@@ -28,15 +28,11 @@ body { background:var(--bg); color:var(--text); font-family:'DM Mono',monospace;
 body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(45,143,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(45,143,255,0.04) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
 .app { display:flex; min-height:100vh; position:relative; z-index:1; }
 
-/* MOBILE TOGGLE */
 .mobile-toggle { display:none; position:fixed; top:14px; left:14px; z-index:400; background:var(--surface); border:1px solid var(--border2); color:var(--accent); width:42px; height:42px; cursor:pointer; font-size:18px; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(0,0,0,0.6); }
-
 .sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:350; }
 .sidebar-overlay.visible { display:block; }
 
-/* SIDEBAR */
 .sidebar { width:278px; min-width:278px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow-y:auto; overflow-x:hidden; z-index:360; transition:transform 0.3s ease; flex-shrink:0; }
-
 .sidebar-brand { padding:22px 20px 16px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; background:linear-gradient(180deg,#000 0%,var(--surface) 100%); }
 .brand-tag { font-size:9px; letter-spacing:3px; color:var(--accent2); text-transform:uppercase; margin-bottom:4px; }
 .brand-name { font-family:'Syne',sans-serif; font-size:17px; font-weight:800; }
@@ -48,13 +44,11 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
 .sidebar-input { padding:16px 20px; border-bottom:1px solid var(--border); position:relative; z-index:10; }
 .input-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); margin-bottom:7px; display:block; }
 
-/* EXCHANGE — pure CSS flags, no emoji */
 .exchange-row { display:flex; gap:5px; margin-bottom:10px; }
 .ex-btn { flex:1; background:#000; border:1px solid var(--border); color:var(--muted2); font-family:'DM Mono',monospace; font-size:10px; padding:7px 3px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:5px; position:relative; z-index:11; -webkit-tap-highlight-color:transparent; }
 .ex-btn:hover { border-color:var(--accent); color:var(--text); }
 .ex-btn.active { background:rgba(45,143,255,0.15); border-color:var(--accent); color:var(--accent); }
 
-/* CSS-drawn flags — no emoji, works everywhere */
 .flag { display:inline-block; border-radius:2px; overflow:hidden; flex-shrink:0; }
 .flag-tr { width:18px; height:12px; background:#e30a17; position:relative; }
 .flag-tr::before { content:'☽'; position:absolute; left:2px; top:50%; transform:translateY(-50%); color:#fff; font-size:7px; line-height:1; }
@@ -76,27 +70,21 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
 
 .reanalyze-hint { display:none; font-size:9px; color:var(--accent2); margin-bottom:6px; text-align:center; animation:pulse 1.5s infinite; }
 .reanalyze-hint.visible { display:block; }
-
-.analyze-btn { width:100%; background:linear-gradient(135deg,var(--accent) 0%,#1a6fd4 100%); color:#fff; border:none; font-family:'Syne',sans-serif; font-size:12px; font-weight:800; padding:12px; cursor:pointer; letter-spacing:2px; text-transform:uppercase; position:relative; z-index:11; -webkit-tap-highlight-color:transparent; transition:opacity 0.2s; }
+.analyze-btn { width:100%; background:linear-gradient(135deg,var(--accent) 0%,#1a6fd4 100%); color:#fff; border:none; font-family:'Syne',sans-serif; font-size:12px; font-weight:800; padding:12px; cursor:pointer; letter-spacing:2px; text-transform:uppercase; position:relative; z-index:11; transition:opacity 0.2s; }
 .analyze-btn:hover { opacity:0.9; }
 .analyze-btn:disabled { opacity:0.4; cursor:not-allowed; }
-
 .error-bar { display:none; background:rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.3); color:var(--danger); padding:8px 12px; font-size:10px; margin-top:8px; }
 .error-bar.visible { display:block; }
 
-/* POPULAR */
 .popular-section { padding:12px 20px; border-bottom:1px solid var(--border); }
 .popular-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); margin-bottom:8px; display:block; }
 .popular-chips { display:flex; flex-wrap:wrap; gap:4px; }
 .popular-chip { font-size:9px; padding:4px 8px; border:1px solid var(--border); color:var(--muted2); cursor:pointer; font-family:'Syne',sans-serif; font-weight:700; display:flex; align-items:center; gap:4px; background:#000; transition:all 0.15s; -webkit-tap-highlight-color:transparent; position:relative; z-index:11; }
 .popular-chip:hover { border-color:var(--accent); color:var(--accent); }
-
-/* chip flag small */
 .cflag { display:inline-block; width:12px; height:8px; border-radius:1px; overflow:hidden; flex-shrink:0; }
 .cflag-tr { background:#e30a17; }
 .cflag-us { background:repeating-linear-gradient(180deg,#B22234 0,#B22234 25%,#fff 25%,#fff 50%,#B22234 50%,#B22234 75%,#fff 75%,#fff 100%); }
 
-/* NAV */
 .nav-label { padding:12px 20px 5px; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
 .nav-item { display:flex; align-items:center; gap:8px; padding:10px 20px; cursor:pointer; border-left:2px solid transparent; font-size:11px; color:var(--muted2); transition:all 0.15s; -webkit-tap-highlight-color:transparent; position:relative; z-index:11; }
 .nav-item:hover { background:var(--surface2); color:var(--text); }
@@ -112,7 +100,6 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
 .verdict-box.watch { border-color:var(--warn); color:var(--warn); background:rgba(255,184,48,0.05); }
 .verdict-box.avoid { border-color:var(--danger); color:var(--danger); background:rgba(255,77,106,0.05); }
 
-/* MAIN */
 .main { flex:1; overflow-y:auto; padding:32px 36px; min-width:0; }
 .page { display:none; }
 .page.active { display:block; animation:fadeUp 0.3s ease; }
@@ -130,8 +117,6 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
 
 .stock-logo { width:42px; height:42px; border-radius:8px; background:var(--surface2); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:13px; font-weight:800; color:var(--accent); overflow:hidden; flex-shrink:0; }
 .stock-logo img { width:100%; height:100%; object-fit:contain; border-radius:6px; }
-
-/* Header flag — bigger CSS flag */
 .header-flag { display:inline-block; width:28px; height:19px; border-radius:3px; overflow:hidden; flex-shrink:0; }
 .hflag-tr { background:#e30a17; position:relative; }
 .hflag-tr::before { content:'☽'; position:absolute; left:3px; top:50%; transform:translateY(-50%); color:#fff; font-size:10px; line-height:1; }
@@ -146,10 +131,8 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
 .badge-fw { color:var(--accent); border-color:rgba(45,143,255,0.3); background:rgba(45,143,255,0.05); }
 .badge-fw.lynch { color:var(--lynch); border-color:rgba(249,115,22,0.3); background:rgba(249,115,22,0.05); }
 
-/* SINGLE share button */
 .x-share-btn { margin-left:auto; background:#000; border:1px solid #333; color:#fff; font-family:'Syne',sans-serif; font-size:11px; font-weight:700; padding:10px 18px; cursor:pointer; display:flex; align-items:center; gap:8px; letter-spacing:1px; transition:all 0.2s; }
 .x-share-btn:hover { background:#111; border-color:var(--accent); color:var(--accent); }
-.x-logo-icon { font-size:13px; font-weight:900; font-family:'Syne',sans-serif; }
 
 /* GRID */
 .overview-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
@@ -159,11 +142,63 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
 .stat-value { font-family:'Syne',sans-serif; font-size:30px; font-weight:800; color:var(--accent); }
 .stat-sub { font-size:10px; color:var(--muted2); margin-top:3px; }
 
-/* TV CHART */
+/* TRADINGVIEW — full featured */
 .tv-card { background:#000; border:1px solid var(--border2); margin-bottom:14px; overflow:hidden; }
 .tv-card-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); padding:12px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
 .tv-live-dot { width:6px; height:6px; background:var(--success); border-radius:50%; animation:blink 2s infinite; flex-shrink:0; }
-.tv-wrap { height:380px; width:100%; }
+.tv-wrap { height:500px; width:100%; }
+
+/* PRICE RANGE BAR */
+.price-range-card { background:#000; border:1px solid var(--border2); padding:18px 20px; margin-bottom:14px; }
+.price-range-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
+.range-dot { width:5px; height:5px; background:var(--accent); border-radius:50%; }
+.range-labels { display:flex; justify-content:space-between; margin-bottom:6px; font-size:10px; color:var(--muted2); }
+.range-bar-wrap { position:relative; height:8px; background:var(--border2); border-radius:4px; margin-bottom:8px; overflow:hidden; }
+.range-bar-fill { position:absolute; left:0; top:0; height:100%; background:linear-gradient(90deg,var(--danger),var(--warn),var(--success)); border-radius:4px; transition:width 1s ease; }
+.range-marker { position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:14px; background:var(--accent); border:2px solid #000; border-radius:50%; transition:left 1s ease; }
+.range-meta { display:flex; justify-content:space-between; font-size:10px; }
+.range-current { color:var(--accent); font-family:'Syne',sans-serif; font-weight:700; }
+.range-pct { color:var(--muted2); }
+
+/* RSI CARD */
+.rsi-card { background:#000; border:1px solid var(--border2); padding:18px 20px; margin-bottom:14px; }
+.rsi-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
+.rsi-gauge-wrap { display:flex; align-items:center; gap:20px; }
+.rsi-gauge { flex:1; }
+.rsi-bar-bg { height:10px; background:var(--border2); border-radius:5px; position:relative; overflow:hidden; margin-bottom:6px; }
+.rsi-bar-fill { height:100%; border-radius:5px; transition:width 1s ease; }
+.rsi-zones { display:flex; justify-content:space-between; font-size:9px; color:var(--muted); }
+.rsi-value-box { text-align:center; flex-shrink:0; }
+.rsi-value { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; }
+.rsi-label { font-size:9px; letter-spacing:1px; margin-top:2px; }
+.rsi-signal { display:inline-block; font-size:9px; font-weight:700; letter-spacing:1px; padding:3px 8px; border:1px solid; margin-top:4px; }
+
+/* MULTIPLES GRID */
+.multiples-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+.multiple-card { background:#000; border:1px solid var(--border2); padding:14px 12px; position:relative; overflow:hidden; text-align:center; }
+.multiple-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:var(--border2); }
+.multiple-label { font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--muted2); margin-bottom:6px; }
+.multiple-value { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:var(--accent); }
+.multiple-sub { font-size:9px; color:var(--muted2); margin-top:3px; }
+.multiple-signal { font-size:8px; font-weight:700; letter-spacing:1px; padding:2px 6px; border:1px solid; margin-top:5px; display:inline-block; }
+.sig-good { color:var(--success); border-color:rgba(0,229,160,0.3); background:rgba(0,229,160,0.06); }
+.sig-warn { color:var(--warn); border-color:rgba(255,184,48,0.3); background:rgba(255,184,48,0.06); }
+.sig-bad { color:var(--danger); border-color:rgba(255,77,106,0.3); background:rgba(255,77,106,0.06); }
+.sig-neutral { color:var(--muted2); border-color:var(--border2); background:transparent; }
+
+/* ANALYST TARGET */
+.analyst-card { background:#000; border:1px solid var(--border2); padding:18px 20px; margin-bottom:14px; }
+.analyst-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
+.analyst-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+.analyst-stat { text-align:center; padding:12px; background:var(--surface); border:1px solid var(--border); }
+.analyst-stat-label { font-size:9px; color:var(--muted2); margin-bottom:5px; letter-spacing:1px; text-transform:uppercase; }
+.analyst-stat-val { font-family:'Syne',sans-serif; font-size:16px; font-weight:800; }
+.consensus-bar { height:6px; border-radius:3px; overflow:hidden; display:flex; gap:2px; margin-bottom:8px; }
+.consensus-buy { background:var(--success); border-radius:3px 0 0 3px; transition:width 1s ease; }
+.consensus-hold { background:var(--warn); }
+.consensus-sell { background:var(--danger); border-radius:0 3px 3px 0; transition:width 1s ease; }
+.consensus-labels { display:flex; justify-content:space-between; font-size:9px; color:var(--muted2); }
+.analyst-note { font-size:10px; color:var(--muted2); padding:10px; background:var(--surface); border:1px solid var(--border); border-left:2px solid var(--accent); line-height:1.6; }
 
 /* CHARTS */
 .chart-card { background:#000; border:1px solid var(--border2); padding:20px; margin-bottom:14px; }
@@ -180,7 +215,6 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
 .crit-num { font-family:'Syne',sans-serif; font-size:10px; font-weight:700; color:var(--accent); }
 .crit-name { font-family:'Syne',sans-serif; font-size:12px; font-weight:600; margin-bottom:2px; }
 .crit-desc { font-size:10px; color:var(--muted2); line-height:1.5; }
-
 .status-pill { display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:700; letter-spacing:1px; padding:3px 8px; font-family:'Syne',sans-serif; white-space:nowrap; }
 .status-pill.pass { background:rgba(0,229,160,0.1); color:var(--success); border:1px solid rgba(0,229,160,0.2); }
 .status-pill.fail { background:rgba(255,77,106,0.1); color:var(--danger); border:1px solid rgba(255,77,106,0.2); }
@@ -188,7 +222,7 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
 .status-pill.pending { background:rgba(26,58,92,0.3); color:var(--muted2); border:1px solid var(--border); }
 .detail-text { font-size:10px; color:#5a90b8; line-height:1.6; max-width:280px; }
 
-/* DETAIL */
+/* DETAIL PAGE */
 .detail-header { display:flex; align-items:flex-start; gap:18px; margin-bottom:20px; padding:20px; background:#000; border:1px solid var(--border2); }
 .detail-num { font-family:'Syne',sans-serif; font-size:42px; font-weight:800; color:var(--accent); opacity:0.15; line-height:1; flex-shrink:0; }
 .detail-info { flex:1; }
@@ -197,7 +231,6 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
 .analysis-block { background:#000; border:1px solid var(--border2); padding:20px; margin-bottom:14px; }
 .analysis-block-title { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); margin-bottom:12px; }
 .analysis-text { font-size:12px; line-height:1.9; color:#7ab0d0; }
-
 .score-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
 .score-bar-label { font-size:10px; color:var(--muted2); width:130px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .score-bar { flex:1; height:2px; background:var(--border2); }
@@ -227,18 +260,17 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
 /* SHARE MODAL */
 .share-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.93); z-index:600; align-items:center; justify-content:center; flex-direction:column; gap:12px; }
 .share-modal.visible { display:flex; }
-.share-modal-box { background:var(--surface); border:1px solid var(--border2); padding:20px; max-width:420px; width:92%; }
+.share-modal-box { background:var(--surface); border:1px solid var(--border2); padding:20px; max-width:440px; width:92%; }
 .share-modal-title { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; color:var(--text); margin-bottom:14px; letter-spacing:1px; }
-.share-canvas-wrap { border:1px solid var(--border2); margin-bottom:14px; overflow:hidden; }
+.share-canvas-wrap { border:1px solid var(--border2); margin-bottom:12px; overflow:hidden; }
 .share-canvas-wrap canvas { display:block; width:100%; height:auto; }
-.share-hint { font-size:10px; color:var(--muted2); margin-bottom:12px; line-height:1.6; }
+.share-hint { font-size:10px; color:var(--muted2); margin-bottom:12px; line-height:1.7; padding:10px; background:rgba(45,143,255,0.05); border:1px solid var(--border); }
 .share-btns { display:flex; gap:8px; }
 .sdl-btn { flex:1; background:linear-gradient(135deg,var(--accent),#1a6fd4); color:#fff; border:none; font-family:'Syne',sans-serif; font-size:11px; font-weight:700; padding:10px; cursor:pointer; letter-spacing:1px; }
 .stw-btn { flex:1; background:#000; border:1px solid #444; color:#fff; font-family:'Syne',sans-serif; font-size:11px; font-weight:700; padding:10px; cursor:pointer; letter-spacing:1px; }
 .stw-btn:hover { border-color:var(--accent); }
 .sclose-btn { width:100%; margin-top:8px; background:none; border:1px solid var(--border2); color:var(--muted2); font-family:'DM Mono',monospace; font-size:10px; padding:9px; cursor:pointer; }
 
-/* MOBILE */
 @media (max-width:768px) {
   .mobile-toggle { display:flex; }
   .sidebar { position:fixed; left:0; top:0; height:100vh; transform:translateX(-100%); box-shadow:4px 0 40px rgba(0,0,0,0.8); }
@@ -246,6 +278,8 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
   .sidebar-close { display:flex; }
   .main { padding:14px; padding-top:66px; }
   .overview-grid { grid-template-columns:1fr; }
+  .multiples-grid { grid-template-columns:repeat(2,1fr); }
+  .analyst-grid { grid-template-columns:1fr; }
   .stock-header { flex-wrap:wrap; }
   .x-share-btn { margin-left:0; width:100%; justify-content:center; }
   .criteria-table th:last-child, .criteria-table td:last-child { display:none; }
@@ -278,10 +312,12 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
     <div class="share-canvas-wrap">
       <canvas id="shareCanvas" width="600" height="420"></canvas>
     </div>
-    <div class="share-hint">Görseli indir, X'te paylaşırken ekle. Ya da "X'te Paylaş"a basarak direkt tweet at (görsel manuel eklenir).</div>
+    <div class="share-hint">
+      💡 <strong>Nasıl paylaşılır:</strong> "İndir & X'te Paylaş" butonuna tıkla. Görsel otomatik indirilir ve tweet penceresi açılır. Tweet'e indirilen görseli ekle, paylaş!
+    </div>
     <div class="share-btns">
-      <button class="sdl-btn" onclick="downloadShareImage()">⬇ Görseli İndir</button>
-      <button class="stw-btn" onclick="tweetIt()">✕ X'te Paylaş</button>
+      <button class="sdl-btn" onclick="downloadAndTweet()">⬇ İndir & X'te Paylaş</button>
+      <button class="stw-btn" onclick="downloadShareImage()">💾 Sadece İndir</button>
     </div>
     <button class="sclose-btn" onclick="closeShareModal()">Kapat</button>
   </div>
@@ -348,6 +384,8 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
     </div>
 
     <div class="page" id="page-overview">
+
+      <!-- STOCK HEADER -->
       <div class="stock-header" id="stockHeader">
         <div class="stock-logo" id="stockLogo">—</div>
         <span class="header-flag" id="headerFlag"></span>
@@ -359,32 +397,132 @@ body::before { content:''; position:fixed; inset:0; background-image:linear-grad
           <span class="badge badge-ex" id="badgeEx">—</span>
           <span class="badge badge-fw" id="badgeFw">—</span>
         </div>
-        <!-- SINGLE BUTTON -->
         <button class="x-share-btn" onclick="openShareModal()">
-          <span class="x-logo-icon">✕</span> X'te Paylaş
+          <span style="font-weight:900;font-size:13px">✕</span> X'te Paylaş
         </button>
       </div>
 
       <div class="page-title">Dashboard — <span id="overviewTicker" style="color:var(--accent)">—</span></div>
 
+      <!-- SCORE GRID -->
       <div class="overview-grid">
         <div class="stat-card">
-          <div class="stat-label">Skor</div>
+          <div class="stat-label">Analiz Skoru</div>
           <div class="stat-value" id="statScore">—</div>
           <div class="stat-sub">kriter üzerinden</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Geçen</div>
+          <div class="stat-label">Geçen Kriter</div>
           <div class="stat-value" id="statPass" style="color:var(--success)">—</div>
           <div class="stat-sub" id="statPassSub">—</div>
         </div>
       </div>
 
+      <!-- CLASSIC MULTIPLES -->
+      <div class="multiples-grid" id="multiplesGrid" style="display:none">
+        <div class="multiple-card">
+          <div class="multiple-label">F/K (P/E)</div>
+          <div class="multiple-value" id="mPE">—</div>
+          <div class="multiple-sub" id="mPESub">—</div>
+          <div class="multiple-signal sig-neutral" id="mPESig">—</div>
+        </div>
+        <div class="multiple-card">
+          <div class="multiple-label">F/DD (P/B)</div>
+          <div class="multiple-value" id="mPB">—</div>
+          <div class="multiple-sub" id="mPBSub">—</div>
+          <div class="multiple-signal sig-neutral" id="mPBSig">—</div>
+        </div>
+        <div class="multiple-card">
+          <div class="multiple-label">EV/FAVÖK</div>
+          <div class="multiple-value" id="mEV">—</div>
+          <div class="multiple-sub" id="mEVSub">—</div>
+          <div class="multiple-signal sig-neutral" id="mEVSig">—</div>
+        </div>
+        <div class="multiple-card">
+          <div class="multiple-label">PEG Oranı</div>
+          <div class="multiple-value" id="mPEG">—</div>
+          <div class="multiple-sub" id="mPEGSub">—</div>
+          <div class="multiple-signal sig-neutral" id="mPEGSig">—</div>
+        </div>
+      </div>
+
+      <!-- RSI CARD -->
+      <div class="rsi-card" id="rsiCard" style="display:none">
+        <div class="rsi-title"><div class="range-dot"></div>RSI Göstergesi (14 günlük tahmini)</div>
+        <div class="rsi-gauge-wrap">
+          <div class="rsi-gauge">
+            <div class="rsi-bar-bg">
+              <div class="rsi-bar-fill" id="rsiBarFill" style="width:0%"></div>
+            </div>
+            <div class="rsi-zones">
+              <span>Aşırı Satım (30)</span>
+              <span>Nötr (50)</span>
+              <span>Aşırı Alım (70)</span>
+            </div>
+          </div>
+          <div class="rsi-value-box">
+            <div class="rsi-value" id="rsiValue">—</div>
+            <div class="rsi-label" id="rsiLabelText" style="color:var(--muted2)">RSI-14</div>
+            <div class="rsi-signal" id="rsiSignal">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRICE RANGE -->
+      <div class="price-range-card" id="priceRangeCard" style="display:none">
+        <div class="price-range-title"><div class="range-dot"></div>52 Haftalık Fiyat Aralığı (Tahmini)</div>
+        <div class="range-labels">
+          <span id="rangeLow">—</span>
+          <span id="rangeMid">Güncel Fiyat</span>
+          <span id="rangeHigh">—</span>
+        </div>
+        <div class="range-bar-wrap">
+          <div class="range-bar-fill" id="rangeBarFill" style="width:100%"></div>
+          <div class="range-marker" id="rangeMarker" style="left:50%"></div>
+        </div>
+        <div class="range-meta">
+          <span class="range-current" id="rangeCurrentPrice">—</span>
+          <span class="range-pct" id="rangePctFromLow">—</span>
+        </div>
+      </div>
+
+      <!-- ANALYST TARGET -->
+      <div class="analyst-card" id="analystCard" style="display:none">
+        <div class="analyst-title"><div class="range-dot"></div>Analist Konsensüsü (Tahmini)</div>
+        <div class="analyst-grid">
+          <div class="analyst-stat">
+            <div class="analyst-stat-label">Konsensüs</div>
+            <div class="analyst-stat-val" id="analystConsensus" style="color:var(--success)">—</div>
+          </div>
+          <div class="analyst-stat">
+            <div class="analyst-stat-label">Hedef Fiyat</div>
+            <div class="analyst-stat-val" id="analystTarget" style="color:var(--accent)">—</div>
+          </div>
+          <div class="analyst-stat">
+            <div class="analyst-stat-label">Yukarı Potansiyel</div>
+            <div class="analyst-stat-val" id="analystUpside" style="color:var(--success)">—</div>
+          </div>
+        </div>
+        <div class="consensus-bar" id="consensusBar">
+          <div class="consensus-buy" id="cBuy" style="width:60%"></div>
+          <div class="consensus-hold" id="cHold" style="width:25%"></div>
+          <div class="consensus-sell" id="cSell" style="width:15%"></div>
+        </div>
+        <div class="consensus-labels">
+          <span id="cBuyLabel" style="color:var(--success)">AL</span>
+          <span id="cHoldLabel" style="color:var(--warn)">TUT</span>
+          <span id="cSellLabel" style="color:var(--danger)">SAT</span>
+        </div>
+        <div class="analyst-note" id="analystNote" style="margin-top:12px">—</div>
+      </div>
+
+      <!-- TRADINGVIEW — RSI + Price included via studies -->
       <div class="tv-card" id="tvCard" style="display:none">
-        <div class="tv-card-title"><div class="tv-live-dot"></div>Canlı Grafik — <span id="tvLabel" style="color:var(--accent);margin-left:4px">—</span></div>
+        <div class="tv-card-title"><div class="tv-live-dot"></div>Canlı Grafik + RSI — <span id="tvLabel" style="color:var(--accent);margin-left:4px">—</span></div>
         <div class="tv-wrap" id="tvContainer"></div>
       </div>
 
+      <!-- RADAR & BAR -->
       <div class="chart-card">
         <div class="chart-title"><div class="chart-dot"></div>Radar Analizi</div>
         <div class="radar-wrap"><canvas id="radarChart"></canvas></div>
@@ -458,39 +596,25 @@ const LOGOS = {
   'ETN':'eaton.com','MSCI':'msci.com',
 };
 
-function getLogoUrl(ticker) {
-  const d = LOGOS[ticker];
-  return d ? `https://logo.clearbit.com/${d}` : null;
-}
+function getLogoUrl(t){ const d=LOGOS[t]; return d?`https://logo.clearbit.com/${d}`:null; }
 
-function buildPopularChips() {
-  const el = document.getElementById('popularChips');
-  el.innerHTML = '';
-  const bist = [...POOL.BIST].sort(()=>Math.random()-0.5).slice(0,4);
-  const us = [...POOL.US].sort(()=>Math.random()-0.5).slice(0,4);
-  [...bist,...us].forEach(s => {
-    const ex = s.e||'BIST';
-    const isTR = !s.e;
-    const div = document.createElement('div');
-    div.className = 'popular-chip';
-    div.title = s.c;
-    div.innerHTML = `<span class="cflag ${isTR?'cflag-tr':'cflag-us'}"></span>${s.t}`;
-    div.onclick = () => quickFill(s.t, s.c, ex);
+function buildPopularChips(){
+  const el=document.getElementById('popularChips'); el.innerHTML='';
+  const bist=[...POOL.BIST].sort(()=>Math.random()-0.5).slice(0,4);
+  const us=[...POOL.US].sort(()=>Math.random()-0.5).slice(0,4);
+  [...bist,...us].forEach(s=>{
+    const ex=s.e||'BIST'; const isTR=!s.e;
+    const div=document.createElement('div');
+    div.className='popular-chip'; div.title=s.c;
+    div.innerHTML=`<span class="cflag ${isTR?'cflag-tr':'cflag-us'}"></span>${s.t}`;
+    div.onclick=()=>quickFill(s.t,s.c,ex);
     el.appendChild(div);
   });
 }
 
-// ---- MOBILE ----
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebarOverlay').classList.toggle('visible');
-}
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebarOverlay').classList.remove('visible');
-}
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('visible'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('visible'); }
 
-// ---- DATA ----
 const EX = {
   BIST:{ label:'BIST', tvSym:(t)=>`BIST:${t}`, flagClass:'hflag-tr' },
   NYSE:{ label:'NYSE', tvSym:(t)=>`NYSE:${t}`, flagClass:'hflag-us' },
@@ -501,110 +625,103 @@ const FW = {
   buffett:{
     name:'Buffett',
     criteria:[
-      {name:'ROE Sürdürülebilirliği', desc:'ROE %15+ ve son 5 yılda tutarlı mı? Operasyonel güçten mi geliyor?', ctx:'Buffett, ROE\'yi sermaye verimliliğinin en saf göstergesi olarak görür. Borçla şişirilmiş ROE\'yi reddeder, operasyonel güçten gelen ROE arar.'},
-      {name:'Fiyatlama Gücü', desc:'Maliyet artışlarını müşteriye yansıtabiliyor mu? Net kâr marjı genişliyor mu?', ctx:'"Enflasyona karşı en iyi savunma, insanların ihtiyaç duyduğu ve fiyat arttığında bile aldığı ürünleri satmaktır."'},
-      {name:'$1 → $1+ Testi', desc:'Her $1 alıkonulan sermaye piyasada $1+ değer yarattı mı?', ctx:'Buffett\'ın özgün testi: alıkonulan kazançların piyasa değerine katkısı. Sermaye tahsisi kalitesini doğrudan ölçer.'},
-      {name:'Ekonomik Hendek', desc:'Marka, ağ etkisi, maliyet avantajı veya değiştirme maliyeti var mı?', ctx:'Buffett\'ın en ünlü konsepti. ROIC\'in WACC\'tan sürekli yüksek olması hendek göstergesidir.'},
-      {name:'Serbest Nakit Akışı', desc:'FCF tutarlı, büyüyor ve net gelirle uyumlu mu?', ctx:'Buffett muhasebe kârına değil gerçek nakde bakar. Büyük capex gerektiren işletmeler genellikle cazip değildir.'},
-      {name:'Yönetim Kalitesi', desc:'Sermaye tahsisi geçmişi ve hissedar dostu mu?', ctx:'Zor dönemlerdeki davranış, gereksiz hisse ihraçları ve kötü satın almalar kırmızı bayraktır.'},
-      {name:'Değerleme Marjı', desc:'P/E, P/FCF, EV/EBITDA sektör ortalamasına göre nasıl?', ctx:'"Olağanüstü bir şirketi adil fiyatına almak, sıradan bir şirketi olağanüstü fiyatına almaktan çok daha iyidir."'}
+      {name:'ROE Sürdürülebilirliği', desc:'ROE %15+ ve son 5 yılda tutarlı mı?', ctx:'Buffett, ROE\'yi sermaye verimliliğinin en saf göstergesi olarak görür. Borçla şişirilmiş ROE\'yi reddeder.'},
+      {name:'Fiyatlama Gücü', desc:'Maliyet artışlarını müşteriye yansıtabiliyor mu?', ctx:'"Enflasyona karşı en iyi savunma, fiyat arttığında bile alınan ürünleri satmaktır."'},
+      {name:'$1 → $1+ Testi', desc:'Her $1 alıkonulan sermaye $1+ piyasa değeri yarattı mı?', ctx:'Buffett\'ın özgün testi: alıkonulan kazançların piyasa değerine katkısı.'},
+      {name:'Ekonomik Hendek', desc:'Marka, ağ etkisi, maliyet avantajı var mı?', ctx:'ROIC\'in WACC\'tan sürekli yüksek olması hendek göstergesidir.'},
+      {name:'Serbest Nakit Akışı', desc:'FCF tutarlı, büyüyor ve net gelirle uyumlu mu?', ctx:'Buffett muhasebe kârına değil gerçek nakde bakar.'},
+      {name:'Yönetim Kalitesi', desc:'Sermaye tahsisi geçmişi ve hissedar dostu mu?', ctx:'Zor dönemlerdeki davranış kırmızı bayraktır.'},
+      {name:'Değerleme Marjı', desc:'P/E, P/FCF, EV/EBITDA sektör ortalamasına göre?', ctx:'"Olağanüstü bir şirketi adil fiyatına almak çok daha iyidir."'}
     ],
     keys:['ROE','PRICING','DOLLAR','MOAT','FCF','MGMT','VALUATION'],
-    prompt:(t,c,ex)=>`Warren Buffett yatırım felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''}${c?` — ÖNEMLİ: Şirket adı "${c}", kesinlikle bu şirketi analiz et.`:''} hissesini analiz et.
+    prompt:(t,c,ex)=>`Warren Buffett yatırım felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''}${c?` — ÖNEMLİ: Şirket adı "${c}", kesinlikle bu şirketi analiz et. Ayrıca bu şirketin yaklaşık P/E, P/B, EV/EBITDA çarpanlarını, tahmini RSI durumunu (aşırı alım/satım/nötr), 52 haftalık fiyat aralığını ve analist konsensüsünü (AL/TUT/SAT oranları ve hedef fiyat) MULTIPLES bölümünde ver.`:` Ayrıca bu şirketin yaklaşık P/E, P/B, EV/EBITDA çarpanlarını, tahmini RSI durumunu, 52 haftalık fiyat aralığını ve analist konsensüsünü MULTIPLES bölümünde ver.`} hissesini analiz et.
 
 KRİTERLER:
-1. ROE: ROE %15+ tutarlı mı? Operasyonel güçten mi?
+1. ROE: ROE %15+ tutarlı mı?
 2. PRICING: Fiyatlama gücü ve marj trendi?
-3. DOLLAR: Her $1 alıkonulan sermaye $1+ piyasa değeri yarattı mı?
+3. DOLLAR: Her $1 alıkonulan sermaye $1+ yarattı mı?
 4. MOAT: Ekonomik hendek var ve büyüyor mu?
-5. FCF: Serbest nakit akışı kalitesi ve net gelirle uyum?
+5. FCF: Serbest nakit akışı kalitesi?
 6. MGMT: Yönetim kalitesi ve sermaye tahsisi?
-7. VALUATION: P/E, P/FCF, EV/EBITDA — değerleme ve güvenlik marjı?
+7. VALUATION: P/E, P/FCF, EV/EBITDA değerleme?
 
 FORMAT:
 TICKER: ${t}
 TOTAL_SCORE: X
 VERDICT: AL|BEKLE|UZAK_DUR
-SUMMARY: [2-3 cümle Buffett perspektifinden]
-RISK: [en kritik 1 risk]
+SUMMARY: [2-3 cümle]
+RISK: [en kritik risk]
+
+MULTIPLES_START
+PE: [sayı veya N/A] | [kısa yorum: ucuz/adil/pahalı]
+PB: [sayı veya N/A] | [kısa yorum]
+EV_EBITDA: [sayı veya N/A] | [kısa yorum]
+PEG: [sayı veya N/A] | [kısa yorum]
+RSI: [30-70 arası tahmini sayı] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]
+PRICE_52W: [düşük fiyat]-[yüksek fiyat] | [mevcut tahmini fiyat]
+ANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs: GÜÇLÜ_AL|AL|TUT|SAT] | [hedef fiyat] | [yukarı potansiyel %]
+MULTIPLES_END
+
 CRITERIA_START
-ROE: PASS|FAIL|NEUTRAL | [2-3 cümle, somut veri]
-PRICING: PASS|FAIL|NEUTRAL | [2-3 cümle, somut veri]
-DOLLAR: PASS|FAIL|NEUTRAL | [2-3 cümle, somut veri]
-MOAT: PASS|FAIL|NEUTRAL | [2-3 cümle, somut veri]
-FCF: PASS|FAIL|NEUTRAL | [2-3 cümle, somut veri]
-MGMT: PASS|FAIL|NEUTRAL | [2-3 cümle, somut veri]
-VALUATION: PASS|FAIL|NEUTRAL | [2-3 cümle, somut veri]
+ROE: PASS|FAIL|NEUTRAL | [2-3 cümle]
+PRICING: PASS|FAIL|NEUTRAL | [2-3 cümle]
+DOLLAR: PASS|FAIL|NEUTRAL | [2-3 cümle]
+MOAT: PASS|FAIL|NEUTRAL | [2-3 cümle]
+FCF: PASS|FAIL|NEUTRAL | [2-3 cümle]
+MGMT: PASS|FAIL|NEUTRAL | [2-3 cümle]
+VALUATION: PASS|FAIL|NEUTRAL | [2-3 cümle]
 CRITERIA_END`
   },
-
   lynch:{
     name:'Peter Lynch',
     criteria:[
-      {
-        name:'Saha & Hikaye (Amatör Avantajı)',
-        desc:'Ürün/hizmet günlük hayatta gözlemlenebilir mi? Büyüme hikayesi (script) hala geçerli mi?',
-        ctx:'"İnsanlar çalıştıkları yerde, alışveriş yaparken veya başka bir yerde fark ettikleri şirketlere yatırım yapmalı." Lynch\'e göre amatör yatırımcının en büyük silahı, kurumlardan önce tüketici trendlerini görebilmesidir.'
-      },
-      {
-        name:'Büyüme Motoru & Diworseification',
-        desc:'Kârı artıracak asıl hikaye nedir? Şirket anlamadığı sektörlere kayarak odak kaybediyor mu?',
-        ctx:'"Diworseification": Şirketin ana işinden uzaklaşıp kaynak israf etmesi Lynch\'in en büyük kırmızı bayraklarından. Büyüme motoru — mağaza açılımı, yeni pazar, marj iyileştirmesi — net ve anlaşılır olmalı.'
-      },
-      {
-        name:'Net Nakit & Bilanço Sağlığı',
-        desc:'Net nakit pozisyonu nedir? (Nakit - Uzun Vadeli Borç). Zorlu dönemleri atlatacak güçte mi?',
-        ctx:'"Güçlü bilanço bir güvenlik ağıdır." Lynch, net nakit pozisyonundaki şirketleri sever çünkü kötü dönemlerde hayatta kalır ve fırsatları değerlendirebilirler. Gizli yükümlülükler (emeklilik borçları vb.) kritik kırmızı bayrak.'
-      },
-      {
-        name:'Stok (Envanter) Kontrolü',
-        desc:'Stok büyüme hızı satış büyüme hızını geçiyor mu? Satılamayan ürün birikimi var mı?',
-        ctx:'"Satılamayan ürünlerin birikmesi Lynch\'in en büyük kırmızı bayraklarından biri." Stok/satış oranının bozulması gelecekteki marj baskısının öncü göstergesidir. Bu kriter özellikle perakende ve üretim şirketleri için kritiktir.'
-      },
-      {
-        name:'PEG Oranı & Kazanç Çizgisi',
-        desc:'PEG (F/K ÷ Büyüme) 1\'in altında mı? Fiyat tarihsel kazanç eğrisinin altında mı seyrediyor?',
-        ctx:'"PEG oranı 1\'in altındaysa değerli, 2\'nin üzerindeyse pahalı." Lynch için fiyat ve kazanç arasındaki ilişki kritiktir. Fiyat, kazanç eğrisinden kopup aşırı fiyatlanmışsa bu tehlike sinyalidir.'
-      },
-      {
-        name:'Kurumsal Sahiplik & Gizli Mücevher',
-        desc:'Kurumsal sahiplik %30\'un altında mı? Analistler henüz keşfetmedi mi?',
-        ctx:'"Wall Street bu şirketi çoktan keşfettiyse büyük fırsat kalmamıştır." Lynch kurumların ve analistlerin radarına girmemiş şirketleri arar. Kurumsal sahipliğin düşük olması, henüz büyük paranın girmediğinin işareti.'
-      },
-      {
-        name:'Yönetim Hamleleri (Insider & Buyback)',
-        desc:'İçeriden yöneticiler hisse alıyor mu? Tutarlı geri alım programı var mı?',
-        ctx:'"Yöneticiler pek çok nedenden satar ama tek nedenden alır — fiyatın ucuz olduğunu düşünürler." Geri alım programı hem hisse başına değeri artırır hem de yönetimin geleceğe olan güvenini gösterir.'
-      }
+      {name:'Saha & Hikaye (Amatör Avantajı)', desc:'Ürün/hizmet gözlemlenebilir mi? Büyüme script\'i geçerli mi?', ctx:'"İnsanlar çalıştıkları yerde, alışveriş yaparken fark ettikleri şirketlere yatırım yapmalı." Amatör avantajı kurumlardan önce tüketici trendlerini görmektir.'},
+      {name:'Büyüme Motoru & Diworseification', desc:'Kârı artıracak asıl hikaye nedir? Odak kaybı var mı?', ctx:'"Diworseification": Şirketin ana işinden uzaklaşıp kaynak israf etmesi Lynch\'in en büyük kırmızı bayrağı.'},
+      {name:'Net Nakit & Bilanço Sağlığı', desc:'Net nakit pozisyonu nedir? Zorlu dönemleri atlatacak güçte mi?', ctx:'"Güçlü bilanço bir güvenlik ağıdır." Lynch net nakit pozisyonundaki şirketleri sever.'},
+      {name:'Stok (Envanter) Kontrolü', desc:'Stok büyüme hızı satış büyüme hızını geçiyor mu?', ctx:'"Satılamayan ürünlerin birikmesi Lynch\'in en büyük kırmızı bayraklarından biri."'},
+      {name:'PEG Oranı & Kazanç Çizgisi', desc:'PEG 1\'in altında mı? Fiyat kazanç eğrisinin altında mı?', ctx:'"PEG oranı 1\'in altındaysa değerli, 2\'nin üzerindeyse pahalı."'},
+      {name:'Kurumsal Sahiplik & Gizli Mücevher', desc:'Kurumsal sahiplik %30\'un altında mı?', ctx:'"Wall Street bu şirketi çoktan keşfettiyse büyük fırsat kalmamıştır."'},
+      {name:'Yönetim Hamleleri (Insider & Buyback)', desc:'Yöneticiler hisse alıyor mu? Geri alım programı var mı?', ctx:'"Yöneticiler tek nedenden alır — fiyatın ucuz olduğunu düşünürler."'}
     ],
     keys:['STORY','GROWTH','BALANCE','INVENTORY','PEG','INSTITUTION','INSIDER'],
-    prompt:(t,c,ex)=>`Peter Lynch'in yatırım felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''}${c?` — ÖNEMLİ: Şirket adı "${c}", kesinlikle bu şirketi analiz et.`:''} hissesini analiz et.
+    prompt:(t,c,ex)=>`Peter Lynch yatırım felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''}${c?` — ÖNEMLİ: Şirket adı "${c}", kesinlikle bu şirketi analiz et. Ayrıca bu şirketin yaklaşık P/E, PEG, P/B çarpanlarını, tahmini RSI durumunu, 52 haftalık fiyat aralığını ve analist konsensüsünü MULTIPLES bölümünde ver.`:` Ayrıca bu şirketin yaklaşık çarpanlarını ve analist konsensüsünü MULTIPLES bölümünde ver.`} hissesini analiz et.
 
 Lynch'in 4 temel pilari: Saha & Hikaye, Finansal Sağlık, Değerleme, Sahiplik yapısı.
 
 KRİTERLER:
-1. STORY: Amatör avantajı var mı? Ürün/hizmet günlük hayatta gözlemlenebilir ve anlaşılır mı? Büyüme hikayesi (script) hala geçerli mi, yoksa olgunluk/çöküş evresine mi girdi?
-2. GROWTH: Büyüme motoru net mi? (Yeni mağaza/pazar/marj iyileştirmesi). "Diworseification" var mı — şirket anlamadığı sektörlere kayarak kaynak israf ediyor mu?
-3. BALANCE: Net nakit pozisyonu (Nakit - Uzun Vadeli Borç) nedir? Bilanço zorlu dönemleri atlatacak güçte mi? Gizli yükümlülükler (emeklilik borçları vb.) var mı?
-4. INVENTORY: Stok büyüme hızı satış büyüme hızını geçiyor mu? Satılamayan ürün birikimi var mı? (Özellikle perakende/üretim şirketleri için kritik)
-5. PEG: PEG oranı (F/K ÷ Büyüme Oranı) nedir? 1'in altında mı? Tarihsel kazanç eğrisine göre fiyat nerede — aşırı fiyatlanmış mı?
-6. INSTITUTION: Kurumsal sahiplik %30'un altında mı? Analistler henüz keşfetmedi mi? Wall Street radarında mı?
-7. INSIDER: Son 12 ayda yönetici alımı var mı? Tutarlı ve anlamlı geri alım programı uygulanıyor mu?
+1. STORY: Amatör avantajı, ürün gözlemlenebilir mi, script geçerli mi?
+2. GROWTH: Büyüme motoru net mi? Diworseification var mı?
+3. BALANCE: Net nakit pozisyonu, bilanço gücü, gizli yükümlülükler?
+4. INVENTORY: Stok/satış oranı, envanter birikimi?
+5. PEG: PEG oranı ve kazanç çizgisi analizi?
+6. INSTITUTION: Kurumsal sahiplik oranı, analist radarı?
+7. INSIDER: İçeriden alımlar ve geri alım programı?
 
 FORMAT:
 TICKER: ${t}
 TOTAL_SCORE: X
 VERDICT: AL|BEKLE|UZAK_DUR
-SUMMARY: [2-3 cümle, Lynch'in bu hisseye nasıl bakacağını anlat — "Lynch bu şirketi şundan alırdı/almazdı" gibi]
-RISK: [en kritik 1 risk]
+SUMMARY: [2-3 cümle Lynch perspektifinden]
+RISK: [en kritik risk]
+
+MULTIPLES_START
+PE: [sayı veya N/A] | [kısa yorum]
+PB: [sayı veya N/A] | [kısa yorum]
+EV_EBITDA: [sayı veya N/A] | [kısa yorum]
+PEG: [sayı veya N/A] | [kısa yorum]
+RSI: [30-70 arası tahmini sayı] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]
+PRICE_52W: [düşük]-[yüksek] | [mevcut tahmini]
+ANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef fiyat] | [yukarı potansiyel %]
+MULTIPLES_END
+
 CRITERIA_START
-STORY: PASS|FAIL|NEUTRAL | [2-3 cümle, somut gözlem]
-GROWTH: PASS|FAIL|NEUTRAL | [2-3 cümle, büyüme motoru ve diworseification]
-BALANCE: PASS|FAIL|NEUTRAL | [2-3 cümle, net nakit rakamı ver]
-INVENTORY: PASS|FAIL|NEUTRAL | [2-3 cümle, stok/satış oranı]
-PEG: PASS|FAIL|NEUTRAL | [2-3 cümle, somut PEG değeri ver]
-INSTITUTION: PASS|FAIL|NEUTRAL | [2-3 cümle, kurumsal sahiplik oranı]
-INSIDER: PASS|FAIL|NEUTRAL | [2-3 cümle, içeriden alım ve geri alım detayı]
+STORY: PASS|FAIL|NEUTRAL | [2-3 cümle]
+GROWTH: PASS|FAIL|NEUTRAL | [2-3 cümle]
+BALANCE: PASS|FAIL|NEUTRAL | [2-3 cümle]
+INVENTORY: PASS|FAIL|NEUTRAL | [2-3 cümle]
+PEG: PASS|FAIL|NEUTRAL | [2-3 cümle]
+INSTITUTION: PASS|FAIL|NEUTRAL | [2-3 cümle]
+INSIDER: PASS|FAIL|NEUTRAL | [2-3 cümle]
 CRITERIA_END`
   }
 };
@@ -614,7 +731,7 @@ let currentFW='buffett', currentEX='BIST';
 let currentTicker='', currentCompany='';
 let hasAnalyzed=false;
 
-function selectExchange(ex) {
+function selectExchange(ex){
   currentEX=ex;
   ['BIST','NYSE','NASDAQ'].forEach(k=>{
     const el=document.getElementById('ex-'+k.toLowerCase());
@@ -622,7 +739,7 @@ function selectExchange(ex) {
   });
 }
 
-function selectFramework(fw) {
+function selectFramework(fw){
   currentFW=fw;
   document.getElementById('fw-buffett').className='fw-btn'+(fw==='buffett'?' active':'');
   document.getElementById('fw-lynch').className='fw-btn'+(fw==='lynch'?' lynch-active':'');
@@ -634,11 +751,10 @@ function selectFramework(fw) {
   }
 }
 
-function buildNav() {
+function buildNav(){
   const fw=FW[currentFW];
   document.getElementById('navLabel').textContent=fw.criteria.length+' Kriter';
-  const list=document.getElementById('navList');
-  list.innerHTML='';
+  const list=document.getElementById('navList'); list.innerHTML='';
   fw.criteria.forEach((c,i)=>{
     const div=document.createElement('div');
     div.className='nav-item'; div.id='nav-'+i;
@@ -648,7 +764,7 @@ function buildNav() {
   });
 }
 
-function quickFill(t,c,ex) {
+function quickFill(t,c,ex){
   selectExchange(ex);
   document.getElementById('tickerInput').value=t;
   document.getElementById('companyInput').value=c;
@@ -656,7 +772,7 @@ function quickFill(t,c,ex) {
   setTimeout(()=>doAnalyze(),100);
 }
 
-function showPage(type,index) {
+function showPage(type,index){
   ['empty','overview','crit'].forEach(p=>{
     const el=document.getElementById('page-'+p);
     if(el) el.classList.remove('active');
@@ -675,8 +791,8 @@ function showPage(type,index) {
   }
 }
 
-// ---- TRADINGVIEW ----
-function loadTradingView(ticker,exchange) {
+// ---- TRADINGVIEW with RSI ----
+function loadTradingView(ticker, exchange){
   const ex=EX[exchange];
   const symbol=ex.tvSym(ticker);
   document.getElementById('tvLabel').textContent=ticker;
@@ -684,26 +800,215 @@ function loadTradingView(ticker,exchange) {
   const container=document.getElementById('tvContainer');
   container.innerHTML='';
 
-  // Use iframe approach for reliability
-  const iframe=document.createElement('iframe');
-  iframe.style.cssText='width:100%;height:380px;border:none;';
-  iframe.src=`https://www.tradingview.com/widgetembed/?frameElementId=tv&symbol=${encodeURIComponent(symbol)}&interval=D&hidesidetoolbar=0&saveimage=0&toolbarbg=000000&studies=[]&theme=dark&style=1&timezone=Europe%2FIstanbul&withdateranges=1&showpopupbutton=1&locale=tr&utm_source=barisinvesting.vercel.app&utm_medium=widget&utm_campaign=chart`;
-  iframe.setAttribute('allowtransparency','true');
-  iframe.setAttribute('allowfullscreen','true');
-  container.appendChild(iframe);
+  const wrapper=document.createElement('div');
+  wrapper.className='tradingview-widget-container';
+  wrapper.style.cssText='height:500px;width:100%;';
+
+  const inner=document.createElement('div');
+  inner.className='tradingview-widget-container__widget';
+  inner.style.cssText='height:468px;width:100%;';
+
+  const script=document.createElement('script');
+  script.type='text/javascript';
+  script.src='https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  script.async=true;
+  script.textContent=JSON.stringify({
+    autosize: true,
+    symbol: symbol,
+    interval: 'D',
+    timezone: 'Europe/Istanbul',
+    theme: 'dark',
+    style: '1',
+    locale: 'tr',
+    backgroundColor: '#000000',
+    gridColor: 'rgba(15,37,64,0.8)',
+    hide_top_toolbar: false,
+    hide_legend: false,
+    save_image: false,
+    calendar: false,
+    hide_volume: false,
+    support_host: 'https://www.tradingview.com',
+    studies: [
+      'STD;RSI',
+      'STD;MACD'
+    ],
+    studies_overrides: {
+      'RSI.RSI.color': '#2d8fff',
+      'RSI.Overbought.value': 70,
+      'RSI.Oversold.value': 30,
+    },
+    overrides: {
+      'mainSeriesProperties.candleStyle.upColor': '#00e5a0',
+      'mainSeriesProperties.candleStyle.downColor': '#ff4d6a',
+      'mainSeriesProperties.candleStyle.borderUpColor': '#00e5a0',
+      'mainSeriesProperties.candleStyle.borderDownColor': '#ff4d6a',
+      'mainSeriesProperties.candleStyle.wickUpColor': '#00e5a0',
+      'mainSeriesProperties.candleStyle.wickDownColor': '#ff4d6a',
+    }
+  });
+
+  wrapper.appendChild(inner);
+  wrapper.appendChild(script);
+  container.appendChild(wrapper);
 }
 
-// ---- SHARE MODAL ----
-function openShareModal() {
+// ---- PARSE MULTIPLES ----
+function parseMultiples(text){
+  const section=text.match(/MULTIPLES_START([\s\S]*?)MULTIPLES_END/);
+  if(!section) return null;
+  const raw=section[1];
+
+  const get=(key)=>{
+    const m=raw.match(new RegExp(key+':\\s*([^\\n]+)','i'));
+    return m?m[1].trim():null;
+  };
+
+  return {
+    pe: get('PE'),
+    pb: get('PB'),
+    ev: get('EV_EBITDA'),
+    peg: get('PEG'),
+    rsi: get('RSI'),
+    price52w: get('PRICE_52W'),
+    analyst: get('ANALYST'),
+  };
+}
+
+function renderMultiples(m){
+  if(!m) return;
+
+  // Show multiples grid
+  document.getElementById('multiplesGrid').style.display='grid';
+
+  const parseVal=(str)=>{
+    if(!str) return {val:'N/A',comment:'',sig:'sig-neutral'};
+    const parts=str.split('|').map(s=>s.trim());
+    const val=parts[0]||'N/A';
+    const comment=parts[1]||'';
+    const lower=comment.toLowerCase();
+    let sig='sig-neutral';
+    if(lower.includes('ucuz')||lower.includes('düşük')||lower.includes('cazip')) sig='sig-good';
+    else if(lower.includes('pahalı')||lower.includes('yüksek')||lower.includes('aşırı')) sig='sig-bad';
+    else if(lower.includes('adil')||lower.includes('makul')||lower.includes('nötr')) sig='sig-warn';
+    return {val,comment,sig};
+  };
+
+  const pe=parseVal(m.pe);
+  document.getElementById('mPE').textContent=pe.val;
+  document.getElementById('mPESub').textContent=pe.comment;
+  document.getElementById('mPESig').textContent=pe.comment||'—';
+  document.getElementById('mPESig').className='multiple-signal '+pe.sig;
+
+  const pb=parseVal(m.pb);
+  document.getElementById('mPB').textContent=pb.val;
+  document.getElementById('mPBSub').textContent=pb.comment;
+  document.getElementById('mPBSig').textContent=pb.comment||'—';
+  document.getElementById('mPBSig').className='multiple-signal '+pb.sig;
+
+  const ev=parseVal(m.ev);
+  document.getElementById('mEV').textContent=ev.val;
+  document.getElementById('mEVSub').textContent=ev.comment;
+  document.getElementById('mEVSig').textContent=ev.comment||'—';
+  document.getElementById('mEVSig').className='multiple-signal '+ev.sig;
+
+  const peg=parseVal(m.peg);
+  document.getElementById('mPEG').textContent=peg.val;
+  document.getElementById('mPEGSub').textContent=peg.comment;
+  document.getElementById('mPEGSig').textContent=peg.comment||'—';
+  document.getElementById('mPEGSig').className='multiple-signal '+peg.sig;
+
+  // RSI
+  if(m.rsi){
+    const rsiParts=m.rsi.split('|').map(s=>s.trim());
+    const rsiNum=parseFloat(rsiParts[0])||50;
+    const rsiStatus=rsiParts[1]||'NÖTR';
+    document.getElementById('rsiCard').style.display='block';
+    document.getElementById('rsiValue').textContent=rsiNum.toFixed(0);
+
+    const rsiColor=rsiNum>70?'#ff4d6a':rsiNum<30?'#00e5a0':'#2d8fff';
+    const rsiPct=Math.min(100,Math.max(0,rsiNum));
+    document.getElementById('rsiValue').style.color=rsiColor;
+
+    const fillEl=document.getElementById('rsiBarFill');
+    fillEl.style.background=rsiNum>70?'linear-gradient(90deg,#2d8fff,#ffb830,#ff4d6a)':rsiNum<30?'#00e5a0':'#2d8fff';
+    setTimeout(()=>{ fillEl.style.width=rsiPct+'%'; },100);
+
+    const sigEl=document.getElementById('rsiSignal');
+    if(rsiNum>70){ sigEl.textContent='AŞIRI ALIM'; sigEl.style.cssText='color:#ff4d6a;border-color:rgba(255,77,106,0.3);background:rgba(255,77,106,0.1);'; }
+    else if(rsiNum<30){ sigEl.textContent='AŞIRI SATIM'; sigEl.style.cssText='color:#00e5a0;border-color:rgba(0,229,160,0.3);background:rgba(0,229,160,0.1);'; }
+    else { sigEl.textContent='NÖTR BÖLGE'; sigEl.style.cssText='color:#2d8fff;border-color:rgba(45,143,255,0.3);background:rgba(45,143,255,0.1);'; }
+  }
+
+  // Price Range
+  if(m.price52w){
+    const p52Parts=m.price52w.split('|').map(s=>s.trim());
+    const rangeParts=(p52Parts[0]||'').split('-');
+    const low=parseFloat(rangeParts[0])||0;
+    const high=parseFloat(rangeParts[1])||100;
+    const current=parseFloat(p52Parts[1])||((low+high)/2);
+    const pct=Math.min(100,Math.max(0,((current-low)/(high-low))*100));
+    const fromLow=((current-low)/low*100).toFixed(1);
+
+    document.getElementById('priceRangeCard').style.display='block';
+    document.getElementById('rangeLow').textContent=low.toLocaleString();
+    document.getElementById('rangeHigh').textContent=high.toLocaleString();
+    document.getElementById('rangeCurrentPrice').textContent=current.toLocaleString();
+    document.getElementById('rangePctFromLow').textContent=`52H düşüğünden +%${fromLow}`;
+
+    setTimeout(()=>{
+      document.getElementById('rangeBarFill').style.width='100%';
+      document.getElementById('rangeMarker').style.left=pct+'%';
+    },200);
+  }
+
+  // Analyst
+  if(m.analyst){
+    const aParts=m.analyst.split('|').map(s=>s.trim());
+    const ratios=(aParts[0]||'60-25-15').split('-').map(v=>parseFloat(v)||0);
+    const buyPct=ratios[0]||60;
+    const holdPct=ratios[1]||25;
+    const sellPct=ratios[2]||15;
+    const consensus=aParts[1]||'TUT';
+    const target=aParts[2]||'—';
+    const upside=aParts[3]||'—';
+
+    document.getElementById('analystCard').style.display='block';
+
+    const cColor=consensus.includes('GÜÇLÜ_AL')||consensus==='AL'?'#00e5a0':consensus==='TUT'?'#ffb830':'#ff4d6a';
+    document.getElementById('analystConsensus').textContent=consensus.replace('_',' ');
+    document.getElementById('analystConsensus').style.color=cColor;
+    document.getElementById('analystTarget').textContent=target;
+    document.getElementById('analystUpside').textContent=upside;
+
+    setTimeout(()=>{
+      document.getElementById('cBuy').style.width=buyPct+'%';
+      document.getElementById('cHold').style.width=holdPct+'%';
+      document.getElementById('cSell').style.width=sellPct+'%';
+    },300);
+
+    document.getElementById('cBuyLabel').textContent=`AL %${buyPct}`;
+    document.getElementById('cHoldLabel').textContent=`TUT %${holdPct}`;
+    document.getElementById('cSellLabel').textContent=`SAT %${sellPct}`;
+
+    // Analyst note
+    const summaryM=text_global.match(/SUMMARY:\s*([^\n]+)/);
+    if(summaryM){
+      document.getElementById('analystNote').textContent='📊 '+summaryM[1].trim();
+    }
+  }
+}
+
+let text_global='';
+
+// ---- SHARE ----
+function openShareModal(){
   if(!analysisData) return;
   drawShareCanvas();
   document.getElementById('shareModal').classList.add('visible');
 }
-function closeShareModal() {
-  document.getElementById('shareModal').classList.remove('visible');
-}
+function closeShareModal(){ document.getElementById('shareModal').classList.remove('visible'); }
 
-function drawShareCanvas() {
+function drawShareCanvas(){
   const canvas=document.getElementById('shareCanvas');
   const ctx=canvas.getContext('2d');
   const W=600,H=420;
@@ -711,69 +1016,46 @@ function drawShareCanvas() {
   const fw=FW[currentFW];
   const d=analysisData;
 
-  // BG
-  ctx.fillStyle='#000';
-  ctx.fillRect(0,0,W,H);
-
-  // grid
-  ctx.strokeStyle='rgba(45,143,255,0.05)';
-  ctx.lineWidth=1;
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(45,143,255,0.05)'; ctx.lineWidth=1;
   for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
   for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
 
-  // top line
   const g=ctx.createLinearGradient(0,0,W,0);
   g.addColorStop(0,'#2d8fff'); g.addColorStop(1,'transparent');
   ctx.fillStyle=g; ctx.fillRect(0,0,W,3);
 
-  // brand
-  ctx.fillStyle='#00c8ff';
-  ctx.font='700 9px DM Mono,monospace';
+  ctx.fillStyle='#00c8ff'; ctx.font='700 9px monospace';
   ctx.fillText('BARIS INVESTING  ·  YATIRIMCI CERCEVESI',24,26);
 
-  // ticker
-  ctx.fillStyle='#2d8fff';
-  ctx.font='800 52px Syne,sans-serif';
+  ctx.fillStyle='#2d8fff'; ctx.font='800 52px sans-serif';
   ctx.fillText(d.ticker,24,90);
+  if(currentCompany){ ctx.fillStyle='#5a90b8'; ctx.font='400 13px monospace'; ctx.fillText(currentCompany,24,112); }
 
-  // company
-  if(currentCompany){
-    ctx.fillStyle='#5a90b8';
-    ctx.font='400 13px DM Mono,monospace';
-    ctx.fillText(currentCompany,24,112);
-  }
-
-  // verdict box
   const vc=d.verdict==='AL'?'#00e5a0':d.verdict==='UZAK_DUR'?'#ff4d6a':'#ffb830';
   ctx.fillStyle=vc+'22'; ctx.strokeStyle=vc; ctx.lineWidth=1.5;
   ctx.strokeRect(W-165,20,142,76); ctx.fillRect(W-165,20,142,76);
-  ctx.fillStyle=vc;
-  ctx.font='800 30px Syne,sans-serif'; ctx.textAlign='center';
+  ctx.fillStyle=vc; ctx.font='800 30px sans-serif'; ctx.textAlign='center';
   ctx.fillText(d.verdict,W-94,58);
-  ctx.font='600 11px DM Mono,monospace';
+  ctx.font='600 11px monospace';
   ctx.fillText(`${d.score}/${fw.criteria.length} KRİTER`,W-94,78);
   ctx.textAlign='left';
 
-  // badges
   ctx.fillStyle='rgba(45,143,255,0.1)'; ctx.strokeStyle='#2d8fff'; ctx.lineWidth=1;
-  ctx.strokeRect(24,126,fw.name.length*7+20,22); ctx.fillRect(24,fw.name.length*7>50?126:126,fw.name.length*7+20,22);
-  ctx.fillStyle='#2d8fff'; ctx.font='700 9px DM Mono,monospace';
+  ctx.strokeRect(24,126,100,22); ctx.fillRect(24,126,100,22);
+  ctx.fillStyle='#2d8fff'; ctx.font='700 9px monospace';
   ctx.fillText(fw.name.toUpperCase(),30,141);
-
   ctx.fillStyle='rgba(0,200,255,0.08)'; ctx.strokeStyle='#00c8ff';
-  const bx=fw.name.length*7+52;
-  ctx.strokeRect(bx,126,60,22); ctx.fillRect(bx,126,60,22);
-  ctx.fillStyle='#00c8ff'; ctx.fillText(currentEX,bx+6,141);
+  ctx.strokeRect(132,126,60,22); ctx.fillRect(132,126,60,22);
+  ctx.fillStyle='#00c8ff'; ctx.fillText(currentEX,138,141);
 
-  // divider
   ctx.strokeStyle='#0f2540'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(24,162); ctx.lineTo(W-24,162); ctx.stroke();
 
-  // criteria
-  const cols=2, cW=(W-48)/cols, bH=30, sY=174;
+  const cols=2,cW=(W-48)/cols,bH=30,sY=174;
   fw.criteria.forEach((cr,i)=>{
-    const col=i%cols, row=Math.floor(i/cols);
-    const x=24+col*cW, y=sY+row*(bH+6);
+    const col=i%cols,row=Math.floor(i/cols);
+    const x=24+col*cW,y=sY+row*(bH+6);
     if(y+bH>H-44) return;
     const s=d.statuses[i];
     const clr=s==='pass'?'#00e5a0':s==='fail'?'#ff4d6a':'#00c8ff';
@@ -781,38 +1063,28 @@ function drawShareCanvas() {
     ctx.fillStyle='#050d1a'; ctx.fillRect(x,y,cW-10,bH);
     ctx.fillStyle=clr+'28'; ctx.fillRect(x,y,fw2,bH);
     ctx.fillStyle=clr; ctx.fillRect(x,y,3,bH);
-    ctx.fillStyle='#e8f4ff'; ctx.font='600 10px DM Mono,monospace';
+    ctx.fillStyle='#e8f4ff'; ctx.font='600 10px monospace';
     const nm=cr.name.length>22?cr.name.substring(0,21)+'…':cr.name;
     ctx.fillText(nm,x+9,y+12);
-    ctx.fillStyle=clr; ctx.font='700 9px DM Mono,monospace';
+    ctx.fillStyle=clr; ctx.font='700 9px monospace';
     ctx.fillText(s==='pass'?'✓ GEÇTİ':s==='fail'?'✗ KALDI':'? BELİRSİZ',x+9,y+24);
   });
 
-  // footer
   ctx.fillStyle='#0a1e30'; ctx.fillRect(0,H-38,W,38);
-  ctx.fillStyle='#2d8fff'; ctx.font='700 10px DM Mono,monospace';
+  ctx.fillStyle='#2d8fff'; ctx.font='700 10px monospace';
   ctx.fillText('@barisinvesting',24,H-16);
   ctx.fillStyle='#5a90b8'; ctx.textAlign='right';
   ctx.fillText('barisinvesting.vercel.app',W-24,H-16);
   ctx.textAlign='left';
 }
 
-function downloadShareImage() {
-  const canvas=document.getElementById('shareCanvas');
-  const link=document.createElement('a');
-  link.download=`${currentTicker}_${currentFW}_analiz.png`;
-  link.href=canvas.toDataURL('image/png');
-  link.click();
-}
-
-function tweetIt() {
-  if(!analysisData) return;
+function getTweetText(){
   const fw=FW[currentFW];
   const d=analysisData;
   const pass=fw.criteria.filter((_,i)=>d.statuses[i]==='pass').map(c=>`✅ ${c.name.split(' ')[0]}`);
   const fail=fw.criteria.filter((_,i)=>d.statuses[i]==='fail').map(c=>`❌ ${c.name.split(' ')[0]}`);
   const em=d.verdict==='AL'?'🟢':d.verdict==='UZAK_DUR'?'🔴':'🟡';
-  const text=`📊 ${currentEX}: $${d.ticker}${currentCompany?' — '+currentCompany:''}
+  return `📊 ${currentEX}: $${d.ticker}${currentCompany?' — '+currentCompany:''}
 ${fw.name} Skoru: ${d.score}/${fw.criteria.length} ${em} ${d.verdict}
 
 ${pass.slice(0,3).join(' ')}
@@ -822,8 +1094,25 @@ ${fail.slice(0,2).join(' ')}
 barisinvesting.vercel.app
 
 #Borsa #Yatırım #${d.ticker}`;
-  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,'_blank');
-  closeShareModal();
+}
+
+function downloadShareImage(){
+  const canvas=document.getElementById('shareCanvas');
+  const link=document.createElement('a');
+  link.download=`${currentTicker}_${currentFW}_analiz.png`;
+  link.href=canvas.toDataURL('image/png');
+  link.click();
+}
+
+function downloadAndTweet(){
+  // Download first
+  downloadShareImage();
+  // Open tweet after short delay
+  setTimeout(()=>{
+    const text=getTweetText();
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,'_blank');
+    closeShareModal();
+  },800);
 }
 
 // ---- HELPERS ----
@@ -833,7 +1122,7 @@ function pill(s){
   if(s==='fail') return '<span class="status-pill fail">✗ KALDI</span>';
   return '<span class="status-pill neutral">? BELİRSİZ</span>';
 }
-function icon(s){return s==='pass'?'✓':s==='fail'?'✗':s==='neutral'?'?':'○';}
+function icon(s){ return s==='pass'?'✓':s==='fail'?'✗':s==='neutral'?'?':'○'; }
 function parseStatus(str){
   if(!str) return 'neutral';
   const u=str.toUpperCase();
@@ -842,9 +1131,8 @@ function parseStatus(str){
   return 'neutral';
 }
 
-function renderCritDetail(i) {
-  const fw=FW[currentFW];
-  const meta=fw.criteria[i];
+function renderCritDetail(i){
+  const fw=FW[currentFW]; const meta=fw.criteria[i];
   document.getElementById('critTitle').textContent=`Kriter ${String(i+1).padStart(2,'0')} — ${meta.name}`;
   document.getElementById('critNum').textContent=String(i+1).padStart(2,'0');
   document.getElementById('critName').textContent=meta.name;
@@ -857,21 +1145,19 @@ function renderCritDetail(i) {
     document.getElementById('critPill').innerHTML=pill('pending');
     document.getElementById('critAnalysis').textContent='Önce bir hisse analiz edin.';
   }
-  const bars=document.getElementById('critBars');
-  bars.innerHTML='';
+  const bars=document.getElementById('critBars'); bars.innerHTML='';
   fw.criteria.forEach((m,idx)=>{
     const s=(analysisData&&analysisData.fw===currentFW)?analysisData.statuses[idx]:'pending';
     const v=s==='pass'?100:s==='fail'?20:s==='neutral'?55:0;
     const cls=s==='pass'?'pass':s==='fail'?'fail':'neutral';
-    const row=document.createElement('div');
-    row.className='score-row';
+    const row=document.createElement('div'); row.className='score-row';
     row.innerHTML=`<div class="score-bar-label">${String(idx+1).padStart(2,'0')} ${m.name}</div><div class="score-bar"><div class="score-bar-fill ${cls}" id="sb-${idx}" style="width:0%"></div></div><div class="score-bar-val">${s==='pending'?'—':icon(s)}</div>`;
     bars.appendChild(row);
     setTimeout(()=>{const el=document.getElementById('sb-'+idx);if(el)el.style.width=v+'%';},50+idx*80);
   });
 }
 
-function renderCharts(data) {
+function renderCharts(data){
   const fw=FW[currentFW];
   const scores=data.statuses.map(s=>s==='pass'?100:s==='fail'?15:50);
   const colors=data.statuses.map(s=>s==='pass'?'rgba(0,229,160,0.7)':s==='fail'?'rgba(255,77,106,0.7)':'rgba(0,200,255,0.6)');
@@ -890,37 +1176,40 @@ function renderCharts(data) {
   });
 }
 
-function renderTable(data) {
-  const fw=FW[currentFW];
-  const tbody=document.getElementById('summaryBody');
-  tbody.innerHTML='';
+function renderTable(data){
+  const fw=FW[currentFW]; const tbody=document.getElementById('summaryBody'); tbody.innerHTML='';
   fw.criteria.forEach((m,i)=>{
-    const tr=document.createElement('tr');
-    tr.onclick=()=>showPage('crit',i);
+    const tr=document.createElement('tr'); tr.onclick=()=>showPage('crit',i);
     tr.innerHTML=`<td><span class="crit-num">${String(i+1).padStart(2,'0')}</span></td><td><div class="crit-name">${m.name}</div><div class="crit-desc">${m.desc}</div></td><td>${pill(data.statuses[i])}</td><td><div class="detail-text">${(data.details[i]||'—').substring(0,90)}${data.details[i]&&data.details[i].length>90?'...':''}</div></td>`;
     tbody.appendChild(tr);
   });
 }
 
-async function doAnalyze() {
+async function doAnalyze(){
   const ticker=document.getElementById('tickerInput').value.trim().toUpperCase();
   const company=document.getElementById('companyInput').value.trim();
   if(!ticker) return;
   const btn=document.getElementById('analyzeBtn');
   const overlay=document.getElementById('loadingOverlay');
   const errorBar=document.getElementById('errorBar');
-  const ex=EX[currentEX];
-  const fw=FW[currentFW];
+  const ex=EX[currentEX]; const fw=FW[currentFW];
   errorBar.classList.remove('visible');
-  btn.disabled=true;
-  currentTicker=ticker; currentCompany=company;
+  btn.disabled=true; currentTicker=ticker; currentCompany=company;
   document.getElementById('loadingTicker').textContent=ticker;
   document.getElementById('loadingFw').textContent=`${ex.label} — ${fw.name}`;
   overlay.classList.add('visible');
+
+  // Reset data cards
+  ['multiplesGrid','rsiCard','priceRangeCard','analystCard'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+
   ['ls1','ls2','ls3','ls4'].forEach((s,i)=>{
     document.getElementById(s).className='loading-step';
     setTimeout(()=>{if(i>0)document.getElementById(['ls1','ls2','ls3','ls4'][i-1]).classList.add('done');document.getElementById(s).classList.add('active');},i*700);
   });
+
   try {
     const prompt=fw.prompt(ticker,company,ex.label);
     const response=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,prompt})});
@@ -928,17 +1217,15 @@ async function doAnalyze() {
     if(data.error) throw new Error(data.error);
     document.getElementById('ls4').classList.add('done');
     setTimeout(()=>{overlay.classList.remove('visible');btn.disabled=false;hasAnalyzed=true;parseAndRender(ticker,company,data.result);},400);
-  } catch(err) {
-    overlay.classList.remove('visible');
-    btn.disabled=false;
-    errorBar.textContent='Hata: '+err.message;
-    errorBar.classList.add('visible');
+  } catch(err){
+    overlay.classList.remove('visible'); btn.disabled=false;
+    errorBar.textContent='Hata: '+err.message; errorBar.classList.add('visible');
   }
 }
 
-function parseAndRender(ticker,company,text) {
-  const fw=FW[currentFW];
-  const ex=EX[currentEX];
+function parseAndRender(ticker,company,text){
+  text_global=text;
+  const fw=FW[currentFW]; const ex=EX[currentEX];
   const statuses=[],details=[];
   fw.keys.forEach(key=>{
     const m=text.match(new RegExp(key+':\\s*(PASS|FAIL|NEUTRAL)\\s*\\|\\s*([^\\n]+)','i'));
@@ -957,25 +1244,17 @@ function parseAndRender(ticker,company,text) {
   vbox.textContent=`${score}/${fw.criteria.length} — ${verdict}`;
   vbox.className='verdict-box '+(verdict==='AL'?'buy':verdict==='UZAK_DUR'?'avoid':'watch');
 
-  // Logo
   const logoEl=document.getElementById('stockLogo');
   const logoUrl=getLogoUrl(ticker);
-  if(logoUrl){
-    logoEl.innerHTML=`<img src="${logoUrl}" alt="${ticker}" onerror="this.parentElement.innerHTML='${ticker.substring(0,2)}'">`;
-  } else {
-    logoEl.textContent=ticker.substring(0,2);
-  }
+  if(logoUrl){ logoEl.innerHTML=`<img src="${logoUrl}" alt="${ticker}" onerror="this.parentElement.innerHTML='${ticker.substring(0,2)}'">`;
+  } else { logoEl.textContent=ticker.substring(0,2); }
 
-  // Header flag
-  const flagEl=document.getElementById('headerFlag');
-  flagEl.className='header-flag '+ex.flagClass;
-
+  document.getElementById('headerFlag').className='header-flag '+ex.flagClass;
   document.getElementById('stockTicker').textContent=ticker;
   document.getElementById('stockCompany').textContent=company||'';
   document.getElementById('badgeEx').textContent=ex.label;
   const bfw=document.getElementById('badgeFw');
-  bfw.textContent=fw.name;
-  bfw.className='badge badge-fw '+currentFW;
+  bfw.textContent=fw.name; bfw.className='badge badge-fw '+currentFW;
   document.getElementById('stockHeader').classList.add('visible');
   document.getElementById('overviewTicker').textContent=company?`${ticker} — ${company}`:ticker;
   document.getElementById('statScore').textContent=`${score}/${fw.criteria.length}`;
@@ -983,6 +1262,10 @@ function parseAndRender(ticker,company,text) {
   const fc=statuses.filter(s=>s==='fail').length;
   document.getElementById('statPass').textContent=pc;
   document.getElementById('statPassSub').textContent=`${fc} kaldı, ${statuses.filter(s=>s==='neutral').length} belirsiz`;
+
+  // Parse and render multiples
+  const multiples=parseMultiples(text);
+  if(multiples) renderMultiples(multiples);
 
   loadTradingView(ticker,currentEX);
   renderCharts(analysisData);
