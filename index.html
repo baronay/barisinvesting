@@ -22,226 +22,120 @@
   --info: #5bc8ff;
   --lynch: #ff9f43;
 }
-
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  min-height: 100vh;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(200,241,53,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(200,241,53,0.02) 1px, transparent 1px);
-  background-size: 48px 48px;
-  pointer-events: none;
-  z-index: 0;
-}
-
+body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; min-height: 100vh; }
+body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(200,241,53,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(200,241,53,0.02) 1px, transparent 1px); background-size: 48px 48px; pointer-events: none; z-index: 0; }
 .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
 
-/* SIDEBAR */
-.sidebar {
-  width: 260px;
-  min-width: 260px;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-}
-
-.sidebar-brand {
-  padding: 28px 24px 20px;
-  border-bottom: 1px solid var(--border);
-}
-
+.sidebar { width: 270px; min-width: 270px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.sidebar-brand { padding: 28px 24px 20px; border-bottom: 1px solid var(--border); }
 .brand-tag { font-size: 9px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; }
-.brand-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+.brand-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; }
 .brand-name span { color: var(--accent); }
-
 .sidebar-input { padding: 20px 24px; border-bottom: 1px solid var(--border); }
-.input-label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted2); margin-bottom: 10px; display: block; }
+.input-label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted2); margin-bottom: 8px; display: block; }
 
-.ticker-wrap { display: flex; gap: 8px; margin-bottom: 10px; }
+.exchange-row { display: flex; gap: 6px; margin-bottom: 12px; }
+.ex-btn { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--muted2); font-family: 'DM Mono', monospace; font-size: 10px; padding: 8px 4px; cursor: pointer; transition: all 0.2s; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.ex-btn:hover { border-color: var(--accent); color: var(--text); }
+.ex-btn.active { background: rgba(200,241,53,0.08); border-color: var(--accent); color: var(--accent); }
+.ex-flag { font-size: 14px; }
 
-.ticker-input {
-  flex: 1;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: 'Syne', sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  padding: 10px 12px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
+.ticker-wrap { display: flex; gap: 8px; margin-bottom: 12px; }
+.ticker-input { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; padding: 10px 12px; text-transform: uppercase; letter-spacing: 2px; outline: none; transition: border-color 0.2s; }
 .ticker-input:focus { border-color: var(--accent); }
 .ticker-input::placeholder { color: var(--muted); font-size: 13px; letter-spacing: 1px; }
-
-.analyze-btn {
-  background: var(--accent);
-  color: #000;
-  border: none;
-  font-family: 'Syne', sans-serif;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  letter-spacing: 1px;
-}
-
+.analyze-btn { background: var(--accent); color: #000; border: none; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 800; padding: 10px 14px; cursor: pointer; transition: all 0.2s; }
 .analyze-btn:hover { background: #d4ff3a; }
 .analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Framework selector */
 .framework-label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted2); margin-bottom: 8px; display: block; }
-
 .framework-btns { display: flex; gap: 6px; }
-
-.fw-btn {
-  flex: 1;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--muted2);
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  padding: 7px 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: center;
-  letter-spacing: 1px;
-}
-
+.fw-btn { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--muted2); font-family: 'DM Mono', monospace; font-size: 10px; padding: 7px 6px; cursor: pointer; transition: all 0.2s; text-align: center; }
 .fw-btn:hover { border-color: var(--accent); color: var(--accent); }
 .fw-btn.active { background: rgba(200,241,53,0.1); border-color: var(--accent); color: var(--accent); }
 .fw-btn.lynch-active { background: rgba(255,159,67,0.1); border-color: var(--lynch); color: var(--lynch); }
 
-.nav-label { padding: 16px 24px 8px; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 24px;
-  cursor: pointer;
-  transition: all 0.15s;
-  border-left: 2px solid transparent;
-  font-size: 12px;
-  color: var(--muted2);
+/* Auto-reanalyze indicator */
+.reanalyze-hint {
+  display: none;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--lynch);
+  margin-top: 8px;
+  text-align: center;
+  animation: pulse 1.5s infinite;
 }
+.reanalyze-hint.visible { display: block; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
+.nav-label { padding: 16px 24px 8px; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 11px 24px; cursor: pointer; transition: all 0.15s; border-left: 2px solid transparent; font-size: 11px; color: var(--muted2); }
 .nav-item:hover { background: var(--surface2); color: var(--text); }
 .nav-item.active { border-left-color: var(--accent); color: var(--accent); background: rgba(200,241,53,0.05); }
-
-.nav-num { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; color: var(--accent); opacity: 0.5; width: 20px; }
+.nav-num { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; color: var(--accent); opacity: 0.5; width: 18px; flex-shrink: 0; }
 .nav-item.active .nav-num { opacity: 1; }
-.nav-status { margin-left: auto; font-size: 14px; }
+.nav-status { margin-left: auto; font-size: 13px; flex-shrink: 0; }
 
 .nav-verdict { padding: 16px 24px; margin-top: auto; border-top: 1px solid var(--border); }
 .verdict-label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted2); margin-bottom: 8px; }
-
-.verdict-box {
-  font-family: 'Syne', sans-serif;
-  font-size: 18px;
-  font-weight: 800;
-  padding: 12px 16px;
-  text-align: center;
-  border: 2px solid var(--border);
-  color: var(--muted);
-  letter-spacing: 2px;
-}
-
+.verdict-box { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; padding: 12px 16px; text-align: center; border: 2px solid var(--border); color: var(--muted); letter-spacing: 2px; }
 .verdict-box.buy { border-color: var(--accent2); color: var(--accent2); background: rgba(61,255,160,0.05); }
 .verdict-box.watch { border-color: var(--warn); color: var(--warn); background: rgba(255,184,48,0.05); }
 .verdict-box.avoid { border-color: var(--danger); color: var(--danger); background: rgba(255,69,69,0.05); }
 
-/* MAIN */
-.main { flex: 1; overflow-y: auto; padding: 40px; }
-
+.main { flex: 1; overflow-y: auto; padding: 36px 40px; }
 .page { display: none; }
 .page.active { display: block; animation: fadeUp 0.3s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+.page-title { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--muted2); margin-bottom: 24px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.page-title::after { content: ''; flex: 1; height: 1px; background: var(--border); min-width: 20px; }
 
-.page-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--muted2);
-  margin-bottom: 28px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.stock-header { display: none; background: var(--surface); border: 1px solid var(--border); padding: 16px 20px; margin-bottom: 20px; align-items: center; gap: 16px; flex-wrap: wrap; }
+.stock-header.visible { display: flex; }
+.stock-flag { font-size: 28px; }
+.stock-name { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--accent); letter-spacing: 2px; }
+.stock-exchange { font-size: 10px; letter-spacing: 2px; color: var(--muted2); padding: 3px 8px; border: 1px solid var(--border); text-transform: uppercase; margin-top: 4px; display: inline-block; }
+.stock-meta { font-size: 11px; color: var(--muted2); margin-left: auto; }
 
-.page-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-.overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-
+.overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
 .stat-card { background: var(--surface); border: 1px solid var(--border); padding: 20px 24px; }
 .stat-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); margin-bottom: 8px; }
 .stat-value { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--accent); }
 .stat-sub { font-size: 11px; color: var(--muted2); margin-top: 4px; }
 
+.tv-card { background: var(--surface); border: 1px solid var(--border); margin-bottom: 16px; overflow: hidden; }
+.tv-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); padding: 16px 20px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.tv-live-dot { width: 6px; height: 6px; background: var(--accent2); border-radius: 50%; animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.tv-wrap { height: 420px; }
+
 .chart-card { background: var(--surface); border: 1px solid var(--border); padding: 24px; margin-bottom: 16px; }
 .chart-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); margin-bottom: 20px; }
-.chart-wrap { position: relative; height: 220px; }
-.radar-wrap { position: relative; height: 280px; max-width: 320px; margin: 0 auto; }
+.chart-wrap { position: relative; height: 200px; }
+.radar-wrap { position: relative; height: 260px; max-width: 300px; margin: 0 auto; }
 
 .criteria-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 16px; }
 .criteria-table th { text-align: left; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface2); }
-.criteria-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: top; background: var(--surface); }
+.criteria-table td { padding: 13px 16px; border-bottom: 1px solid var(--border); vertical-align: top; background: var(--surface); }
 .criteria-table tr:hover td { background: var(--surface2); cursor: pointer; }
-
 .crit-num { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: var(--accent); }
 .crit-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
 .crit-desc { font-size: 10px; color: var(--muted2); line-height: 1.5; }
 
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  padding: 4px 10px;
-  font-family: 'Syne', sans-serif;
-  white-space: nowrap;
-}
-
+.status-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; letter-spacing: 1px; padding: 4px 10px; font-family: 'Syne', sans-serif; white-space: nowrap; }
 .status-pill.pass { background: rgba(61,255,160,0.12); color: var(--accent2); border: 1px solid rgba(61,255,160,0.3); }
 .status-pill.fail { background: rgba(255,69,69,0.1); color: var(--danger); border: 1px solid rgba(255,69,69,0.25); }
 .status-pill.neutral { background: rgba(91,200,255,0.1); color: var(--info); border: 1px solid rgba(91,200,255,0.25); }
 .status-pill.pending { background: rgba(74,74,74,0.3); color: var(--muted2); border: 1px solid var(--border); }
-
 .detail-text { font-size: 11px; color: #aaa; line-height: 1.7; max-width: 320px; }
 
-.detail-header { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 28px; padding: 24px; background: var(--surface); border: 1px solid var(--border); }
+.detail-header { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 24px; padding: 24px; background: var(--surface); border: 1px solid var(--border); }
 .detail-num { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--accent); opacity: 0.3; line-height: 1; }
 .detail-info { flex: 1; }
 .detail-name { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 6px; }
 .detail-desc { font-size: 12px; color: var(--muted2); line-height: 1.7; }
-
 .analysis-block { background: var(--surface); border: 1px solid var(--border); padding: 24px; margin-bottom: 16px; }
 .analysis-block-title { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted2); margin-bottom: 14px; }
 .analysis-text { font-size: 13px; line-height: 1.9; color: #ccc; }
@@ -253,51 +147,30 @@ body::before {
 .score-bar-fill.pass { background: var(--accent2); }
 .score-bar-fill.fail { background: var(--danger); }
 .score-bar-fill.neutral { background: var(--info); }
-.score-bar-val { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; width: 30px; text-align: right; }
+.score-bar-val { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; width: 20px; text-align: right; }
 
-.loading-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(8,8,8,0.92);
-  z-index: 100;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-}
-
+.loading-overlay { display: none; position: fixed; inset: 0; background: rgba(8,8,8,0.93); z-index: 100; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
 .loading-overlay.visible { display: flex; }
-.loading-ticker { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--accent); letter-spacing: 4px; animation: pulse 1.5s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
+.loading-ticker { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--accent); letter-spacing: 4px; }
+.loading-fw { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted2); margin-top: -16px; }
 .loading-steps { display: flex; flex-direction: column; gap: 8px; }
 .loading-step { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); transition: color 0.3s; display: flex; align-items: center; gap: 10px; }
 .loading-step.done { color: var(--accent2); }
-.loading-step.active { color: var(--accent); }
+.loading-step.active { color: var(--accent); animation: pulse 1.5s infinite; }
 .loading-step-dot { width: 6px; height: 6px; background: currentColor; flex-shrink: 0; }
 
 .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 16px; text-align: center; }
 .empty-icon { font-size: 48px; opacity: 0.3; }
 .empty-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: var(--muted2); }
-.empty-sub { font-size: 12px; color: var(--muted); max-width: 300px; line-height: 1.7; }
+.empty-sub { font-size: 12px; color: var(--muted); max-width: 320px; line-height: 1.7; }
+.empty-examples { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+.example-chip { font-size: 10px; padding: 5px 12px; border: 1px solid var(--border); color: var(--muted2); cursor: pointer; transition: all 0.2s; font-family: 'Syne', sans-serif; font-weight: 600; }
+.example-chip:hover { border-color: var(--accent); color: var(--accent); }
 
 .error-bar { display: none; background: rgba(255,69,69,0.1); border: 1px solid var(--danger); color: var(--danger); padding: 10px 14px; font-size: 11px; margin-top: 8px; }
 .error-bar.visible { display: block; }
-
-.framework-badge {
-  display: inline-block;
-  font-size: 9px;
-  letter-spacing: 2px;
-  padding: 3px 8px;
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  text-transform: uppercase;
-  margin-left: 8px;
-}
-
+.framework-badge { display: inline-block; font-size: 9px; letter-spacing: 2px; padding: 3px 8px; border: 1px solid var(--accent); color: var(--accent); text-transform: uppercase; }
 .framework-badge.lynch { border-color: var(--lynch); color: var(--lynch); }
-
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); }
@@ -307,6 +180,7 @@ body::before {
 
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-ticker" id="loadingTicker">—</div>
+  <div class="loading-fw" id="loadingFw">—</div>
   <div class="loading-steps">
     <div class="loading-step active" id="ls1"><div class="loading-step-dot"></div>Finansal veriler taranıyor</div>
     <div class="loading-step" id="ls2"><div class="loading-step-dot"></div>Kriterler analiz ediliyor</div>
@@ -323,9 +197,16 @@ body::before {
     </div>
 
     <div class="sidebar-input">
-      <label class="input-label">Hisse Analizi</label>
+      <label class="input-label">Borsa Seç</label>
+      <div class="exchange-row">
+        <button class="ex-btn active" id="ex-bist" onclick="selectExchange('BIST')"><span class="ex-flag">🇹🇷</span>BIST</button>
+        <button class="ex-btn" id="ex-nyse" onclick="selectExchange('NYSE')"><span class="ex-flag">🇺🇸</span>NYSE</button>
+        <button class="ex-btn" id="ex-nasdaq" onclick="selectExchange('NASDAQ')"><span class="ex-flag">🇺🇸</span>NAS</button>
+      </div>
+
+      <label class="input-label">Hisse Ticker</label>
       <div class="ticker-wrap">
-        <input type="text" class="ticker-input" id="tickerInput" placeholder="MSFT, AAPL..." maxlength="10" />
+        <input type="text" class="ticker-input" id="tickerInput" placeholder="TURSG, MSFT..." maxlength="10" />
         <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">→</button>
       </div>
 
@@ -334,15 +215,16 @@ body::before {
         <button class="fw-btn active" id="fw-buffett" onclick="selectFramework('buffett')">Buffett</button>
         <button class="fw-btn" id="fw-lynch" onclick="selectFramework('lynch')">P. Lynch</button>
       </div>
-
+      <div class="reanalyze-hint" id="reanalyzeHint">↺ Yeniden analiz ediliyor...</div>
       <div class="error-bar" id="errorBar"></div>
     </div>
 
     <div class="nav-label">Genel Bakış</div>
     <div class="nav-item active" id="nav-overview" onclick="showPage('overview')">
-      <span class="nav-num">00</span>
-      Özet Dashboard
-      <span class="nav-status" id="ns-overview">◎</span>
+      <span class="nav-num">00</span>Özet Dashboard<span class="nav-status">◎</span>
+    </div>
+    <div class="nav-item" id="nav-chart" onclick="showPage('chart')">
+      <span class="nav-num">——</span>Canlı Grafik<span class="nav-status">📈</span>
     </div>
 
     <div class="nav-label" id="navCriteriaLabel">7 Kriter</div>
@@ -355,22 +237,39 @@ body::before {
   </div>
 
   <div class="main">
+
     <div class="page active" id="page-empty">
       <div class="empty-state">
         <div class="empty-icon">◎</div>
         <div class="empty-title">Analiz Bekliyor</div>
-        <div class="empty-sub">Sol taraftan bir hisse ticker'ı gir ve çerçeve seç. Buffett veya Peter Lynch metodolojisiyle anında analiz edilsin.</div>
+        <div class="empty-sub">Borsa seç, ticker gir, çerçeve belirle. Buffett veya Peter Lynch metodolojisiyle saniyeler içinde analiz.</div>
+        <div class="empty-examples">
+          <div class="example-chip" onclick="quickFill('TURSG','BIST')">🇹🇷 TURSG</div>
+          <div class="example-chip" onclick="quickFill('THYAO','BIST')">🇹🇷 THYAO</div>
+          <div class="example-chip" onclick="quickFill('SAHOL','BIST')">🇹🇷 SAHOL</div>
+          <div class="example-chip" onclick="quickFill('MSFT','NASDAQ')">🇺🇸 MSFT</div>
+          <div class="example-chip" onclick="quickFill('ABBV','NYSE')">🇺🇸 ABBV</div>
+        </div>
       </div>
     </div>
 
     <div class="page" id="page-overview">
-      <div class="page-title">Özet Dashboard — <span id="overviewTicker" style="color:var(--accent)">—</span> <span class="framework-badge" id="overviewBadge">—</span></div>
+      <div class="stock-header" id="stockHeader">
+        <div class="stock-flag" id="stockFlag">—</div>
+        <div>
+          <div class="stock-name" id="stockName">—</div>
+          <div class="stock-exchange" id="stockExchange">—</div>
+        </div>
+        <div class="stock-meta" id="stockMeta">—</div>
+      </div>
+
+      <div class="page-title">Dashboard — <span id="overviewTicker" style="color:var(--accent)">—</span> <span class="framework-badge" id="overviewBadge">—</span></div>
 
       <div class="overview-grid">
         <div class="stat-card">
           <div class="stat-label">Skor</div>
           <div class="stat-value" id="statScore">—</div>
-          <div class="stat-sub" id="statScoreSub">kriter üzerinden</div>
+          <div class="stat-sub">kriter üzerinden</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Geçen Kriter</div>
@@ -380,26 +279,27 @@ body::before {
       </div>
 
       <div class="chart-card">
-        <div class="chart-title">Kriter Dağılımı — Radar Analizi</div>
+        <div class="chart-title">Kriter Dağılımı — Radar</div>
         <div class="radar-wrap"><canvas id="radarChart"></canvas></div>
       </div>
 
       <div class="chart-card">
-        <div class="chart-title">Kriter Skoru — Görsel Karşılaştırma</div>
+        <div class="chart-title">Kriter Skoru — Bar</div>
         <div class="chart-wrap"><canvas id="barChart"></canvas></div>
       </div>
 
-      <table class="criteria-table" id="summaryTable">
-        <thead>
-          <tr>
-            <th style="width:40px">#</th>
-            <th>Kriter</th>
-            <th>Durum</th>
-            <th>Özet</th>
-          </tr>
-        </thead>
+      <table class="criteria-table">
+        <thead><tr><th style="width:36px">#</th><th>Kriter</th><th>Durum</th><th>Özet</th></tr></thead>
         <tbody id="summaryBody"></tbody>
       </table>
+    </div>
+
+    <div class="page" id="page-chart">
+      <div class="page-title">Canlı Grafik — <span id="chartTicker" style="color:var(--accent)">—</span></div>
+      <div class="tv-card">
+        <div class="tv-title"><div class="tv-live-dot"></div>TradingView — Gerçek Zamanlı</div>
+        <div class="tv-wrap" id="tvContainer"></div>
+      </div>
     </div>
 
     <div class="page" id="page-crit">
@@ -417,44 +317,107 @@ body::before {
         <div class="analysis-text" id="critAnalysis">—</div>
       </div>
       <div class="analysis-block">
-        <div class="analysis-block-title">Yatırımcının Bu Kritere Yaklaşımı</div>
+        <div class="analysis-block-title">Yatırımcının Yaklaşımı</div>
         <div class="analysis-text" id="critContext">—</div>
       </div>
-      <div class="chart-card" id="critScoreCard">
-        <div class="chart-title">Tüm Kriterler — Hızlı Karşılaştırma</div>
+      <div class="chart-card">
+        <div class="chart-title">Tüm Kriterler — Karşılaştırma</div>
         <div id="critScoreBars"></div>
       </div>
     </div>
+
   </div>
 </div>
 
 <script>
+const EXCHANGES = {
+  BIST: { flag: '🇹🇷', label: 'BIST', tvPrefix: 'BIST:' },
+  NYSE: { flag: '🇺🇸', label: 'NYSE', tvPrefix: 'NYSE:' },
+  NASDAQ: { flag: '🇺🇸', label: 'NASDAQ', tvPrefix: 'NASDAQ:' },
+};
+
 const FRAMEWORKS = {
   buffett: {
     name: 'Buffett',
     criteria: [
-      { name: 'ROE Sürdürülebilirliği', desc: 'ROE %15+ ve son 5 yılda tutarlı mı?', context: 'Buffett, ROE\'yi sermaye verimliliğinin en saf göstergesi olarak görür. Operasyonel güçten gelen ROE arar.' },
-      { name: 'Fiyatlama Gücü', desc: 'Şirket fiyat belirleyici mi? Kâr marjı genişliyor mu?', context: '"Enflasyona karşı en iyi savunma, insanların ihtiyaç duyduğu ve fiyat arttığında bile aldığı ürünleri satmaktır." - Buffett' },
-      { name: '$1 → $1+ Testi', desc: 'Her $1 alıkonulan sermaye, $1+ piyasa değeri yarattı mı?', context: 'Şirkete alıkonulan her dolar, hissedarlar için en az bir dolar piyasa değeri yaratmalı.' },
-      { name: 'Ekonomik Hendek', desc: 'Rakiplerin kopyalayamayacağı rekabet avantajı var mı?', context: 'Marka gücü, ağ etkileri, düşük maliyet avantajı veya yüksek değiştirme maliyetleri bu hendeklerin kaynağıdır.' },
-      { name: 'Serbest Nakit Akışı', desc: 'FCF tutarlı, büyüyor ve net gelirle uyumlu mu?', context: 'Buffett muhasebe kârına değil gerçek nakde bakar. FCF\'nin net gelire yakın veya üzerinde olması gerekir.' },
-      { name: 'Yönetim Kalitesi', desc: 'Hissedar dostu mu? Sermaye tahsisi geçmişi nasıl?', context: 'Zor dönemlerdeki davranışlar, gereksiz hisse ihraçları ve kötü satın almalar kırmızı bayraktır.' },
-      { name: 'Değerleme Marjı', desc: 'İçsel değerine göre makul güvenlik marjıyla fiyatlanmış mı?', context: '"Olağanüstü bir şirketi adil fiyatına almak, sıradan bir şirketi olağanüstü fiyatına almaktan iyidir." - Buffett' }
+      { name: 'ROE Sürdürülebilirliği', desc: 'ROE %15+ ve son 5 yılda tutarlı mı? Finansal kaldıraçtan değil, operasyonel güçten mi geliyor?', context: 'Buffett, ROE\'yi sermaye verimliliğinin en saf göstergesi olarak görür. Tek seferlik yüksek ROE değil, sürdürülebilir ROE arar. Borçla şişirilmiş ROE\'yi reddeder.' },
+      { name: 'Fiyatlama Gücü', desc: 'Maliyet artışlarını müşteriye yansıtabiliyor mu? Net kâr marjı genişliyor mu, yoksa daralıyor mu?', context: '"Enflasyona karşı en iyi savunma, insanların ihtiyaç duyduğu ve fiyat arttığında bile aldığı ürünleri satmaktır." Fiyatlama gücü bir şirketin en değerli özelliğidir.' },
+      { name: '$1 → $1+ Testi', desc: 'Son 10 yılda alıkonulan her $1 sermaye, piyasada $1\'dan fazla değer yarattı mı?', context: 'Buffett\'ın özgün testlerinden biri: alıkonulan kazançların piyasa değerine katkısı. Eğer $1 alıkonulup $0.50 değer yaratılıyorsa, şirket parayı hissedara geri vermeli.' },
+      { name: 'Ekonomik Hendek', desc: 'Marka, ağ etkisi, maliyet avantajı veya değiştirme maliyeti var mı? Rakipler kopyalayabilir mi?', context: 'Buffett\'ın en ünlü konsepti — kalesi olan işletmeler. Hendek daralıyorsa kırmızı bayrak. Genişliyorsa güçlü sinyal. ROIC\'in WACC\'tan sürekli yüksek olması hendek göstergesidir.' },
+      { name: 'Serbest Nakit Akışı', desc: 'FCF tutarlı ve büyüyor mu? Net gelirden büyük sapma var mı? Capex yükü ağır mı?', context: 'Buffett muhasebe kârına değil gerçek nakde bakar. FCF\'nin net gelire yakın veya üzerinde olması gerekir. Büyük sermaye yatırımı gerektiren işletmeler Buffett için genellikle cazip değildir.' },
+      { name: 'Yönetim Kalitesi', desc: 'Sermaye tahsisi geçmişi nasıl? Hissedara karşı dürüst mü? Gereksiz satın alma veya seyreltme var mı?', context: 'Zor dönemlerdeki yönetim davranışı, gereksiz maaş artışları, seyreltici hisse ihraçları ve kötü satın almalar kırmızı bayraktır. En iyi yöneticiler sermayeyi en yüksek getiriyi sağlayacak yere tahsis eder.' },
+      { name: 'Değerleme Marjı', desc: 'P/E, P/FCF ve EV/EBITDA sektör ortalamasına kıyasla nasıl? İçsel değerine göre güvenlik marjı var mı?', context: '"Olağanüstü bir şirketi adil fiyatına almak, sıradan bir şirketi olağanüstü fiyatına almaktan çok daha iyidir." Güvenlik marjı hem zarar riskini hem de getiri potansiyelini belirler.' }
     ],
-    keys: ['ROE','PRICING','DOLLAR','MOAT','FCF','MGMT','VALUATION']
+    keys: ['ROE','PRICING','DOLLAR','MOAT','FCF','MGMT','VALUATION'],
+    prompt: (ticker, exchange) => `Sen Warren Buffett'ın yatırım felsefesini ve Berkshire Hathaway metodolojisini derinlemesine bilen bir finans analistisin. ${exchange} borsasındaki "${ticker}" hissesini Buffett'ın 7 temel kriteri ile analiz et.
+
+KRİTERLER:
+1. ROE_SUSTAINABILITY: ROE %15+ ve son 5 yılda tutarlı mı? Finansal kaldıraçtan mı, operasyonel güçten mi geliyor?
+2. PRICING_POWER: Maliyet artışlarını müşteriye yansıtabiliyor mu? Net kâr marjı genişliyor mu?
+3. DOLLAR_TEST: Son 10 yılda alıkonulan her $1 sermaye, piyasada $1+ değer yarattı mı?
+4. MOAT: Ekonomik hendek var mı? Marka, ağ etkisi, maliyet avantajı veya değiştirme maliyeti. Daralıyor mu, genişliyor mu?
+5. FREE_CASH_FLOW: FCF tutarlı ve büyüyor mu? Net gelirden büyük sapma var mı? Capex yükü nasıl?
+6. MANAGEMENT: Sermaye tahsisi geçmişi nasıl? Hissedara dürüst mü? Gereksiz satın alma veya seyreltme var mı?
+7. VALUATION: P/E, P/FCF ve EV/EBITDA sektör ortalamasına kıyasla nasıl? Güvenlik marjı var mı?
+
+YANIT FORMATI (sadece bu format, hiçbir ek metin yok):
+TICKER: ${ticker}
+TOTAL_SCORE: X
+VERDICT: AL|BEKLE|UZAK_DUR
+SUMMARY: [2-3 cümle Buffett perspektifinden genel değerlendirme]
+RISK: [en kritik 1 risk faktörü]
+
+CRITERIA_START
+ROE: PASS|FAIL|NEUTRAL | [2-3 cümle detaylı açıklama, somut veri kullan]
+PRICING: PASS|FAIL|NEUTRAL | [2-3 cümle detaylı açıklama, somut veri kullan]
+DOLLAR: PASS|FAIL|NEUTRAL | [2-3 cümle detaylı açıklama, somut veri kullan]
+MOAT: PASS|FAIL|NEUTRAL | [2-3 cümle detaylı açıklama, somut veri kullan]
+FCF: PASS|FAIL|NEUTRAL | [2-3 cümle detaylı açıklama, somut veri kullan]
+MGMT: PASS|FAIL|NEUTRAL | [2-3 cümle detaylı açıklama, somut veri kullan]
+VALUATION: PASS|FAIL|NEUTRAL | [2-3 cümle detaylı açıklama, somut veri kullan]
+CRITERIA_END`
   },
   lynch: {
     name: 'Peter Lynch',
     criteria: [
-      { name: 'PEG Oranı', desc: 'PEG oranı 1\'in altında mı? Büyüme fiyatına göre ucuz mu?', context: 'Lynch için PEG 1\'in altında olan hisse değerli, 2\'nin üzerinde pahalıdır. Büyüme için makul fiyat öder.' },
-      { name: 'Anlaşılırlık', desc: 'İşi anlaşılır mı? Sıradan insan açıklayabilir mi?', context: '"Eğer 3. sınıf öğrencisine açıklayamazsan, alma." Lynch tanıdık ve basit iş modellerini tercih eder.' },
-      { name: 'Büyüme Hikayesi', desc: 'Büyüme hikayesi tutarlı ve devam ediyor mu?', context: 'Lynch growth story\'nin katalizi önemlidir: yeni ürün, pazar genişlemesi veya maliyet düşürme.' },
-      { name: 'Kurumsal İhmal', desc: 'Kurumsal yatırımcılar tarafından ihmal ediliyor mu?', context: 'Lynch\'in sevdiği hisseler genellikle sıkıcı, boring veya küçük ölçekli — kurumların radarında olmayan.' },
-      { name: 'Kazanç Büyümesi', desc: 'EPS büyümesi tutarlı ve güçlü mü?', context: 'Lynch, yılda %20-25 büyüyen ama makul fiyatlı şirketleri arar. Çok hızlı büyüme de tehlikeli.' },
-      { name: 'Bilanço Sağlığı', desc: 'Bilanço güçlü mü, borç yönetilebilir mi?', context: 'Borç/özsermaye oranı düşük, nakit pozisyonu güçlü şirketleri tercih eder. Borç krizi olan şirketlerden kaçar.' },
-      { name: 'Lynch Kategorisi', desc: 'Hangi Lynch kategorisi? Slow/Fast Grower, Stalwart, Turnaround, Asset Play?', context: 'Her kategori farklı beklenti ve strateji gerektirir. Doğru kategoriyi bilmek doğru strateji demektir.' }
+      { name: 'PEG & Büyüme Fiyatı', desc: 'PEG oranı 1\'in altında mı? Kazanç büyümesi fiyatlamaya göre hâlâ ucuz mu?', context: 'Lynch\'in en kritik metriği: P/E / Büyüme Oranı. PEG < 1 değerli, PEG > 2 pahalı. "Hızlı büyüyen ama makul fiyatlı şirket, yavaş büyüyen pahalı şirketten çok daha iyidir."' },
+      { name: 'Lynch Kategorisi & Strateji', desc: 'Hangi Lynch kategorisine giriyor? Slow Grower, Stalwart, Fast Grower, Cyclical, Turnaround, Asset Play?', context: '"Yatırım yapmadan önce şirketi hangi kategoriye koyduğunu bilmelisin." Her kategori farklı beklenti ve çıkış stratejisi gerektirir. Fast Grower\'da büyümenin yavaşlama sinyalini yakala, Turnaround\'da iyileşme katalizörünü bul.' },
+      { name: 'Anlaşılırlık & Sıkıcılık', desc: 'İş modeli sıradan insan tarafından anlaşılabilir mi? Kurumların radarında olmayan "sıkıcı" bir şirket mi?', context: '"Eğer 3. sınıf öğrencisine açıklayamazsan, alma." Lynch sıkıcı isimli, sıkıcı sektördeki şirketleri sever. Analistlerin ihmal ettiği, kurumların %5\'inden azının tuttuğu şirketler fırsattır.' },
+      { name: 'Büyüme Katalizörü', desc: 'Büyümeyi sürükleyen somut bir hikaye var mı? Yeni ürün, coğrafi genişleme, maliyet avantajı veya pazar konsolidasyonu?', context: 'Lynch, growth story\'nin somut ve sürdürülebilir olmasını ister. "Şirket büyüyor çünkü..." sorusunu net yanıtlayamazsan alma. Aşırı büyüme (>%50/yıl) da tehlike sinyalidir.' },
+      { name: 'Bilanço & Borç Yapısı', desc: 'Nakit/borç oranı sağlıklı mı? Net nakit pozisyonunda mı? Faiz yükü kazancı eziyor mu?', context: '"Güçlü bilanço, kötü bir fikrin telafisi değildir — ama zor dönemleri atlatmanın garantisidir." Lynch, borç/özsermaye < 0.5 tercih eder. Net nakit pozisyonundaki şirketler düşük fiyatlarda korunur.' },
+      { name: 'İçeriden Alımlar & Geri Alım', desc: 'Yöneticiler kendi hisselerini alıyor mu? Şirket anlamlı hisse geri alımı yapıyor mu?', context: 'Lynch için içeriden alım güçlü bir sinyaldir: "Yöneticiler pek çok nedenle satar, ama tek nedenden satın alır — fiyatın ucuz olduğunu düşünürler." Geri alımlar hisse başına değeri artırır.' },
+      { name: 'Kurum Sahipliği & Analist Takibi', desc: 'Kurumsal sahiplik %30\'un altında mı? Az analist takip ediyor mu? "Keşfedilmemiş" mi?', context: 'Lynch\'in en sevdiği fırsat: henüz kurumların dikkatini çekmemiş hisseler. Kurumsal sahiplik düşükse ve analist sayısı azsa, büyük para henüz girmemiş demektir. Keşfedildikçe fiyat artar.' }
     ],
-    keys: ['PEG','UNDERSTAND','GROWTH','NEGLECT','EARNINGS','BALANCE','CATEGORY']
+    keys: ['PEG','CATEGORY','BORING','CATALYST','BALANCE','INSIDER','INSTITUTION'],
+    prompt: (ticker, exchange) => `Sen Peter Lynch'in "One Up on Wall Street" ve "Beating the Street" kitaplarındaki yatırım felsefesini derinlemesine bilen bir finans analistisin. ${exchange} borsasındaki "${ticker}" hissesini Lynch metodolojisiyle analiz et.
+
+Lynch'in temel prensibi: "Herkes iyi hisse bulabilir — sadece etrafına bakman yeterli." Sıradan yatırımcının kurumsal yatırımcıya karşı avantajını kullanan bir analiz yap.
+
+KRİTERLER:
+1. PEG_GROWTH: PEG oranı (P/E / Büyüme Oranı) nedir? 1\'in altında mı? Kazanç büyümesi fiyatlamayı haklı kılıyor mu?
+2. LYNCH_CATEGORY: Hangi Lynch kategorisi? Slow Grower / Stalwart / Fast Grower / Cyclical / Turnaround / Asset Play — ve bu kategoriye uygun strateji nedir?
+3. BORING_FACTOR: İş modeli anlaşılır ve "sıkıcı" mı? Kurumların ve analistlerin ihmal ettiği bir şirket mi?
+4. GROWTH_CATALYST: Büyüme katalizörü somut ve sürdürülebilir mi? Ne büyütüyor bu şirketi? Aşırı büyüme riski var mı?
+5. BALANCE_SHEET: Borç/özsermaye oranı, net nakit pozisyonu ve faiz karşılama oranı nasıl?
+6. INSIDER_BUYBACK: Son 12 ayda yönetici alımı var mı? Hisse geri alım programı anlamlı mı?
+7. INSTITUTION_NEGLECT: Kurumsal sahiplik %30\'un altında mı? Analist takip sayısı düşük mü? "Keşfedilmemiş" sinyal var mı?
+
+YANIT FORMATI (sadece bu format, hiçbir ek metin yok):
+TICKER: ${ticker}
+TOTAL_SCORE: X
+VERDICT: AL|BEKLE|UZAK_DUR
+SUMMARY: [2-3 cümle Lynch perspektifinden genel değerlendirme, Lynch'in bu hisseyi neden alır/almaz anlatır gibi yaz]
+RISK: [en kritik 1 risk faktörü]
+
+CRITERIA_START
+PEG: PASS|FAIL|NEUTRAL | [2-3 cümle detaylı açıklama, somut PEG değeri ver]
+CATEGORY: PASS|FAIL|NEUTRAL | [2-3 cümle kategori tanımı ve bu kategoriye uygun strateji]
+BORING: PASS|FAIL|NEUTRAL | [2-3 cümle anlaşılırlık ve kurumsal ihmal değerlendirmesi]
+CATALYST: PASS|FAIL|NEUTRAL | [2-3 cümle büyüme hikayesi ve katalizör analizi]
+BALANCE: PASS|FAIL|NEUTRAL | [2-3 cümle bilanço analizi, somut borç/nakit rakamları]
+INSIDER: PASS|FAIL|NEUTRAL | [2-3 cümle içeriden alım ve geri alım değerlendirmesi]
+INSTITUTION: PASS|FAIL|NEUTRAL | [2-3 cümle kurumsal sahiplik ve analist takip analizi]
+CRITERIA_END`
   }
 };
 
@@ -462,13 +425,33 @@ let analysisData = null;
 let radarChart = null;
 let barChart = null;
 let currentFramework = 'buffett';
-let currentCritIndex = 0;
+let currentExchange = 'BIST';
+let currentTicker = '';
+let hasAnalyzed = false;
+
+function selectExchange(ex) {
+  currentExchange = ex;
+  ['BIST','NYSE','NASDAQ'].forEach(k => {
+    const el = document.getElementById('ex-' + k.toLowerCase());
+    if (el) el.className = 'ex-btn' + (k === ex ? ' active' : '');
+  });
+}
 
 function selectFramework(fw) {
   currentFramework = fw;
   document.getElementById('fw-buffett').className = 'fw-btn' + (fw === 'buffett' ? ' active' : '');
   document.getElementById('fw-lynch').className = 'fw-btn' + (fw === 'lynch' ? ' lynch-active' : '');
   buildNavCriteria();
+
+  // Auto-reanalyze if ticker exists
+  if (hasAnalyzed && currentTicker) {
+    const hint = document.getElementById('reanalyzeHint');
+    hint.classList.add('visible');
+    setTimeout(() => {
+      hint.classList.remove('visible');
+      analyze();
+    }, 600);
+  }
 }
 
 function buildNavCriteria() {
@@ -481,27 +464,74 @@ function buildNavCriteria() {
     div.className = 'nav-item';
     div.id = 'nav-' + i;
     div.onclick = () => showPage('crit', i);
-    div.innerHTML = `<span class="nav-num">${String(i+1).padStart(2,'0')}</span> ${c.name} <span class="nav-status" id="ns-${i}">○</span>`;
+    div.innerHTML = `<span class="nav-num">${String(i+1).padStart(2,'0')}</span>${c.name}<span class="nav-status" id="ns-${i}">○</span>`;
     list.appendChild(div);
   });
 }
 
+function quickFill(ticker, exchange) {
+  selectExchange(exchange);
+  document.getElementById('tickerInput').value = ticker;
+  analyze();
+}
+
 function showPage(type, index) {
-  ['empty','overview','crit'].forEach(p => document.getElementById('page-' + p).classList.remove('active'));
+  ['empty','overview','chart','crit'].forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.classList.remove('active');
+  });
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
   if (type === 'overview') {
     document.getElementById('page-overview').classList.add('active');
     document.getElementById('nav-overview').classList.add('active');
+  } else if (type === 'chart') {
+    document.getElementById('page-chart').classList.add('active');
+    document.getElementById('nav-chart').classList.add('active');
+    loadTradingView();
   } else if (type === 'crit') {
     document.getElementById('page-crit').classList.add('active');
     const navEl = document.getElementById('nav-' + index);
     if (navEl) navEl.classList.add('active');
-    currentCritIndex = index;
     renderCritDetail(index);
   } else {
     document.getElementById('page-empty').classList.add('active');
   }
+}
+
+function loadTradingView() {
+  if (!currentTicker) return;
+  const ex = EXCHANGES[currentExchange];
+  const symbol = ex.tvPrefix + currentTicker;
+  document.getElementById('chartTicker').textContent = `${ex.flag} ${currentTicker}`;
+
+  const container = document.getElementById('tvContainer');
+  container.innerHTML = '';
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'tradingview-widget-container';
+  wrapper.style.cssText = 'height:100%;width:100%;';
+
+  const inner = document.createElement('div');
+  inner.className = 'tradingview-widget-container__widget';
+  inner.style.cssText = 'height:calc(100% - 32px);width:100%;';
+
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  script.async = true;
+  script.textContent = JSON.stringify({
+    autosize: true, symbol, interval: 'D', timezone: 'Europe/Istanbul',
+    theme: 'dark', style: '1', locale: 'tr',
+    backgroundColor: '#101010', gridColor: 'rgba(31,31,31,1)',
+    hide_top_toolbar: false, hide_legend: false,
+    save_image: false, calendar: false,
+    support_host: 'https://www.tradingview.com'
+  });
+
+  wrapper.appendChild(inner);
+  wrapper.appendChild(script);
+  container.appendChild(wrapper);
 }
 
 function getStatusPill(status) {
@@ -511,27 +541,25 @@ function getStatusPill(status) {
   return '<span class="status-pill neutral">? BELİRSİZ</span>';
 }
 
-function getStatusIcon(status) {
-  if (status === 'pass') return '✓';
-  if (status === 'fail') return '✗';
-  if (status === 'neutral') return '?';
+function getStatusIcon(s) {
+  if (s === 'pass') return '✓';
+  if (s === 'fail') return '✗';
+  if (s === 'neutral') return '?';
   return '○';
 }
 
 function renderCritDetail(i) {
   const fw = FRAMEWORKS[currentFramework];
   const meta = fw.criteria[i];
-  const data = analysisData;
-
   document.getElementById('critPageTitle').textContent = `Kriter ${String(i+1).padStart(2,'0')} — ${meta.name}`;
   document.getElementById('critNum').textContent = String(i+1).padStart(2,'0');
   document.getElementById('critName').textContent = meta.name;
   document.getElementById('critDesc').textContent = meta.desc;
   document.getElementById('critContext').textContent = meta.context;
 
-  if (data) {
-    document.getElementById('critStatusPill').innerHTML = getStatusPill(data.statuses[i]);
-    document.getElementById('critAnalysis').textContent = data.details[i] || '—';
+  if (analysisData && analysisData.framework === currentFramework) {
+    document.getElementById('critStatusPill').innerHTML = getStatusPill(analysisData.statuses[i]);
+    document.getElementById('critAnalysis').textContent = analysisData.details[i] || '—';
   } else {
     document.getElementById('critStatusPill').innerHTML = getStatusPill('pending');
     document.getElementById('critAnalysis').textContent = 'Önce bir hisse analiz edin.';
@@ -540,16 +568,12 @@ function renderCritDetail(i) {
   const barsContainer = document.getElementById('critScoreBars');
   barsContainer.innerHTML = '';
   fw.criteria.forEach((m, idx) => {
-    const status = data ? data.statuses[idx] : 'pending';
+    const status = (analysisData && analysisData.framework === currentFramework) ? analysisData.statuses[idx] : 'pending';
     const val = status === 'pass' ? 100 : status === 'fail' ? 20 : status === 'neutral' ? 55 : 0;
     const cls = status === 'pass' ? 'pass' : status === 'fail' ? 'fail' : 'neutral';
     const row = document.createElement('div');
     row.className = 'score-row';
-    row.innerHTML = `
-      <div class="score-bar-label">${String(idx+1).padStart(2,'0')} ${m.name}</div>
-      <div class="score-bar"><div class="score-bar-fill ${cls}" id="sb-${idx}" style="width:0%"></div></div>
-      <div class="score-bar-val" style="color:var(--${cls === 'pass' ? 'accent2' : cls === 'fail' ? 'danger' : 'info'})">${status === 'pending' ? '—' : getStatusIcon(status)}</div>
-    `;
+    row.innerHTML = `<div class="score-bar-label">${String(idx+1).padStart(2,'0')} ${m.name}</div><div class="score-bar"><div class="score-bar-fill ${cls}" id="sb-${idx}" style="width:0%"></div></div><div class="score-bar-val">${status === 'pending' ? '—' : getStatusIcon(status)}</div>`;
     barsContainer.appendChild(row);
     setTimeout(() => { const el = document.getElementById('sb-' + idx); if (el) el.style.width = val + '%'; }, 50 + idx * 80);
   });
@@ -564,35 +588,16 @@ function renderCharts(data) {
   if (radarChart) radarChart.destroy();
   if (barChart) barChart.destroy();
 
-  const radarCtx = document.getElementById('radarChart').getContext('2d');
-  radarChart = new Chart(radarCtx, {
+  radarChart = new Chart(document.getElementById('radarChart').getContext('2d'), {
     type: 'radar',
-    data: {
-      labels: fw.criteria.map(m => m.name.split(' ')[0]),
-      datasets: [{ data: scores, backgroundColor: `${accentColor}18`, borderColor: accentColor, borderWidth: 2, pointBackgroundColor: accentColor, pointRadius: 4 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: '#1f1f1f' }, pointLabels: { color: '#777', font: { family: 'DM Mono', size: 10 } }, angleLines: { color: '#1f1f1f' } } },
-      plugins: { legend: { display: false } }
-    }
+    data: { labels: fw.criteria.map(m => m.name.split(' ')[0]), datasets: [{ data: scores, backgroundColor: `${accentColor}18`, borderColor: accentColor, borderWidth: 2, pointBackgroundColor: accentColor, pointRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: '#1f1f1f' }, pointLabels: { color: '#777', font: { family: 'DM Mono', size: 10 } }, angleLines: { color: '#1f1f1f' } } }, plugins: { legend: { display: false } } }
   });
 
-  const barCtx = document.getElementById('barChart').getContext('2d');
-  barChart = new Chart(barCtx, {
+  barChart = new Chart(document.getElementById('barChart').getContext('2d'), {
     type: 'bar',
-    data: {
-      labels: fw.criteria.map((_, i) => String(i+1).padStart(2,'0')),
-      datasets: [{ data: scores, backgroundColor: colors, borderWidth: 0, borderRadius: 0 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      scales: {
-        y: { min: 0, max: 100, ticks: { display: false }, grid: { color: '#1a1a1a' }, border: { color: '#1f1f1f' } },
-        x: { ticks: { color: '#555', font: { family: 'DM Mono', size: 10 } }, grid: { display: false }, border: { color: '#1f1f1f' } }
-      },
-      plugins: { legend: { display: false } }
-    }
+    data: { labels: fw.criteria.map((_, i) => String(i+1).padStart(2,'0')), datasets: [{ data: scores, backgroundColor: colors, borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100, ticks: { display: false }, grid: { color: '#1a1a1a' }, border: { color: '#1f1f1f' } }, x: { ticks: { color: '#555', font: { family: 'DM Mono', size: 10 } }, grid: { display: false }, border: { color: '#1f1f1f' } } }, plugins: { legend: { display: false } } }
   });
 }
 
@@ -603,12 +608,7 @@ function renderSummaryTable(data) {
   fw.criteria.forEach((m, i) => {
     const tr = document.createElement('tr');
     tr.onclick = () => showPage('crit', i);
-    tr.innerHTML = `
-      <td><span class="crit-num">${String(i+1).padStart(2,'0')}</span></td>
-      <td><div class="crit-name">${m.name}</div><div class="crit-desc">${m.desc}</div></td>
-      <td>${getStatusPill(data.statuses[i])}</td>
-      <td><div class="detail-text">${(data.details[i] || '—').substring(0, 100)}${data.details[i] && data.details[i].length > 100 ? '...' : ''}</div></td>
-    `;
+    tr.innerHTML = `<td><span class="crit-num">${String(i+1).padStart(2,'0')}</span></td><td><div class="crit-name">${m.name}</div><div class="crit-desc">${m.desc.split('?')[0]}?</div></td><td>${getStatusPill(data.statuses[i])}</td><td><div class="detail-text">${(data.details[i] || '—').substring(0,100)}${data.details[i] && data.details[i].length > 100 ? '...' : ''}</div></td>`;
     tbody.appendChild(tr);
   });
 }
@@ -620,39 +620,36 @@ async function analyze() {
   const btn = document.getElementById('analyzeBtn');
   const overlay = document.getElementById('loadingOverlay');
   const errorBar = document.getElementById('errorBar');
+  const ex = EXCHANGES[currentExchange];
+  const fw = FRAMEWORKS[currentFramework];
 
   errorBar.classList.remove('visible');
   btn.disabled = true;
-  document.getElementById('loadingTicker').textContent = ticker;
+  currentTicker = ticker;
+  document.getElementById('loadingTicker').textContent = `${ex.flag} ${ticker}`;
+  document.getElementById('loadingFw').textContent = fw.name + ' Çerçevesi';
   overlay.classList.add('visible');
 
   const steps = ['ls1','ls2','ls3','ls4'];
   steps.forEach((s,i) => {
     document.getElementById(s).className = 'loading-step';
-    setTimeout(() => {
-      if (i > 0) document.getElementById(steps[i-1]).classList.add('done');
-      document.getElementById(s).classList.add('active');
-    }, i * 700);
+    setTimeout(() => { if (i > 0) document.getElementById(steps[i-1]).classList.add('done'); document.getElementById(s).classList.add('active'); }, i * 700);
   });
 
   try {
+    const prompt = fw.prompt(ticker, ex.label);
+
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticker, framework: currentFramework })
+      body: JSON.stringify({ ticker, exchange: currentExchange, framework: currentFramework, prompt })
     });
 
     const data = await response.json();
-
     if (data.error) throw new Error(data.error);
 
     document.getElementById('ls4').classList.add('done');
-
-    setTimeout(() => {
-      overlay.classList.remove('visible');
-      btn.disabled = false;
-      parseAndRender(ticker, data.result);
-    }, 400);
+    setTimeout(() => { overlay.classList.remove('visible'); btn.disabled = false; hasAnalyzed = true; parseAndRender(ticker, data.result); }, 400);
 
   } catch (err) {
     overlay.classList.remove('visible');
@@ -671,6 +668,7 @@ function parseStatus(str) {
 
 function parseAndRender(ticker, text) {
   const fw = FRAMEWORKS[currentFramework];
+  const ex = EXCHANGES[currentExchange];
   const statuses = [];
   const details = [];
 
@@ -683,25 +681,25 @@ function parseAndRender(ticker, text) {
 
   const scoreMatch = text.match(/TOTAL_SCORE:\s*(\d+)/);
   const score = scoreMatch ? parseInt(scoreMatch[1]) : statuses.filter(s => s === 'pass').length;
-
   const verdictMatch = text.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);
   const verdict = verdictMatch ? verdictMatch[1] : 'BEKLE';
 
-  analysisData = { ticker, statuses, details, score, verdict };
+  analysisData = { ticker, statuses, details, score, verdict, framework: currentFramework };
 
-  // Update nav icons
-  statuses.forEach((s, i) => {
-    const icon = document.getElementById('ns-' + i);
-    if (icon) icon.textContent = getStatusIcon(s);
-  });
+  statuses.forEach((s, i) => { const icon = document.getElementById('ns-' + i); if (icon) icon.textContent = getStatusIcon(s); });
 
-  // Verdict
   const vbox = document.getElementById('verdictBox');
+  const accentClass = currentFramework === 'lynch' ? 'lynch' : '';
   vbox.textContent = `${score}/${fw.criteria.length} — ${verdict}`;
   vbox.className = 'verdict-box ' + (verdict === 'AL' ? 'buy' : verdict === 'UZAK_DUR' ? 'avoid' : 'watch');
 
-  // Overview
-  document.getElementById('overviewTicker').textContent = ticker;
+  document.getElementById('stockFlag').textContent = ex.flag;
+  document.getElementById('stockName').textContent = ticker;
+  document.getElementById('stockExchange').textContent = ex.label;
+  document.getElementById('stockMeta').textContent = fw.name + ' Çerçevesi';
+  document.getElementById('stockHeader').classList.add('visible');
+
+  document.getElementById('overviewTicker').textContent = `${ex.flag} ${ticker}`;
   const badge = document.getElementById('overviewBadge');
   badge.textContent = fw.name;
   badge.className = 'framework-badge' + (currentFramework === 'lynch' ? ' lynch' : '');
@@ -717,7 +715,6 @@ function parseAndRender(ticker, text) {
   showPage('overview');
 }
 
-// Init
 buildNavCriteria();
 document.getElementById('tickerInput').addEventListener('keydown', e => { if (e.key === 'Enter') analyze(); });
 </script>
