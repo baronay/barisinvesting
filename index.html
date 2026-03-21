@@ -8,12 +8,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 :root {
-  --bg: #000000;
-  --surface: #050d1a;
-  --surface2: #091525;
-  --surface3: #0d1e30;
+  --bg: #000;
+  --surface: #05101f;
+  --surface2: #081828;
   --border: #0f2540;
-  --border2: #1a3a5c;
+  --border2: #163352;
   --accent: #2d8fff;
   --accent2: #00c8ff;
   --text: #e8f4ff;
@@ -23,467 +22,237 @@
   --warn: #ffb830;
   --success: #00e5a0;
   --lynch: #f97316;
-  --glow: rgba(45,143,255,0.12);
 }
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; min-height: 100vh; overflow-x: hidden; }
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: linear-gradient(rgba(45,143,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(45,143,255,0.05) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'DM Mono',monospace; min-height:100vh; overflow-x:hidden; }
+body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(45,143,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(45,143,255,0.04) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+.app { display:flex; min-height:100vh; position:relative; z-index:1; }
 
 /* MOBILE TOGGLE */
-.mobile-toggle {
-  display: none;
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  z-index: 400;
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  color: var(--accent);
-  width: 42px;
-  height: 42px;
-  cursor: pointer;
-  font-size: 18px;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-}
+.mobile-toggle { display:none; position:fixed; top:14px; left:14px; z-index:400; background:var(--surface); border:1px solid var(--border2); color:var(--accent); width:42px; height:42px; cursor:pointer; font-size:18px; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(0,0,0,0.6); }
 
-/* OVERLAY */
-.sidebar-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.8);
-  z-index: 350;
-  backdrop-filter: blur(2px);
-}
-.sidebar-overlay.visible { display: block; }
+.sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:350; }
+.sidebar-overlay.visible { display:block; }
 
 /* SIDEBAR */
-.sidebar {
-  width: 276px;
-  min-width: 276px;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  z-index: 360;
-  transition: transform 0.3s ease;
-  flex-shrink: 0;
-}
+.sidebar { width:278px; min-width:278px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow-y:auto; overflow-x:hidden; z-index:360; transition:transform 0.3s ease; flex-shrink:0; }
 
-.sidebar-brand {
-  padding: 24px 20px 18px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  background: linear-gradient(180deg, #000 0%, var(--surface) 100%);
-}
+.sidebar-brand { padding:22px 20px 16px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; background:linear-gradient(180deg,#000 0%,var(--surface) 100%); }
+.brand-tag { font-size:9px; letter-spacing:3px; color:var(--accent2); text-transform:uppercase; margin-bottom:4px; }
+.brand-name { font-family:'Syne',sans-serif; font-size:17px; font-weight:800; }
+.brand-name span { color:var(--accent); }
+.brand-sub { font-size:9px; color:var(--muted2); margin-top:3px; letter-spacing:1px; }
+.sidebar-close { display:none; background:none; border:1px solid var(--border2); color:var(--muted2); width:30px; height:30px; cursor:pointer; font-size:14px; align-items:center; justify-content:center; flex-shrink:0; }
+.sidebar-close:hover { border-color:var(--danger); color:var(--danger); }
 
-.brand-tag { font-size: 9px; letter-spacing: 3px; color: var(--accent2); text-transform: uppercase; margin-bottom: 5px; }
-.brand-name { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 800; }
-.brand-name span { color: var(--accent); }
-.brand-sub { font-size: 9px; color: var(--muted2); margin-top: 3px; letter-spacing: 1px; }
+.sidebar-input { padding:16px 20px; border-bottom:1px solid var(--border); position:relative; z-index:10; }
+.input-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); margin-bottom:7px; display:block; }
 
-.sidebar-close {
-  display: none;
-  background: none;
-  border: 1px solid var(--border2);
-  color: var(--muted2);
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  font-size: 14px;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.sidebar-close:hover { border-color: var(--danger); color: var(--danger); }
+/* EXCHANGE — pure CSS flags, no emoji */
+.exchange-row { display:flex; gap:5px; margin-bottom:10px; }
+.ex-btn { flex:1; background:#000; border:1px solid var(--border); color:var(--muted2); font-family:'DM Mono',monospace; font-size:10px; padding:7px 3px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:5px; position:relative; z-index:11; -webkit-tap-highlight-color:transparent; }
+.ex-btn:hover { border-color:var(--accent); color:var(--text); }
+.ex-btn.active { background:rgba(45,143,255,0.15); border-color:var(--accent); color:var(--accent); }
 
-/* INPUT AREA */
-.sidebar-input {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  position: relative;
-  z-index: 10;
-}
+/* CSS-drawn flags — no emoji, works everywhere */
+.flag { display:inline-block; border-radius:2px; overflow:hidden; flex-shrink:0; }
+.flag-tr { width:18px; height:12px; background:#e30a17; position:relative; }
+.flag-tr::before { content:'☽'; position:absolute; left:2px; top:50%; transform:translateY(-50%); color:#fff; font-size:7px; line-height:1; }
+.flag-us { width:18px; height:12px; background:repeating-linear-gradient(180deg,#B22234 0,#B22234 8%,#fff 8%,#fff 16%); position:relative; }
+.flag-us::before { content:''; position:absolute; top:0; left:0; width:7px; height:6px; background:#3C3B6E; }
 
-.input-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); margin-bottom: 7px; display: block; }
+.ticker-row { display:flex; gap:6px; margin-bottom:10px; }
+.ticker-input { width:88px; flex-shrink:0; background:#000; border:1px solid var(--border2); color:var(--text); font-family:'Syne',sans-serif; font-size:14px; font-weight:700; padding:9px 10px; text-transform:uppercase; letter-spacing:2px; outline:none; border-radius:0; position:relative; z-index:11; }
+.ticker-input:focus { border-color:var(--accent); }
+.ticker-input::placeholder { color:var(--muted2); font-size:10px; letter-spacing:1px; font-family:'DM Mono',monospace; font-weight:400; }
+.company-input { flex:1; min-width:0; background:#000; border:1px solid var(--border2); color:var(--text); font-family:'DM Mono',monospace; font-size:10px; padding:9px 10px; outline:none; border-radius:0; position:relative; z-index:11; }
+.company-input:focus { border-color:var(--accent); }
+.company-input::placeholder { color:var(--muted2); font-size:9px; }
 
-.exchange-row { display: flex; gap: 5px; margin-bottom: 10px; }
-.ex-btn {
-  flex: 1;
-  background: #000;
-  border: 1px solid var(--border);
-  color: var(--muted2);
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  padding: 7px 3px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  position: relative;
-  z-index: 11;
-  -webkit-tap-highlight-color: transparent;
-}
-.ex-btn:hover, .ex-btn:active { border-color: var(--accent); color: var(--text); }
-.ex-btn.active { background: rgba(45,143,255,0.15); border-color: var(--accent); color: var(--accent); }
+.fw-row { display:flex; gap:5px; margin-bottom:10px; }
+.fw-btn { flex:1; background:#000; border:1px solid var(--border); color:var(--muted2); font-family:'DM Mono',monospace; font-size:10px; padding:8px 4px; cursor:pointer; transition:all 0.2s; -webkit-tap-highlight-color:transparent; position:relative; z-index:11; }
+.fw-btn.active { background:rgba(45,143,255,0.12); border-color:var(--accent); color:var(--accent); }
+.fw-btn.lynch-active { background:rgba(249,115,22,0.1); border-color:var(--lynch); color:var(--lynch); }
 
-/* SVG flags */
-.flag { display: inline-block; width: 16px; height: 11px; border-radius: 1px; flex-shrink: 0; }
-.flag-tr { background: linear-gradient(#e30a17 50%, #e30a17); position: relative; overflow: hidden; }
-.flag-us { background: repeating-linear-gradient(180deg, #b22234 0px, #b22234 7.7%, #fff 7.7%, #fff 15.4%); }
+.reanalyze-hint { display:none; font-size:9px; color:var(--accent2); margin-bottom:6px; text-align:center; animation:pulse 1.5s infinite; }
+.reanalyze-hint.visible { display:block; }
 
-.ticker-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.analyze-btn { width:100%; background:linear-gradient(135deg,var(--accent) 0%,#1a6fd4 100%); color:#fff; border:none; font-family:'Syne',sans-serif; font-size:12px; font-weight:800; padding:12px; cursor:pointer; letter-spacing:2px; text-transform:uppercase; position:relative; z-index:11; -webkit-tap-highlight-color:transparent; transition:opacity 0.2s; }
+.analyze-btn:hover { opacity:0.9; }
+.analyze-btn:disabled { opacity:0.4; cursor:not-allowed; }
 
-.ticker-input {
-  width: 88px;
-  flex-shrink: 0;
-  background: #000;
-  border: 1px solid var(--border2);
-  color: var(--text);
-  font-family: 'Syne', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 9px 10px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  outline: none;
-  -webkit-appearance: none;
-  border-radius: 0;
-  position: relative;
-  z-index: 11;
-}
-.ticker-input:focus { border-color: var(--accent); }
-.ticker-input::placeholder { color: var(--muted2); font-size: 10px; letter-spacing: 1px; font-family: 'DM Mono', monospace; font-weight: 400; }
-
-.company-input {
-  flex: 1;
-  min-width: 0;
-  background: #000;
-  border: 1px solid var(--border2);
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  padding: 9px 10px;
-  outline: none;
-  -webkit-appearance: none;
-  border-radius: 0;
-  position: relative;
-  z-index: 11;
-}
-.company-input:focus { border-color: var(--accent); }
-.company-input::placeholder { color: var(--muted2); font-size: 9px; }
-
-.fw-row { display: flex; gap: 5px; margin-bottom: 10px; }
-.fw-btn {
-  flex: 1;
-  background: #000;
-  border: 1px solid var(--border);
-  color: var(--muted2);
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  padding: 8px 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-  -webkit-tap-highlight-color: transparent;
-  position: relative;
-  z-index: 11;
-}
-.fw-btn.active { background: rgba(45,143,255,0.12); border-color: var(--accent); color: var(--accent); }
-.fw-btn.lynch-active { background: rgba(249,115,22,0.1); border-color: var(--lynch); color: var(--lynch); }
-
-.reanalyze-hint { display: none; font-size: 9px; color: var(--accent2); margin-bottom: 6px; text-align: center; animation: pulse 1.5s infinite; }
-.reanalyze-hint.visible { display: block; }
-
-.analyze-btn {
-  width: 100%;
-  background: linear-gradient(135deg, var(--accent) 0%, #1a6fd4 100%);
-  color: #fff;
-  border: none;
-  font-family: 'Syne', sans-serif;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 12px;
-  cursor: pointer;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  position: relative;
-  z-index: 11;
-  -webkit-tap-highlight-color: transparent;
-  transition: opacity 0.2s;
-}
-.analyze-btn:hover { opacity: 0.9; }
-.analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.error-bar { display: none; background: rgba(255,77,106,0.08); border: 1px solid rgba(255,77,106,0.3); color: var(--danger); padding: 8px 12px; font-size: 10px; margin-top: 8px; }
-.error-bar.visible { display: block; }
+.error-bar { display:none; background:rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.3); color:var(--danger); padding:8px 12px; font-size:10px; margin-top:8px; }
+.error-bar.visible { display:block; }
 
 /* POPULAR */
-.popular-section { padding: 12px 20px; border-bottom: 1px solid var(--border); }
-.popular-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); margin-bottom: 8px; display: block; }
-.popular-chips { display: flex; flex-wrap: wrap; gap: 4px; }
-.popular-chip {
-  font-size: 9px;
-  padding: 4px 8px;
-  border: 1px solid var(--border);
-  color: var(--muted2);
-  cursor: pointer;
-  font-family: 'Syne', sans-serif;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: #000;
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-  position: relative;
-  z-index: 11;
-}
-.popular-chip:hover, .popular-chip:active { border-color: var(--accent); color: var(--accent); }
+.popular-section { padding:12px 20px; border-bottom:1px solid var(--border); }
+.popular-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); margin-bottom:8px; display:block; }
+.popular-chips { display:flex; flex-wrap:wrap; gap:4px; }
+.popular-chip { font-size:9px; padding:4px 8px; border:1px solid var(--border); color:var(--muted2); cursor:pointer; font-family:'Syne',sans-serif; font-weight:700; display:flex; align-items:center; gap:4px; background:#000; transition:all 0.15s; -webkit-tap-highlight-color:transparent; position:relative; z-index:11; }
+.popular-chip:hover { border-color:var(--accent); color:var(--accent); }
+
+/* chip flag small */
+.cflag { display:inline-block; width:12px; height:8px; border-radius:1px; overflow:hidden; flex-shrink:0; }
+.cflag-tr { background:#e30a17; }
+.cflag-us { background:repeating-linear-gradient(180deg,#B22234 0,#B22234 25%,#fff 25%,#fff 50%,#B22234 50%,#B22234 75%,#fff 75%,#fff 100%); }
 
 /* NAV */
-.nav-label { padding: 12px 20px 5px; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  cursor: pointer;
-  border-left: 2px solid transparent;
-  font-size: 11px;
-  color: var(--muted2);
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-  position: relative;
-  z-index: 11;
-}
-.nav-item:hover, .nav-item:active { background: var(--surface2); color: var(--text); }
-.nav-item.active { border-left-color: var(--accent); color: var(--accent); background: rgba(45,143,255,0.06); }
-.nav-num { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; color: var(--accent); opacity: 0.4; width: 16px; flex-shrink: 0; }
-.nav-item.active .nav-num { opacity: 1; }
-.nav-status { margin-left: auto; font-size: 12px; flex-shrink: 0; }
+.nav-label { padding:12px 20px 5px; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
+.nav-item { display:flex; align-items:center; gap:8px; padding:10px 20px; cursor:pointer; border-left:2px solid transparent; font-size:11px; color:var(--muted2); transition:all 0.15s; -webkit-tap-highlight-color:transparent; position:relative; z-index:11; }
+.nav-item:hover { background:var(--surface2); color:var(--text); }
+.nav-item.active { border-left-color:var(--accent); color:var(--accent); background:rgba(45,143,255,0.06); }
+.nav-num { font-family:'Syne',sans-serif; font-size:10px; font-weight:700; color:var(--accent); opacity:0.4; width:16px; flex-shrink:0; }
+.nav-item.active .nav-num { opacity:1; }
+.nav-status { margin-left:auto; font-size:12px; flex-shrink:0; }
 
-.nav-verdict { padding: 14px 20px; margin-top: auto; border-top: 1px solid var(--border); }
-.verdict-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); margin-bottom: 6px; }
-.verdict-box { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800; padding: 10px 14px; text-align: center; border: 2px solid var(--border); color: var(--muted2); letter-spacing: 2px; }
-.verdict-box.buy { border-color: var(--success); color: var(--success); background: rgba(0,229,160,0.05); }
-.verdict-box.watch { border-color: var(--warn); color: var(--warn); background: rgba(255,184,48,0.05); }
-.verdict-box.avoid { border-color: var(--danger); color: var(--danger); background: rgba(255,77,106,0.05); }
+.nav-verdict { padding:14px 20px; margin-top:auto; border-top:1px solid var(--border); }
+.verdict-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); margin-bottom:6px; }
+.verdict-box { font-family:'Syne',sans-serif; font-size:14px; font-weight:800; padding:10px 14px; text-align:center; border:2px solid var(--border); color:var(--muted2); letter-spacing:2px; }
+.verdict-box.buy { border-color:var(--success); color:var(--success); background:rgba(0,229,160,0.05); }
+.verdict-box.watch { border-color:var(--warn); color:var(--warn); background:rgba(255,184,48,0.05); }
+.verdict-box.avoid { border-color:var(--danger); color:var(--danger); background:rgba(255,77,106,0.05); }
 
 /* MAIN */
-.main { flex: 1; overflow-y: auto; padding: 32px 36px; min-width: 0; }
-.page { display: none; }
-.page.active { display: block; animation: fadeUp 0.3s ease; }
-@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.main { flex:1; overflow-y:auto; padding:32px 36px; min-width:0; }
+.page { display:none; }
+.page.active { display:block; animation:fadeUp 0.3s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-.page-title { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--muted2); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.page-title::after { content: ''; flex: 1; height: 1px; background: var(--border2); min-width: 20px; }
+.page-title { font-family:'Syne',sans-serif; font-size:11px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--muted2); margin-bottom:20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.page-title::after { content:''; flex:1; height:1px; background:var(--border2); min-width:20px; }
 
 /* STOCK HEADER */
-.stock-header {
-  display: none;
-  background: #000;
-  border: 1px solid var(--border2);
-  padding: 18px 20px;
-  margin-bottom: 18px;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  position: relative;
-  overflow: hidden;
-}
-.stock-header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), transparent); }
-.stock-header.visible { display: flex; }
+.stock-header { display:none; background:#000; border:1px solid var(--border2); padding:18px 20px; margin-bottom:18px; align-items:center; gap:14px; flex-wrap:wrap; position:relative; overflow:hidden; }
+.stock-header::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),transparent); }
+.stock-header.visible { display:flex; }
 
-.stock-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Syne', sans-serif;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--accent);
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.stock-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
+.stock-logo { width:42px; height:42px; border-radius:8px; background:var(--surface2); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:13px; font-weight:800; color:var(--accent); overflow:hidden; flex-shrink:0; }
+.stock-logo img { width:100%; height:100%; object-fit:contain; border-radius:6px; }
 
-.stock-ticker { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; color: var(--accent); letter-spacing: 2px; }
-.stock-company { font-size: 11px; color: var(--muted2); margin-top: 2px; }
-.stock-badges { display: flex; flex-direction: column; gap: 4px; }
-.badge { font-size: 9px; letter-spacing: 1px; padding: 3px 7px; border: 1px solid; text-transform: uppercase; }
-.badge-exchange { color: var(--accent2); border-color: rgba(0,200,255,0.3); background: rgba(0,200,255,0.05); }
-.badge-fw { color: var(--accent); border-color: rgba(45,143,255,0.3); background: rgba(45,143,255,0.05); }
-.badge-fw.lynch { color: var(--lynch); border-color: rgba(249,115,22,0.3); background: rgba(249,115,22,0.05); }
+/* Header flag — bigger CSS flag */
+.header-flag { display:inline-block; width:28px; height:19px; border-radius:3px; overflow:hidden; flex-shrink:0; }
+.hflag-tr { background:#e30a17; position:relative; }
+.hflag-tr::before { content:'☽'; position:absolute; left:3px; top:50%; transform:translateY(-50%); color:#fff; font-size:10px; line-height:1; }
+.hflag-us { background:repeating-linear-gradient(180deg,#B22234 0,#B22234 14%,#fff 14%,#fff 28%,#B22234 28%,#B22234 42%,#fff 42%,#fff 56%,#B22234 56%,#B22234 70%,#fff 70%,#fff 84%,#B22234 84%,#B22234 100%); position:relative; }
+.hflag-us::before { content:''; position:absolute; top:0; left:0; width:11px; height:9px; background:#3C3B6E; }
 
-.header-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.stock-ticker { font-family:'Syne',sans-serif; font-size:24px; font-weight:800; color:var(--accent); letter-spacing:2px; }
+.stock-company { font-size:11px; color:var(--muted2); margin-top:2px; }
+.stock-badges { display:flex; flex-direction:column; gap:4px; }
+.badge { font-size:9px; letter-spacing:1px; padding:3px 7px; border:1px solid; text-transform:uppercase; }
+.badge-ex { color:var(--accent2); border-color:rgba(0,200,255,0.3); background:rgba(0,200,255,0.05); }
+.badge-fw { color:var(--accent); border-color:rgba(45,143,255,0.3); background:rgba(45,143,255,0.05); }
+.badge-fw.lynch { color:var(--lynch); border-color:rgba(249,115,22,0.3); background:rgba(249,115,22,0.05); }
 
-.x-share-btn {
-  background: #000;
-  border: 1px solid #333;
-  color: #fff;
-  font-family: 'Syne', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 9px 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  letter-spacing: 1px;
-  transition: all 0.2s;
-}
-.x-share-btn:hover { background: #111; border-color: #555; }
-
-.dl-share-btn {
-  background: rgba(45,143,255,0.1);
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  font-family: 'Syne', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 9px 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  letter-spacing: 1px;
-  transition: all 0.2s;
-}
-.dl-share-btn:hover { background: rgba(45,143,255,0.2); }
+/* SINGLE share button */
+.x-share-btn { margin-left:auto; background:#000; border:1px solid #333; color:#fff; font-family:'Syne',sans-serif; font-size:11px; font-weight:700; padding:10px 18px; cursor:pointer; display:flex; align-items:center; gap:8px; letter-spacing:1px; transition:all 0.2s; }
+.x-share-btn:hover { background:#111; border-color:var(--accent); color:var(--accent); }
+.x-logo-icon { font-size:13px; font-weight:900; font-family:'Syne',sans-serif; }
 
 /* GRID */
-.overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
-.stat-card { background: #000; border: 1px solid var(--border2); padding: 18px 20px; position: relative; overflow: hidden; }
-.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), transparent); }
-.stat-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); margin-bottom: 6px; }
-.stat-value { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: var(--accent); }
-.stat-sub { font-size: 10px; color: var(--muted2); margin-top: 3px; }
+.overview-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
+.stat-card { background:#000; border:1px solid var(--border2); padding:18px 20px; position:relative; overflow:hidden; }
+.stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),transparent); }
+.stat-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); margin-bottom:6px; }
+.stat-value { font-family:'Syne',sans-serif; font-size:30px; font-weight:800; color:var(--accent); }
+.stat-sub { font-size:10px; color:var(--muted2); margin-top:3px; }
 
-/* TV */
-.tv-card { background: #000; border: 1px solid var(--border2); margin-bottom: 14px; overflow: hidden; }
-.tv-card-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-.tv-live-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; animation: blink 2s infinite; flex-shrink: 0; }
-.tv-wrap { height: 360px; }
+/* TV CHART */
+.tv-card { background:#000; border:1px solid var(--border2); margin-bottom:14px; overflow:hidden; }
+.tv-card-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); padding:12px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+.tv-live-dot { width:6px; height:6px; background:var(--success); border-radius:50%; animation:blink 2s infinite; flex-shrink:0; }
+.tv-wrap { height:380px; width:100%; }
 
 /* CHARTS */
-.chart-card { background: #000; border: 1px solid var(--border2); padding: 20px; margin-bottom: 14px; }
-.chart-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
-.chart-dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; }
-.chart-wrap { position: relative; height: 180px; }
-.radar-wrap { position: relative; height: 240px; max-width: 280px; margin: 0 auto; }
+.chart-card { background:#000; border:1px solid var(--border2); padding:20px; margin-bottom:14px; }
+.chart-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); margin-bottom:16px; display:flex; align-items:center; gap:6px; }
+.chart-dot { width:5px; height:5px; background:var(--accent); border-radius:50%; }
+.chart-wrap { position:relative; height:180px; }
+.radar-wrap { position:relative; height:240px; max-width:280px; margin:0 auto; }
 
 /* TABLE */
-.criteria-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 14px; }
-.criteria-table th { text-align: left; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); padding: 9px 14px; border-bottom: 1px solid var(--border2); background: var(--surface); }
-.criteria-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; background: #000; }
-.criteria-table tr:hover td { background: var(--surface); cursor: pointer; }
-.crit-num { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; color: var(--accent); }
-.crit-name { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; margin-bottom: 2px; }
-.crit-desc { font-size: 10px; color: var(--muted2); line-height: 1.5; }
+.criteria-table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:14px; }
+.criteria-table th { text-align:left; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); padding:9px 14px; border-bottom:1px solid var(--border2); background:var(--surface); }
+.criteria-table td { padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:top; background:#000; }
+.criteria-table tr:hover td { background:var(--surface); cursor:pointer; }
+.crit-num { font-family:'Syne',sans-serif; font-size:10px; font-weight:700; color:var(--accent); }
+.crit-name { font-family:'Syne',sans-serif; font-size:12px; font-weight:600; margin-bottom:2px; }
+.crit-desc { font-size:10px; color:var(--muted2); line-height:1.5; }
 
-.status-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 700; letter-spacing: 1px; padding: 3px 8px; font-family: 'Syne', sans-serif; white-space: nowrap; }
-.status-pill.pass { background: rgba(0,229,160,0.1); color: var(--success); border: 1px solid rgba(0,229,160,0.2); }
-.status-pill.fail { background: rgba(255,77,106,0.1); color: var(--danger); border: 1px solid rgba(255,77,106,0.2); }
-.status-pill.neutral { background: rgba(0,200,255,0.08); color: var(--accent2); border: 1px solid rgba(0,200,255,0.2); }
-.status-pill.pending { background: rgba(26,58,92,0.3); color: var(--muted2); border: 1px solid var(--border); }
-.detail-text { font-size: 10px; color: #5a90b8; line-height: 1.6; max-width: 280px; }
+.status-pill { display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:700; letter-spacing:1px; padding:3px 8px; font-family:'Syne',sans-serif; white-space:nowrap; }
+.status-pill.pass { background:rgba(0,229,160,0.1); color:var(--success); border:1px solid rgba(0,229,160,0.2); }
+.status-pill.fail { background:rgba(255,77,106,0.1); color:var(--danger); border:1px solid rgba(255,77,106,0.2); }
+.status-pill.neutral { background:rgba(0,200,255,0.08); color:var(--accent2); border:1px solid rgba(0,200,255,0.2); }
+.status-pill.pending { background:rgba(26,58,92,0.3); color:var(--muted2); border:1px solid var(--border); }
+.detail-text { font-size:10px; color:#5a90b8; line-height:1.6; max-width:280px; }
 
 /* DETAIL */
-.detail-header { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 20px; padding: 20px; background: #000; border: 1px solid var(--border2); }
-.detail-num { font-family: 'Syne', sans-serif; font-size: 42px; font-weight: 800; color: var(--accent); opacity: 0.15; line-height: 1; flex-shrink: 0; }
-.detail-info { flex: 1; }
-.detail-name { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 5px; }
-.detail-desc { font-size: 11px; color: var(--muted2); line-height: 1.7; }
-.analysis-block { background: #000; border: 1px solid var(--border2); padding: 20px; margin-bottom: 14px; }
-.analysis-block-title { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); margin-bottom: 12px; }
-.analysis-text { font-size: 12px; line-height: 1.9; color: #7ab0d0; }
+.detail-header { display:flex; align-items:flex-start; gap:18px; margin-bottom:20px; padding:20px; background:#000; border:1px solid var(--border2); }
+.detail-num { font-family:'Syne',sans-serif; font-size:42px; font-weight:800; color:var(--accent); opacity:0.15; line-height:1; flex-shrink:0; }
+.detail-info { flex:1; }
+.detail-name { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; margin-bottom:5px; }
+.detail-desc { font-size:11px; color:var(--muted2); line-height:1.7; }
+.analysis-block { background:#000; border:1px solid var(--border2); padding:20px; margin-bottom:14px; }
+.analysis-block-title { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); margin-bottom:12px; }
+.analysis-text { font-size:12px; line-height:1.9; color:#7ab0d0; }
 
-.score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.score-bar-label { font-size: 10px; color: var(--muted2); width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.score-bar { flex: 1; height: 2px; background: var(--border2); }
-.score-bar-fill { height: 100%; transition: width 1s ease; width: 0; }
-.score-bar-fill.pass { background: var(--success); }
-.score-bar-fill.fail { background: var(--danger); }
-.score-bar-fill.neutral { background: var(--accent2); }
-.score-bar-val { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; width: 18px; text-align: right; }
+.score-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.score-bar-label { font-size:10px; color:var(--muted2); width:130px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.score-bar { flex:1; height:2px; background:var(--border2); }
+.score-bar-fill { height:100%; transition:width 1s ease; width:0; }
+.score-bar-fill.pass { background:var(--success); }
+.score-bar-fill.fail { background:var(--danger); }
+.score-bar-fill.neutral { background:var(--accent2); }
+.score-bar-val { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; width:18px; text-align:right; }
 
 /* LOADING */
-.loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 500; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
-.loading-overlay.visible { display: flex; }
-.loading-ticker { font-family: 'Syne', sans-serif; font-size: 44px; font-weight: 800; color: var(--accent); letter-spacing: 4px; text-shadow: 0 0 40px rgba(45,143,255,0.5); animation: pulse 1.5s infinite; }
-.loading-fw { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted2); margin-top: -18px; }
-.loading-steps { display: flex; flex-direction: column; gap: 10px; }
-.loading-step { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 10px; transition: color 0.3s; }
-.loading-step.done { color: var(--success); }
-.loading-step.active { color: var(--accent); animation: pulse 1.5s infinite; }
-.loading-step-dot { width: 6px; height: 6px; background: currentColor; border-radius: 50%; flex-shrink: 0; }
+.loading-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.97); z-index:500; flex-direction:column; align-items:center; justify-content:center; gap:24px; }
+.loading-overlay.visible { display:flex; }
+.loading-ticker { font-family:'Syne',sans-serif; font-size:44px; font-weight:800; color:var(--accent); letter-spacing:4px; text-shadow:0 0 40px rgba(45,143,255,0.5); animation:pulse 1.5s infinite; }
+.loading-fw { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--muted2); margin-top:-18px; }
+.loading-steps { display:flex; flex-direction:column; gap:10px; }
+.loading-step { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:10px; transition:color 0.3s; }
+.loading-step.done { color:var(--success); }
+.loading-step.active { color:var(--accent); animation:pulse 1.5s infinite; }
+.loading-step-dot { width:6px; height:6px; background:currentColor; border-radius:50%; flex-shrink:0; }
 
 /* EMPTY */
-.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 14px; text-align: center; }
-.empty-icon { font-size: 48px; opacity: 0.15; }
-.empty-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: var(--muted2); }
-.empty-sub { font-size: 11px; color: var(--muted2); max-width: 320px; line-height: 1.8; opacity: 0.6; }
+.empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:14px; text-align:center; }
+.empty-icon { font-size:48px; opacity:0.15; }
+.empty-title { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; color:var(--muted2); }
+.empty-sub { font-size:11px; color:var(--muted2); max-width:320px; line-height:1.8; opacity:0.6; }
 
-/* SHARE CANVAS MODAL */
-.share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 600; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
-.share-modal.visible { display: flex; }
-.share-modal-content { background: var(--surface); border: 1px solid var(--border2); padding: 24px; max-width: 400px; width: 90%; }
-.share-modal-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 16px; letter-spacing: 1px; }
-.share-canvas-wrap { border: 1px solid var(--border2); margin-bottom: 16px; }
-.share-canvas-wrap canvas { display: block; width: 100%; height: auto; }
-.share-actions { display: flex; gap: 8px; }
-.share-dl-btn { flex: 1; background: linear-gradient(135deg, var(--accent), #1a6fd4); color: #fff; border: none; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; padding: 10px; cursor: pointer; letter-spacing: 1px; }
-.share-x-btn { flex: 1; background: #000; border: 1px solid #444; color: #fff; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; padding: 10px; cursor: pointer; letter-spacing: 1px; }
-.share-close-btn { background: none; border: 1px solid var(--border2); color: var(--muted2); font-family: 'DM Mono', monospace; font-size: 11px; padding: 10px 16px; cursor: pointer; }
+/* SHARE MODAL */
+.share-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.93); z-index:600; align-items:center; justify-content:center; flex-direction:column; gap:12px; }
+.share-modal.visible { display:flex; }
+.share-modal-box { background:var(--surface); border:1px solid var(--border2); padding:20px; max-width:420px; width:92%; }
+.share-modal-title { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; color:var(--text); margin-bottom:14px; letter-spacing:1px; }
+.share-canvas-wrap { border:1px solid var(--border2); margin-bottom:14px; overflow:hidden; }
+.share-canvas-wrap canvas { display:block; width:100%; height:auto; }
+.share-hint { font-size:10px; color:var(--muted2); margin-bottom:12px; line-height:1.6; }
+.share-btns { display:flex; gap:8px; }
+.sdl-btn { flex:1; background:linear-gradient(135deg,var(--accent),#1a6fd4); color:#fff; border:none; font-family:'Syne',sans-serif; font-size:11px; font-weight:700; padding:10px; cursor:pointer; letter-spacing:1px; }
+.stw-btn { flex:1; background:#000; border:1px solid #444; color:#fff; font-family:'Syne',sans-serif; font-size:11px; font-weight:700; padding:10px; cursor:pointer; letter-spacing:1px; }
+.stw-btn:hover { border-color:var(--accent); }
+.sclose-btn { width:100%; margin-top:8px; background:none; border:1px solid var(--border2); color:var(--muted2); font-family:'DM Mono',monospace; font-size:10px; padding:9px; cursor:pointer; }
 
 /* MOBILE */
-@media (max-width: 768px) {
-  .mobile-toggle { display: flex; }
-  .sidebar { position: fixed; left: 0; top: 0; height: 100vh; transform: translateX(-100%); box-shadow: 4px 0 40px rgba(0,0,0,0.8); }
-  .sidebar.open { transform: translateX(0); }
-  .sidebar-close { display: flex; }
-  .main { padding: 16px; padding-top: 68px; }
-  .overview-grid { grid-template-columns: 1fr; }
-  .stock-header { flex-wrap: wrap; }
-  .header-actions { width: 100%; }
-  .x-share-btn, .dl-share-btn { flex: 1; justify-content: center; }
-  .criteria-table th:last-child, .criteria-table td:last-child { display: none; }
-  .detail-header { flex-direction: column; }
+@media (max-width:768px) {
+  .mobile-toggle { display:flex; }
+  .sidebar { position:fixed; left:0; top:0; height:100vh; transform:translateX(-100%); box-shadow:4px 0 40px rgba(0,0,0,0.8); }
+  .sidebar.open { transform:translateX(0); }
+  .sidebar-close { display:flex; }
+  .main { padding:14px; padding-top:66px; }
+  .overview-grid { grid-template-columns:1fr; }
+  .stock-header { flex-wrap:wrap; }
+  .x-share-btn { margin-left:0; width:100%; justify-content:center; }
+  .criteria-table th:last-child, .criteria-table td:last-child { display:none; }
+  .detail-header { flex-direction:column; }
 }
-
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border2); }
+::-webkit-scrollbar { width:3px; }
+::-webkit-scrollbar-thumb { background:var(--border2); }
 </style>
 </head>
 <body>
@@ -504,21 +273,17 @@ body::before {
 
 <!-- SHARE MODAL -->
 <div class="share-modal" id="shareModal">
-  <div class="share-modal-content">
+  <div class="share-modal-box">
     <div class="share-modal-title">📊 X Paylaşım Görseli</div>
     <div class="share-canvas-wrap">
-      <canvas id="shareCanvas" width="600" height="400"></canvas>
+      <canvas id="shareCanvas" width="600" height="420"></canvas>
     </div>
-    <div style="font-size:10px;color:var(--muted2);margin-bottom:12px;line-height:1.6">
-      Görseli indir, X'te paylaşırken ekle. Veya direkt X'e tweet at.
+    <div class="share-hint">Görseli indir, X'te paylaşırken ekle. Ya da "X'te Paylaş"a basarak direkt tweet at (görsel manuel eklenir).</div>
+    <div class="share-btns">
+      <button class="sdl-btn" onclick="downloadShareImage()">⬇ Görseli İndir</button>
+      <button class="stw-btn" onclick="tweetIt()">✕ X'te Paylaş</button>
     </div>
-    <div class="share-actions">
-      <button class="share-dl-btn" onclick="downloadShareImage()">⬇ Görseli İndir</button>
-      <button class="share-x-btn" onclick="tweetIt()">✕ X'te Paylaş</button>
-    </div>
-    <div style="margin-top:8px">
-      <button class="share-close-btn" onclick="closeShareModal()" style="width:100%">Kapat</button>
-    </div>
+    <button class="sclose-btn" onclick="closeShareModal()">Kapat</button>
   </div>
 </div>
 
@@ -536,29 +301,20 @@ body::before {
     <div class="sidebar-input">
       <label class="input-label">Borsa</label>
       <div class="exchange-row">
-        <button class="ex-btn active" id="ex-bist" onclick="selectExchange('BIST')">
-          <span class="flag flag-tr"></span>BIST
-        </button>
-        <button class="ex-btn" id="ex-nyse" onclick="selectExchange('NYSE')">
-          <span class="flag flag-us"></span>NYSE
-        </button>
-        <button class="ex-btn" id="ex-nasdaq" onclick="selectExchange('NASDAQ')">
-          <span class="flag flag-us"></span>NAS
-        </button>
+        <button class="ex-btn active" id="ex-bist" onclick="selectExchange('BIST')"><span class="flag flag-tr"></span>BIST</button>
+        <button class="ex-btn" id="ex-nyse" onclick="selectExchange('NYSE')"><span class="flag flag-us"></span>NYSE</button>
+        <button class="ex-btn" id="ex-nasdaq" onclick="selectExchange('NASDAQ')"><span class="flag flag-us"></span>NAS</button>
       </div>
-
       <label class="input-label">Ticker & Şirket</label>
       <div class="ticker-row">
-        <input type="text" class="ticker-input" id="tickerInput" placeholder="THYAO" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters" />
-        <input type="text" class="company-input" id="companyInput" placeholder="Şirket adı" autocomplete="off" />
+        <input type="text" class="ticker-input" id="tickerInput" placeholder="THYAO" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" />
+        <input type="text" class="company-input" id="companyInput" placeholder="Şirket adı" autocomplete="off" spellcheck="false" />
       </div>
-
       <label class="input-label" style="margin-top:10px">Çerçeve</label>
       <div class="fw-row">
         <button class="fw-btn active" id="fw-buffett" onclick="selectFramework('buffett')">Buffett</button>
         <button class="fw-btn" id="fw-lynch" onclick="selectFramework('lynch')">P. Lynch</button>
       </div>
-
       <div class="reanalyze-hint" id="reanalyzeHint">↺ Yeniden analiz ediliyor...</div>
       <button class="analyze-btn" id="analyzeBtn" onclick="doAnalyze()">ANALİZ ET →</button>
       <div class="error-bar" id="errorBar"></div>
@@ -570,7 +326,7 @@ body::before {
     </div>
 
     <div class="nav-label">Menü</div>
-    <div class="nav-item active" id="nav-overview" onclick="showPage('overview'); closeSidebar();">
+    <div class="nav-item active" id="nav-overview" onclick="showPage('overview');closeSidebar();">
       <span class="nav-num">00</span>Dashboard<span class="nav-status">◎</span>
     </div>
     <div class="nav-label" id="navLabel">Kriterler</div>
@@ -583,31 +339,30 @@ body::before {
   </div>
 
   <div class="main">
-
     <div class="page active" id="page-empty">
       <div class="empty-state">
         <div class="empty-icon">◈</div>
         <div class="empty-title">Analiz Bekliyor</div>
-        <div class="empty-sub">Sol menüden borsa, ticker ve şirket adını gir. Buffett veya Lynch çerçevesiyle analiz et.</div>
+        <div class="empty-sub">Sol menüden borsa, ticker ve şirket adını gir. Buffett veya Peter Lynch çerçevesiyle analiz et.</div>
       </div>
     </div>
 
     <div class="page" id="page-overview">
-
       <div class="stock-header" id="stockHeader">
         <div class="stock-logo" id="stockLogo">—</div>
+        <span class="header-flag" id="headerFlag"></span>
         <div>
           <div class="stock-ticker" id="stockTicker">—</div>
           <div class="stock-company" id="stockCompany">—</div>
         </div>
         <div class="stock-badges">
-          <span class="badge badge-exchange" id="badgeExchange">—</span>
+          <span class="badge badge-ex" id="badgeEx">—</span>
           <span class="badge badge-fw" id="badgeFw">—</span>
         </div>
-        <div class="header-actions">
-          <button class="dl-share-btn" onclick="openShareModal()">📊 Görsel</button>
-          <button class="x-share-btn" onclick="tweetIt()"><span style="font-weight:900">✕</span> Paylaş</button>
-        </div>
+        <!-- SINGLE BUTTON -->
+        <button class="x-share-btn" onclick="openShareModal()">
+          <span class="x-logo-icon">✕</span> X'te Paylaş
+        </button>
       </div>
 
       <div class="page-title">Dashboard — <span id="overviewTicker" style="color:var(--accent)">—</span></div>
@@ -625,12 +380,8 @@ body::before {
         </div>
       </div>
 
-      <!-- TradingView integrated -->
       <div class="tv-card" id="tvCard" style="display:none">
-        <div class="tv-card-title">
-          <div class="tv-live-dot"></div>
-          Canlı Grafik — <span id="tvLabel" style="color:var(--accent);margin-left:4px">—</span>
-        </div>
+        <div class="tv-card-title"><div class="tv-live-dot"></div>Canlı Grafik — <span id="tvLabel" style="color:var(--accent);margin-left:4px">—</span></div>
         <div class="tv-wrap" id="tvContainer"></div>
       </div>
 
@@ -638,7 +389,6 @@ body::before {
         <div class="chart-title"><div class="chart-dot"></div>Radar Analizi</div>
         <div class="radar-wrap"><canvas id="radarChart"></canvas></div>
       </div>
-
       <div class="chart-card">
         <div class="chart-title"><div class="chart-dot"></div>Kriter Skoru</div>
         <div class="chart-wrap"><canvas id="barChart"></canvas></div>
@@ -673,14 +423,13 @@ body::before {
         <div id="critBars"></div>
       </div>
     </div>
-
   </div>
 </div>
 
 <script>
-// ---- STOCK POOL ----
+// ---- POOL ----
 const POOL = {
-  BIST: [
+  BIST:[
     {t:'THYAO',c:'Türk Hava Yolları'},{t:'TURSG',c:'Türkiye Sigorta'},
     {t:'SAHOL',c:'Sabancı Holding'},{t:'KCHOL',c:'Koç Holding'},
     {t:'EREGL',c:'Ereğli Demir Çelik'},{t:'BIMAS',c:'BİM Mağazalar'},
@@ -690,44 +439,44 @@ const POOL = {
     {t:'TOASO',c:'Tofaş'},{t:'VAKBN',c:'Vakıfbank'},
     {t:'PGSUS',c:'Pegasus'},{t:'TAVHL',c:'TAV Havalimanları'},
   ],
-  US: [
+  US:[
     {t:'AAPL',c:'Apple',e:'NASDAQ'},{t:'MSFT',c:'Microsoft',e:'NASDAQ'},
     {t:'GOOGL',c:'Alphabet',e:'NASDAQ'},{t:'AMZN',c:'Amazon',e:'NASDAQ'},
     {t:'NVDA',c:'NVIDIA',e:'NASDAQ'},{t:'META',c:'Meta',e:'NASDAQ'},
     {t:'TSLA',c:'Tesla',e:'NASDAQ'},{t:'ABBV',c:'AbbVie',e:'NYSE'},
     {t:'JPM',c:'JPMorgan',e:'NYSE'},{t:'V',c:'Visa',e:'NYSE'},
-    {t:'JNJ',c:'Johnson & Johnson',e:'NYSE'},{t:'AMD',c:'AMD',e:'NASDAQ'},
-    {t:'NOW',c:'ServiceNow',e:'NYSE'},{t:'ETN',c:'Eaton Corp',e:'NYSE'},
+    {t:'AMD',c:'AMD',e:'NASDAQ'},{t:'NOW',c:'ServiceNow',e:'NYSE'},
+    {t:'ETN',c:'Eaton Corp',e:'NYSE'},{t:'MSCI',c:'MSCI Inc',e:'NYSE'},
   ]
 };
 
-// Logo providers
-function getLogoUrl(ticker, exchange) {
-  const domain = {
-    'AAPL':'apple.com','MSFT':'microsoft.com','GOOGL':'google.com',
-    'AMZN':'amazon.com','NVDA':'nvidia.com','META':'meta.com',
-    'TSLA':'tesla.com','ABBV':'abbvie.com','JPM':'jpmorganchase.com',
-    'V':'visa.com','JNJ':'jnj.com','AMD':'amd.com',
-    'NOW':'servicenow.com','ETN':'eaton.com','WMT':'walmart.com',
-  }[ticker];
-  if (domain) return `https://logo.clearbit.com/${domain}`;
-  return null;
+const LOGOS = {
+  'AAPL':'apple.com','MSFT':'microsoft.com','GOOGL':'google.com',
+  'AMZN':'amazon.com','NVDA':'nvidia.com','META':'meta.com',
+  'TSLA':'tesla.com','ABBV':'abbvie.com','JPM':'jpmorganchase.com',
+  'V':'visa.com','AMD':'amd.com','NOW':'servicenow.com',
+  'ETN':'eaton.com','MSCI':'msci.com',
+};
+
+function getLogoUrl(ticker) {
+  const d = LOGOS[ticker];
+  return d ? `https://logo.clearbit.com/${d}` : null;
 }
 
 function buildPopularChips() {
-  const chips = document.getElementById('popularChips');
-  chips.innerHTML = '';
-  const bist = [...POOL.BIST].sort(() => Math.random() - 0.5).slice(0, 4);
-  const us = [...POOL.US].sort(() => Math.random() - 0.5).slice(0, 4);
-  [...bist, ...us].forEach(s => {
-    const ex = s.e || 'BIST';
+  const el = document.getElementById('popularChips');
+  el.innerHTML = '';
+  const bist = [...POOL.BIST].sort(()=>Math.random()-0.5).slice(0,4);
+  const us = [...POOL.US].sort(()=>Math.random()-0.5).slice(0,4);
+  [...bist,...us].forEach(s => {
+    const ex = s.e||'BIST';
     const isTR = !s.e;
     const div = document.createElement('div');
     div.className = 'popular-chip';
     div.title = s.c;
-    div.innerHTML = `<span class="flag ${isTR ? 'flag-tr' : 'flag-us'}" style="width:12px;height:9px;border-radius:1px"></span>${s.t}`;
+    div.innerHTML = `<span class="cflag ${isTR?'cflag-tr':'cflag-us'}"></span>${s.t}`;
     div.onclick = () => quickFill(s.t, s.c, ex);
-    chips.appendChild(div);
+    el.appendChild(div);
   });
 }
 
@@ -736,50 +485,48 @@ function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('sidebarOverlay').classList.toggle('visible');
 }
-
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('visible');
 }
 
-// ---- EXCHANGES ----
+// ---- DATA ----
 const EX = {
-  BIST: { label:'BIST', tvSym: (t) => `BIST:${t}` },
-  NYSE: { label:'NYSE', tvSym: (t) => `NYSE:${t}` },
-  NASDAQ: { label:'NASDAQ', tvSym: (t) => `NASDAQ:${t}` },
+  BIST:{ label:'BIST', tvSym:(t)=>`BIST:${t}`, flagClass:'hflag-tr' },
+  NYSE:{ label:'NYSE', tvSym:(t)=>`NYSE:${t}`, flagClass:'hflag-us' },
+  NASDAQ:{ label:'NASDAQ', tvSym:(t)=>`NASDAQ:${t}`, flagClass:'hflag-us' },
 };
 
-// ---- FRAMEWORKS ----
 const FW = {
-  buffett: {
+  buffett:{
     name:'Buffett',
     criteria:[
-      {name:'ROE Sürdürülebilirliği', desc:'ROE %15+ ve son 5 yılda tutarlı mı?', ctx:'Buffett ROE\'yi sermaye verimliliğinin en saf göstergesi olarak görür. Borçla şişirilmiş ROE\'yi reddeder, operasyonel güçten gelen ROE arar.'},
-      {name:'Fiyatlama Gücü', desc:'Maliyet artışlarını müşteriye yansıtabiliyor mu?', ctx:'"Enflasyona karşı en iyi savunma, fiyat arttığında bile alınan ürünleri satmaktır." Fiyatlama gücü şirketin en değerli özelliğidir.'},
-      {name:'$1 → $1+ Testi', desc:'Her $1 alıkonulan sermaye $1+ piyasa değeri yarattı mı?', ctx:'Buffett\'ın özgün testi: alıkonulan kazançların piyasa değerine katkısı. Sermaye tahsisi kalitesini doğrudan ölçer.'},
-      {name:'Ekonomik Hendek', desc:'Marka, ağ etkisi, maliyet avantajı var mı?', ctx:'Buffett\'ın en ünlü konsepti. Hendek daralıyorsa kırmızı bayrak. ROIC\'in WACC\'tan sürekli yüksek olması hendek göstergesi.'},
+      {name:'ROE Sürdürülebilirliği', desc:'ROE %15+ ve son 5 yılda tutarlı mı? Operasyonel güçten mi geliyor?', ctx:'Buffett, ROE\'yi sermaye verimliliğinin en saf göstergesi olarak görür. Borçla şişirilmiş ROE\'yi reddeder, operasyonel güçten gelen ROE arar.'},
+      {name:'Fiyatlama Gücü', desc:'Maliyet artışlarını müşteriye yansıtabiliyor mu? Net kâr marjı genişliyor mu?', ctx:'"Enflasyona karşı en iyi savunma, insanların ihtiyaç duyduğu ve fiyat arttığında bile aldığı ürünleri satmaktır."'},
+      {name:'$1 → $1+ Testi', desc:'Her $1 alıkonulan sermaye piyasada $1+ değer yarattı mı?', ctx:'Buffett\'ın özgün testi: alıkonulan kazançların piyasa değerine katkısı. Sermaye tahsisi kalitesini doğrudan ölçer.'},
+      {name:'Ekonomik Hendek', desc:'Marka, ağ etkisi, maliyet avantajı veya değiştirme maliyeti var mı?', ctx:'Buffett\'ın en ünlü konsepti. ROIC\'in WACC\'tan sürekli yüksek olması hendek göstergesidir.'},
       {name:'Serbest Nakit Akışı', desc:'FCF tutarlı, büyüyor ve net gelirle uyumlu mu?', ctx:'Buffett muhasebe kârına değil gerçek nakde bakar. Büyük capex gerektiren işletmeler genellikle cazip değildir.'},
       {name:'Yönetim Kalitesi', desc:'Sermaye tahsisi geçmişi ve hissedar dostu mu?', ctx:'Zor dönemlerdeki davranış, gereksiz hisse ihraçları ve kötü satın almalar kırmızı bayraktır.'},
-      {name:'Değerleme Marjı', desc:'P/E, P/FCF, EV/EBITDA sektör ortalamasına göre?', ctx:'"Olağanüstü bir şirketi adil fiyatına almak, sıradan bir şirketi olağanüstü fiyatına almaktan iyidir."'}
+      {name:'Değerleme Marjı', desc:'P/E, P/FCF, EV/EBITDA sektör ortalamasına göre nasıl?', ctx:'"Olağanüstü bir şirketi adil fiyatına almak, sıradan bir şirketi olağanüstü fiyatına almaktan çok daha iyidir."'}
     ],
     keys:['ROE','PRICING','DOLLAR','MOAT','FCF','MGMT','VALUATION'],
-    prompt:(t,c,ex) => `Warren Buffett yatırım felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''}${c?` — ÖNEMLİ: Şirket adı "${c}", kesinlikle bu şirketi analiz et.`:''} hissesini analiz et.
+    prompt:(t,c,ex)=>`Warren Buffett yatırım felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''}${c?` — ÖNEMLİ: Şirket adı "${c}", kesinlikle bu şirketi analiz et.`:''} hissesini analiz et.
 
 KRİTERLER:
-1. ROE: ROE %15+ tutarlı mı?
+1. ROE: ROE %15+ tutarlı mı? Operasyonel güçten mi?
 2. PRICING: Fiyatlama gücü ve marj trendi?
-3. DOLLAR: Her $1 alıkonulan sermaye $1+ yarattı mı?
+3. DOLLAR: Her $1 alıkonulan sermaye $1+ piyasa değeri yarattı mı?
 4. MOAT: Ekonomik hendek var ve büyüyor mu?
-5. FCF: Serbest nakit akışı kalitesi?
-6. MGMT: Yönetim ve sermaye tahsisi?
-7. VALUATION: Değerleme ve güvenlik marjı?
+5. FCF: Serbest nakit akışı kalitesi ve net gelirle uyum?
+6. MGMT: Yönetim kalitesi ve sermaye tahsisi?
+7. VALUATION: P/E, P/FCF, EV/EBITDA — değerleme ve güvenlik marjı?
 
 FORMAT:
 TICKER: ${t}
 TOTAL_SCORE: X
 VERDICT: AL|BEKLE|UZAK_DUR
 SUMMARY: [2-3 cümle Buffett perspektifinden]
-RISK: [en kritik risk]
+RISK: [en kritik 1 risk]
 CRITERIA_START
 ROE: PASS|FAIL|NEUTRAL | [2-3 cümle, somut veri]
 PRICING: PASS|FAIL|NEUTRAL | [2-3 cümle, somut veri]
@@ -790,527 +537,463 @@ MGMT: PASS|FAIL|NEUTRAL | [2-3 cümle, somut veri]
 VALUATION: PASS|FAIL|NEUTRAL | [2-3 cümle, somut veri]
 CRITERIA_END`
   },
-  lynch: {
+
+  lynch:{
     name:'Peter Lynch',
     criteria:[
-      {name:'PEG & Büyüme Fiyatı', desc:'PEG oranı 1\'in altında mı?', ctx:'Lynch\'in en kritik metriği: P/E / Büyüme Oranı. PEG < 1 değerli, PEG > 2 pahalı.'},
-      {name:'Lynch Kategorisi', desc:'Slow/Fast Grower, Stalwart, Cyclical, Turnaround?', ctx:'"Yatırım yapmadan önce şirketi hangi kategoriye koyduğunu bilmelisin." Her kategori farklı strateji gerektirir.'},
-      {name:'Anlaşılırlık & Sıkıcılık', desc:'İş modeli basit mi? Kurumların radarında olmayan bir şirket mi?', ctx:'"Eğer 3. sınıf öğrencisine açıklayamazsan, alma." Lynch sıkıcı ama kârlı şirketleri sever.'},
-      {name:'Büyüme Katalizörü', desc:'Büyümeyi sürükleyen somut hikaye var mı?', ctx:'Lynch, growth story\'nin somut olmasını ister. Aşırı büyüme (>%50/yıl) tehlike sinyalidir.'},
-      {name:'Bilanço & Borç Yapısı', desc:'Net nakit pozisyonunda mı? Borç/özsermaye < 0.5?', ctx:'"Güçlü bilanço, zor dönemleri atlatmanın garantisidir."'},
-      {name:'İçeriden Alımlar', desc:'Yöneticiler kendi hisselerini alıyor mu?', ctx:'"Yöneticiler pek çok nedenle satar, ama tek nedenden satın alır — fiyatın ucuz olduğunu düşünürler."'},
-      {name:'Kurumsal İhmal', desc:'Kurumsal sahiplik %30 altında mı?', ctx:'Lynch\'in en sevdiği fırsat: kurumların dikkatini çekmemiş hisseler.'}
+      {
+        name:'Saha & Hikaye (Amatör Avantajı)',
+        desc:'Ürün/hizmet günlük hayatta gözlemlenebilir mi? Büyüme hikayesi (script) hala geçerli mi?',
+        ctx:'"İnsanlar çalıştıkları yerde, alışveriş yaparken veya başka bir yerde fark ettikleri şirketlere yatırım yapmalı." Lynch\'e göre amatör yatırımcının en büyük silahı, kurumlardan önce tüketici trendlerini görebilmesidir.'
+      },
+      {
+        name:'Büyüme Motoru & Diworseification',
+        desc:'Kârı artıracak asıl hikaye nedir? Şirket anlamadığı sektörlere kayarak odak kaybediyor mu?',
+        ctx:'"Diworseification": Şirketin ana işinden uzaklaşıp kaynak israf etmesi Lynch\'in en büyük kırmızı bayraklarından. Büyüme motoru — mağaza açılımı, yeni pazar, marj iyileştirmesi — net ve anlaşılır olmalı.'
+      },
+      {
+        name:'Net Nakit & Bilanço Sağlığı',
+        desc:'Net nakit pozisyonu nedir? (Nakit - Uzun Vadeli Borç). Zorlu dönemleri atlatacak güçte mi?',
+        ctx:'"Güçlü bilanço bir güvenlik ağıdır." Lynch, net nakit pozisyonundaki şirketleri sever çünkü kötü dönemlerde hayatta kalır ve fırsatları değerlendirebilirler. Gizli yükümlülükler (emeklilik borçları vb.) kritik kırmızı bayrak.'
+      },
+      {
+        name:'Stok (Envanter) Kontrolü',
+        desc:'Stok büyüme hızı satış büyüme hızını geçiyor mu? Satılamayan ürün birikimi var mı?',
+        ctx:'"Satılamayan ürünlerin birikmesi Lynch\'in en büyük kırmızı bayraklarından biri." Stok/satış oranının bozulması gelecekteki marj baskısının öncü göstergesidir. Bu kriter özellikle perakende ve üretim şirketleri için kritiktir.'
+      },
+      {
+        name:'PEG Oranı & Kazanç Çizgisi',
+        desc:'PEG (F/K ÷ Büyüme) 1\'in altında mı? Fiyat tarihsel kazanç eğrisinin altında mı seyrediyor?',
+        ctx:'"PEG oranı 1\'in altındaysa değerli, 2\'nin üzerindeyse pahalı." Lynch için fiyat ve kazanç arasındaki ilişki kritiktir. Fiyat, kazanç eğrisinden kopup aşırı fiyatlanmışsa bu tehlike sinyalidir.'
+      },
+      {
+        name:'Kurumsal Sahiplik & Gizli Mücevher',
+        desc:'Kurumsal sahiplik %30\'un altında mı? Analistler henüz keşfetmedi mi?',
+        ctx:'"Wall Street bu şirketi çoktan keşfettiyse büyük fırsat kalmamıştır." Lynch kurumların ve analistlerin radarına girmemiş şirketleri arar. Kurumsal sahipliğin düşük olması, henüz büyük paranın girmediğinin işareti.'
+      },
+      {
+        name:'Yönetim Hamleleri (Insider & Buyback)',
+        desc:'İçeriden yöneticiler hisse alıyor mu? Tutarlı geri alım programı var mı?',
+        ctx:'"Yöneticiler pek çok nedenden satar ama tek nedenden alır — fiyatın ucuz olduğunu düşünürler." Geri alım programı hem hisse başına değeri artırır hem de yönetimin geleceğe olan güvenini gösterir.'
+      }
     ],
-    keys:['PEG','CATEGORY','BORING','CATALYST','BALANCE','INSIDER','INSTITUTION'],
-    prompt:(t,c,ex) => `Peter Lynch metodolojisiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''}${c?` — ÖNEMLİ: Şirket adı "${c}", kesinlikle bu şirketi analiz et.`:''} hissesini analiz et.
+    keys:['STORY','GROWTH','BALANCE','INVENTORY','PEG','INSTITUTION','INSIDER'],
+    prompt:(t,c,ex)=>`Peter Lynch'in yatırım felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''}${c?` — ÖNEMLİ: Şirket adı "${c}", kesinlikle bu şirketi analiz et.`:''} hissesini analiz et.
+
+Lynch'in 4 temel pilari: Saha & Hikaye, Finansal Sağlık, Değerleme, Sahiplik yapısı.
 
 KRİTERLER:
-1. PEG: PEG oranı ve büyüme fiyatlaması?
-2. CATEGORY: Lynch kategorisi (Slow/Fast Grower, Stalwart, Cyclical, Turnaround, Asset Play) ve strateji?
-3. BORING: Anlaşılırlık ve kurumsal ihmal?
-4. CATALYST: Büyüme katalizörü somut mu?
-5. BALANCE: Bilanço ve borç yapısı?
-6. INSIDER: İçeriden alım ve geri alım?
-7. INSTITUTION: Kurumsal sahiplik ve analist takibi?
+1. STORY: Amatör avantajı var mı? Ürün/hizmet günlük hayatta gözlemlenebilir ve anlaşılır mı? Büyüme hikayesi (script) hala geçerli mi, yoksa olgunluk/çöküş evresine mi girdi?
+2. GROWTH: Büyüme motoru net mi? (Yeni mağaza/pazar/marj iyileştirmesi). "Diworseification" var mı — şirket anlamadığı sektörlere kayarak kaynak israf ediyor mu?
+3. BALANCE: Net nakit pozisyonu (Nakit - Uzun Vadeli Borç) nedir? Bilanço zorlu dönemleri atlatacak güçte mi? Gizli yükümlülükler (emeklilik borçları vb.) var mı?
+4. INVENTORY: Stok büyüme hızı satış büyüme hızını geçiyor mu? Satılamayan ürün birikimi var mı? (Özellikle perakende/üretim şirketleri için kritik)
+5. PEG: PEG oranı (F/K ÷ Büyüme Oranı) nedir? 1'in altında mı? Tarihsel kazanç eğrisine göre fiyat nerede — aşırı fiyatlanmış mı?
+6. INSTITUTION: Kurumsal sahiplik %30'un altında mı? Analistler henüz keşfetmedi mi? Wall Street radarında mı?
+7. INSIDER: Son 12 ayda yönetici alımı var mı? Tutarlı ve anlamlı geri alım programı uygulanıyor mu?
 
 FORMAT:
 TICKER: ${t}
 TOTAL_SCORE: X
 VERDICT: AL|BEKLE|UZAK_DUR
-SUMMARY: [2-3 cümle Lynch perspektifinden]
-RISK: [en kritik risk]
+SUMMARY: [2-3 cümle, Lynch'in bu hisseye nasıl bakacağını anlat — "Lynch bu şirketi şundan alırdı/almazdı" gibi]
+RISK: [en kritik 1 risk]
 CRITERIA_START
-PEG: PASS|FAIL|NEUTRAL | [2-3 cümle, somut PEG değeri]
-CATEGORY: PASS|FAIL|NEUTRAL | [2-3 cümle kategori ve strateji]
-BORING: PASS|FAIL|NEUTRAL | [2-3 cümle]
-CATALYST: PASS|FAIL|NEUTRAL | [2-3 cümle]
-BALANCE: PASS|FAIL|NEUTRAL | [2-3 cümle, rakamlar]
-INSIDER: PASS|FAIL|NEUTRAL | [2-3 cümle]
-INSTITUTION: PASS|FAIL|NEUTRAL | [2-3 cümle]
+STORY: PASS|FAIL|NEUTRAL | [2-3 cümle, somut gözlem]
+GROWTH: PASS|FAIL|NEUTRAL | [2-3 cümle, büyüme motoru ve diworseification]
+BALANCE: PASS|FAIL|NEUTRAL | [2-3 cümle, net nakit rakamı ver]
+INVENTORY: PASS|FAIL|NEUTRAL | [2-3 cümle, stok/satış oranı]
+PEG: PASS|FAIL|NEUTRAL | [2-3 cümle, somut PEG değeri ver]
+INSTITUTION: PASS|FAIL|NEUTRAL | [2-3 cümle, kurumsal sahiplik oranı]
+INSIDER: PASS|FAIL|NEUTRAL | [2-3 cümle, içeriden alım ve geri alım detayı]
 CRITERIA_END`
   }
 };
 
-let analysisData = null;
-let radarChart = null;
-let barChart = null;
-let currentFW = 'buffett';
-let currentEX = 'BIST';
-let currentTicker = '';
-let currentCompany = '';
-let hasAnalyzed = false;
-let lastTweetText = '';
+let analysisData=null, radarChart=null, barChart=null;
+let currentFW='buffett', currentEX='BIST';
+let currentTicker='', currentCompany='';
+let hasAnalyzed=false;
 
 function selectExchange(ex) {
-  currentEX = ex;
-  ['BIST','NYSE','NASDAQ'].forEach(k => {
-    const el = document.getElementById('ex-' + k.toLowerCase());
-    if (el) el.className = 'ex-btn' + (k === ex ? ' active' : '');
+  currentEX=ex;
+  ['BIST','NYSE','NASDAQ'].forEach(k=>{
+    const el=document.getElementById('ex-'+k.toLowerCase());
+    if(el) el.className='ex-btn'+(k===ex?' active':'');
   });
 }
 
 function selectFramework(fw) {
-  currentFW = fw;
-  document.getElementById('fw-buffett').className = 'fw-btn' + (fw === 'buffett' ? ' active' : '');
-  document.getElementById('fw-lynch').className = 'fw-btn' + (fw === 'lynch' ? ' lynch-active' : '');
+  currentFW=fw;
+  document.getElementById('fw-buffett').className='fw-btn'+(fw==='buffett'?' active':'');
+  document.getElementById('fw-lynch').className='fw-btn'+(fw==='lynch'?' lynch-active':'');
   buildNav();
-  if (hasAnalyzed && currentTicker) {
-    const hint = document.getElementById('reanalyzeHint');
-    hint.classList.add('visible');
-    setTimeout(() => { hint.classList.remove('visible'); doAnalyze(); }, 700);
+  if(hasAnalyzed&&currentTicker){
+    const h=document.getElementById('reanalyzeHint');
+    h.classList.add('visible');
+    setTimeout(()=>{h.classList.remove('visible');doAnalyze();},700);
   }
 }
 
 function buildNav() {
-  const fw = FW[currentFW];
-  document.getElementById('navLabel').textContent = fw.criteria.length + ' Kriter';
-  const list = document.getElementById('navList');
-  list.innerHTML = '';
-  fw.criteria.forEach((c, i) => {
-    const div = document.createElement('div');
-    div.className = 'nav-item';
-    div.id = 'nav-' + i;
-    div.onclick = () => { showPage('crit', i); closeSidebar(); };
-    div.innerHTML = `<span class="nav-num">${String(i+1).padStart(2,'0')}</span>${c.name}<span class="nav-status" id="ns-${i}">○</span>`;
+  const fw=FW[currentFW];
+  document.getElementById('navLabel').textContent=fw.criteria.length+' Kriter';
+  const list=document.getElementById('navList');
+  list.innerHTML='';
+  fw.criteria.forEach((c,i)=>{
+    const div=document.createElement('div');
+    div.className='nav-item'; div.id='nav-'+i;
+    div.onclick=()=>{showPage('crit',i);closeSidebar();};
+    div.innerHTML=`<span class="nav-num">${String(i+1).padStart(2,'0')}</span>${c.name}<span class="nav-status" id="ns-${i}">○</span>`;
     list.appendChild(div);
   });
 }
 
-function quickFill(t, c, ex) {
+function quickFill(t,c,ex) {
   selectExchange(ex);
-  document.getElementById('tickerInput').value = t;
-  document.getElementById('companyInput').value = c;
+  document.getElementById('tickerInput').value=t;
+  document.getElementById('companyInput').value=c;
   closeSidebar();
-  setTimeout(() => doAnalyze(), 100);
+  setTimeout(()=>doAnalyze(),100);
 }
 
-function showPage(type, index) {
-  ['empty','overview','crit'].forEach(p => {
-    const el = document.getElementById('page-' + p);
-    if (el) el.classList.remove('active');
+function showPage(type,index) {
+  ['empty','overview','crit'].forEach(p=>{
+    const el=document.getElementById('page-'+p);
+    if(el) el.classList.remove('active');
   });
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  if (type === 'overview') {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(type==='overview'){
     document.getElementById('page-overview').classList.add('active');
     document.getElementById('nav-overview').classList.add('active');
-  } else if (type === 'crit') {
+  } else if(type==='crit'){
     document.getElementById('page-crit').classList.add('active');
-    const el = document.getElementById('nav-' + index);
-    if (el) el.classList.add('active');
+    const el=document.getElementById('nav-'+index);
+    if(el) el.classList.add('active');
     renderCritDetail(index);
   } else {
     document.getElementById('page-empty').classList.add('active');
   }
 }
 
-function loadTradingView(ticker, exchange) {
-  const ex = EX[exchange];
-  // For BIST use BIST: prefix, others use exchange prefix
-  let sym = ex.tvSym(ticker);
-  document.getElementById('tvLabel').textContent = ticker;
-  document.getElementById('tvCard').style.display = 'block';
-  const container = document.getElementById('tvContainer');
-  container.innerHTML = '';
-  const wrapper = document.createElement('div');
-  wrapper.style.cssText = 'height:100%;width:100%;';
-  const inner = document.createElement('div');
-  inner.className = 'tradingview-widget-container__widget';
-  inner.style.cssText = 'height:calc(100% - 32px);width:100%;';
-  const script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-  script.async = true;
-  script.textContent = JSON.stringify({
-    autosize: true,
-    symbol: sym,
-    interval: 'D',
-    timezone: 'Europe/Istanbul',
-    theme: 'dark',
-    style: '1',
-    locale: 'tr',
-    backgroundColor: '#000000',
-    gridColor: 'rgba(15,37,64,1)',
-    hide_top_toolbar: false,
-    hide_legend: false,
-    save_image: false,
-    support_host: 'https://www.tradingview.com'
-  });
-  wrapper.appendChild(inner);
-  wrapper.appendChild(script);
-  container.appendChild(wrapper);
+// ---- TRADINGVIEW ----
+function loadTradingView(ticker,exchange) {
+  const ex=EX[exchange];
+  const symbol=ex.tvSym(ticker);
+  document.getElementById('tvLabel').textContent=ticker;
+  document.getElementById('tvCard').style.display='block';
+  const container=document.getElementById('tvContainer');
+  container.innerHTML='';
+
+  // Use iframe approach for reliability
+  const iframe=document.createElement('iframe');
+  iframe.style.cssText='width:100%;height:380px;border:none;';
+  iframe.src=`https://www.tradingview.com/widgetembed/?frameElementId=tv&symbol=${encodeURIComponent(symbol)}&interval=D&hidesidetoolbar=0&saveimage=0&toolbarbg=000000&studies=[]&theme=dark&style=1&timezone=Europe%2FIstanbul&withdateranges=1&showpopupbutton=1&locale=tr&utm_source=barisinvesting.vercel.app&utm_medium=widget&utm_campaign=chart`;
+  iframe.setAttribute('allowtransparency','true');
+  iframe.setAttribute('allowfullscreen','true');
+  container.appendChild(iframe);
 }
 
-// ---- SHARE CANVAS ----
+// ---- SHARE MODAL ----
 function openShareModal() {
-  if (!analysisData) return;
+  if(!analysisData) return;
   drawShareCanvas();
   document.getElementById('shareModal').classList.add('visible');
 }
-
 function closeShareModal() {
   document.getElementById('shareModal').classList.remove('visible');
 }
 
 function drawShareCanvas() {
-  const canvas = document.getElementById('shareCanvas');
-  const ctx = canvas.getContext('2d');
-  const fw = FW[currentFW];
-  const d = analysisData;
-  const W = 600, H = 400;
-  canvas.width = W;
-  canvas.height = H;
+  const canvas=document.getElementById('shareCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=600,H=420;
+  canvas.width=W; canvas.height=H;
+  const fw=FW[currentFW];
+  const d=analysisData;
 
-  // Background
-  ctx.fillStyle = '#000000';
-  ctx.fillRect(0, 0, W, H);
+  // BG
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,W,H);
 
-  // Grid lines
-  ctx.strokeStyle = 'rgba(45,143,255,0.06)';
-  ctx.lineWidth = 1;
-  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  // grid
+  ctx.strokeStyle='rgba(45,143,255,0.05)';
+  ctx.lineWidth=1;
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
 
-  // Top accent line
-  const grad = ctx.createLinearGradient(0,0,W,0);
-  grad.addColorStop(0, '#2d8fff');
-  grad.addColorStop(1, 'transparent');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, 2);
+  // top line
+  const g=ctx.createLinearGradient(0,0,W,0);
+  g.addColorStop(0,'#2d8fff'); g.addColorStop(1,'transparent');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,3);
 
-  // Brand
-  ctx.fillStyle = '#2d8fff';
-  ctx.font = '700 10px DM Mono, monospace';
-  ctx.letterSpacing = '3px';
-  ctx.fillText('BARIS INVESTING — YATIRIMCI CERCEVESI', 24, 28);
+  // brand
+  ctx.fillStyle='#00c8ff';
+  ctx.font='700 9px DM Mono,monospace';
+  ctx.fillText('BARIS INVESTING  ·  YATIRIMCI CERCEVESI',24,26);
 
-  // Ticker
-  ctx.fillStyle = '#2d8fff';
-  ctx.font = '800 48px Syne, sans-serif';
-  ctx.fillText(d.ticker, 24, 90);
+  // ticker
+  ctx.fillStyle='#2d8fff';
+  ctx.font='800 52px Syne,sans-serif';
+  ctx.fillText(d.ticker,24,90);
 
-  // Company
-  if (currentCompany) {
-    ctx.fillStyle = '#5a90b8';
-    ctx.font = '400 14px DM Mono, monospace';
-    ctx.fillText(currentCompany, 24, 112);
+  // company
+  if(currentCompany){
+    ctx.fillStyle='#5a90b8';
+    ctx.font='400 13px DM Mono,monospace';
+    ctx.fillText(currentCompany,24,112);
   }
 
-  // Score badge
-  const verdictColor = d.verdict === 'AL' ? '#00e5a0' : d.verdict === 'UZAK_DUR' ? '#ff4d6a' : '#ffb830';
-  ctx.fillStyle = verdictColor + '20';
-  ctx.strokeStyle = verdictColor;
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(W - 160, 24, 136, 72);
-  ctx.fillRect(W - 160, 24, 136, 72);
+  // verdict box
+  const vc=d.verdict==='AL'?'#00e5a0':d.verdict==='UZAK_DUR'?'#ff4d6a':'#ffb830';
+  ctx.fillStyle=vc+'22'; ctx.strokeStyle=vc; ctx.lineWidth=1.5;
+  ctx.strokeRect(W-165,20,142,76); ctx.fillRect(W-165,20,142,76);
+  ctx.fillStyle=vc;
+  ctx.font='800 30px Syne,sans-serif'; ctx.textAlign='center';
+  ctx.fillText(d.verdict,W-94,58);
+  ctx.font='600 11px DM Mono,monospace';
+  ctx.fillText(`${d.score}/${fw.criteria.length} KRİTER`,W-94,78);
+  ctx.textAlign='left';
 
-  ctx.fillStyle = verdictColor;
-  ctx.font = '800 28px Syne, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(d.verdict, W - 92, 56);
-  ctx.font = '600 12px DM Mono, monospace';
-  ctx.fillText(`${d.score}/${fw.criteria.length} KRITER`, W - 92, 76);
-  ctx.textAlign = 'left';
+  // badges
+  ctx.fillStyle='rgba(45,143,255,0.1)'; ctx.strokeStyle='#2d8fff'; ctx.lineWidth=1;
+  ctx.strokeRect(24,126,fw.name.length*7+20,22); ctx.fillRect(24,fw.name.length*7>50?126:126,fw.name.length*7+20,22);
+  ctx.fillStyle='#2d8fff'; ctx.font='700 9px DM Mono,monospace';
+  ctx.fillText(fw.name.toUpperCase(),30,141);
 
-  // Framework badge
-  ctx.fillStyle = 'rgba(45,143,255,0.1)';
-  ctx.strokeStyle = '#2d8fff';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(24, 126, 100, 22);
-  ctx.fillRect(24, 126, 100, 22);
-  ctx.fillStyle = '#2d8fff';
-  ctx.font = '700 9px DM Mono, monospace';
-  ctx.fillText(fw.name.toUpperCase() + ' CERCEVESI', 30, 141);
+  ctx.fillStyle='rgba(0,200,255,0.08)'; ctx.strokeStyle='#00c8ff';
+  const bx=fw.name.length*7+52;
+  ctx.strokeRect(bx,126,60,22); ctx.fillRect(bx,126,60,22);
+  ctx.fillStyle='#00c8ff'; ctx.fillText(currentEX,bx+6,141);
 
-  ctx.fillStyle = 'rgba(0,212,255,0.1)';
-  ctx.strokeStyle = '#00c8ff';
-  ctx.strokeRect(132, 126, 60, 22);
-  ctx.fillRect(132, 126, 60, 22);
-  ctx.fillStyle = '#00c8ff';
-  ctx.fillText(currentEX, 138, 141);
+  // divider
+  ctx.strokeStyle='#0f2540'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(24,162); ctx.lineTo(W-24,162); ctx.stroke();
 
-  // Divider
-  ctx.strokeStyle = '#0f2540';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(24, 162); ctx.lineTo(W-24, 162); ctx.stroke();
-
-  // Criteria bars
-  const criteria = fw.criteria;
-  const barH = 28;
-  const startY = 178;
-  const cols = 2;
-  const colW = (W - 48) / cols;
-
-  criteria.forEach((cr, i) => {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const x = 24 + col * colW;
-    const y = startY + row * (barH + 6);
-
-    if (y + barH > H - 50) return;
-
-    const status = d.statuses[i];
-    const color = status === 'pass' ? '#00e5a0' : status === 'fail' ? '#ff4d6a' : '#00c8ff';
-    const fillW = status === 'pass' ? colW - 80 : status === 'fail' ? (colW - 80) * 0.2 : (colW - 80) * 0.55;
-
-    // Bar bg
-    ctx.fillStyle = '#050d1a';
-    ctx.fillRect(x, y, colW - 10, barH);
-
-    // Bar fill
-    ctx.fillStyle = color + '30';
-    ctx.fillRect(x, y, fillW, barH);
-
-    // Status indicator
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, 3, barH);
-
-    // Name
-    ctx.fillStyle = '#e8f4ff';
-    ctx.font = '600 10px DM Mono, monospace';
-    const shortName = cr.name.length > 20 ? cr.name.substring(0,19)+'…' : cr.name;
-    ctx.fillText(shortName, x + 10, y + 12);
-
-    // Status pill
-    ctx.fillStyle = color;
-    ctx.font = '700 9px DM Mono, monospace';
-    const statusText = status === 'pass' ? '✓ GEÇTİ' : status === 'fail' ? '✗ KALDI' : '? BELİRSİZ';
-    ctx.fillText(statusText, x + 10, y + 22);
+  // criteria
+  const cols=2, cW=(W-48)/cols, bH=30, sY=174;
+  fw.criteria.forEach((cr,i)=>{
+    const col=i%cols, row=Math.floor(i/cols);
+    const x=24+col*cW, y=sY+row*(bH+6);
+    if(y+bH>H-44) return;
+    const s=d.statuses[i];
+    const clr=s==='pass'?'#00e5a0':s==='fail'?'#ff4d6a':'#00c8ff';
+    const fw2=s==='pass'?cW-12:s==='fail'?(cW-12)*0.18:(cW-12)*0.55;
+    ctx.fillStyle='#050d1a'; ctx.fillRect(x,y,cW-10,bH);
+    ctx.fillStyle=clr+'28'; ctx.fillRect(x,y,fw2,bH);
+    ctx.fillStyle=clr; ctx.fillRect(x,y,3,bH);
+    ctx.fillStyle='#e8f4ff'; ctx.font='600 10px DM Mono,monospace';
+    const nm=cr.name.length>22?cr.name.substring(0,21)+'…':cr.name;
+    ctx.fillText(nm,x+9,y+12);
+    ctx.fillStyle=clr; ctx.font='700 9px DM Mono,monospace';
+    ctx.fillText(s==='pass'?'✓ GEÇTİ':s==='fail'?'✗ KALDI':'? BELİRSİZ',x+9,y+24);
   });
 
-  // Footer
-  ctx.fillStyle = '#1a3a5c';
-  ctx.fillRect(0, H - 36, W, 36);
-  ctx.fillStyle = '#2d8fff';
-  ctx.font = '700 10px DM Mono, monospace';
-  ctx.fillText('@barisinvesting', 24, H - 16);
-  ctx.fillStyle = '#5a90b8';
-  ctx.textAlign = 'right';
-  ctx.fillText('barisinvesting.vercel.app', W - 24, H - 16);
-  ctx.textAlign = 'left';
+  // footer
+  ctx.fillStyle='#0a1e30'; ctx.fillRect(0,H-38,W,38);
+  ctx.fillStyle='#2d8fff'; ctx.font='700 10px DM Mono,monospace';
+  ctx.fillText('@barisinvesting',24,H-16);
+  ctx.fillStyle='#5a90b8'; ctx.textAlign='right';
+  ctx.fillText('barisinvesting.vercel.app',W-24,H-16);
+  ctx.textAlign='left';
 }
 
 function downloadShareImage() {
-  const canvas = document.getElementById('shareCanvas');
-  const link = document.createElement('a');
-  link.download = `${currentTicker}_${currentFW}_analiz.png`;
-  link.href = canvas.toDataURL('image/png');
+  const canvas=document.getElementById('shareCanvas');
+  const link=document.createElement('a');
+  link.download=`${currentTicker}_${currentFW}_analiz.png`;
+  link.href=canvas.toDataURL('image/png');
   link.click();
 }
 
 function tweetIt() {
-  if (!analysisData) return;
-  const fw = FW[currentFW];
-  const d = analysisData;
-  const passItems = fw.criteria.filter((_,i) => d.statuses[i]==='pass').map(c => `✅ ${c.name.split(' ')[0]}`);
-  const failItems = fw.criteria.filter((_,i) => d.statuses[i]==='fail').map(c => `❌ ${c.name.split(' ')[0]}`);
-  const em = d.verdict==='AL'?'🟢':d.verdict==='UZAK_DUR'?'🔴':'🟡';
-  const text = `📊 ${currentEX}: $${d.ticker}${currentCompany?' — '+currentCompany:''}
+  if(!analysisData) return;
+  const fw=FW[currentFW];
+  const d=analysisData;
+  const pass=fw.criteria.filter((_,i)=>d.statuses[i]==='pass').map(c=>`✅ ${c.name.split(' ')[0]}`);
+  const fail=fw.criteria.filter((_,i)=>d.statuses[i]==='fail').map(c=>`❌ ${c.name.split(' ')[0]}`);
+  const em=d.verdict==='AL'?'🟢':d.verdict==='UZAK_DUR'?'🔴':'🟡';
+  const text=`📊 ${currentEX}: $${d.ticker}${currentCompany?' — '+currentCompany:''}
 ${fw.name} Skoru: ${d.score}/${fw.criteria.length} ${em} ${d.verdict}
 
-${passItems.slice(0,3).join(' ')}
-${failItems.slice(0,2).join(' ')}
+${pass.slice(0,3).join(' ')}
+${fail.slice(0,2).join(' ')}
 
 @barisinvesting ile analiz et 👇
 barisinvesting.vercel.app
 
 #Borsa #Yatırım #${d.ticker}`;
-  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,'_blank');
   closeShareModal();
 }
 
-// ---- STATUS HELPERS ----
-function pill(s) {
-  if (!s||s==='pending') return '<span class="status-pill pending">○ Bekliyor</span>';
-  if (s==='pass') return '<span class="status-pill pass">✓ GEÇTİ</span>';
-  if (s==='fail') return '<span class="status-pill fail">✗ KALDI</span>';
+// ---- HELPERS ----
+function pill(s){
+  if(!s||s==='pending') return '<span class="status-pill pending">○ Bekliyor</span>';
+  if(s==='pass') return '<span class="status-pill pass">✓ GEÇTİ</span>';
+  if(s==='fail') return '<span class="status-pill fail">✗ KALDI</span>';
   return '<span class="status-pill neutral">? BELİRSİZ</span>';
 }
-function icon(s) { return s==='pass'?'✓':s==='fail'?'✗':s==='neutral'?'?':'○'; }
-function parseStatus(str) {
-  if (!str) return 'neutral';
-  const u = str.toUpperCase();
-  if (u.includes('PASS')) return 'pass';
-  if (u.includes('FAIL')) return 'fail';
+function icon(s){return s==='pass'?'✓':s==='fail'?'✗':s==='neutral'?'?':'○';}
+function parseStatus(str){
+  if(!str) return 'neutral';
+  const u=str.toUpperCase();
+  if(u.includes('PASS')) return 'pass';
+  if(u.includes('FAIL')) return 'fail';
   return 'neutral';
 }
 
-// ---- RENDER CRIT DETAIL ----
 function renderCritDetail(i) {
-  const fw = FW[currentFW];
-  const meta = fw.criteria[i];
-  document.getElementById('critTitle').textContent = `Kriter ${String(i+1).padStart(2,'0')} — ${meta.name}`;
-  document.getElementById('critNum').textContent = String(i+1).padStart(2,'0');
-  document.getElementById('critName').textContent = meta.name;
-  document.getElementById('critDesc').textContent = meta.desc;
-  document.getElementById('critContext').textContent = meta.ctx;
-  if (analysisData && analysisData.fw === currentFW) {
-    document.getElementById('critPill').innerHTML = pill(analysisData.statuses[i]);
-    document.getElementById('critAnalysis').textContent = analysisData.details[i] || '—';
+  const fw=FW[currentFW];
+  const meta=fw.criteria[i];
+  document.getElementById('critTitle').textContent=`Kriter ${String(i+1).padStart(2,'0')} — ${meta.name}`;
+  document.getElementById('critNum').textContent=String(i+1).padStart(2,'0');
+  document.getElementById('critName').textContent=meta.name;
+  document.getElementById('critDesc').textContent=meta.desc;
+  document.getElementById('critContext').textContent=meta.ctx;
+  if(analysisData&&analysisData.fw===currentFW){
+    document.getElementById('critPill').innerHTML=pill(analysisData.statuses[i]);
+    document.getElementById('critAnalysis').textContent=analysisData.details[i]||'—';
   } else {
-    document.getElementById('critPill').innerHTML = pill('pending');
-    document.getElementById('critAnalysis').textContent = 'Önce bir hisse analiz edin.';
+    document.getElementById('critPill').innerHTML=pill('pending');
+    document.getElementById('critAnalysis').textContent='Önce bir hisse analiz edin.';
   }
-  const bars = document.getElementById('critBars');
-  bars.innerHTML = '';
-  fw.criteria.forEach((m, idx) => {
-    const s = (analysisData && analysisData.fw === currentFW) ? analysisData.statuses[idx] : 'pending';
-    const v = s==='pass'?100:s==='fail'?20:s==='neutral'?55:0;
-    const cls = s==='pass'?'pass':s==='fail'?'fail':'neutral';
-    const row = document.createElement('div');
-    row.className = 'score-row';
-    row.innerHTML = `<div class="score-bar-label">${String(idx+1).padStart(2,'0')} ${m.name}</div><div class="score-bar"><div class="score-bar-fill ${cls}" id="sb-${idx}" style="width:0%"></div></div><div class="score-bar-val">${s==='pending'?'—':icon(s)}</div>`;
+  const bars=document.getElementById('critBars');
+  bars.innerHTML='';
+  fw.criteria.forEach((m,idx)=>{
+    const s=(analysisData&&analysisData.fw===currentFW)?analysisData.statuses[idx]:'pending';
+    const v=s==='pass'?100:s==='fail'?20:s==='neutral'?55:0;
+    const cls=s==='pass'?'pass':s==='fail'?'fail':'neutral';
+    const row=document.createElement('div');
+    row.className='score-row';
+    row.innerHTML=`<div class="score-bar-label">${String(idx+1).padStart(2,'0')} ${m.name}</div><div class="score-bar"><div class="score-bar-fill ${cls}" id="sb-${idx}" style="width:0%"></div></div><div class="score-bar-val">${s==='pending'?'—':icon(s)}</div>`;
     bars.appendChild(row);
-    setTimeout(() => { const el = document.getElementById('sb-'+idx); if(el) el.style.width=v+'%'; }, 50+idx*80);
+    setTimeout(()=>{const el=document.getElementById('sb-'+idx);if(el)el.style.width=v+'%';},50+idx*80);
   });
 }
 
-// ---- RENDER CHARTS ----
 function renderCharts(data) {
-  const fw = FW[currentFW];
-  const scores = data.statuses.map(s => s==='pass'?100:s==='fail'?15:50);
-  const colors = data.statuses.map(s => s==='pass'?'rgba(0,229,160,0.7)':s==='fail'?'rgba(255,77,106,0.7)':'rgba(0,200,255,0.6)');
-  const ac = currentFW==='lynch'?'#f97316':'#2d8fff';
-  if (radarChart) radarChart.destroy();
-  if (barChart) barChart.destroy();
-  radarChart = new Chart(document.getElementById('radarChart').getContext('2d'), {
+  const fw=FW[currentFW];
+  const scores=data.statuses.map(s=>s==='pass'?100:s==='fail'?15:50);
+  const colors=data.statuses.map(s=>s==='pass'?'rgba(0,229,160,0.7)':s==='fail'?'rgba(255,77,106,0.7)':'rgba(0,200,255,0.6)');
+  const ac=currentFW==='lynch'?'#f97316':'#2d8fff';
+  if(radarChart) radarChart.destroy();
+  if(barChart) barChart.destroy();
+  radarChart=new Chart(document.getElementById('radarChart').getContext('2d'),{
     type:'radar',
     data:{labels:fw.criteria.map(c=>c.name.split(' ')[0]),datasets:[{data:scores,backgroundColor:ac+'18',borderColor:ac,borderWidth:2,pointBackgroundColor:ac,pointRadius:4}]},
     options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'#0f2540'},pointLabels:{color:'#5a90b8',font:{family:'DM Mono',size:9}},angleLines:{color:'#0f2540'}}},plugins:{legend:{display:false}}}
   });
-  barChart = new Chart(document.getElementById('barChart').getContext('2d'), {
+  barChart=new Chart(document.getElementById('barChart').getContext('2d'),{
     type:'bar',
     data:{labels:fw.criteria.map((_,i)=>String(i+1).padStart(2,'0')),datasets:[{data:scores,backgroundColor:colors,borderWidth:0,borderRadius:2}]},
     options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100,ticks:{display:false},grid:{color:'#050d1a'},border:{color:'#0f2540'}},x:{ticks:{color:'#5a90b8',font:{family:'DM Mono',size:9}},grid:{display:false},border:{color:'#0f2540'}}},plugins:{legend:{display:false}}}
   });
 }
 
-// ---- RENDER TABLE ----
 function renderTable(data) {
-  const fw = FW[currentFW];
-  const tbody = document.getElementById('summaryBody');
-  tbody.innerHTML = '';
-  fw.criteria.forEach((m, i) => {
-    const tr = document.createElement('tr');
-    tr.onclick = () => showPage('crit', i);
-    tr.innerHTML = `<td><span class="crit-num">${String(i+1).padStart(2,'0')}</span></td><td><div class="crit-name">${m.name}</div><div class="crit-desc">${m.desc}</div></td><td>${pill(data.statuses[i])}</td><td><div class="detail-text">${(data.details[i]||'—').substring(0,90)}${data.details[i]&&data.details[i].length>90?'...':''}</div></td>`;
+  const fw=FW[currentFW];
+  const tbody=document.getElementById('summaryBody');
+  tbody.innerHTML='';
+  fw.criteria.forEach((m,i)=>{
+    const tr=document.createElement('tr');
+    tr.onclick=()=>showPage('crit',i);
+    tr.innerHTML=`<td><span class="crit-num">${String(i+1).padStart(2,'0')}</span></td><td><div class="crit-name">${m.name}</div><div class="crit-desc">${m.desc}</div></td><td>${pill(data.statuses[i])}</td><td><div class="detail-text">${(data.details[i]||'—').substring(0,90)}${data.details[i]&&data.details[i].length>90?'...':''}</div></td>`;
     tbody.appendChild(tr);
   });
 }
 
-// ---- ANALYZE ----
 async function doAnalyze() {
-  const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
-  const company = document.getElementById('companyInput').value.trim();
-  if (!ticker) return;
-
-  const btn = document.getElementById('analyzeBtn');
-  const overlay = document.getElementById('loadingOverlay');
-  const errorBar = document.getElementById('errorBar');
-  const ex = EX[currentEX];
-  const fw = FW[currentFW];
-
+  const ticker=document.getElementById('tickerInput').value.trim().toUpperCase();
+  const company=document.getElementById('companyInput').value.trim();
+  if(!ticker) return;
+  const btn=document.getElementById('analyzeBtn');
+  const overlay=document.getElementById('loadingOverlay');
+  const errorBar=document.getElementById('errorBar');
+  const ex=EX[currentEX];
+  const fw=FW[currentFW];
   errorBar.classList.remove('visible');
-  btn.disabled = true;
-  currentTicker = ticker;
-  currentCompany = company;
-
-  document.getElementById('loadingTicker').textContent = ticker;
-  document.getElementById('loadingFw').textContent = `${ex.label} — ${fw.name}`;
+  btn.disabled=true;
+  currentTicker=ticker; currentCompany=company;
+  document.getElementById('loadingTicker').textContent=ticker;
+  document.getElementById('loadingFw').textContent=`${ex.label} — ${fw.name}`;
   overlay.classList.add('visible');
-
-  ['ls1','ls2','ls3','ls4'].forEach((s,i) => {
-    document.getElementById(s).className = 'loading-step';
-    setTimeout(() => {
-      if (i > 0) document.getElementById(['ls1','ls2','ls3','ls4'][i-1]).classList.add('done');
-      document.getElementById(s).classList.add('active');
-    }, i * 700);
+  ['ls1','ls2','ls3','ls4'].forEach((s,i)=>{
+    document.getElementById(s).className='loading-step';
+    setTimeout(()=>{if(i>0)document.getElementById(['ls1','ls2','ls3','ls4'][i-1]).classList.add('done');document.getElementById(s).classList.add('active');},i*700);
   });
-
   try {
-    const prompt = fw.prompt(ticker, company, ex.label);
-    const response = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticker, prompt })
-    });
-    const data = await response.json();
-    if (data.error) throw new Error(data.error);
+    const prompt=fw.prompt(ticker,company,ex.label);
+    const response=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,prompt})});
+    const data=await response.json();
+    if(data.error) throw new Error(data.error);
     document.getElementById('ls4').classList.add('done');
-    setTimeout(() => {
-      overlay.classList.remove('visible');
-      btn.disabled = false;
-      hasAnalyzed = true;
-      parseAndRender(ticker, company, data.result);
-    }, 400);
-  } catch (err) {
+    setTimeout(()=>{overlay.classList.remove('visible');btn.disabled=false;hasAnalyzed=true;parseAndRender(ticker,company,data.result);},400);
+  } catch(err) {
     overlay.classList.remove('visible');
-    btn.disabled = false;
-    errorBar.textContent = 'Hata: ' + err.message;
+    btn.disabled=false;
+    errorBar.textContent='Hata: '+err.message;
     errorBar.classList.add('visible');
   }
 }
 
-function parseAndRender(ticker, company, text) {
-  const fw = FW[currentFW];
-  const ex = EX[currentEX];
-  const statuses = [], details = [];
-
-  fw.keys.forEach(key => {
-    const m = text.match(new RegExp(key + ':\\s*(PASS|FAIL|NEUTRAL)\\s*\\|\\s*([^\\n]+)', 'i'));
-    statuses.push(m ? parseStatus(m[1]) : 'neutral');
-    details.push(m ? m[2].trim() : '—');
+function parseAndRender(ticker,company,text) {
+  const fw=FW[currentFW];
+  const ex=EX[currentEX];
+  const statuses=[],details=[];
+  fw.keys.forEach(key=>{
+    const m=text.match(new RegExp(key+':\\s*(PASS|FAIL|NEUTRAL)\\s*\\|\\s*([^\\n]+)','i'));
+    statuses.push(m?parseStatus(m[1]):'neutral');
+    details.push(m?m[2].trim():'—');
   });
+  const sm=text.match(/TOTAL_SCORE:\s*(\d+)/);
+  const score=sm?parseInt(sm[1]):statuses.filter(s=>s==='pass').length;
+  const vm=text.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);
+  const verdict=vm?vm[1]:'BEKLE';
+  analysisData={ticker,company,statuses,details,score,verdict,fw:currentFW};
 
-  const sMatch = text.match(/TOTAL_SCORE:\s*(\d+)/);
-  const score = sMatch ? parseInt(sMatch[1]) : statuses.filter(s=>s==='pass').length;
-  const vMatch = text.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);
-  const verdict = vMatch ? vMatch[1] : 'BEKLE';
+  statuses.forEach((s,i)=>{const el=document.getElementById('ns-'+i);if(el)el.textContent=icon(s);});
 
-  analysisData = { ticker, company, statuses, details, score, verdict, fw: currentFW };
+  const vbox=document.getElementById('verdictBox');
+  vbox.textContent=`${score}/${fw.criteria.length} — ${verdict}`;
+  vbox.className='verdict-box '+(verdict==='AL'?'buy':verdict==='UZAK_DUR'?'avoid':'watch');
 
-  // Nav icons
-  statuses.forEach((s,i) => { const el = document.getElementById('ns-'+i); if(el) el.textContent = icon(s); });
-
-  // Verdict
-  const vbox = document.getElementById('verdictBox');
-  vbox.textContent = `${score}/${fw.criteria.length} — ${verdict}`;
-  vbox.className = 'verdict-box ' + (verdict==='AL'?'buy':verdict==='UZAK_DUR'?'avoid':'watch');
-
-  // Stock header
-  const logoEl = document.getElementById('stockLogo');
-  const logoUrl = getLogoUrl(ticker, currentEX);
-  if (logoUrl) {
-    logoEl.innerHTML = `<img src="${logoUrl}" alt="${ticker}" onerror="this.parentElement.textContent='${ticker.substring(0,2)}'">`;
+  // Logo
+  const logoEl=document.getElementById('stockLogo');
+  const logoUrl=getLogoUrl(ticker);
+  if(logoUrl){
+    logoEl.innerHTML=`<img src="${logoUrl}" alt="${ticker}" onerror="this.parentElement.innerHTML='${ticker.substring(0,2)}'">`;
   } else {
-    logoEl.textContent = ticker.substring(0, 2);
+    logoEl.textContent=ticker.substring(0,2);
   }
 
-  document.getElementById('stockTicker').textContent = ticker;
-  document.getElementById('stockCompany').textContent = company || '';
-  document.getElementById('badgeExchange').textContent = ex.label;
-  const bfw = document.getElementById('badgeFw');
-  bfw.textContent = fw.name;
-  bfw.className = 'badge badge-fw ' + currentFW;
+  // Header flag
+  const flagEl=document.getElementById('headerFlag');
+  flagEl.className='header-flag '+ex.flagClass;
+
+  document.getElementById('stockTicker').textContent=ticker;
+  document.getElementById('stockCompany').textContent=company||'';
+  document.getElementById('badgeEx').textContent=ex.label;
+  const bfw=document.getElementById('badgeFw');
+  bfw.textContent=fw.name;
+  bfw.className='badge badge-fw '+currentFW;
   document.getElementById('stockHeader').classList.add('visible');
+  document.getElementById('overviewTicker').textContent=company?`${ticker} — ${company}`:ticker;
+  document.getElementById('statScore').textContent=`${score}/${fw.criteria.length}`;
+  const pc=statuses.filter(s=>s==='pass').length;
+  const fc=statuses.filter(s=>s==='fail').length;
+  document.getElementById('statPass').textContent=pc;
+  document.getElementById('statPassSub').textContent=`${fc} kaldı, ${statuses.filter(s=>s==='neutral').length} belirsiz`;
 
-  document.getElementById('overviewTicker').textContent = company ? `${ticker} — ${company}` : ticker;
-  document.getElementById('statScore').textContent = `${score}/${fw.criteria.length}`;
-  const pc = statuses.filter(s=>s==='pass').length;
-  const fc = statuses.filter(s=>s==='fail').length;
-  document.getElementById('statPass').textContent = pc;
-  document.getElementById('statPassSub').textContent = `${fc} kaldı, ${statuses.filter(s=>s==='neutral').length} belirsiz`;
-
-  loadTradingView(ticker, currentEX);
+  loadTradingView(ticker,currentEX);
   renderCharts(analysisData);
   renderTable(analysisData);
   showPage('overview');
 }
 
-// Init
 buildNav();
 buildPopularChips();
-document.getElementById('tickerInput').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('companyInput').focus(); });
-document.getElementById('companyInput').addEventListener('keydown', e => { if(e.key==='Enter') { closeSidebar(); doAnalyze(); } });
+document.getElementById('tickerInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('companyInput').focus();});
+document.getElementById('companyInput').addEventListener('keydown',e=>{if(e.key==='Enter'){closeSidebar();doAnalyze();}});
 </script>
 </body>
 </html>
