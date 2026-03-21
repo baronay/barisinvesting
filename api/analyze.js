@@ -1,220 +1,102 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { ticker, prompt, exchange } = req.body;
+  if (!ticker) return res.status(400).json({ error: 'Ticker gerekli' });
 
-  if (!ticker) {
-    return res.status(400).json({ error: 'Ticker gerekli' });
-  }
-
-  // Yahoo Finance ticker format
   const yahooTicker = exchange === 'BIST' ? `${ticker}.IS` : ticker;
-
-  // Fetch real financial data from Yahoo Finance
   let financialData = null;
-  try {
-    financialData = await fetchYahooData(yahooTicker);
-  } catch (e) {
-    console.log('Yahoo fetch failed:', e.message);
-  }
+  try { financialData = await fetchYahooData(yahooTicker); } catch (e) {}
 
-  // Build enriched prompt with real data
-  const enrichedPrompt = financialData
-    ? injectFinancialData(prompt, financialData, ticker)
-    : prompt;
+  const enrichedPrompt = financialData ? injectFinancialData(prompt, financialData, ticker) : prompt;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1400,
-        messages: [{ role: 'user', content: enrichedPrompt }]
-      })
+      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1400, messages: [{ role: 'user', content: enrichedPrompt }] })
     });
-
     const data = await response.json();
-    if (data.error) {
-      return res.status(500).json({ error: data.error.message });
-    }
-
-    const text = data.content?.[0]?.text || '';
-    res.status(200).json({ result: text, financialData });
-
+    if (data.error) return res.status(500).json({ error: data.error.message });
+    res.status(200).json({ result: data.content?.[0]?.text || '', financialData });
   } catch (err) {
     res.status(500).json({ error: 'API hatası: ' + err.message });
   }
 }
 
 async function fetchYahooData(yahooTicker) {
-  const headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    'Accept': 'application/json',
-  };
-
-  // Fetch summary + key stats in parallel
-  const [summaryRes, statsRes] = await Promise.allSettled([
+  const headers = { 'User-Agent': 'Mozilla/5.0' };
+  const [r1, r2] = await Promise.allSettled([
     fetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${yahooTicker}?modules=summaryDetail,defaultKeyStatistics,financialData,price`, { headers }),
     fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${yahooTicker}?modules=summaryDetail,defaultKeyStatistics,financialData,price`, { headers }),
   ]);
-
-  const summaryData = summaryRes.status === 'fulfilled' && summaryRes.value.ok
-    ? await summaryRes.value.json()
-    : statsRes.status === 'fulfilled' && statsRes.value.ok
-      ? await statsRes.value.json()
-      : null;
-
-  if (!summaryData?.quoteSummary?.result?.[0]) {
-    throw new Error('Yahoo data not available');
-  }
-
-  const result = summaryData.quoteSummary.result[0];
-  const sd = result.summaryDetail || {};
-  const ks = result.defaultKeyStatistics || {};
-  const fd = result.financialData || {};
-  const pr = result.price || {};
-
-  const fmt = (v) => {
-    if (!v || v.raw === undefined || v.raw === null) return null;
-    return v.raw;
-  };
-  const fmtStr = (v) => v?.fmt || null;
-
+  const resp = r1.status === 'fulfilled' && r1.value.ok ? await r1.value.json() : r2.status === 'fulfilled' && r2.value.ok ? await r2.value.json() : null;
+  if (!resp?.quoteSummary?.result?.[0]) throw new Error('No data');
+  const { summaryDetail: sd = {}, defaultKeyStatistics: ks = {}, financialData: fd = {}, price: pr = {} } = resp.quoteSummary.result[0];
+  const f = v => v?.raw ?? null;
   return {
-    // Price
-    currentPrice: fmt(pr.regularMarketPrice) || fmt(fd.currentPrice),
+    currentPrice: f(pr.regularMarketPrice) || f(fd.currentPrice),
     currency: pr.currency || 'USD',
-    marketCap: fmt(pr.marketCap),
-    fiftyTwoWeekLow: fmt(sd.fiftyTwoWeekLow),
-    fiftyTwoWeekHigh: fmt(sd.fiftyTwoWeekHigh),
-
-    // Valuation
-    peRatio: fmt(sd.trailingPE) || fmt(ks.trailingPE),
-    forwardPE: fmt(sd.forwardPE) || fmt(ks.forwardPE),
-    pbRatio: fmt(ks.priceToBook),
-    pegRatio: fmt(ks.pegRatio),
-    evEbitda: fmt(ks.enterpriseToEbitda),
-    priceToSales: fmt(ks.priceToSalesTrailing12Months),
-    evToRevenue: fmt(ks.enterpriseToRevenue),
-
-    // Profitability
-    profitMargin: fmt(fd.profitMargins),
-    operatingMargin: fmt(fd.operatingMargins),
-    grossMargin: fmt(fd.grossMargins),
-    roe: fmt(fd.returnOnEquity),
-    roa: fmt(fd.returnOnAssets),
-
-    // Cash flow
-    freeCashflow: fmt(fd.freeCashflow),
-    operatingCashflow: fmt(fd.operatingCashflow),
-
-    // Balance
-    totalCash: fmt(fd.totalCash),
-    totalDebt: fmt(fd.totalDebt),
-    debtToEquity: fmt(fd.debtToEquity),
-    currentRatio: fmt(fd.currentRatio),
-    quickRatio: fmt(fd.quickRatio),
-
-    // Growth
-    revenueGrowth: fmt(fd.revenueGrowth),
-    earningsGrowth: fmt(fd.earningsGrowth),
-    revenuePerShare: fmt(fd.revenuePerShare),
-
-    // Dividend
-    dividendYield: fmt(sd.dividendYield),
-    payoutRatio: fmt(sd.payoutRatio),
-
-    // Short/Institution
-    shortRatio: fmt(ks.shortRatio),
-    institutionOwnership: fmt(ks.heldPercentInstitutions),
-
-    // Recommendations
+    marketCap: f(pr.marketCap),
+    fiftyTwoWeekLow: f(sd.fiftyTwoWeekLow),
+    fiftyTwoWeekHigh: f(sd.fiftyTwoWeekHigh),
+    peRatio: f(sd.trailingPE) || f(ks.trailingPE),
+    forwardPE: f(sd.forwardPE) || f(ks.forwardPE),
+    pbRatio: f(ks.priceToBook),
+    pegRatio: f(ks.pegRatio),
+    evEbitda: f(ks.enterpriseToEbitda),
+    profitMargin: f(fd.profitMargins),
+    operatingMargin: f(fd.operatingMargins),
+    grossMargin: f(fd.grossMargins),
+    roe: f(fd.returnOnEquity),
+    roa: f(fd.returnOnAssets),
+    freeCashflow: f(fd.freeCashflow),
+    operatingCashflow: f(fd.operatingCashflow),
+    totalCash: f(fd.totalCash),
+    totalDebt: f(fd.totalDebt),
+    debtToEquity: f(fd.debtToEquity),
+    currentRatio: f(fd.currentRatio),
+    revenueGrowth: f(fd.revenueGrowth),
+    earningsGrowth: f(fd.earningsGrowth),
+    dividendYield: f(sd.dividendYield),
+    institutionOwnership: f(ks.heldPercentInstitutions),
     recommendationKey: fd.recommendationKey || null,
-    numberOfAnalystOpinions: fmt(fd.numberOfAnalystOpinions),
-    targetMeanPrice: fmt(fd.targetMeanPrice),
-    targetHighPrice: fmt(fd.targetHighPrice),
-    targetLowPrice: fmt(fd.targetLowPrice),
+    numberOfAnalystOpinions: f(fd.numberOfAnalystOpinions),
+    targetMeanPrice: f(fd.targetMeanPrice),
+    targetHighPrice: f(fd.targetHighPrice),
+    shortRatio: f(ks.shortRatio),
   };
 }
 
 function injectFinancialData(prompt, fd, ticker) {
-  const pct = (v) => v !== null ? `%${(v * 100).toFixed(1)}` : 'N/A';
-  const num = (v, dec = 2) => v !== null ? v.toFixed(dec) : 'N/A';
-  const big = (v) => {
+  const pct = v => v !== null ? `%${(v * 100).toFixed(1)}` : 'N/A';
+  const num = (v, d = 2) => v !== null ? v.toFixed(d) : 'N/A';
+  const big = v => {
     if (v === null) return 'N/A';
-    if (Math.abs(v) >= 1e12) return `$${(v / 1e12).toFixed(2)}T`;
-    if (Math.abs(v) >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
-    if (Math.abs(v) >= 1e6) return `$${(v / 1e6).toFixed(2)}M`;
+    const a = Math.abs(v);
+    if (a >= 1e12) return `$${(v/1e12).toFixed(2)}T`;
+    if (a >= 1e9) return `$${(v/1e9).toFixed(2)}B`;
+    if (a >= 1e6) return `$${(v/1e6).toFixed(2)}M`;
     return `$${v.toFixed(0)}`;
   };
+  const netCash = fd.totalCash !== null && fd.totalDebt !== null ? fd.totalCash - fd.totalDebt : null;
+  const upside = fd.currentPrice && fd.targetMeanPrice ? ((fd.targetMeanPrice - fd.currentPrice) / fd.currentPrice * 100).toFixed(1) : null;
 
-  const netCash = fd.totalCash !== null && fd.totalDebt !== null
-    ? fd.totalCash - fd.totalDebt : null;
-
-  const upside = fd.currentPrice && fd.targetMeanPrice
-    ? ((fd.targetMeanPrice - fd.currentPrice) / fd.currentPrice * 100).toFixed(1)
-    : null;
-
-  const dataBlock = `
-
+  const block = `
 === GERÇEK FİNANSAL VERİLER (Yahoo Finance - Anlık) ===
-Şirket: ${ticker}
 Güncel Fiyat: ${fd.currentPrice ? `${fd.currentPrice} ${fd.currency}` : 'N/A'}
-52H Düşük/Yüksek: ${fd.fiftyTwoWeekLow || 'N/A'} / ${fd.fiftyTwoWeekHigh || 'N/A'} ${fd.currency || ''}
+52H Düşük/Yüksek: ${fd.fiftyTwoWeekLow || 'N/A'} / ${fd.fiftyTwoWeekHigh || 'N/A'}
 Piyasa Değeri: ${big(fd.marketCap)}
-
-DEĞERLEME ÇARPANLARI:
-- F/K (P/E TTM): ${num(fd.peRatio)}
-- F/K (Forward): ${num(fd.forwardPE)}
-- F/DD (P/B): ${num(fd.pbRatio)}
-- PEG Oranı: ${num(fd.pegRatio)}
-- EV/FAVÖK: ${num(fd.evEbitda)}
-- F/S (P/S): ${num(fd.priceToSales)}
-
-KÂRLILİK:
-- Net Kâr Marjı: ${pct(fd.profitMargin)}
-- Faaliyet Marjı: ${pct(fd.operatingMargin)}
-- Brüt Kâr Marjı: ${pct(fd.grossMargin)}
-- Özsermaye Kârlılığı (ROE): ${pct(fd.roe)}
-- Aktif Kârlılığı (ROA): ${pct(fd.roa)}
-
-NAKİT AKIŞI:
-- Serbest Nakit Akışı: ${big(fd.freeCashflow)}
-- Operasyonel Nakit Akışı: ${big(fd.operatingCashflow)}
-
-BİLANÇO:
-- Toplam Nakit: ${big(fd.totalCash)}
-- Toplam Borç: ${big(fd.totalDebt)}
-- Net Nakit Pozisyonu: ${big(netCash)}
-- Borç/Özsermaye: ${num(fd.debtToEquity)}
-- Cari Oran: ${num(fd.currentRatio)}
-
-BÜYÜME:
-- Gelir Büyümesi (YoY): ${pct(fd.revenueGrowth)}
-- Kazanç Büyümesi (YoY): ${pct(fd.earningsGrowth)}
-
-SAHİPLİK:
-- Kurumsal Sahiplik: ${pct(fd.institutionOwnership)}
-- Temettü Verimi: ${pct(fd.dividendYield)}
-
-ANALİST KONSENSÜSÜ:
-- Öneri: ${fd.recommendationKey || 'N/A'}
-- Analist Sayısı: ${fd.numberOfAnalystOpinions || 'N/A'}
-- Hedef Fiyat (Ort): ${fd.targetMeanPrice ? `${fd.targetMeanPrice} ${fd.currency}` : 'N/A'}
-- Hedef Fiyat (Yüksek): ${fd.targetHighPrice ? `${fd.targetHighPrice} ${fd.currency}` : 'N/A'}
-- Yukarı Potansiyel: ${upside ? `%${upside}` : 'N/A'}
+F/K (TTM): ${num(fd.peRatio)} | F/K (Forward): ${num(fd.forwardPE)}
+F/DD: ${num(fd.pbRatio)} | PEG: ${num(fd.pegRatio)} | EV/FAVÖK: ${num(fd.evEbitda)}
+Net Kâr Marjı: ${pct(fd.profitMargin)} | ROE: ${pct(fd.roe)} | ROA: ${pct(fd.roa)}
+FCF: ${big(fd.freeCashflow)} | Nakit: ${big(fd.totalCash)} | Borç: ${big(fd.totalDebt)}
+Net Nakit: ${big(netCash)} | Borç/Özsermaye: ${num(fd.debtToEquity)}
+Gelir Büyümesi: ${pct(fd.revenueGrowth)} | Kazanç Büyümesi: ${pct(fd.earningsGrowth)}
+Kurumsal Sahiplik: ${pct(fd.institutionOwnership)}
+Analist Öneri: ${fd.recommendationKey || 'N/A'} | Hedef: ${fd.targetMeanPrice ? `${fd.targetMeanPrice} ${fd.currency}` : 'N/A'} | Potansiyel: ${upside ? `%${upside}` : 'N/A'}
 ======================================================
-
-Bu GERÇEK verileri kullanarak analiz yap. MULTIPLES bölümünde yukarıdaki gerçek değerleri kullan.
+Bu GERÇEK verileri kullanarak analiz yap. MULTIPLES bölümünde bu değerleri kullan.
 `;
-
-  // Inject before the criteria section
-  return prompt.replace('KRİTERLER:', dataBlock + '\nKRİTERLER:');
+  return prompt.replace('KRİTERLER:', block + '\nKRİTERLER:');
 }
