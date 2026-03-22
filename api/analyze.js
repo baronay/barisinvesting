@@ -1,160 +1,102 @@
-// Analysis publish/read API using Vercel KV (free tier)
-// Setup: Add KV store in Vercel dashboard, env vars auto-added
-
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { method } = req;
-  const { action, id } = req.query;
+  const { ticker, prompt, exchange } = req.body;
+  if (!ticker) return res.status(400).json({ error: 'Ticker gerekli' });
 
-  // Simple admin key check for write operations
-  const ADMIN_KEY = process.env.ADMIN_KEY || 'barisinvesting2026';
+  const yahooTicker = exchange === 'BIST' ? `${ticker}.IS` : ticker;
+  let financialData = null;
+  try { financialData = await fetchYahooData(yahooTicker); } catch (e) {}
 
-  if (method === 'GET') {
-    if (action === 'list') return listAnalyses(res);
-    if (action === 'get' && id) return getAnalysis(id, res);
-    return listAnalyses(res);
-  }
+  const enrichedPrompt = financialData ? injectFinancialData(prompt, financialData, ticker) : prompt;
 
-  if (method === 'POST') {
-    const { adminKey, analysis } = req.body || {};
-    if (adminKey !== ADMIN_KEY) return res.status(401).json({ error: 'Yetkisiz erişim' });
-    return saveAnalysis(analysis, res);
-  }
-
-  if (method === 'DELETE') {
-    const { adminKey } = req.body || {};
-    if (adminKey !== ADMIN_KEY) return res.status(401).json({ error: 'Yetkisiz erişim' });
-    return deleteAnalysis(id, res);
-  }
-
-  return res.status(405).json({ error: 'Method not allowed' });
-}
-
-// ---- KV helpers (Vercel KV) ----
-async function getKV() {
-  // Use Vercel KV if available, else fallback to in-memory (dev)
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
-    return {
-      async get(key) {
-        const r = await fetch(`${process.env.KV_REST_API_URL}/get/${key}`, {
-          headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` }
-        });
-        const d = await r.json();
-        return d.result ? JSON.parse(d.result) : null;
-      },
-      async set(key, value) {
-        await fetch(`${process.env.KV_REST_API_URL}/set/${key}`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ value: JSON.stringify(value) })
-        });
-      },
-      async del(key) {
-        await fetch(`${process.env.KV_REST_API_URL}/del/${key}`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` }
-        });
-      }
-    };
-  }
-  // Fallback: simple file-based or return mock
-  return null;
-}
-
-const ANALYSES_KEY = 'baris_analyses_v1';
-
-async function listAnalyses(res) {
   try {
-    const kv = await getKV();
-    if (!kv) {
-      // Return demo analyses if no KV configured
-      return res.status(200).json({ analyses: getDemoAnalyses() });
-    }
-    const data = await kv.get(ANALYSES_KEY);
-    const analyses = data || [];
-    return res.status(200).json({ analyses: analyses.sort((a, b) => b.createdAt - a.createdAt) });
-  } catch (e) {
-    return res.status(200).json({ analyses: getDemoAnalyses() });
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1400, messages: [{ role: 'user', content: enrichedPrompt }] })
+    });
+    const data = await response.json();
+    if (data.error) return res.status(500).json({ error: data.error.message });
+    res.status(200).json({ result: data.content?.[0]?.text || '', financialData });
+  } catch (err) {
+    res.status(500).json({ error: 'API hatası: ' + err.message });
   }
 }
 
-async function getAnalysis(id, res) {
-  try {
-    const kv = await getKV();
-    if (!kv) return res.status(404).json({ error: 'Not found' });
-    const data = await kv.get(ANALYSES_KEY);
-    const analyses = data || [];
-    const found = analyses.find(a => a.id === id);
-    if (!found) return res.status(404).json({ error: 'Not found' });
-    return res.status(200).json({ analysis: found });
-  } catch (e) { return res.status(500).json({ error: e.message }); }
-}
-
-async function saveAnalysis(analysis, res) {
-  if (!analysis?.title || !analysis?.content) {
-    return res.status(400).json({ error: 'Başlık ve içerik gerekli' });
-  }
-  const newAnalysis = {
-    id: `a_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-    title: analysis.title,
-    ticker: (analysis.ticker || '').toUpperCase(),
-    exchange: analysis.exchange || '',
-    verdict: analysis.verdict || 'BEKLE',
-    buffettScore: analysis.buffettScore || null,
-    lynchScore: analysis.lynchScore || null,
-    summary: analysis.summary || '',
-    content: analysis.content,
-    tags: analysis.tags || [],
-    createdAt: Date.now(),
+async function fetchYahooData(yahooTicker) {
+  const headers = { 'User-Agent': 'Mozilla/5.0' };
+  const [r1, r2] = await Promise.allSettled([
+    fetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${yahooTicker}?modules=summaryDetail,defaultKeyStatistics,financialData,price`, { headers }),
+    fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${yahooTicker}?modules=summaryDetail,defaultKeyStatistics,financialData,price`, { headers }),
+  ]);
+  const resp = r1.status === 'fulfilled' && r1.value.ok ? await r1.value.json() : r2.status === 'fulfilled' && r2.value.ok ? await r2.value.json() : null;
+  if (!resp?.quoteSummary?.result?.[0]) throw new Error('No data');
+  const { summaryDetail: sd = {}, defaultKeyStatistics: ks = {}, financialData: fd = {}, price: pr = {} } = resp.quoteSummary.result[0];
+  const f = v => v?.raw ?? null;
+  return {
+    currentPrice: f(pr.regularMarketPrice) || f(fd.currentPrice),
+    currency: pr.currency || 'USD',
+    marketCap: f(pr.marketCap),
+    fiftyTwoWeekLow: f(sd.fiftyTwoWeekLow),
+    fiftyTwoWeekHigh: f(sd.fiftyTwoWeekHigh),
+    peRatio: f(sd.trailingPE) || f(ks.trailingPE),
+    forwardPE: f(sd.forwardPE) || f(ks.forwardPE),
+    pbRatio: f(ks.priceToBook),
+    pegRatio: f(ks.pegRatio),
+    evEbitda: f(ks.enterpriseToEbitda),
+    profitMargin: f(fd.profitMargins),
+    operatingMargin: f(fd.operatingMargins),
+    grossMargin: f(fd.grossMargins),
+    roe: f(fd.returnOnEquity),
+    roa: f(fd.returnOnAssets),
+    freeCashflow: f(fd.freeCashflow),
+    operatingCashflow: f(fd.operatingCashflow),
+    totalCash: f(fd.totalCash),
+    totalDebt: f(fd.totalDebt),
+    debtToEquity: f(fd.debtToEquity),
+    currentRatio: f(fd.currentRatio),
+    revenueGrowth: f(fd.revenueGrowth),
+    earningsGrowth: f(fd.earningsGrowth),
+    dividendYield: f(sd.dividendYield),
+    institutionOwnership: f(ks.heldPercentInstitutions),
+    recommendationKey: fd.recommendationKey || null,
+    numberOfAnalystOpinions: f(fd.numberOfAnalystOpinions),
+    targetMeanPrice: f(fd.targetMeanPrice),
+    targetHighPrice: f(fd.targetHighPrice),
+    shortRatio: f(ks.shortRatio),
   };
-  try {
-    const kv = await getKV();
-    if (!kv) return res.status(200).json({ success: true, analysis: newAnalysis, warning: 'KV not configured' });
-    const existing = await kv.get(ANALYSES_KEY) || [];
-    existing.unshift(newAnalysis);
-    // Keep max 100 analyses
-    const trimmed = existing.slice(0, 100);
-    await kv.set(ANALYSES_KEY, trimmed);
-    return res.status(200).json({ success: true, analysis: newAnalysis });
-  } catch (e) { return res.status(500).json({ error: e.message }); }
 }
 
-async function deleteAnalysis(id, res) {
-  try {
-    const kv = await getKV();
-    if (!kv) return res.status(404).json({ error: 'KV not configured' });
-    const existing = await kv.get(ANALYSES_KEY) || [];
-    const filtered = existing.filter(a => a.id !== id);
-    await kv.set(ANALYSES_KEY, filtered);
-    return res.status(200).json({ success: true });
-  } catch (e) { return res.status(500).json({ error: e.message }); }
-}
+function injectFinancialData(prompt, fd, ticker) {
+  const pct = v => v !== null ? `%${(v * 100).toFixed(1)}` : 'N/A';
+  const num = (v, d = 2) => v !== null ? v.toFixed(d) : 'N/A';
+  const big = v => {
+    if (v === null) return 'N/A';
+    const a = Math.abs(v);
+    if (a >= 1e12) return `$${(v/1e12).toFixed(2)}T`;
+    if (a >= 1e9) return `$${(v/1e9).toFixed(2)}B`;
+    if (a >= 1e6) return `$${(v/1e6).toFixed(2)}M`;
+    return `$${v.toFixed(0)}`;
+  };
+  const netCash = fd.totalCash !== null && fd.totalDebt !== null ? fd.totalCash - fd.totalDebt : null;
+  const upside = fd.currentPrice && fd.targetMeanPrice ? ((fd.targetMeanPrice - fd.currentPrice) / fd.currentPrice * 100).toFixed(1) : null;
 
-function getDemoAnalyses() {
-  return [
-    {
-      id: 'demo_1',
-      title: 'THYAO — Türk Hava Yolları Derin Analiz',
-      ticker: 'THYAO', exchange: 'BIST', verdict: 'AL',
-      buffettScore: 5, lynchScore: 6,
-      summary: 'THY global expansion hikayesi güçlü, marj iyileştirmesi devam ediyor. 2026 hedef kapasiteye ulaşma sürecinde.',
-      content: `THY analiz içeriği buraya gelecek...`,
-      tags: ['Havacılık', 'BIST30', 'Büyüme'],
-      createdAt: Date.now() - 86400000 * 2,
-    },
-    {
-      id: 'demo_2',
-      title: 'ABBV — AbbVie Buffett Kriterleri ile Analiz',
-      ticker: 'ABBV', exchange: 'NYSE', verdict: 'BEKLE',
-      buffettScore: 4, lynchScore: 4,
-      summary: 'Humira patent kaybı telafi ediliyor ama büyüme ivmesi henüz netleşmedi.',
-      content: `ABBV analiz içeriği buraya gelecek...`,
-      tags: ['İlaç', 'Temettü', 'Değer'],
-      createdAt: Date.now() - 86400000 * 5,
-    },
-  ];
+  const block = `
+=== GERÇEK FİNANSAL VERİLER (Yahoo Finance - Anlık) ===
+Güncel Fiyat: ${fd.currentPrice ? `${fd.currentPrice} ${fd.currency}` : 'N/A'}
+52H Düşük/Yüksek: ${fd.fiftyTwoWeekLow || 'N/A'} / ${fd.fiftyTwoWeekHigh || 'N/A'}
+Piyasa Değeri: ${big(fd.marketCap)}
+F/K (TTM): ${num(fd.peRatio)} | F/K (Forward): ${num(fd.forwardPE)}
+F/DD: ${num(fd.pbRatio)} | PEG: ${num(fd.pegRatio)} | EV/FAVÖK: ${num(fd.evEbitda)}
+Net Kâr Marjı: ${pct(fd.profitMargin)} | ROE: ${pct(fd.roe)} | ROA: ${pct(fd.roa)}
+FCF: ${big(fd.freeCashflow)} | Nakit: ${big(fd.totalCash)} | Borç: ${big(fd.totalDebt)}
+Net Nakit: ${big(netCash)} | Borç/Özsermaye: ${num(fd.debtToEquity)}
+Gelir Büyümesi: ${pct(fd.revenueGrowth)} | Kazanç Büyümesi: ${pct(fd.earningsGrowth)}
+Kurumsal Sahiplik: ${pct(fd.institutionOwnership)}
+Analist Öneri: ${fd.recommendationKey || 'N/A'} | Hedef: ${fd.targetMeanPrice ? `${fd.targetMeanPrice} ${fd.currency}` : 'N/A'} | Potansiyel: ${upside ? `%${upside}` : 'N/A'}
+======================================================
+Bu GERÇEK verileri kullanarak analiz yap. MULTIPLES bölümünde bu değerleri kullan.
+`;
+  return prompt.replace('KRİTERLER:', block + '\nKRİTERLER:');
 }
