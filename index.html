@@ -508,6 +508,52 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
   #priceStrip{flex-direction:column;align-items:flex-start;}
 }
 ::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--border2);}
+
+/* ===== BOTTOM NAV - MOBILE ONLY ===== */
+.bottom-nav{display:none;}
+@media(max-width:768px){
+  .mobile-toggle{display:none!important;}
+  .sidebar{display:none!important;}
+  .app{display:block!important;}
+  .main{width:100%!important;}
+  .main-content{padding:12px;padding-top:16px;padding-bottom:72px;}
+  .bottom-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;
+    background:var(--surface);border-top:1px solid var(--border2);
+    z-index:500;height:58px;
+  }
+  .bn-tab{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;cursor:pointer;color:var(--muted2);transition:color 0.2s;
+    border:none;background:none;-webkit-tap-highlight-color:transparent;
+    padding:6px 0;
+  }
+  .bn-tab.active{color:var(--accent);}
+  .bn-tab svg{width:20px;height:20px;}
+  .bn-tab span{font-size:9px;letter-spacing:0.5px;font-family:'Syne',sans-serif;font-weight:700;text-transform:uppercase;}
+  /* Mobile layout tweaks */
+  .mkt-strip{grid-template-columns:repeat(3,1fr);}
+  .ov-grid,.rd-grid,.mult-grid,.pt-sum{grid-template-columns:1fr 1fr;}
+  .ana-grid,.risk-items{grid-template-columns:1fr;}
+  .pt-charts{grid-template-columns:1fr;}
+  .news-grid{grid-template-columns:1fr;}
+  .stock-hdr{flex-wrap:wrap;}
+  .x-shr-btn{margin-left:0;width:100%;justify-content:center;}
+  .crit-table th:last-child,.crit-table td:last-child{display:none;}
+  .hero-search-row{flex-direction:column;}
+  .hero-search-btn,.hero-fw-select{width:100%;}
+  .hero-ex-row{gap:4px;flex-wrap:wrap;}
+  .pt-add-row{flex-direction:column;}
+  .ptin.tf,.ptin.pf,.ptin.qf,.pt-sel{width:100%;}
+  .fw-opts{grid-template-columns:1fr;}
+  .fw-opt:first-child{border-right:none;border-bottom:1px solid var(--border);}
+  .pf-row{flex-direction:column;}
+  .pf-in{width:100%!important;}
+  #priceStrip{flex-direction:column;align-items:flex-start;}
+  .hero{padding:20px 16px 18px;}
+  .hero-title{font-size:22px;}
+  .s-close{display:none;}
+}
 </style>
 </head>
 <body>
@@ -1505,9 +1551,48 @@ barisinvesting.vercel.app
   },800);
 }
 
+
+// ===== MOBILE BOTTOM NAV =====
+function mobileNav(tab) {
+  // Update active tab
+  ['analiz','portfoy','forum'].forEach(t => {
+    const el = document.getElementById('bn-' + t);
+    if(el) el.className = 'bn-tab' + (t === tab ? ' active' : '');
+  });
+  // Navigate
+  if(tab === 'analiz') {
+    showPage('overview');
+    // Also scroll to top
+    window.scrollTo(0,0);
+  } else if(tab === 'portfoy') {
+    showPage('portfolio');
+    window.scrollTo(0,0);
+  } else if(tab === 'forum') {
+    showPage('forum');
+    loadPosts();
+    window.scrollTo(0,0);
+  }
+}
+
 // INIT
 buildNav();buildChips();setupAC();loadMkt();loadNews();
 if(!localStorage.getItem('baris_fw_seen')){setTimeout(()=>{showFWModal();localStorage.setItem('baris_fw_seen','1');},1400);}
 </script>
+
+<!-- BOTTOM NAVIGATION - MOBILE ONLY -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bn-tab active" id="bn-analiz" onclick="mobileNav('analiz')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <span>Analiz</span>
+  </button>
+  <button class="bn-tab" id="bn-portfoy" onclick="mobileNav('portfoy')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+    <span>Portföy</span>
+  </button>
+  <button class="bn-tab" id="bn-forum" onclick="mobileNav('forum')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span>Forum</span>
+  </button>
+</nav>
 </body>
 </html>
