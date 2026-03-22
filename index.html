@@ -263,10 +263,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .cons-lbls{display:flex;justify-content:space-between;font-size:8px;color:var(--muted2);}
 .ana-note{font-size:9px;color:var(--muted2);padding:7px;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--accent);line-height:1.6;margin-top:7px;}
 
-.tv-card{background:#000;border:1px solid var(--border2);margin-bottom:10px;overflow:hidden;}
-.tv-ct{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
-.tv-ldot{width:5px;height:5px;background:var(--success);border-radius:50%;animation:blink 2s infinite;flex-shrink:0;}
-.tv-wrap{height:400px;width:100%;}
+/* TV chart removed */
 
 .chart-card{background:#000;border:1px solid var(--border2);padding:12px;margin-bottom:10px;}
 .chart-wrap{position:relative;height:145px;}
@@ -708,6 +705,31 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       <div class="stat-card"><div class="stat-lbl">Analiz Skoru</div><div class="stat-val" id="statScore">—</div><div class="stat-sub">kriter üzerinden</div></div>
       <div class="stat-card"><div class="stat-lbl">Geçen Kriter</div><div class="stat-val" id="statPass" style="color:var(--success)">—</div><div class="stat-sub" id="statPassS">—</div></div>
     </div>
+    <!-- Live price strip above multiples -->
+    <div id="priceStrip" style="display:none;background:#000;border:1px solid var(--border2);padding:11px 14px;margin-bottom:10px;display:none;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:3px">Anlık Fiyat</div>
+        <div id="livePriceBig" style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--accent)">—</div>
+        <div id="livePriceSub" style="font-size:9px;color:var(--muted2);margin-top:2px">— ● Yahoo Finance</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-left:auto">
+        <div style="text-align:center">
+          <div style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-bottom:2px">52H Düşük</div>
+          <div id="price52Low" style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--danger)">—</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-bottom:2px">52H Yüksek</div>
+          <div id="price52High" style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--success)">—</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-bottom:2px">Piyasa Değeri</div>
+          <div id="priceMcap" style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text)">—</div>
+        </div>
+        <a id="tvLink" href="#" target="_blank" style="display:flex;align-items:center;gap:5px;background:#000;border:1px solid var(--border2);color:var(--muted2);font-family:'DM Mono',monospace;font-size:9px;padding:7px 11px;text-decoration:none;transition:all 0.2s;align-self:center" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted2)'">
+          📈 TradingView'da Gör →
+        </a>
+      </div>
+    </div>
     <div class="mult-grid" id="multGrid" style="display:none">
       <div class="mult-card"><div class="mult-lbl">F/K (P/E)</div><div class="mult-val" id="mPE">—</div><div class="mult-sub" id="mPES">—</div><div class="mult-sig sn" id="mPESig">—</div></div>
       <div class="mult-card"><div class="mult-lbl">F/DD (P/B)</div><div class="mult-val" id="mPB">—</div><div class="mult-sub" id="mPBS">—</div><div class="mult-sig sn" id="mPBSig">—</div></div>
@@ -731,10 +753,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       <div class="cons-lbls"><span id="cBuyL" style="color:var(--success)">AL</span><span id="cHoldL" style="color:var(--warn)">TUT</span><span id="cSellL" style="color:var(--danger)">SAT</span></div>
       <div class="ana-note" id="anaNote">—</div>
     </div>
-    <div class="tv-card" id="tvCard" style="display:none">
-      <div class="tv-ct"><div class="tv-ldot"></div>Canlı Grafik — <span id="tvLbl" style="color:var(--accent);margin-left:4px">—</span></div>
-      <div class="tv-wrap" id="tvWrap"></div>
-    </div>
+
     <div class="chart-card"><div class="card-t"><div class="cdot"></div>Radar Analizi</div><div class="radar-wrap"><canvas id="radarC"></canvas></div></div>
     <div class="chart-card"><div class="card-t"><div class="cdot"></div>Kriter Skoru</div><div class="chart-wrap"><canvas id="barC"></canvas></div></div>
     <table class="crit-table"><thead><tr><th>#</th><th>Kriter</th><th>Durum</th><th>Özet</th></tr></thead><tbody id="summaryBody"></tbody></table>
@@ -1036,29 +1055,7 @@ function showPage(type,idx){
 }
 
 // TV CHART
-function loadTV(containerId,symbol,height){
-  const c=document.getElementById(containerId);if(!c)return;c.innerHTML='';
-  // Use iframe embed — works for all symbols including BIST
-  const iframe=document.createElement('iframe');
-  iframe.style.cssText=`width:100%;height:${height}px;border:none;`;
-  iframe.allowFullscreen=true;
-  const params=new URLSearchParams({
-    symbol:symbol,
-    interval:'D',
-    timezone:'Europe/Istanbul',
-    theme:'dark',
-    style:'1',
-    locale:'tr',
-    toolbar_bg:'#000000',
-    enable_publishing:'false',
-    hide_top_toolbar:'false',
-    hide_legend:'false',
-    save_image:'false',
-    container_id:containerId,
-  });
-  iframe.src=`https://www.tradingview.com/widgetembed/?${params.toString()}`;
-  c.appendChild(iframe);
-}
+// loadTV removed
 
 // REAL DATA
 function renderRealData(fd){
@@ -1066,6 +1063,21 @@ function renderRealData(fd){
   document.getElementById('rdGrid').style.display='grid';
   document.getElementById('badgeLive').style.display='block';
   document.getElementById('dataBadge').classList.add('visible');
+
+  // Price strip
+  const ps=document.getElementById('priceStrip');
+  if(ps){ps.style.display='flex';}
+  const bigFn=v=>{if(v==null)return'N/A';const a=Math.abs(v);if(a>=1e12)return`${(v/1e12).toFixed(2)}T`;if(a>=1e9)return`${(v/1e9).toFixed(2)}B`;if(a>=1e6)return`${(v/1e6).toFixed(2)}M`;return v.toFixed(0);};
+  const lpb=document.getElementById('livePriceBig');
+  const lps=document.getElementById('livePriceSub');
+  if(lpb&&fd.currentPrice){lpb.textContent=`${fd.currentPrice.toFixed(2)} ${fd.currency}`;lpb.style.color=fd.currency==='TRY'?'var(--warn)':'var(--success)';}
+  if(lps){lps.textContent=`${fd.currency==='TRY'?'BIST':'US'} · Yahoo Finance ●`;}
+  const pl=document.getElementById('price52Low');const ph=document.getElementById('price52High');const pm=document.getElementById('priceMcap');
+  if(pl&&fd.fiftyTwoWeekLow)pl.textContent=`${fd.fiftyTwoWeekLow.toFixed(2)} ${fd.currency}`;
+  if(ph&&fd.fiftyTwoWeekHigh)ph.textContent=`${fd.fiftyTwoWeekHigh.toFixed(2)} ${fd.currency}`;
+  if(pm)pm.textContent=bigFn(fd.marketCap);
+  const tvl=document.getElementById('tvLink');
+  if(tvl){const sym=curEX==='BIST'?`BIST:${curTicker}`:curTicker;tvl.href=`https://www.tradingview.com/chart/?symbol=${sym}`;} 
   const cur=fd.currency==='TRY'?'₺':'$';
   document.getElementById('rdPrice').textContent=fd.currentPrice?`${fd.currentPrice.toFixed(2)} ${fd.currency}`:'N/A';
   document.getElementById('rdPrice').style.color=fd.currency==='TRY'?'var(--warn)':'var(--success)';
@@ -1178,7 +1190,7 @@ async function doAnalyze(){
   document.getElementById('loadingT').textContent=ticker;
   document.getElementById('loadingFW').textContent=`${ex.l} — ${fw.name}`;
   ov.classList.add('visible');
-  ['rdGrid','multGrid','rsiCard','rngCard','anaCard'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  ['rdGrid','multGrid','rsiCard','rngCard','anaCard','priceStrip'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
   document.getElementById('badgeLive').style.display='none';
   ['ls1','ls2','ls3','ls4'].forEach((s,i)=>{document.getElementById(s).className='loading-step';setTimeout(()=>{if(i>0)document.getElementById(['ls1','ls2','ls3','ls4'][i-1]).classList.add('done');document.getElementById(s).classList.add('active');},i*700);});
   try{
@@ -1225,8 +1237,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   if(fd)renderRealData(fd);
   const mults=parseMult(text);if(mults)renderMult(mults);
 
-  document.getElementById('tvLbl').textContent=ticker;document.getElementById('tvCard').style.display='block';
-  loadTV('tvWrap',ex.tv(ticker),400);
+  // TV chart removed
   renderCharts(analysisData);renderTable(analysisData);
 
   // Show analysis section
