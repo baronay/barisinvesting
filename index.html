@@ -13,8 +13,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(45,143,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(45,143,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
 .app{display:flex;min-height:100vh;position:relative;z-index:1;}
 .mobile-toggle{display:none;position:fixed;top:12px;left:12px;z-index:1000;background:var(--surface);border:1px solid var(--border2);color:var(--accent);width:40px;height:40px;cursor:pointer;font-size:17px;align-items:center;justify-content:center;}
-.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:998;opacity:0;pointer-events:none;transition:opacity 0.25s ease;}
-.sidebar-overlay.visible{opacity:1;pointer-events:all;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:998;transition:opacity 0.25s ease;}
+.sidebar-overlay.visible{display:block;opacity:1;cursor:pointer;}
 
 /* SIDEBAR */
 .sidebar{width:268px;min-width:268px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;overflow-x:hidden;z-index:999;transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);flex-shrink:0;}
@@ -883,15 +883,11 @@ function openSidebar(){
   sb.classList.add('open');
   ov.classList.add('visible');
   document.body.style.overflow='hidden';
-  document.body.style.position='fixed';
-  document.body.style.width='100%';
 }
 function closeSidebar(){
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('visible');
   document.body.style.overflow='';
-  document.body.style.position='';
-  document.body.style.width='';
   document.body.style.overflow = '';
 }
 
