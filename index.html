@@ -13,11 +13,11 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(45,143,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(45,143,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
 .app{display:flex;min-height:100vh;position:relative;z-index:1;}
 .mobile-toggle{display:none;position:fixed;top:12px;left:12px;z-index:1000;background:var(--surface);border:1px solid var(--border2);color:var(--accent);width:40px;height:40px;cursor:pointer;font-size:17px;align-items:center;justify-content:center;}
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:998;transition:opacity 0.25s ease;}
-.sidebar-overlay.visible{display:block;opacity:1;cursor:pointer;}
+
+
 
 /* SIDEBAR */
-.sidebar{width:268px;min-width:268px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;overflow-x:hidden;z-index:999;transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);flex-shrink:0;}
+.sidebar{width:268px;min-width:268px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;overflow-x:hidden;transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);flex-shrink:0;}
 .brand{padding:15px 18px 11px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#000 0%,var(--surface) 100%);}
 .brand-top{display:flex;align-items:flex-start;justify-content:space-between;}
 .brand-tag{font-size:9px;letter-spacing:3px;color:var(--accent2);text-transform:uppercase;margin-bottom:2px;}
@@ -476,9 +476,10 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 
 @media(max-width:768px){
   .mobile-toggle{display:flex;z-index:1000;}
-  .app{display:block;}
-  .sidebar{position:fixed;left:0;top:0;width:82vw;max-width:300px;min-width:0;height:100%;height:100dvh;transform:translateX(-100%);box-shadow:6px 0 48px rgba(0,0,0,0.98);z-index:1001;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-  .main{width:100%;min-width:0;}
+  .app{display:block!important;}
+  .sidebar{position:fixed!important;left:0;top:0;width:80vw;max-width:290px;min-width:0;height:100vh;transform:translateX(-110%);box-shadow:none;z-index:1000;overflow-y:auto;}
+  .sidebar.open{transform:translateX(0)!important;box-shadow:4px 0 30px rgba(0,0,0,0.8);}
+  .main{width:100%!important;min-width:0;}
   .sidebar.open{transform:translateX(0);}
   .s-close{display:flex;}
   .main{width:100%;overflow-x:hidden;}
@@ -519,7 +520,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 </svg>
 
 <button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()">☰</button>
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
 
 <!-- FW MODAL -->
 <div class="fw-modal" id="fwModal">
@@ -875,22 +876,26 @@ function avatarBg(name){const h=(name||'').split('').reduce((a,c)=>a+c.charCodeA
 
 // SIDEBAR
 function toggleSidebar(){
-  const sb=document.getElementById('sidebar');
-  const isOpen=sb.classList.contains('open');
-  if(isOpen){ closeSidebar(); } else { openSidebar(); }
+  const isOpen=document.getElementById('sidebar').classList.contains('open');
+  isOpen ? closeSidebar() : openSidebar();
 }
 function openSidebar(){
-  const sb=document.getElementById('sidebar');
-  const ov=document.getElementById('sidebarOverlay');
-  sb.classList.add('open');
-  ov.classList.add('visible');
-  document.body.style.overflow='hidden';
+  document.getElementById('sidebar').classList.add('open');
+  // Add backdrop
+  let bd=document.getElementById('sb-backdrop');
+  if(!bd){
+    bd=document.createElement('div');
+    bd.id='sb-backdrop';
+    bd.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;';
+    bd.onclick=closeSidebar;
+    document.body.appendChild(bd);
+  }
+  bd.style.display='block';
 }
 function closeSidebar(){
   document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebarOverlay').classList.remove('visible');
-  document.body.style.overflow='';
-  document.body.style.overflow = '';
+  const bd=document.getElementById('sb-backdrop');
+  if(bd) bd.style.display='none';
 }
 
 // TABS
