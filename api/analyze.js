@@ -1,38 +1,64 @@
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { ticker, prompt, exchange } = req.body;
+  const { ticker, prompt, exchange } = req.body || {};
   if (!ticker) return res.status(400).json({ error: 'Ticker gerekli' });
 
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'API key eksik - Vercel env variable yok' });
+
+  // Fetch Yahoo Finance data
   const yahooTicker = exchange === 'BIST' ? `${ticker}.IS` : ticker;
   let financialData = null;
-  try { financialData = await fetchYahooData(yahooTicker); } catch (e) {}
+  try { financialData = await fetchYahooData(yahooTicker); } catch (e) {
+    console.log('Yahoo fetch failed:', e.message);
+  }
 
   const enrichedPrompt = financialData ? injectFinancialData(prompt, financialData, ticker) : prompt;
 
+  // Call Anthropic
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 2000, messages: [{ role: 'user', content: enrichedPrompt }] })
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: enrichedPrompt }]
+      })
     });
+
     const data = await response.json();
-    if (data.error) { console.error('Anthropic error:', JSON.stringify(data.error)); return res.status(500).json({ error: data.error.message || JSON.stringify(data.error) }); }
-    const result = data.content?.[0]?.text || ''; console.log('Result length:', result.length, 'First 100:', result.substring(0,100)); res.status(200).json({ result, financialData });
+
+    // Anthropic error
+    if (data.error) {
+      console.error('Anthropic API error:', JSON.stringify(data.error));
+      return res.status(500).json({ error: `Anthropic hatası: ${data.error.message || data.error.type}` });
+    }
+
+    const result = data.content?.[0]?.text || '';
+    console.log('Success, result length:', result.length);
+    return res.status(200).json({ result, financialData });
+
   } catch (err) {
-    res.status(500).json({ error: 'API hatası: ' + err.message });
+    console.error('Fetch error:', err.message);
+    return res.status(500).json({ error: 'API bağlantı hatası: ' + err.message });
   }
 }
 
 async function fetchYahooData(yahooTicker) {
-  const headers = { 'User-Agent': 'Mozilla/5.0' };
-  const [r1, r2] = await Promise.allSettled([
-    fetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${yahooTicker}?modules=summaryDetail,defaultKeyStatistics,financialData,price`, { headers }),
-    fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${yahooTicker}?modules=summaryDetail,defaultKeyStatistics,financialData,price`, { headers }),
-  ]);
-  const resp = r1.status === 'fulfilled' && r1.value.ok ? await r1.value.json() : r2.status === 'fulfilled' && r2.value.ok ? await r2.value.json() : null;
-  if (!resp?.quoteSummary?.result?.[0]) throw new Error('No data');
-  const { summaryDetail: sd = {}, defaultKeyStatistics: ks = {}, financialData: fd = {}, price: pr = {} } = resp.quoteSummary.result[0];
+  const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
+  const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(yahooTicker)}?modules=summaryDetail,defaultKeyStatistics,financialData,price`;
+  const r = await fetch(url, { headers });
+  if (!r.ok) throw new Error(`Yahoo ${r.status}`);
+  const data = await r.json();
+  if (!data?.quoteSummary?.result?.[0]) throw new Error('No Yahoo data');
+  const { summaryDetail: sd = {}, defaultKeyStatistics: ks = {}, financialData: fd = {}, price: pr = {} } = data.quoteSummary.result[0];
   const f = v => v?.raw ?? null;
   return {
     currentPrice: f(pr.regularMarketPrice) || f(fd.currentPrice),
@@ -45,32 +71,23 @@ async function fetchYahooData(yahooTicker) {
     pbRatio: f(ks.priceToBook),
     pegRatio: f(ks.pegRatio),
     evEbitda: f(ks.enterpriseToEbitda),
-    profitMargin: f(fd.profitMargins),
-    operatingMargin: f(fd.operatingMargins),
-    grossMargin: f(fd.grossMargins),
     roe: f(fd.returnOnEquity),
-    roa: f(fd.returnOnAssets),
     freeCashflow: f(fd.freeCashflow),
-    operatingCashflow: f(fd.operatingCashflow),
     totalCash: f(fd.totalCash),
     totalDebt: f(fd.totalDebt),
     debtToEquity: f(fd.debtToEquity),
-    currentRatio: f(fd.currentRatio),
     revenueGrowth: f(fd.revenueGrowth),
     earningsGrowth: f(fd.earningsGrowth),
-    dividendYield: f(sd.dividendYield),
     institutionOwnership: f(ks.heldPercentInstitutions),
     recommendationKey: fd.recommendationKey || null,
-    numberOfAnalystOpinions: f(fd.numberOfAnalystOpinions),
     targetMeanPrice: f(fd.targetMeanPrice),
-    targetHighPrice: f(fd.targetHighPrice),
-    shortRatio: f(ks.shortRatio),
+    profitMargin: f(fd.profitMargins),
   };
 }
 
 function injectFinancialData(prompt, fd, ticker) {
   const pct = v => v !== null ? `%${(v * 100).toFixed(1)}` : 'N/A';
-  const num = (v, d = 2) => v !== null ? v.toFixed(d) : 'N/A';
+  const n = (v, d = 2) => v !== null ? v.toFixed(d) : 'N/A';
   const big = v => {
     if (v === null) return 'N/A';
     const a = Math.abs(v);
@@ -79,24 +96,17 @@ function injectFinancialData(prompt, fd, ticker) {
     if (a >= 1e6) return `$${(v/1e6).toFixed(2)}M`;
     return `$${v.toFixed(0)}`;
   };
-  const netCash = fd.totalCash !== null && fd.totalDebt !== null ? fd.totalCash - fd.totalDebt : null;
+  const nc = fd.totalCash !== null && fd.totalDebt !== null ? fd.totalCash - fd.totalDebt : null;
   const upside = fd.currentPrice && fd.targetMeanPrice ? ((fd.targetMeanPrice - fd.currentPrice) / fd.currentPrice * 100).toFixed(1) : null;
-
-  const block = `
-=== GERÇEK FİNANSAL VERİLER (Yahoo Finance - Anlık) ===
-Güncel Fiyat: ${fd.currentPrice ? `${fd.currentPrice} ${fd.currency}` : 'N/A'}
-52H Düşük/Yüksek: ${fd.fiftyTwoWeekLow || 'N/A'} / ${fd.fiftyTwoWeekHigh || 'N/A'}
+  const block = `\n=== GERÇEK VERİ (Yahoo Finance) ===
+Fiyat: ${fd.currentPrice ? `${fd.currentPrice} ${fd.currency}` : 'N/A'}
+52H: ${fd.fiftyTwoWeekLow||'N/A'} / ${fd.fiftyTwoWeekHigh||'N/A'}
 Piyasa Değeri: ${big(fd.marketCap)}
-F/K (TTM): ${num(fd.peRatio)} | F/K (Forward): ${num(fd.forwardPE)}
-F/DD: ${num(fd.pbRatio)} | PEG: ${num(fd.pegRatio)} | EV/FAVÖK: ${num(fd.evEbitda)}
-Net Kâr Marjı: ${pct(fd.profitMargin)} | ROE: ${pct(fd.roe)} | ROA: ${pct(fd.roa)}
-FCF: ${big(fd.freeCashflow)} | Nakit: ${big(fd.totalCash)} | Borç: ${big(fd.totalDebt)}
-Net Nakit: ${big(netCash)} | Borç/Özsermaye: ${num(fd.debtToEquity)}
-Gelir Büyümesi: ${pct(fd.revenueGrowth)} | Kazanç Büyümesi: ${pct(fd.earningsGrowth)}
-Kurumsal Sahiplik: ${pct(fd.institutionOwnership)}
-Analist Öneri: ${fd.recommendationKey || 'N/A'} | Hedef: ${fd.targetMeanPrice ? `${fd.targetMeanPrice} ${fd.currency}` : 'N/A'} | Potansiyel: ${upside ? `%${upside}` : 'N/A'}
-======================================================
-Bu GERÇEK verileri kullanarak analiz yap. MULTIPLES bölümünde bu değerleri kullan.
-`;
+F/K: ${n(fd.peRatio)} | F/DD: ${n(fd.pbRatio)} | PEG: ${n(fd.pegRatio)} | EV/FAVÖK: ${n(fd.evEbitda)}
+ROE: ${pct(fd.roe)} | Net Kâr Marjı: ${pct(fd.profitMargin)}
+FCF: ${big(fd.freeCashflow)} | Net Nakit: ${big(nc)} | Borç/Özsermaye: ${n(fd.debtToEquity)}
+Gelir Büyümesi: ${pct(fd.revenueGrowth)} | Kurumsal Sahiplik: ${pct(fd.institutionOwnership)}
+Analist: ${fd.recommendationKey||'N/A'} | Hedef: ${fd.targetMeanPrice||'N/A'} | Potansiyel: ${upside?`%${upside}`:'N/A'}
+===================================\n`;
   return prompt.replace('KRİTERLER:', block + '\nKRİTERLER:');
 }
