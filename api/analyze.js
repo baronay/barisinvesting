@@ -16,13 +16,20 @@ export default async function handler(req, res) {
   }
 
   // Build strict system prompt
-  const systemPrompt = `Sen bir hisse senedi analiz asistanısın. 
-KURAL: Yanıtını SADECE aşağıdaki formatta ver. Markdown kullanma. # işareti kullanma. * işareti kullanma. Sadece düz metin.
-Verilen formata HARFIYEN uy. Başka hiçbir şey yazma.`;
+  const systemPrompt = `Sen deneyimli bir hisse senedi analistisin. Türkçe analiz yapıyorsun.
+KURALLAR:
+1. Yanıtını SADECE verilen formatta yaz. Markdown KULLANMA. # işareti KULLANMA. * işareti KULLANMA. Düz metin.
+2. Her kriter için açıklama MUTLAKA 2-3 cümle olmalı. Tek cümle kabul edilmez.
+3. Açıklamalarda: somut rakamlar kullan (ROE=%18, F/K=12x gibi), sektör ortalamasıyla karşılaştır, net gerekçe ver.
+4. TOTAL_SCORE: sadece 0-7 arasında tam sayı. 7'yi geçemez.
+5. VERDICT: sadece AL, BEKLE veya UZAK_DUR yaz.
+6. SUMMARY: şirketin güçlü ve zayıf yönlerini içeren 3 cümle. Yatırım kararını destekler nitelikte.
+7. Formata HARFIYEN uy. Verilen format dışında hiçbir şey yazma.`;
 
   // Build user message with real data
   const fdBlock = financialData ? buildDataBlock(financialData) : '';
-  const userMsg = fdBlock + '\n' + prompt;
+  const detailNote = `\nÖNEMLİ: Her kriter açıklaması için 2-3 cümle yaz. [açıklama] yazan yerlere somut analiz yaz. Tek cümle yetersiz.\n`;
+  const userMsg = fdBlock + detailNote + '\n' + prompt;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -34,7 +41,7 @@ Verilen formata HARFIYEN uy. Başka hiçbir şey yazma.`;
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2000,
+        max_tokens: 3000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMsg }]
       })
