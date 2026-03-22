@@ -1038,11 +1038,26 @@ function showPage(type,idx){
 // TV CHART
 function loadTV(containerId,symbol,height){
   const c=document.getElementById(containerId);if(!c)return;c.innerHTML='';
-  const wrap=document.createElement('div');wrap.style.cssText=`height:${height}px;width:100%;`;
-  const inner=document.createElement('div');inner.style.cssText=`height:${height-32}px;width:100%;`;
-  const sc=document.createElement('script');sc.type='text/javascript';sc.src='https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';sc.async=true;
-  sc.textContent=JSON.stringify({width:'100%',height:height-32,symbol,interval:'D',timezone:'Europe/Istanbul',theme:'dark',style:'1',locale:'tr',backgroundColor:'#000000',gridColor:'rgba(15,37,64,0.6)',hide_top_toolbar:false,save_image:false,support_host:'https://www.tradingview.com',allow_symbol_change:true,withdateranges:true,studies:containerId==='tvWrap'?['STD;RSI','STD;MACD']:['STD;RSI'],overrides:{'mainSeriesProperties.candleStyle.upColor':'#00e5a0','mainSeriesProperties.candleStyle.downColor':'#ff4d6a','mainSeriesProperties.candleStyle.borderUpColor':'#00e5a0','mainSeriesProperties.candleStyle.borderDownColor':'#ff4d6a','mainSeriesProperties.candleStyle.wickUpColor':'#00e5a0','mainSeriesProperties.candleStyle.wickDownColor':'#ff4d6a'}});
-  wrap.appendChild(inner);wrap.appendChild(sc);c.appendChild(wrap);
+  // Use iframe embed — works for all symbols including BIST
+  const iframe=document.createElement('iframe');
+  iframe.style.cssText=`width:100%;height:${height}px;border:none;`;
+  iframe.allowFullscreen=true;
+  const params=new URLSearchParams({
+    symbol:symbol,
+    interval:'D',
+    timezone:'Europe/Istanbul',
+    theme:'dark',
+    style:'1',
+    locale:'tr',
+    toolbar_bg:'#000000',
+    enable_publishing:'false',
+    hide_top_toolbar:'false',
+    hide_legend:'false',
+    save_image:'false',
+    container_id:containerId,
+  });
+  iframe.src=`https://www.tradingview.com/widgetembed/?${params.toString()}`;
+  c.appendChild(iframe);
 }
 
 // REAL DATA
