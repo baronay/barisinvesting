@@ -46,8 +46,13 @@ Verilen formata HARFIYEN uy. Başka hiçbir şey yazma.`;
       return res.status(500).json({ error: `${data.error.type}: ${data.error.message}` });
     }
 
-    const result = data.content?.[0]?.text || '';
-    console.log('Success, length:', result.length, '| First 200:', result.substring(0, 200));
+    let result = data.content?.[0]?.text || '';
+    // Clamp TOTAL_SCORE to 7 in the response text
+    result = result.replace(/TOTAL_SCORE:\s*(\d+)/i, (match, n) => {
+      const clamped = Math.min(7, Math.max(0, parseInt(n)));
+      return `TOTAL_SCORE: ${clamped}`;
+    });
+    console.log('Success, length:', result.length);
     return res.status(200).json({ result, financialData });
 
   } catch(err) {
