@@ -1207,7 +1207,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   const fw=FW[fwKey||curFW];const ex=EX_CFG[curEX];
   const statuses=[],details=[];
   fw.keys.forEach(key=>{const m=text.match(new RegExp(key+':\\s*(PASS|FAIL|NEUTRAL)\\s*\\|\\s*([^\\n]+)','i'));statuses.push(m?pStat(m[1]):'neutral');details.push(m?m[2].trim():'—');});
-  const sm=text.match(/TOTAL_SCORE:\s*(\d+)/);const score=sm?parseInt(sm[1]):statuses.filter(s=>s==='pass').length;
+  const sm=text.match(/TOTAL_SCORE:\s*(\d+)/);const rawScore=sm?parseInt(sm[1]):statuses.filter(s=>s==='pass').length;const score=Math.min(fw.criteria.length,Math.max(0,rawScore));
   const vm=text.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);const verdict=vm?vm[1]:'BEKLE';
   analysisData={ticker,company,statuses,details,score,verdict,fw:fwKey||curFW};
 
@@ -1282,10 +1282,10 @@ async function analyzeAllPt(){
     let notif=document.getElementById(nid);
     if(!notif){notif=document.createElement('div');notif.id=nid;notif.className='pt-notif analyzing';notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span class="pt-nt">${p.ticker}</span><span class="pt-nc">${p.company||'—'} · ${p.exchange}</span></div><div style="font-size:10px;color:var(--muted2)">⏳ Buffett analizi...</div><div class="pt-prog"><div class="pt-pf" id="pf-${p.ticker}" style="width:5%"></div></div>`;nc.appendChild(notif);}
     notif.scrollIntoView({behavior:'smooth',block:'nearest'});
-    try{const bR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,prompt:FW.buffett.prompt(p.ticker,p.company,p.exchange),exchange:p.exchange})});const bD=await bR.json();if(!bD.error){const s=bD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=bD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.bS=s?parseInt(s[1]):null;p.bV=v?v[1]:'BEKLE';}}catch{}
+    try{const bR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,prompt:FW.buffett.prompt(p.ticker,p.company,p.exchange),exchange:p.exchange})});const bD=await bR.json();if(!bD.error){const s=bD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=bD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.bS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.bV=v?v[1]:'BEKLE';}}catch{}
     const pf=document.getElementById('pf-'+p.ticker);if(pf)pf.style.width='55%';
     notif.querySelector('div:nth-child(2)').textContent='⏳ Lynch analizi...';
-    try{const lR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,prompt:FW.lynch.prompt(p.ticker,p.company,p.exchange),exchange:p.exchange})});const lD=await lR.json();if(!lD.error){const s=lD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=lD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.lS=s?parseInt(s[1]):null;p.lV=v?v[1]:'BEKLE';}}catch{}
+    try{const lR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,prompt:FW.lynch.prompt(p.ticker,p.company,p.exchange),exchange:p.exchange})});const lD=await lR.json();if(!lD.error){const s=lD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=lD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.lS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.lV=v?v[1]:'BEKLE';}}catch{}
     if(pf)pf.style.width='100%';
     const gc=v=>v==='AL'?'#00e5a0':v==='UZAK_DUR'?'#ff4d6a':'#ffb830';
     const sc2=s=>s>=5?'#00e5a0':s>=3?'#ffb830':'#ff4d6a';
