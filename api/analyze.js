@@ -38,6 +38,13 @@ LYNCH KURALLARI (Lynch analizi için):
 - Stok büyümesi satışı %10+ aşıyorsa FAIL + "satılamayan ürün riski"
 - Diworseification varsa sert eleştir
 
+DALIO KURALLARI (Dalio analizi için):
+- Borç döngüsü: Kaldıraç artıyor mu, azalıyor mu? Konumu belirle.
+- Para politikası: Mevcut faiz ortamının şirkete etkisi — pozitif/negatif?
+- Döviz riski: Dolar borcu varsa kur baskısını değerlendir.
+- Enflasyon koruması: Reel varlık veya emtia bağlantısı var mı?
+- Makro şok direnci: En kötü makro senaryoda (stagflasyon, kriz) hayatta kalır mı?
+
 TÜRK HİSSELERİ: Nominal büyüme TÜFE altındaysa "REEL KÜÇÜLME" uyarısı ekle.`;
 
   // Build enriched prompt with real data
