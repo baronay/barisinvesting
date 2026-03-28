@@ -1193,8 +1193,20 @@ function parseMult(text){
 
 function renderMult(m){
   if(!m)return;document.getElementById('multGrid').style.display='grid';
-  const pv=str=>{if(!str)return{val:'N/A',comment:'',sig:'sn'};const p=str.split('|').map(s=>s.trim());const lo=(p[1]||'').toLowerCase();let sig='sn';if(lo.includes('ucuz')||lo.includes('cazip'))sig='sg';else if(lo.includes('pahalı'))sig='sb';else if(lo.includes('adil')||lo.includes('makul'))sig='sw';return{val:p[0]||'N/A',comment:p[1]||'',sig};};
-  [['mPE',m.pe],['mPB',m.pb],['mEV',m.ev],['mPEG',m.peg]].forEach(([id,raw])=>{const p=pv(raw);document.getElementById(id).textContent=p.val;document.getElementById(id+'S').textContent=p.comment;const sig=document.getElementById(id+'Sig');sig.textContent=p.comment||'—';sig.className='mult-sig '+p.sig;});
+  const pv=(str,isPEG=false)=>{
+    if(!str)return{val:'N/A',comment:'',sig:'sn'};
+    const p=str.split('|').map(s=>s.trim());
+    const lo=(p[1]||'').toLowerCase();
+    let sig='sn';
+    if(lo.includes('ucuz')||lo.includes('fırsat'))sig='sg';
+    else if(lo.includes('pahalı')||lo.includes('dikkatli'))sig='sb';
+    else if(lo.includes('adil')||lo.includes('makul'))sig='sw';
+    // PEG specific: truncate long comments
+    let comment=p[1]||'';
+    if(isPEG&&comment.length>20)comment=comment.substring(0,20)+'...';
+    return{val:p[0]||'N/A',comment,sig};
+  };
+  [['mPE',m.pe,false],['mPB',m.pb,false],['mEV',m.ev,false],['mPEG',m.peg,true]].forEach(([id,raw,isPEG])=>{const p=pv(raw,isPEG);document.getElementById(id).textContent=p.val;document.getElementById(id+'S').textContent=p.comment;const sig=document.getElementById(id+'Sig');sig.textContent=p.comment||'—';sig.className='mult-sig '+p.sig;});
   if(m.rsi){
     const rp=m.rsi.split('|').map(s=>s.trim());const rn=parseFloat(rp[0])||50;
     const rc=rn>70?'#ff4d6a':rn<30?'#00e5a0':'#2d8fff';
