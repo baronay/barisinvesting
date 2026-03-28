@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yatırımcı Çerçevesi — Barış Investing</title>
+<title>Yatırım Analiz Merkezi — Barış Investing</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -207,6 +207,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .badge-ex{color:var(--accent2);border-color:rgba(0,200,255,0.3);background:rgba(0,200,255,0.05);}
 .badge-fw{color:var(--accent);border-color:rgba(45,143,255,0.3);background:rgba(45,143,255,0.05);}
 .badge-fw.lynch{color:var(--lynch);border-color:rgba(249,115,22,0.3);background:rgba(249,115,22,0.05);}
+.badge-fw.dalio{color:#a855f7;border-color:rgba(168,85,247,0.3);background:rgba(168,85,247,0.05);}
 .badge-live{color:var(--success);border-color:rgba(0,229,160,0.3);background:rgba(0,229,160,0.05);}
 .x-shr-btn{margin-left:auto;background:#000;border:1px solid #333;color:#fff;font-family:'Syne',sans-serif;font-size:9px;font-weight:700;padding:7px 11px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all 0.2s;}
 .x-shr-btn:hover{border-color:var(--accent);color:var(--accent);}
@@ -554,8 +555,44 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
   .hero-title{font-size:22px;}
   .s-close{display:none;}
 }
+/* WATCHLIST */
+.wl-tab{background:#000;border:1px solid var(--border);color:var(--muted2);font-family:'DM Mono',monospace;font-size:9px;padding:3px 8px;cursor:pointer;display:flex;align-items:center;gap:3px;transition:all 0.15s;}
+.wl-tab.active{border-color:var(--accent);color:var(--accent);background:rgba(45,143,255,0.08);}
+.wl-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:18px;}
+@media(max-width:900px){.wl-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.wl-grid{grid-template-columns:repeat(2,1fr);}}
+.wl-card{background:var(--surface);border:1px solid var(--border);padding:11px 12px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
+.wl-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent);}
+.wl-card.bear::before{background:linear-gradient(90deg,var(--danger),transparent);}
+.wl-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.wl-rank{font-size:8px;color:var(--muted2);letter-spacing:1px;margin-bottom:4px;}
+.wl-ticker{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--accent);}
+.wl-name{font-size:8px;color:var(--muted2);margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wl-price{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.wl-chg{font-size:10px;font-weight:700;margin-bottom:6px;}
+.wl-chg.up{color:var(--success);}
+.wl-chg.dn{color:var(--danger);}
+.wl-tags{display:flex;flex-wrap:wrap;gap:2px;}
+.wl-tag{font-size:7px;padding:2px 4px;border-radius:0;}
+.wl-tag.bull{background:rgba(0,229,160,0.1);color:var(--success);border:1px solid rgba(0,229,160,0.2);}
+.wl-tag.bear{background:rgba(255,77,106,0.1);color:var(--danger);border:1px solid rgba(255,77,106,0.2);}
+.wl-tag.vol{background:rgba(0,200,255,0.1);color:var(--accent2);border:1px solid rgba(0,200,255,0.2);}
+.wl-tag.ath{background:rgba(255,184,48,0.1);color:var(--warn);border:1px solid rgba(255,184,48,0.2);}
+.wl-tag.low{background:rgba(168,85,247,0.1);color:#a855f7;border:1px solid rgba(168,85,247,0.2);}
+.wl-tag.ma{background:rgba(45,143,255,0.1);color:var(--accent);border:1px solid rgba(45,143,255,0.2);}
+.wl-bar-wrap{margin-top:6px;}
+.wl-bar-lbl{font-size:7px;color:var(--muted2);margin-bottom:2px;display:flex;justify-content:space-between;}
+.wl-bar{height:2px;background:var(--border);position:relative;}
+.wl-bar-fill{height:100%;background:linear-gradient(90deg,var(--danger),var(--warn),var(--success));transition:width 0.6s;}
+
+/* LIKE BUTTON */
+.post-like-btn{background:none;border:1px solid var(--border);color:var(--muted2);font-family:'DM Mono',monospace;font-size:9px;padding:3px 7px;cursor:pointer;transition:all 0.15s;}
+.post-like-btn:hover{border-color:var(--danger);color:var(--danger);}
+
+/* KURUMSAL BAŞLIK */
+.brand-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;}
+.brand-name span{color:var(--accent);}
 </style>
-</head>
 <body>
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none">
@@ -575,6 +612,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     <div class="fw-opts">
       <button class="fw-opt buffett" onclick="selFWModal('buffett')"><div class="fw-opt-name">Warren Buffett</div><div class="fw-opt-desc">Değer yatırımı. Güçlü hendek, kaliteli yönetim, makul fiyat.</div><div class="fw-tags-wrap"><span class="fw-tag">ROE</span><span class="fw-tag">Hendek</span><span class="fw-tag">FCF</span><span class="fw-tag">Değerleme</span></div></button>
       <button class="fw-opt lynch" onclick="selFWModal('lynch')"><div class="fw-opt-name">Peter Lynch</div><div class="fw-opt-desc">Büyüme ve hikaye. Günlük hayatta gözlemlenebilen şirketler, PEG odaklı.</div><div class="fw-tags-wrap"><span class="fw-tag">Saha Avantajı</span><span class="fw-tag">PEG</span><span class="fw-tag">Bilanço</span><span class="fw-tag">Insider</span></div></button>
+      <button class="fw-opt dalio" onclick="selFWModal('dalio')" style="border-color:rgba(168,85,247,0.4);"><div class="fw-opt-name" style="color:#a855f7">Ray Dalio</div><div class="fw-opt-desc">Makro perspektif. Borç döngüsü, para politikası ve sistemik riskler.</div><div class="fw-tags-wrap"><span class="fw-tag">Borç Döngüsü</span><span class="fw-tag">Makro</span><span class="fw-tag">Enflasyon</span><span class="fw-tag">Kur Riski</span></div></button>
     </div>
     <button class="fw-skip" onclick="closeFWModal()">Şimdi değil — devam et</button>
   </div>
@@ -605,7 +643,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <div class="sidebar" id="sidebar">
   <div class="brand">
     <div class="brand-top">
-      <div><div class="brand-tag">Barış Investing</div><div class="brand-name">Yatırımcı <span>Çerçevesi</span></div><div class="brand-sub">AI Destekli Hisse Analizi</div></div>
+      <div><div class="brand-tag">Barış Investing</div><div class="brand-name">Analiz <span>Merkezi</span></div><div class="brand-sub">Buffett · Lynch · Dalio</div></div>
       <button class="s-close" onclick="closeSidebar()">✕</button>
     </div>
     <div class="brand-socials">
@@ -643,6 +681,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       <div class="fw-row">
         <button class="fw-btn active" id="fw-b" onclick="selFW('buffett')">Buffett</button>
         <button class="fw-btn" id="fw-l" onclick="selFW('lynch')">P. Lynch</button>
+        <button class="fw-btn" id="fw-d" onclick="selFW('dalio')" style="font-size:9px">Dalio</button>
       </div>
       <button class="ana-btn" id="anaBtn" onclick="doAnalyze()">ANALİZ ET →</button>
       <div class="data-badge" id="dataBadge">✓ Yahoo Finance verisi yüklendi</div>
@@ -703,14 +742,15 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 
   <!-- HERO at top -->
   <div class="hero">
-    <div class="hero-tag">Barış Investing · AI Destekli Analiz</div>
-    <div class="hero-title">Hangi şirketi <span>Lynch veya Buffett</span><br>filtresinden geçirmek istersin?</div>
-    <div class="hero-sub">Gerçek Yahoo Finance verileriyle 7 kriterde derinlemesine hisse analizi. Saniyeler içinde sonuç.</div>
+    <div class="hero-tag">Barış Investing · Yatırım Analiz Merkezi</div>
+    <div class="hero-title">Hisseyi <span>Buffett, Lynch veya Dalio</span><br>çerçevesinden geçir</div>
+    <div class="hero-sub">Yahoo Finance verileriyle 7 kriterde AI destekli derinlemesine hisse analizi. Saniyeler içinde sonuç.</div>
     <div class="hero-search-row">
       <input class="hero-ticker-in" id="heroIn" placeholder="THYAO, AAPL..." autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
       <select class="hero-fw-select" id="heroFwSel">
         <option value="buffett">Buffett</option>
         <option value="lynch">Lynch</option>
+        <option value="dalio">Dalio</option>
       </select>
       <button class="hero-search-btn" onclick="heroSearch()">ANALİZ ET →</button>
       <div class="hero-ac" id="heroAc"></div>
@@ -732,6 +772,17 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
   <!-- NEWS -->
   <div class="sec-title">Son Dakika Piyasa Haberleri <span class="src-badge" id="srcBadge" style="margin-left:5px"></span></div>
   <div class="news-grid" id="newsGrid"><div class="news-loading">Haberler yükleniyor...</div></div>
+
+  <!-- TOP 5 DİKKAT ÇEKEN HİSSE -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;margin-top:18px">
+    <div class="sec-title" style="margin:0;flex:1">🔥 Dikkat Çeken Hisseler</div>
+    <div style="display:flex;gap:4px">
+      <button class="wl-tab active" id="wl-bist" onclick="loadWatchlist('BIST')"><svg style="width:11px;height:7px"><use href="#f-tr"/></svg> BIST</button>
+      <button class="wl-tab" id="wl-us" onclick="loadWatchlist('US')"><svg style="width:11px;height:7px"><use href="#f-us"/></svg> ABD</button>
+    </div>
+    <span style="font-size:8px;color:var(--muted2)" id="wlTime"></span>
+  </div>
+  <div class="wl-grid" id="wlGrid"><div class="news-loading">Yükleniyor...</div></div>
 
   <!-- ANALYSIS RESULTS (hidden until analyzed) -->
   <div id="analysisSection" style="display:none">
@@ -897,7 +948,8 @@ const MKT_CFG=[{k:'sp500',l:'S&P 500'},{k:'nasdaq',l:'NASDAQ'},{k:'bist100',l:'B
 const EX_CFG={BIST:{l:'BIST',fh:'#f-tr',cur:'₺',tv:(t)=>`BIST:${t}`},NYSE:{l:'NYSE',fh:'#f-us',cur:'$',tv:(t)=>`NYSE:${t}`},NASDAQ:{l:'NASDAQ',fh:'#f-us',cur:'$',tv:(t)=>`NASDAQ:${t}`}};
 const FW={
   buffett:{name:'Buffett',criteria:[{name:'ROE Sürdürülebilirliği',desc:'ROE %15+ ve son 5 yılda tutarlı mı?',ctx:'Buffett, ROE\'yi sermaye verimliliğinin en saf göstergesi olarak görür.'},{name:'Fiyatlama Gücü',desc:'Maliyet artışlarını müşteriye yansıtabiliyor mu?',ctx:'"Enflasyona karşı en iyi savunma, fiyat arttığında bile alınan ürünleri satmaktır."'},{name:'$1 → $1+ Testi',desc:'Her $1 alıkonulan sermaye $1+ piyasa değeri yarattı mı?',ctx:'Alıkonulan kazançların piyasa değerine katkısı.'},{name:'Ekonomik Hendek',desc:'Marka, ağ etkisi, maliyet avantajı var mı?',ctx:'ROIC\'in WACC\'tan sürekli yüksek olması hendek göstergesidir.'},{name:'Serbest Nakit Akışı',desc:'FCF tutarlı, büyüyor ve net gelirle uyumlu mu?',ctx:'Buffett muhasebe kârına değil gerçek nakde bakar.'},{name:'Yönetim Kalitesi',desc:'Sermaye tahsisi geçmişi ve hissedar dostu mu?',ctx:'Zor dönemlerdeki davranış kırmızı bayraktır.'},{name:'Değerleme Marjı',desc:'P/E, P/FCF, EV/EBITDA sektör ortalamasına göre?',ctx:'"Olağanüstü bir şirketi adil fiyatına almak çok daha iyidir."'}],keys:['ROE','PRICING','DOLLAR','MOAT','FCF','MGMT','VALUATION'],prompt:(t,c,ex)=>`Warren Buffett felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle]\nRISK: [en kritik risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nROE: PASS|FAIL|NEUTRAL | [açıklama]\nPRICING: PASS|FAIL|NEUTRAL | [açıklama]\nDOLLAR: PASS|FAIL|NEUTRAL | [açıklama]\nMOAT: PASS|FAIL|NEUTRAL | [açıklama]\nFCF: PASS|FAIL|NEUTRAL | [açıklama]\nMGMT: PASS|FAIL|NEUTRAL | [açıklama]\nVALUATION: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`},
-  lynch:{name:'Peter Lynch',criteria:[{name:'Saha & Hikaye (Amatör Avantajı)',desc:'Ürün/hizmet gözlemlenebilir mi? Script geçerli mi?',ctx:'"İnsanlar çalıştıkları yerde fark ettikleri şirketlere yatırım yapmalı."'},{name:'Büyüme Motoru & Diworseification',desc:'Kârı artıracak asıl hikaye nedir? Odak kaybı var mı?',ctx:'Diworseification: Ana işten uzaklaşıp kaynak israf etmek.'},{name:'Net Nakit & Bilanço Sağlığı',desc:'Net nakit pozisyonu nedir?',ctx:'"Güçlü bilanço bir güvenlik ağıdır."'},{name:'Stok (Envanter) Kontrolü',desc:'Stok büyüme hızı satış büyüme hızını geçiyor mu?',ctx:'"Satılamayan ürünlerin birikmesi en büyük kırmızı bayrak."'},{name:'PEG Oranı & Kazanç Çizgisi',desc:'PEG 1\'in altında mı?',ctx:'"PEG 1\'in altında değerli, 2\'nin üzerinde pahalı."'},{name:'Kurumsal Sahiplik & Gizli Mücevher',desc:'Kurumsal sahiplik %30\'un altında mı?',ctx:'"Wall Street bu şirketi çoktan keşfettiyse büyük fırsat kalmamıştır."'},{name:'Yönetim Hamleleri (Insider & Buyback)',desc:'Yöneticiler hisse alıyor mu?',ctx:'"Yöneticiler tek nedenden alır — fiyatın ucuz olduğunu düşünürler."'}],keys:['STORY','GROWTH','BALANCE','INVENTORY','PEG','INSTITUTION','INSIDER'],prompt:(t,c,ex)=>`Peter Lynch felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle Lynch perspektifinden]\nRISK: [en kritik risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nSTORY: PASS|FAIL|NEUTRAL | [açıklama]\nGROWTH: PASS|FAIL|NEUTRAL | [açıklama]\nBALANCE: PASS|FAIL|NEUTRAL | [açıklama]\nINVENTORY: PASS|FAIL|NEUTRAL | [açıklama]\nPEG: PASS|FAIL|NEUTRAL | [açıklama]\nINSTITUTION: PASS|FAIL|NEUTRAL | [açıklama]\nINSIDER: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`}
+  lynch:{name:'Peter Lynch',criteria:[{name:'Saha & Hikaye (Amatör Avantajı)',desc:'Ürün/hizmet gözlemlenebilir mi? Script geçerli mi?',ctx:'"İnsanlar çalıştıkları yerde fark ettikleri şirketlere yatırım yapmalı."'},{name:'Büyüme Motoru & Diworseification',desc:'Kârı artıracak asıl hikaye nedir? Odak kaybı var mı?',ctx:'Diworseification: Ana işten uzaklaşıp kaynak israf etmek.'},{name:'Net Nakit & Bilanço Sağlığı',desc:'Net nakit pozisyonu nedir?',ctx:'"Güçlü bilanço bir güvenlik ağıdır."'},{name:'Stok (Envanter) Kontrolü',desc:'Stok büyüme hızı satış büyüme hızını geçiyor mu?',ctx:'"Satılamayan ürünlerin birikmesi en büyük kırmızı bayrak."'},{name:'PEG Oranı & Kazanç Çizgisi',desc:'PEG 1\'in altında mı?',ctx:'"PEG 1\'in altında değerli, 2\'nin üzerinde pahalı."'},{name:'Kurumsal Sahiplik & Gizli Mücevher',desc:'Kurumsal sahiplik %30\'un altında mı?',ctx:'"Wall Street bu şirketi çoktan keşfettiyse büyük fırsat kalmamıştır."'},{name:'Yönetim Hamleleri (Insider & Buyback)',desc:'Yöneticiler hisse alıyor mu?',ctx:'"Yöneticiler tek nedenden alır — fiyatın ucuz olduğunu düşünürler."'}],keys:['STORY','GROWTH','BALANCE','INVENTORY','PEGCRIT','INSTITUTION','INSIDER'],prompt:(t,c,ex)=>`Peter Lynch felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle Lynch perspektifinden]\nRISK: [en kritik risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nSTORY: PASS|FAIL|NEUTRAL | [açıklama]\nGROWTH: PASS|FAIL|NEUTRAL | [açıklama]\nBALANCE: PASS|FAIL|NEUTRAL | [açıklama]\nINVENTORY: PASS|FAIL|NEUTRAL | [açıklama]\nPEGCRIT: PASS|FAIL|NEUTRAL | [açıklama]\nINSTITUTION: PASS|FAIL|NEUTRAL | [açıklama]\nINSIDER: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`},
+  dalio:{name:'Ray Dalio',criteria:[{name:'Büyüme & Verimlilik Dengesi',desc:'Üretkenlik artışı ve reel büyüme sürdürülebilir mi?',ctx:'"Büyüme ikiden gelir: verimlilik artışı ve borç döngüsü."'},{name:'Borç Döngüsü Pozisyonu',desc:'Kısa döngüde nerede? Kaldıraç kontrollü mü?',ctx:'Dalio\'ya göre borç döngüsünün yeri en kritik makro değişkendir.'},{name:'Para Politikası Duyarlılığı',desc:'Faiz değişimlerine duyarlılık nedir?',ctx:'"Merkez bankası elindeki araçları tükettiğinde riskler en yüksek noktadadır."'},{name:'Döviz & Sermaye Akışı',desc:'Dolar bazlı gelir/borç dengesi sağlıklı mı?',ctx:'Güçlü dolar dönemlerinde gelişmekte olan piyasa şirketleri baskı altına girer.'},{name:'Emtia & Enflasyon Koruması',desc:'Stagflasyon senaryosunda korumalı mı?',ctx:'Altın, emtia ve reel varlıklara bağlılık bir Dalio portföy prensibidir.'},{name:'Sistemik Risk & Sektör Kırılganlığı',desc:'Makro şoklara karşı dirençli mi?',ctx:'"Bir şirketi sektörünün yapısal kırılganlıklarından bağımsız değerlendiremezsin."'},{name:'Uzun Vadeli Rekabet Gücü',desc:'20 yıllık öngörüde rekabet avantajı korunacak mı?',ctx:'"Uzun vadeli düşün. Çoğu insan gereğinden kısa vadeli odaklanır."'}],keys:['PRODGROWTH','DEBTCYCLE','MONETARY','CURRENCY','INFLATION','SYSTEMIC','LONGTERM'],prompt:(t,c,ex)=>`Ray Dalio makro perspektifiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et. Borç döngüsü, para politikası, enflasyon ve uzun vadeli makro faktörler çerçevesinde değerlendir.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle Dalio makro perspektifinden]\nRISK: [en kritik makro risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nPRODGROWTH: PASS|FAIL|NEUTRAL | [açıklama]\nDEBTCYCLE: PASS|FAIL|NEUTRAL | [açıklama]\nMONETARY: PASS|FAIL|NEUTRAL | [açıklama]\nCURRENCY: PASS|FAIL|NEUTRAL | [açıklama]\nINFLATION: PASS|FAIL|NEUTRAL | [açıklama]\nSYSTEMIC: PASS|FAIL|NEUTRAL | [açıklama]\nLONGTERM: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`}
 };
 
 // STATE
@@ -974,6 +1026,9 @@ function selFW(fw){
   curFW=fw;
   document.getElementById('fw-b').className='fw-btn'+(fw==='buffett'?' active':'');
   document.getElementById('fw-l').className='fw-btn'+(fw==='lynch'?' la':'');
+  document.getElementById('fw-d').className='fw-btn'+(fw==='dalio'?' active':'')+' fw-dalio';
+  if(fw==='dalio'){document.getElementById('fw-d').style.cssText='font-size:9px;background:rgba(168,85,247,0.15);border-color:#a855f7;color:#a855f7';}
+  else{document.getElementById('fw-d').style.cssText='font-size:9px';}
   document.getElementById('heroFwSel').value=fw;
   buildNav();
   if(hasAnalyzed&&curTicker)doAnalyze();
@@ -1281,7 +1336,10 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   textGlobal=text;
   const fw=FW[fwKey||curFW];const ex=EX_CFG[curEX];
   const statuses=[],details=[];
-  fw.keys.forEach(key=>{const m=text.match(new RegExp(key+':\\s*(PASS|FAIL|NEUTRAL)\\s*\\|\\s*([^\\n]+)','i'));statuses.push(m?pStat(m[1]):'neutral');details.push(m?m[2].trim():'—');});
+  // Extract CRITERIA block first to avoid regex collisions (e.g. PEG in MULTIPLES vs PEG criteria)
+  const criteriaBlock=text.match(/CRITERIA_START([\s\S]*?)CRITERIA_END/i);
+  const searchText=criteriaBlock?criteriaBlock[1]:text;
+  fw.keys.forEach(key=>{const m=searchText.match(new RegExp('^'+key+':\\s*(PASS|FAIL|NEUTRAL)\\s*\\|\\s*([^\\n]+)','im'));statuses.push(m?pStat(m[1]):'neutral');details.push(m?m[2].trim():'—');});
   const sm=text.match(/TOTAL_SCORE:\s*(\d+)/);const rawScore=sm?parseInt(sm[1]):statuses.filter(s=>s==='pass').length;const score=Math.min(fw.criteria.length,Math.max(0,rawScore));
   const vm=text.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);const verdict=vm?vm[1]:'BEKLE';
   analysisData={ticker,company,statuses,details,score,verdict,fw:fwKey||curFW};
@@ -1451,21 +1509,19 @@ document.addEventListener('DOMContentLoaded',()=>{
 async function submitPost(){
   const btn=document.getElementById('pfSubmit');const msg=document.getElementById('pfMsg');
   const content=(document.getElementById('pfContent').value||'').trim();
-  const nickname=(document.getElementById('pfNick').value||'').trim()||'Anonim';
+  const author=(document.getElementById('pfNick').value||'').trim()||'Anonim';
   const ticker=(document.getElementById('pfTicker').value||'').trim().toUpperCase();
-  const exchange=document.getElementById('pfEx').value;
-  const verdict=document.getElementById('pfVerdict').value;
-  if(content.length<20){msg.className='pf-msg err';msg.textContent='Yazı çok kısa (minimum 20 karakter)';msg.style.display='block';return;}
+  const framework=curFW||'buffett';
+  if(content.length<5){msg.className='pf-msg err';msg.textContent='Yazı çok kısa (minimum 5 karakter)';msg.style.display='block';return;}
   btn.disabled=true;btn.textContent='Gönderiliyor...';
   try{
-    const r=await fetch('/api/forum',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({post:{nickname,ticker,exchange,verdict,content}})});
+    const r=await fetch('/api/forum?action=post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({author,ticker,framework,content})});
     const data=await r.json();
     if(data.error)throw new Error(data.error);
     msg.className='pf-msg ok';msg.textContent='✓ Gönderin yayımlandı!';msg.style.display='block';
-    document.getElementById('pfContent').value='';document.getElementById('pfNick').value='';document.getElementById('pfTicker').value='';document.getElementById('pfEx').value='';document.getElementById('pfVerdict').value='';document.getElementById('pfCharCount').textContent='0 / 2000 karakter';
-    // Add to top of posts locally
+    document.getElementById('pfContent').value='';document.getElementById('pfNick').value='';document.getElementById('pfTicker').value='';if(document.getElementById('pfCharCount'))document.getElementById('pfCharCount').textContent='0 / 1000 karakter';
     if(data.post)prependPost(data.post);
-    setTimeout(()=>{msg.style.display='none';closePostForm();},1800);
+    setTimeout(()=>{msg.style.display='none';if(typeof closePostForm==='function')closePostForm();},1800);
   }catch(e){msg.className='pf-msg err';msg.textContent='Hata: '+e.message;msg.style.display='block';}
   btn.disabled=false;btn.textContent='📤 Gönder';
 }
@@ -1473,9 +1529,17 @@ async function submitPost(){
 async function loadPosts(){
   const g=document.getElementById('postsGrid');g.innerHTML='<div class="forum-loading">Gönderiler yükleniyor...</div>';
   try{
-    const r=await fetch('/api/forum');const data=await r.json();
+    const r=await fetch('/api/forum?action=list');const data=await r.json();
     renderPosts(data.posts||[]);
   }catch(e){g.innerHTML=`<div class="forum-empty">Yüklenemedi: ${e.message}</div>`;}
+}
+
+async function likePost(id, btn){
+  try{
+    const r=await fetch('/api/forum?action=like',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+    const data=await r.json();
+    if(data.likes!==undefined&&btn){btn.textContent=`♥ ${data.likes}`;btn.style.color='var(--danger)';}
+  }catch{}
 }
 
 function renderPosts(posts){
@@ -1492,19 +1556,24 @@ function prependPost(post){
 
 function createPostCard(p){
   const card=document.createElement('div');
+  const nickname=p.author||p.nickname||'Anonim';
   const vClass=p.verdict?`v-${p.verdict}`:'v-none';
   card.className=`post-card ${vClass}`;
-  const ltr=avatarLetter(p.nickname||'?');const bg=avatarBg(p.nickname||'');
-  const tweetText=`${p.ticker?'$'+p.ticker+' ':''} — ${p.nickname||'Anonim'}\n\n${p.content.substring(0,200)}${p.content.length>200?'...':''}\n\n#YatırımcıÇerçevesi\nbarisinvesting.vercel.app`;
+  const ltr=avatarLetter(nickname);const bg=avatarBg(nickname);
+  const tweetText=`${p.ticker?'$'+p.ticker+' ':''} — ${nickname}\n\n${p.content.substring(0,200)}${p.content.length>200?'...':''}\n\n#BarışInvesting\nbarisinvesting.vercel.app`;
+  const postId=p.id||'';
+  const likes=p.likes||0;
+  const timeAgo=p.ts?ago(p.ts/1000):p.createdAt?ago(p.createdAt/1000):'az önce';
   card.innerHTML=`
     <div class="post-hdr">
       <div class="post-avatar" style="background:${bg}">${ltr}</div>
       <div>
-        <div class="post-nick">${p.nickname||'Anonim'}</div>
-        <div class="post-meta">${p.createdAt?ago(p.createdAt/1000):'az önce'}</div>
+        <div class="post-nick">${nickname}</div>
+        <div class="post-meta">${timeAgo}</div>
       </div>
       <div class="post-badges">
         ${p.ticker?`<span class="post-ticker-badge">$${p.ticker}</span>`:''}
+        ${p.framework?`<span class="post-ex-badge">${p.framework}</span>`:''}
         ${p.exchange?`<span class="post-ex-badge">${p.exchange}</span>`:''}
         ${p.verdict?`<span class="post-verdict-badge pv-${p.verdict}">${p.verdict}</span>`:''}
       </div>
@@ -1512,8 +1581,9 @@ function createPostCard(p){
     <div class="post-content">${p.content.replace(/\n/g,'<br>')}</div>
     <div class="post-footer">
       ${p.ticker?`<button class="post-analyze-btn" onclick="qFill('${p.ticker}','','${p.exchange||'BIST'}')"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Analiz Et</button>`:''}
+      ${postId?`<button class="post-like-btn" id="like-${postId}" onclick="likePost('${postId}',this)">♥ ${likes}</button>`:''}
       <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}" target="_blank" class="post-x-btn"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X'te Paylaş</a>
-      <span class="post-time">${p.createdAt?ago(p.createdAt/1000):''}</span>
+      <span class="post-time">${timeAgo}</span>
     </div>
   `;
   return card;
@@ -1586,8 +1656,67 @@ function mobileNav(tab) {
   }
 }
 
+// WATCHLIST — Top 5 Dikkat Çeken Hisseler
+let wlMarket = 'BIST';
+async function loadWatchlist(market) {
+  wlMarket = market || wlMarket;
+  ['bist','us'].forEach(m => {
+    const e = document.getElementById('wl-' + m);
+    if(e) e.className = 'wl-tab' + (m.toUpperCase() === wlMarket || (m === 'us' && wlMarket === 'US') ? ' active' : '');
+  });
+  const grid = document.getElementById('wlGrid');
+  if(!grid) return;
+  grid.innerHTML = '<div class="news-loading">Taranıyor...</div>';
+  try {
+    const r = await fetch(`/api/watchlist?market=${wlMarket}`);
+    const data = await r.json();
+    if(data.error) { grid.innerHTML = `<div class="news-loading" style="color:var(--danger)">${data.error}</div>`; return; }
+    const wt = document.getElementById('wlTime');
+    if(wt) wt.textContent = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit',minute:'2-digit'});
+    renderWatchlist(data.stocks || []);
+  } catch(e) {
+    grid.innerHTML = '<div class="news-loading" style="color:var(--danger)">Bağlantı hatası</div>';
+  }
+}
+
+function renderWatchlist(stocks) {
+  const grid = document.getElementById('wlGrid');
+  if(!grid) return;
+  if(!stocks.length) { grid.innerHTML = '<div class="news-loading">Veri bulunamadı</div>'; return; }
+  grid.innerHTML = '';
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  stocks.forEach((s, i) => {
+    const isUp = s.chg >= 0;
+    const card = document.createElement('div');
+    card.className = 'wl-card' + (isUp ? '' : ' bear');
+    const ex = wlMarket === 'BIST' ? 'BIST' : 'NYSE';
+    card.onclick = () => {
+      selEx(ex); selHeroEx(ex);
+      document.getElementById('tickerIn').value = s.ticker;
+      document.getElementById('coIn').value = s.name;
+      switchTab('analiz'); closeSidebar();
+      setTimeout(() => doAnalyze(), 100);
+    };
+    const tagHTML = (s.tags || []).map(t => `<span class="wl-tag ${t.c}">${t.t}</span>`).join('');
+    card.innerHTML = `
+      <div class="wl-rank">${medals[i]} #${i+1}</div>
+      <div class="wl-ticker">${s.ticker}</div>
+      <div class="wl-name">${s.name}</div>
+      <div class="wl-price">${s.price ? s.price.toFixed(2) + ' ' + (s.currency === 'TRY' ? '₺' : '$') : '—'}</div>
+      <div class="wl-chg ${isUp ? 'up' : 'dn'}">${isUp ? '+' : ''}${s.chg ? s.chg.toFixed(2) : '0.00'}%</div>
+      <div class="wl-tags">${tagHTML}</div>
+      <div class="wl-bar-wrap">
+        <div class="wl-bar-lbl"><span>52H Aralık</span><span>%${s.pos52 || 0}</span></div>
+        <div class="wl-bar"><div class="wl-bar-fill" style="width:${s.pos52 || 0}%"></div></div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
 // INIT
 buildNav();buildChips();setupAC();loadMkt();loadNews();
+loadWatchlist('BIST');
 if(!localStorage.getItem('baris_fw_seen')){setTimeout(()=>{showFWModal();localStorage.setItem('baris_fw_seen','1');},1400);}
 </script>
 
