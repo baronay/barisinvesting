@@ -17,71 +17,28 @@ export default async function handler(req, res) {
   const isBuffett = prompt.includes('Warren Buffett') || prompt.includes('ROE:');
   const isLynch = prompt.includes('Peter Lynch') || prompt.includes('STORY:');
 
-  const systemPrompt = `Sen "Barış Investing" platformunun çekirdek analiz motorusun. Warren Buffett ve Peter Lynch disipliniyle profesyonel analiz raporu üretiyorsun.
+  const systemPrompt = `Sen "Barış Investing" platformunun analiz motorusun. Warren Buffett ve Peter Lynch felsefesiyle profesyonel Türkçe analiz raporu yazıyorsun.
 
-ÜSLUP VE FORMAT:
-- Profesyonel yatırım analizi raporu. Chatbot değil, analist sesi.
-- Sade ve net: 12 yaşında anlayabilir, fon yöneticisi ikna olur.
-- Türkçe yaz. Markdown kullanma. # işareti kullanma. * kullanma. Düz metin.
-- Her kriter: minimum 2-3 cümle, somut rakam, sektör karşılaştırması zorunlu.
+ÜSLUP: Profesyonel analist. Chatbot değil. Sade ama ikna edici. 12 yaşında anlayabilir, fon yöneticisi ikna olur.
+FORMAT: Markdown yok. # yok. * yok. Düz metin. TOTAL_SCORE 0-7 arası tam sayı. 7 geçemez.
+HER KRİTER: Minimum 2-3 cümle. Somut rakam. Sektör karşılaştırması.
 
-${isBuffett ? `
-WARREN BUFFETT ÇERÇEVE KURALLARI — BUNLARA HARFIYEN UY:
+BUFFETT KURALLARI (Buffett analizi için):
+- Fiyatlama Gücü = Brüt marj stabilitesi ve maliyet yansıtma kapasitesi. F/K DEĞİL.
+- Hissedar Kazancı = Net gelir + Amortisman - CapEx - Ek işletme sermayesi (FCF proxy kabul et)
+- $1 Testi = Alıkonulan her $1 kâr, $1+ piyasa değeri yarattı mı?
+- Değerleme = DCF bazlı düşün. Nakit akışını bugüne indir. F/K yardımcı araç.
+- Kar marjı trendi = 3 yıllık faaliyet marjı yönü. Daralıyorsa uyar.
+- Hendek = Marka/ağ etkisi/maliyet avantajı kanıtı. "Hendek Çürümüş" uyarısı yap gerekirse.
 
-1. ROE KALİTESİ: ROE'yi yüzde olarak ifade et. Son 3-5 yıl tutarlılığına bak. Sadece "yüksek" deme — sektör ortalamasıyla karşılaştır. Finansal kaldıraçla şişirilmiş ROE'yi ayırt et.
+LYNCH KURALLARI (Lynch analizi için):
+- İlk önce kategori: Yavaş/Orta/Hızlı Büyüyen / Döngüsel / Varlık Zengini / Dönüşümdeki
+- PEG < 1.0 = fırsat, 1.0-1.5 = adil, 1.5-2.0 = dikkatli ol, 2.0+ = pahalı/FAIL
+- Kurumsal sahiplik < %30 = "Gizli Mücevher" işareti
+- Stok büyümesi satışı %10+ aşıyorsa FAIL + "satılamayan ürün riski"
+- Diworseification varsa sert eleştir
 
-2. FİYATLAMA GÜCÜ — F/K ile karıştırma: Bu kriter şunu ölçer: Şirket maliyet artışlarını (hammadde, işçilik, enerji) fiyatlarına yansıtabiliyor mu? Brüt marj trendi son 3 yılda artıyor mu, koruyor mu, yoksa eriyor mu? Coca-Cola, fiyatını artırdığında satış hacmi neredeyse değişmez — bu fiyatlama gücüdür. F/K burada göstergedir ama asıl kanıt brüt marj stabilitesidir.
-
-3. HİSSEDAR KAZANCI (OWNER EARNINGS) — Buffett'ın Gerçek Nakit Akışı: Net gelir + Amortisman ve yıpranma (D&A) — Sermaye harcamaları (CapEx) — İhtiyaç duyulan ek işletme sermayesi. Bu formül varsa hesapla. FCF verisi kullanılabiliyorsa, "Hissedar kazancına yakın değer: X" şeklinde belirt.
-
-4. DAĞITILMAMIŞ KAR $1 TESTİ: Son 5 yılda şirketin dağıtmayıp bünyesinde tuttuğu toplam karı hesapla. Bu karın aynı dönemde piyasa değerinde yarattığı artışla karşılaştır. Her 1 dolarlık alıkonulan kar, 1 dolar+ piyasa değeri yaratıyor mu? Bu Buffett'ın en özgün testidir.
-
-5. EKONOMİK HENDEK (MOAT): Marka gücü, ağ etkisi, maliyet avantajı veya yasal koruma — hangisi var? Soyut konuşma, somut kanıt göster. "Teknolojik liderliğini kaybetmiş" şirketlerde "HENDEK ÇÜRÜMÜŞ" uyarısı yap.
-
-6. KAR MARJLARI VE YÖNETİM KALİTESİ: Buffett, maliyetleri artıran yöneticilerden nefret eder. "Maliyetleri düşüreceğim" diyen yönetici değil, hiç söylemesine gerek duymayan yönetici iyidir. Faaliyet marjı trendi son 3 yılda ne yönde? CEO sermaye tahsisi: buyback, temettü, borç — hangisini tercih ediyor? Hissedar mektupları varsa referans ver.
-
-7. DEĞERLEME — DCF YAKLAŞIMI (THE THEORY OF INVESTMENT VALUE): Buffett'a göre bir şirketin değeri, ömrü boyunca üretmesi beklenen net nakit akışının belirli bir iskonto oranıyla bugüne indirgenmesiyle hesaplanır. Bu prensiple: Mevcut FCF veya hissedar kazancı büyüme hızını tahmin et, makul bir iskonto oranıyla (genellikle uzun vadeli hazine bonosu + risk primi) değerle. F/K ve EV/EBITDA yardımcı araçtır ama asıl değerleme nakit akışı bazlıdır. "Güvenlik marjı" var mı?
-` : ''}
-
-${isLynch ? `
-PETER LYNCH ÇERÇEVE KURALLARI — BUNLARA HARFIYEN UY:
-
-1. ÖNCE KATEGORİZE ET: Analiz başlamadan şirketi ata:
-   - Yavaş Büyüyen (Slow Grower): Yılda %0-5 büyüme, olgun sektör
-   - Orta Büyüyen (Stalwart): Yılda %5-12, güvenilir kar
-   - Hızlı Büyüyen (Fast Grower): Yılda %15-25+, Lynch'in favorisi
-   - Döngüsel (Cyclical): Ekonomiyle iner çıkar
-   - Varlık Zengini (Asset Play): Defter değeri gizli hazine
-   - Dönüşümdeki (Turnaround): Kötüden iyiye dönüş potansiyeli
-   Kategoriye göre analiz kriterlerini esnet veya sertleştir.
-
-2. SAHA VE HİKAYE (AMATÖR AVANTAJI): Şirketin ürün/hizmetini sıradan bir insan günlük hayatta gözlemleyebilir mi? "Annem bu markayı kullanıyor" testi geçiyor mu? Hikaye 2 dakikada anlatılabiliyor mu? Karmaşık anlatıma ihtiyaç duyan şirketler şüphelidir.
-
-3. DİWORSEİFİCATION KONTROLÜ: Şirket ana iş kolundan uzaklaşıp alakasız alanlara yatırım yapıyor mu? Marj daralması + diversifikasyon = tehlike sinyali. Varsa sert eleştir.
-
-4. PEG ORANI — DOĞRU KULLANIM:
-   PEG = F/K / Yıllık Kazanç Büyüme Hızı
-   Lynch'e göre: PEG < 1.0 = gerçek değer fırsatı, PEG 1.0-1.5 = adil fiyatlı, PEG > 2.0 = pahalı.
-   KRİTİK: PEG 1.5-2.0 arası için "uygun" değil, "dikkatli ol" de. PEG > 2 kesinlikle FAIL.
-   Büyüme hızı verisi yoksa tahmini bile belirt ama PEG sinyalini gevşetme.
-
-5. NET NAKİT VE BİLANÇO: Net nakit pozitif mi? Borç/Özsermaye < 0.3 ise güçlü. Lynch, borçlu şirketleri sevmez özellikle döngüsel sektörlerde.
-
-6. STOK/SATIŞ DENGESİ: Stok büyümesi satış büyümesini %10+ aşıyorsa "KALDI" puanı ver. "Satılamayan ürün riski" notu ekle.
-
-7. KURUMSAL SAHİPLİK: %30 altındaysa "GİZLİ MÜCEVHER" işareti ekle. Wall Street henüz keşfetmemiş demektir. %70+ ise "Kurumlar dolu, sürpriz yukarı potansiyeli sınırlı" de.
-` : ''}
-
-TÜRK HİSSELERİ İÇİN EK KURAL:
-Nominal büyüme Türkiye TÜFE'sinin (%40-65 bandı) altındaysa: "REEL OLARAK KÜÇÜLEN ŞİRKET — Yanıltıcı nominal büyüme uyarısı" ekle.
-
-VERİ TUTARSIZLIĞI:
-F/K < 3 veya F/DD < 0.2 gibi anormal değerlerde "VERİ UYARISI" notu ekle.
-Veri eksikse "Belirsiz" yazma — sektörel trend ve bilgi birikiminden eğilim (bias) çıkar.
-
-FORMAT KURALLARI:
-TOTAL_SCORE: 0-7 arası TAM SAYI. 7'yi kesinlikle geçemez.
-VERDICT: sadece AL, BEKLE veya UZAK_DUR`;
+TÜRK HİSSELERİ: Nominal büyüme TÜFE altındaysa "REEL KÜÇÜLME" uyarısı ekle.`;
 
   // Build enriched prompt with real data
   let enrichedPrompt = '';
@@ -132,7 +89,7 @@ PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBITDA=${n(fd.e
   }
 
   enrichedPrompt += prompt;
-  enrichedPrompt += '\n\nHer kriter için minimum 2-3 cümle. Somut rakam ve sektör karşılaştırması zorunlu.';
+  enrichedPrompt += '\n\nKRİTİK KURAL: Aşağıdaki format ŞARTSIZ uygulanacak. Her PASS/FAIL/NEUTRAL satırı pipe (|) işaretiyle açıklama içermeli. CRITERIA_START ve CRITERIA_END etiketleri olmalı.\nHer kriter için 2-3 cümle somut analiz yaz.';
 
   // Pre-fill multiples in prompt text
   if (fd) {
@@ -182,7 +139,7 @@ PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBITDA=${n(fd.e
       if(fd.evEbitda!=null) result=result.replace(/EV_EBITDA:\s*[\d.]+\s*\|/,`EV_EBITDA: ${n3(fd.evEbitda)} |`);
     }
 
-    console.log('OK length:', result.length);
+    console.log('OK length:', result.length, '| CRITERIA found:', result.includes('CRITERIA_START'), '| First criteria:', result.match(/STORY:|GROWTH:|BALANCE:/i)?.[0]);
     return res.status(200).json({ result, financialData });
 
   } catch(err) {
