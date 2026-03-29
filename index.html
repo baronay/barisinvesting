@@ -590,6 +590,29 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
   .hero-title{font-size:22px;}
   .s-close{display:none;}
 }
+
+/* ── CRIT NAV BAR ── */
+.crit-nav-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px 0;}
+.crit-nav-btn{background:var(--surface);border:1px solid var(--border);color:var(--accent2);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:7px 16px;cursor:pointer;transition:all 0.15s;white-space:nowrap;font-weight:500;}
+.crit-nav-btn:hover{background:var(--accent2);color:#fff;border-color:var(--accent2);}
+.crit-nav-btn:disabled{opacity:0.25;cursor:default;background:var(--surface);}
+.crit-progress{display:flex;gap:5px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.crit-dot{width:9px;height:9px;border:1px solid var(--border2);transition:all 0.2s;cursor:pointer;flex-shrink:0;}
+.crit-dot.pass{background:var(--success);border-color:var(--success);}
+.crit-dot.fail{background:var(--danger);border-color:var(--danger);}
+.crit-dot.neutral{background:var(--warn);border-color:var(--warn);}
+.crit-dot.pending{background:var(--rule);}
+.crit-dot.active{transform:scale(1.5);outline:2px solid var(--accent2);outline-offset:2px;}
+
+/* ── DESKTOP HERO — no floating gap ── */
+.main-content{padding:0 !important;}
+.page-body{padding:28px 36px;}
+@media(max-width:768px){.page-body{padding:14px;padding-bottom:74px;}}
+
+/* ── MOBILE crit nav sticky ── */
+@media(max-width:768px){
+  .crit-nav-bar{position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--rule);padding:8px 0 10px;margin-bottom:14px;}
+}
 </style>
 <body>
 
@@ -761,6 +784,7 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
   </div>
 
   <!-- MARKET STRIP -->
+  <div class="page-body">
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
     <div class="sec-title" style="margin:0;flex:1">Piyasa Genel Görünümü</div>
     <span style="font-size:8px;color:var(--success)" id="mktTime"></span>
@@ -858,20 +882,29 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
     <div class="chart-card"><div class="card-t"><div class="cdot"></div>Kriter Skoru</div><div class="chart-wrap"><canvas id="barC"></canvas></div></div>
     <table class="crit-table"><thead><tr><th>#</th><th>Kriter</th><th>Durum</th><th>Özet</th></tr></thead><tbody id="summaryBody"></tbody></table>
   </div>
+  </div><!-- /page-body -->
 </div>
 
 <!-- CRIT DETAIL (still separate page) -->
 <div class="page" id="page-crit">
-  <div class="pg-title" id="critTitle">Kriter</div>
+  <div class="crit-nav-bar">
+    <button class="crit-nav-btn" id="critPrev" onclick="navigateCrit(-1)">← Önceki</button>
+    <div class="pg-title" id="critTitle" style="margin:0;flex:1;justify-content:center">Kriter</div>
+    <button class="crit-nav-btn" id="critNext" onclick="navigateCrit(1)">Sonraki →</button>
+  </div>
+  <div class="page-body" style="padding-top:0">
+  <div class="crit-progress" id="critProgress"></div>
   <div class="dh"><div class="dnum" id="critNum">01</div><div><div class="dname" id="critName">—</div><div class="ddesc" id="critDesc">—</div></div><div id="critPill"></div></div>
   <div class="ablock"><div class="ablock-t">Analiz</div><div class="atext" id="critAna">—</div></div>
   <div class="ablock"><div class="ablock-t">Yatırımcının Yaklaşımı</div><div class="atext" id="critCtx">—</div></div>
   <div class="chart-card"><div class="card-t"><div class="cdot"></div>Karşılaştırma</div><div id="critBars"></div></div>
+  </div>
 </div>
 
 <!-- PORTFOLIO PAGE -->
 <div class="page" id="page-portfolio">
-  <div class="pt-hdr"><div class="pt-title">Portföy<span>üm</span></div><button class="pt-ana-btn" onclick="analyzeAllPt()" id="ptAnaBtn">▶ Buffett + Lynch Analizi</button></div>
+<div class="page-body">
+  <div class="pt-hdr"><div class="pt-title">Portföy<span>üm</span></div><button class="pt-ana-btn" onclick="analyzeAllPt()" id="ptAnaBtn">▶ Buffett + Lynch + Dalio</button></div>
   <div class="pt-notifs" id="ptNotifs"></div>
   <div class="pt-add">
     <div class="pt-add-t">Hisse Ekle</div>
@@ -891,17 +924,19 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
       <div class="ps-card"><div class="ps-lbl">Toplam Maliyet</div><div class="ps-vtl" id="psTL" style="display:none">—</div><div class="ps-vusd" id="psUSD" style="display:none">—</div><div class="ps-sub" id="psCurS">—</div></div>
       <div class="ps-card"><div class="ps-lbl">Hisse Sayısı</div><div class="ps-v" id="psCount">—</div><div class="ps-sub">Farklı sembol</div></div>
       <div class="ps-card"><div class="ps-lbl">En Büyük Pozisyon</div><div class="ps-v" id="psBig">—</div><div class="ps-sub" id="psBigT">—</div></div>
-      <div class="ps-card"><div class="ps-lbl">Ort. Buffett / Lynch</div><div class="ps-v" id="psAvgB">—</div><div class="ps-sub" id="psAvgL">Lynch: —</div></div>
+      <div class="ps-card"><div class="ps-lbl">Ort. Buffett / Lynch</div><div class="ps-v" id="psAvgB">—</div><div class="ps-sub" id="psAvgL">Lynch: — · Dalio: <span id="psAvgD">—</span></div></div>
     </div>
     <div class="pt-mix"><div class="mix-t"><div class="cdot"></div>Portföy Dağılımı (Yüzdesel)</div><div id="mixBars"></div></div>
-    <div class="pt-tw"><table class="pt-table"><thead><tr><th>Hisse</th><th>Borsa</th><th>Alış</th><th>Adet</th><th>Toplam</th><th>Ağırlık</th><th>B / L</th><th>İşlem</th></tr></thead><tbody id="ptTBody"></tbody></table></div>
+    <div class="pt-tw"><table class="pt-table"><thead><tr><th>Hisse</th><th>Borsa</th><th>Alış</th><th>Adet</th><th>Toplam</th><th>Ağırlık</th><th>B / L / D</th><th>İşlem</th></tr></thead><tbody id="ptTBody"></tbody></table></div>
     <div class="pt-charts"><div class="pc-card"><div class="pc-t"><div class="cdot"></div>Ağırlık</div><div class="pc-wrap"><canvas id="ptPie"></canvas></div></div><div class="pc-card"><div class="pc-t"><div class="cdot"></div>Buffett & Lynch Skorları</div><div class="pc-wrap"><canvas id="ptScore"></canvas></div></div></div>
     <div class="risk-card"><div class="risk-t">Risk Analizi<span class="rl" id="riskLv">—</span></div><div class="risk-items"><div class="ri"><div class="ri-l">Konsantrasyon</div><div class="ri-v" id="riskConc">—</div></div><div class="ri"><div class="ri-l">En Büyük Pozisyon</div><div class="ri-v" id="riskBig">—</div></div><div class="ri"><div class="ri-l">Ort. Buffett Skoru</div><div class="ri-v" id="riskAvgB">—</div></div><div class="ri"><div class="ri-l">Analiz Edilmemiş</div><div class="ri-v" id="riskUn">—</div></div></div></div>
   </div>
+</div><!-- /page-body -->
 </div>
 
 <!-- FORUM PAGE -->
 <div class="page" id="page-forum">
+<div class="page-body">
   <div class="forum-hdr">
     <div class="forum-title">Yatırımcı <span>Forumu</span></div>
     <button class="forum-new-btn" onclick="openPostForm()">
@@ -909,8 +944,8 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
       Analiz / Yorum Yaz
     </button>
   </div>
-  <div style="font-size:10px;color:var(--muted2);line-height:1.6;padding:9px 11px;background:#000;border:1px solid var(--border2);border-left:2px solid var(--accent);margin-bottom:13px">
-    👥 Herkese açık forum. Hisse analizi, yorum ve görüşlerini paylaş. Saygılı ol, manipülasyon yapma. Yöneticiler uygunsuz içerikleri silebilir.
+  <div style="font-size:10px;color:var(--muted2);line-height:1.6;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent2);margin-bottom:14px">
+    👥 Herkese açık forum. Hisse analizi, yorum ve görüşlerini paylaş. Saygılı ol, manipülasyon yapma.
   </div>
 
   <!-- POST FORM -->
@@ -931,6 +966,7 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
   </div>
 
   <div class="posts-grid" id="postsGrid"><div class="forum-loading">Gönderiler yükleniyor...</div></div>
+</div><!-- /page-body -->
 </div>
 
 </div><!-- main-content -->
@@ -1276,11 +1312,11 @@ function renderMult(m){
 
 function renderCharts(data){
   const fw=FW[curFW];const sc=data.statuses.map(s=>s==='pass'?100:s==='fail'?15:50);
-  const cl=data.statuses.map(s=>s==='pass'?'rgba(0,229,160,0.7)':s==='fail'?'rgba(255,77,106,0.7)':'rgba(0,200,255,0.6)');
-  const ac=curFW==='lynch'?'#f97316':'#2d8fff';
+  const cl=data.statuses.map(s=>s==='pass'?'rgba(26,107,58,0.7)':s==='fail'?'rgba(192,57,43,0.7)':'rgba(184,112,10,0.6)');
+  const ac=curFW==='lynch'?'#8b4513':curFW==='dalio'?'#5b2d8e':'#2451a3';
   if(radarChart)radarChart.destroy();if(barChart)barChart.destroy();
-  radarChart=new Chart(document.getElementById('radarC').getContext('2d'),{type:'radar',data:{labels:fw.criteria.map(c=>c.name.split(' ')[0]),datasets:[{data:sc,backgroundColor:ac+'18',borderColor:ac,borderWidth:2,pointBackgroundColor:ac,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'#0f2540'},pointLabels:{color:'#5a90b8',font:{family:'DM Mono',size:9}},angleLines:{color:'#0f2540'}}},plugins:{legend:{display:false}}}});
-  barChart=new Chart(document.getElementById('barC').getContext('2d'),{type:'bar',data:{labels:fw.criteria.map((_,i)=>String(i+1).padStart(2,'0')),datasets:[{data:sc,backgroundColor:cl,borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100,ticks:{display:false},grid:{color:'#050d1a'},border:{color:'#0f2540'}},x:{ticks:{color:'#5a90b8',font:{family:'DM Mono',size:9}},grid:{display:false},border:{color:'#0f2540'}}},plugins:{legend:{display:false}}}});
+  radarChart=new Chart(document.getElementById('radarC').getContext('2d'),{type:'radar',data:{labels:fw.criteria.map(c=>c.name.split(' ')[0]),datasets:[{data:sc,backgroundColor:ac+'20',borderColor:ac,borderWidth:1.5,pointBackgroundColor:ac,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'#e8e4dc'},pointLabels:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9}},angleLines:{color:'#e8e4dc'}}},plugins:{legend:{display:false}}}});
+  barChart=new Chart(document.getElementById('barC').getContext('2d'),{type:'bar',data:{labels:fw.criteria.map((_,i)=>String(i+1).padStart(2,'0')),datasets:[{data:sc,backgroundColor:cl,borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100,ticks:{display:false},grid:{color:'#f4f1ec'},border:{color:'#d4cfc6'}},x:{ticks:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9}},grid:{display:false},border:{color:'#d4cfc6'}}},plugins:{legend:{display:false}}}});
 }
 
 function renderTable(data){
@@ -1288,13 +1324,33 @@ function renderTable(data){
   fw.criteria.forEach((m,i)=>{const tr=document.createElement('tr');tr.onclick=()=>showPage('crit',i);tr.innerHTML=`<td><span class="cn">${String(i+1).padStart(2,'0')}</span></td><td><div class="cname">${m.name}</div><div class="cdesc">${m.desc}</div></td><td>${pill(data.statuses[i])}</td><td><div class="dtxt">${(data.details[i]||'—').substring(0,80)}${(data.details[i]||'').length>80?'...':''}</div></td>`;tb.appendChild(tr);});
 }
 
+let curCritIdx=0;
+
 function renderCritDetail(i){
   const fw=FW[curFW];const meta=fw.criteria[i];
-  document.getElementById('critTitle').textContent=`Kriter ${String(i+1).padStart(2,'0')} — ${meta.name}`;
+  curCritIdx=i;
+  document.getElementById('critTitle').textContent=`${String(i+1).padStart(2,'0')} / ${fw.criteria.length}`;
   document.getElementById('critNum').textContent=String(i+1).padStart(2,'0');
   document.getElementById('critName').textContent=meta.name;document.getElementById('critDesc').textContent=meta.desc;document.getElementById('critCtx').textContent=meta.ctx;
   if(analysisData&&analysisData.fw===curFW){document.getElementById('critPill').innerHTML=pill(analysisData.statuses[i]);document.getElementById('critAna').textContent=analysisData.details[i]||'—';}
   else{document.getElementById('critPill').innerHTML=pill('pending');document.getElementById('critAna').textContent='Önce bir hisse analiz edin.';}
+  // Navigation buttons
+  const prev=document.getElementById('critPrev');const next=document.getElementById('critNext');
+  if(prev)prev.disabled=(i===0);
+  if(next)next.disabled=(i===fw.criteria.length-1);
+  // Progress dots
+  const prog=document.getElementById('critProgress');
+  if(prog){
+    prog.innerHTML='';
+    fw.criteria.forEach((_,idx)=>{
+      const s=(analysisData&&analysisData.fw===curFW)?analysisData.statuses[idx]:'pending';
+      const dot=document.createElement('div');
+      dot.className='crit-dot '+s+(idx===i?' active':'');
+      dot.title=fw.criteria[idx].name;
+      dot.onclick=()=>{renderCritDetail(idx);};
+      prog.appendChild(dot);
+    });
+  }
   const bars=document.getElementById('critBars');bars.innerHTML='';
   fw.criteria.forEach((m,idx)=>{
     const s=(analysisData&&analysisData.fw===curFW)?analysisData.statuses[idx]:'pending';
@@ -1304,6 +1360,25 @@ function renderCritDetail(i){
     bars.appendChild(row);setTimeout(()=>{const e=document.getElementById('sf-'+idx);if(e)e.style.width=v+'%';},50+idx*80);
   });
 }
+
+function navigateCrit(dir){
+  const fw=FW[curFW];
+  const next=curCritIdx+dir;
+  if(next>=0&&next<fw.criteria.length){showPage('crit',next);}
+}
+
+// Touch swipe support for crit page
+(function(){
+  let tx=0;
+  document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',e=>{
+    const diff=tx-e.changedTouches[0].clientX;
+    if(Math.abs(diff)<50)return;
+    const page=document.getElementById('page-crit');
+    if(!page||!page.classList.contains('active'))return;
+    navigateCrit(diff>0?1:-1);
+  },{passive:true});
+})();
 
 // ANALYZE
 async function doAnalyze(){
@@ -1334,16 +1409,41 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   textGlobal=text;
   const fw=FW[fwKey||curFW];const ex=EX_CFG[curEX];
   const statuses=[],details=[];
-  // Extract CRITERIA block first to avoid regex collisions (e.g. PEG in MULTIPLES vs PEG criteria)
   const criteriaBlock=text.match(/CRITERIA_START([\s\S]*?)CRITERIA_END/i);
   const searchText=criteriaBlock?criteriaBlock[1]:text;
   fw.keys.forEach(key=>{const m=searchText.match(new RegExp('^'+key+':\\s*(PASS|FAIL|NEUTRAL)\\s*\\|\\s*([^\\n]+)','im'));statuses.push(m?pStat(m[1]):'neutral');details.push(m?m[2].trim():'—');});
   const sm=text.match(/TOTAL_SCORE:\s*(\d+)/);const rawScore=sm?parseInt(sm[1]):statuses.filter(s=>s==='pass').length;const score=Math.min(fw.criteria.length,Math.max(0,rawScore));
-  const vm=text.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);const verdict=vm?vm[1]:'BEKLE';
+  // AKILLI VERDICT: BEKLE asla mecbur değil — pass/fail sayısına göre karar ver
+  const vm=text.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);
+  const passCount=statuses.filter(s=>s==='pass').length;
+  const failCount=statuses.filter(s=>s==='fail').length;
+  let verdict;
+  if(vm){
+    const aiV=vm[1];
+    // AI BEKLE diyorsa sisteme bırak
+    if(aiV==='BEKLE'){
+      if(passCount>failCount)verdict='AL';
+      else if(failCount>passCount)verdict='UZAK_DUR';
+      else verdict='BEKLE'; // gerçekten eşit
+    } else {
+      verdict=aiV;
+    }
+  } else {
+    // AI vermemişse sayısal karar
+    if(passCount>=5)verdict='AL';
+    else if(failCount>=5)verdict='UZAK_DUR';
+    else if(passCount>failCount)verdict='AL';
+    else if(failCount>passCount)verdict='UZAK_DUR';
+    else verdict='BEKLE';
+  }
   analysisData={ticker,company,statuses,details,score,verdict,fw:fwKey||curFW};
 
   const ptIdx=portfolio.findIndex(p=>p.ticker===ticker&&p.exchange===curEX);
-  if(ptIdx>=0){if(fwKey==='buffett'){portfolio[ptIdx].bS=score;portfolio[ptIdx].bV=verdict;}else if(fwKey==='lynch'){portfolio[ptIdx].lS=score;portfolio[ptIdx].lV=verdict;}}
+  if(ptIdx>=0){
+    if(fwKey==='buffett'){portfolio[ptIdx].bS=score;portfolio[ptIdx].bV=verdict;}
+    else if(fwKey==='lynch'){portfolio[ptIdx].lS=score;portfolio[ptIdx].lV=verdict;}
+    else if(fwKey==='dalio'){portfolio[ptIdx].dS=score;portfolio[ptIdx].dV=verdict;}
+  }
 
   statuses.forEach((s,i)=>{const e=document.getElementById('ns-'+i);if(e)e.textContent=icon(s);});
   const vbox=document.getElementById('verdictBox');
@@ -1367,14 +1467,9 @@ function parseAndRender(ticker,company,text,fd,fwKey){
 
   if(fd)renderRealData(fd);
   const mults=parseMult(text);if(mults)renderMult(mults);
-
-  // TV chart removed
   renderCharts(analysisData);renderTable(analysisData);
-
-  // Show analysis section
   document.getElementById('analysisSection').style.display='block';
   showPage('overview');switchTab('analiz');
-  // Scroll to analysis
   setTimeout(()=>document.getElementById('analysisSection').scrollIntoView({behavior:'smooth',block:'start'}),300);
 }
 
@@ -1417,16 +1512,19 @@ async function analyzeAllPt(){
     const pf=document.getElementById('pf-'+p.ticker);if(pf)pf.style.width='55%';
     notif.querySelector('div:nth-child(2)').textContent='⏳ Lynch analizi...';
     try{const lR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,prompt:FW.lynch.prompt(p.ticker,p.company,p.exchange),exchange:p.exchange})});const lD=await lR.json();if(!lD.error){const s=lD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=lD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.lS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.lV=v?v[1]:'BEKLE';}}catch{}
+    // Dalio analizi
+    notif.querySelector('div:nth-child(2)').textContent='⏳ Dalio analizi...';
+    try{const dR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,prompt:FW.dalio.prompt(p.ticker,p.company,p.exchange),exchange:p.exchange})});const dD=await dR.json();if(!dD.error){const s=dD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=dD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.dS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.dV=v?v[1]:'BEKLE';}}catch{}
     if(pf)pf.style.width='100%';
-    const gc=v=>v==='AL'?'#00e5a0':v==='UZAK_DUR'?'#ff4d6a':'#ffb830';
-    const sc2=s=>s>=5?'#00e5a0':s>=3?'#ffb830':'#ff4d6a';
-    const avg=((p.bS||0)+(p.lS||0))/2;
+    const gc=v=>v==='AL'?'var(--success)':v==='UZAK_DUR'?'var(--danger)':'var(--warn)';
+    const sc2=s=>s>=5?'var(--success)':s>=3?'var(--warn)':'var(--danger)';
+    const avg=((p.bS||0)+(p.lS||0)+(p.dS||0))/([(p.bS),(p.lS),(p.dS)].filter(x=>x!=null).length||1);
     notif.className='pt-notif '+(avg>=4.5?'done-good':avg<3?'done-bad':'done-mid');
-    notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span class="pt-nt">${p.ticker}</span><span class="pt-nc">${p.company||'—'} · ${p.exchange}</span></div><div class="pt-scrs"><div class="pt-sb2 b"><span class="ptsl">BUFFETT</span><span class="ptsv" style="color:${p.bS!=null?sc2(p.bS):'#5a90b8'}">${p.bS!=null?p.bS+'/7':'—'}</span>${p.bV?`<span class="ptvt" style="color:${gc(p.bV)};border-color:${gc(p.bV)}40">${p.bV}</span>`:''}</div><div class="pt-sb2 l"><span class="ptsl">LYNCH</span><span class="ptsv" style="color:${p.lS!=null?sc2(p.lS):'#5a90b8'}">${p.lS!=null?p.lS+'/7':'—'}</span>${p.lV?`<span class="ptvt" style="color:${gc(p.lV)};border-color:${gc(p.lV)}40">${p.lV}</span>`:''}</div></div><div class="pt-nn">${p.bV==='AL'&&p.lV==='AL'?'✅ Her iki çerçeve de AL':p.bV==='UZAK_DUR'||p.lV==='UZAK_DUR'?'⚠️ UZAK DUR sinyali var':'🔄 Çerçeveler farklı'}</div>`;
+    notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span class="pt-nt">${p.ticker}</span><span class="pt-nc">${p.company||'—'} · ${p.exchange}</span></div><div class="pt-scrs"><div class="pt-sb2 b"><span class="ptsl">BUFFETT</span><span class="ptsv" style="color:${p.bS!=null?sc2(p.bS):'var(--muted2)'}">${p.bS!=null?p.bS+'/7':'—'}</span>${p.bV?`<span class="ptvt" style="color:${gc(p.bV)};border-color:${gc(p.bV)}40">${p.bV}</span>`:''}</div><div class="pt-sb2 l"><span class="ptsl">LYNCH</span><span class="ptsv" style="color:${p.lS!=null?sc2(p.lS):'var(--muted2)'}">${p.lS!=null?p.lS+'/7':'—'}</span>${p.lV?`<span class="ptvt" style="color:${gc(p.lV)};border-color:${gc(p.lV)}40">${p.lV}</span>`:''}</div><div class="pt-sb2" style="border-left:2px solid var(--dalio)"><span class="ptsl" style="color:var(--dalio)">DALIO</span><span class="ptsv" style="color:${p.dS!=null?sc2(p.dS):'var(--muted2)'}">${p.dS!=null?p.dS+'/7':'—'}</span>${p.dV?`<span class="ptvt" style="color:${gc(p.dV)};border-color:${gc(p.dV)}40">${p.dV}</span>`:''}</div></div>`;
     renderPt();updateSbSummary();
     if(portfolio.indexOf(p)<portfolio.length-1)await new Promise(r=>setTimeout(r,400));
   }
-  btn.disabled=false;btn.textContent='▶ Buffett + Lynch Analizi';
+  btn.disabled=false;btn.textContent='▶ Buffett + Lynch + Dalio';
 }
 
 function renderPt(){
@@ -1445,11 +1543,14 @@ function renderPt(){
   const big2=portfolio.reduce((a,b)=>(b.buyPrice*b.qty)>(a.buyPrice*a.qty)?b:a,portfolio[0]);
   const bigPct=((big2.buyPrice*big2.qty/total)*100).toFixed(1);
   document.getElementById('psBig').textContent=`%${bigPct}`;document.getElementById('psBigT').textContent=big2.ticker;
-  const bAn=portfolio.filter(p=>p.bS!=null);const lAn=portfolio.filter(p=>p.lS!=null);
+  const bAn=portfolio.filter(p=>p.bS!=null);const lAn=portfolio.filter(p=>p.lS!=null);const dAn=portfolio.filter(p=>p.dS!=null);
   const avgB=bAn.length>0?(bAn.reduce((s,p)=>s+p.bS,0)/bAn.length).toFixed(1):'—';
   const avgL=lAn.length>0?(lAn.reduce((s,p)=>s+p.lS,0)/lAn.length).toFixed(1):'—';
-  document.getElementById('psAvgB').textContent=avgB==='—'?'—':`${avgB}/7`;document.getElementById('psAvgL').textContent=`Lynch: ${avgL==='—'?'—':`${avgL}/7`}`;
-  const cols=['#2d8fff','#00e5a0','#f97316','#ff4d6a','#ffb830','#00c8ff','#a855f7','#ec4899'];
+  const avgD=dAn.length>0?(dAn.reduce((s,p)=>s+p.dS,0)/dAn.length).toFixed(1):'—';
+  document.getElementById('psAvgB').textContent=avgB==='—'?'—':`${avgB}/7`;
+  document.getElementById('psAvgL').textContent=`Lynch: ${avgL==='—'?'—':`${avgL}/7`}`;
+  const dEl=document.getElementById('psAvgD');if(dEl)dEl.textContent=avgD==='—'?'—':`${avgD}/7`;
+  const cols=['#2451a3','#1a6b3a','#8b4513','#c0392b','#b8700a','#5b2d8e','#2c7a7b','#9a7d3a'];
   const mix=document.getElementById('mixBars');mix.innerHTML='';
   portfolio.forEach((p,i)=>{
     const cost=p.buyPrice*p.qty;const wt=(cost/total*100).toFixed(1);const isTL=p.currency==='₺';
@@ -1460,16 +1561,17 @@ function renderPt(){
   const tb=document.getElementById('ptTBody');tb.innerHTML='';
   portfolio.forEach((p,i)=>{
     const cost=p.buyPrice*p.qty;const wt=(cost/total*100).toFixed(1);
-    const bC=p.bS!=null?(p.bS>=5?'#00e5a0':p.bS>=3?'#ffb830':'#ff4d6a'):'#5a90b8';
-    const lC=p.lS!=null?(p.lS>=5?'#00e5a0':p.lS>=3?'#ffb830':'#ff4d6a'):'#5a90b8';
+    const bC=p.bS!=null?(p.bS>=5?'var(--success)':p.bS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';
+    const lC=p.lS!=null?(p.lS>=5?'var(--success)':p.lS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';
+    const dC=p.dS!=null?(p.dS>=5?'var(--success)':p.dS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><div class="pt-tk">${p.ticker}</div><div class="pt-co">${p.company||'—'}</div></td><td><span class="badge badge-ex">${p.exchange}</span></td><td>${p.buyPrice.toFixed(2)} <span style="font-size:8px;color:${p.currency==='₺'?'var(--warn)':'var(--success)'}">${p.currency}</span></td><td>${p.qty}</td><td><span style="font-family:Syne,sans-serif;font-weight:700">${cost.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span> <span style="font-size:8px;color:${p.currency==='₺'?'var(--warn)':'var(--success)'}">${p.currency}</span></td><td><div style="font-size:10px;color:${cols[i%cols.length]};font-weight:700">%${wt}</div><div class="pt-wbar" style="background:${cols[i%cols.length]};width:${wt}%"></div></td><td><div class="ptscr"><div class="psr"><span class="psrl">B:</span><span class="psrv" style="color:${bC}">${p.bS!=null?p.bS+'/7':'—'}</span>${p.bV?`<span style="font-size:8px;color:${bC}">${p.bV}</span>`:''}</div><div class="psr"><span class="psrl" style="color:var(--lynch)">L:</span><span class="psrv" style="color:${lC}">${p.lS!=null?p.lS+'/7':'—'}</span>${p.lV?`<span style="font-size:8px;color:${lC}">${p.lV}</span>`:''}</div></div></td><td style="display:flex;gap:3px;flex-wrap:wrap"><button class="pt-act analyze" onclick="anaFromPt('${p.ticker}','${p.company}','${p.exchange}')">Analiz</button><button class="pt-act remove" onclick="removeFromPt('${p.ticker}','${p.exchange}')">✕</button></td>`;
+    tr.innerHTML=`<td><div class="pt-tk">${p.ticker}</div><div class="pt-co">${p.company||'—'}</div></td><td><span class="badge badge-ex">${p.exchange}</span></td><td style="font-family:'IBM Plex Mono',monospace">${p.buyPrice.toFixed(2)} <span style="font-size:8px;color:${p.currency==='₺'?'var(--warn)':'var(--success)'}">${p.currency}</span></td><td>${p.qty}</td><td style="font-family:'IBM Plex Mono',monospace;font-weight:500">${cost.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="font-size:8px;color:${p.currency==='₺'?'var(--warn)':'var(--success)'}">${p.currency}</span></td><td><div style="font-size:10px;color:${cols[i%cols.length]};font-weight:600;font-family:'IBM Plex Mono',monospace">%${wt}</div><div class="pt-wbar" style="background:${cols[i%cols.length]};width:${wt}%"></div></td><td><div class="ptscr"><div class="psr"><span class="psrl">B:</span><span class="psrv" style="color:${bC}">${p.bS!=null?p.bS+'/7':'—'}</span>${p.bV?`<span style="font-size:8px;color:${bC}">${p.bV}</span>`:''}</div><div class="psr"><span class="psrl" style="color:var(--lynch)">L:</span><span class="psrv" style="color:${lC}">${p.lS!=null?p.lS+'/7':'—'}</span>${p.lV?`<span style="font-size:8px;color:${lC}">${p.lV}</span>`:''}</div><div class="psr"><span class="psrl" style="color:var(--dalio)">D:</span><span class="psrv" style="color:${dC}">${p.dS!=null?p.dS+'/7':'—'}</span>${p.dV?`<span style="font-size:8px;color:${dC}">${p.dV}</span>`:''}</div></div></td><td style="display:flex;gap:3px;flex-wrap:wrap"><button class="pt-act analyze" onclick="anaFromPt('${p.ticker}','${p.company}','${p.exchange}')">Analiz</button><button class="pt-act remove" onclick="removeFromPt('${p.ticker}','${p.exchange}')">✕</button></td>`;
     tb.appendChild(tr);
   });
   if(ptPie)ptPie.destroy();if(ptScore)ptScore.destroy();
-  ptPie=new Chart(document.getElementById('ptPie').getContext('2d'),{type:'doughnut',data:{labels:portfolio.map(p=>`${p.ticker}(${p.currency})`),datasets:[{data:portfolio.map(p=>(p.buyPrice*p.qty/total*100)),backgroundColor:cols.slice(0,portfolio.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#5a90b8',font:{family:'DM Mono',size:9},boxWidth:9}}}}});
-  const an=portfolio.filter(p=>p.bS!=null||p.lS!=null);
-  if(an.length>0){ptScore=new Chart(document.getElementById('ptScore').getContext('2d'),{type:'bar',data:{labels:an.map(p=>p.ticker),datasets:[{label:'Buffett',data:an.map(p=>p.bS||0),backgroundColor:'rgba(45,143,255,0.7)',borderWidth:0,borderRadius:2},{label:'Lynch',data:an.map(p=>p.lS||0),backgroundColor:'rgba(249,115,22,0.7)',borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:7,ticks:{color:'#5a90b8',font:{family:'DM Mono',size:9}},grid:{color:'#0f2540'}},x:{ticks:{color:'#5a90b8',font:{family:'DM Mono',size:9}},grid:{display:false}}},plugins:{legend:{labels:{color:'#5a90b8',font:{family:'DM Mono',size:9},boxWidth:8}}}}});}
+  ptPie=new Chart(document.getElementById('ptPie').getContext('2d'),{type:'doughnut',data:{labels:portfolio.map(p=>`${p.ticker}(${p.currency})`),datasets:[{data:portfolio.map(p=>(p.buyPrice*p.qty/total*100)),backgroundColor:cols.slice(0,portfolio.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9},boxWidth:9}}}}});
+  const an=portfolio.filter(p=>p.bS!=null||p.lS!=null||p.dS!=null);
+  if(an.length>0){ptScore=new Chart(document.getElementById('ptScore').getContext('2d'),{type:'bar',data:{labels:an.map(p=>p.ticker),datasets:[{label:'Buffett',data:an.map(p=>p.bS||0),backgroundColor:'rgba(36,81,163,0.7)',borderWidth:0,borderRadius:2},{label:'Lynch',data:an.map(p=>p.lS||0),backgroundColor:'rgba(139,69,19,0.7)',borderWidth:0,borderRadius:2},{label:'Dalio',data:an.map(p=>p.dS||0),backgroundColor:'rgba(91,45,142,0.7)',borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:7,ticks:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9}},grid:{color:'#f4f1ec'}},x:{ticks:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9}},grid:{display:false}}},plugins:{legend:{labels:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9},boxWidth:8}}}}});}
   const cr=parseFloat(bigPct);let rTxt,rCls;if(cr>50||portfolio.length<3){rTxt='YÜKSEK';rCls='high';}else if(cr>30||portfolio.length<5){rTxt='ORTA';rCls='mid';}else{rTxt='DÜŞÜK';rCls='low';}
   const rl=document.getElementById('riskLv');rl.textContent=rTxt;rl.className='rl '+rCls;
   document.getElementById('riskConc').textContent=cr>50?'Kritik ✗':cr>30?'Orta ⚠️':'İyi ✓';
