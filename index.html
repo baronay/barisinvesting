@@ -2247,19 +2247,34 @@ async function doAuth() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, marketingConsent: marketingEl?.checked ?? false })
     });
+    if (!r.ok) {
+      // Sunucu hatası — yine de email'i kaydet, misafir hakları ver
+      localStorage.setItem('bi_email', email);
+      hideAuthModal();
+      showToast('Giriş kaydedildi (çevrimdışı mod). 3 analiz hakkın var.', 'warn');
+      return;
+    }
     const data = await r.json();
-    if (data.error) throw new Error(data.error);
+    if (data.error) {
+      // API hatası — yine de devam et
+      localStorage.setItem('bi_email', email);
+      hideAuthModal();
+      showToast(`Mail kaydedildi. ${data.error.includes('Supabase') ? 'Sunucu kurulumu bekleniyor.' : data.error}`, 'warn');
+      return;
+    }
     curUser = data.user;
     localStorage.setItem('bi_email', email);
     hideAuthModal();
     updateCreditsUI();
     updateSidebarUserUI();
-    // Portföyü cloud'dan yükle
     await loadPortfolioFromCloud();
     if (data.isNew) showToast('✓ Hoş geldin! 3 analiz hakkın hazır.', 'success');
     else showToast(`✓ Tekrar hoş geldin! ${curUser.credits} hakkın var.`, 'success');
   } catch (e) {
-    if (errEl) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+    // Network hatası (fetch failed) — email'i kaydet, misafir olarak devam et
+    localStorage.setItem('bi_email', email);
+    hideAuthModal();
+    showToast('Mail kaydedildi. Bağlantı sorunu — misafir modunda devam ediliyor.', 'warn');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Giriş Yap'; }
   }
@@ -2374,21 +2389,27 @@ async function loadPortfolioFromCloud() {
 async function consumeCredit() {
   const email = getEmail();
   if (email && curUser) {
-    // Cloud'dan düş
     try {
       const r = await fetch('/api/auth?action=use', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
+      if (!r.ok) {
+        // Supabase yoksa yine de analizi izin ver
+        return { ok: true };
+      }
       const d = await r.json();
       if (d.error) return { ok: false, error: d.error };
       curUser.credits = d.credits;
       updateCreditsUI();
       return { ok: true };
-    } catch (e) { return { ok: false, error: e.message }; }
+    } catch (e) {
+      // Network hatası — analizi engelleme, misafir gibi devam et
+      return { ok: true };
+    }
   } else {
     // Misafir — localStorage
-    if (guestCredits <= 0) return { ok: false, error: 'Analiz hakkınız doldu. Giriş yaparak daha fazla hak kazanın.' };
+    if (guestCredits <= 0) return { ok: false, error: 'Analiz hakkınız doldu. E-posta ile kaydolarak daha fazla hak kazanın.' };
     guestCredits--;
     localStorage.setItem('guest_credits', guestCredits);
     updateCreditsUI();
