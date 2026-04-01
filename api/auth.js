@@ -14,19 +14,24 @@ async function sb(method, table, params = {}, body = null) {
   Object.entries(params).forEach(([k, v]) => qs.set(k, v));
   const qStr = qs.toString();
   if (qStr) url += '?' + qStr;
+
+  const headers = {
+    'apikey': SB_KEY,
+    'Authorization': `Bearer ${SB_KEY}`,
+    'Content-Type': 'application/json',
+  };
+  // Prefer header — POST için return=representation, diğerleri için minimal
+  if (method === 'POST') headers['Prefer'] = 'return=representation,resolution=merge-duplicates';
+  if (method === 'PATCH') headers['Prefer'] = 'return=representation';
+
   const r = await fetch(url, {
     method,
-    headers: {
-      'apikey': SB_KEY,
-      'Authorization': `Bearer ${SB_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': method === 'POST' ? 'return=representation' : 'return=representation',
-    },
+    headers,
     ...(body ? { body: JSON.stringify(body) } : {})
   });
   if (!r.ok) {
     const err = await r.text();
-    throw new Error(`Supabase ${method} ${table}: ${err}`);
+    throw new Error(`Supabase ${method} ${table}: ${r.status} ${err}`);
   }
   const text = await r.text();
   return text ? JSON.parse(text) : null;
@@ -72,7 +77,8 @@ export default async function handler(req, res) {
       let user = await getUser(em);
       const isNew = !user;
       if (!user) {
-        const rows = await sb('POST', 'users', {}, {
+        // INSERT — upsert ile çakışmayı önle
+        const rows = await sb('POST', 'users', { 'on_conflict': 'email' }, {
           email: em,
           credits: FREE_CREDITS,
           total_used: 0,
@@ -81,7 +87,7 @@ export default async function handler(req, res) {
           joined_at: new Date().toISOString(),
           last_seen: new Date().toISOString(),
         });
-        user = rows?.[0];
+        user = rows?.[0] || { email: em, credits: FREE_CREDITS, is_admin: em === ADMIN_EMAIL, total_used: 0 };
       } else {
         await sb('PATCH', 'users', { 'email': `eq.${em}` }, {
           last_seen: new Date().toISOString(),
