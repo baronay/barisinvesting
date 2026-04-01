@@ -98,6 +98,11 @@ PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBITDA=${n(fd.e
   enrichedPrompt += prompt;
   enrichedPrompt += '\n\nKRİTİK KURAL: Aşağıdaki format ŞARTSIZ uygulanacak. Her PASS/FAIL/NEUTRAL satırı pipe (|) işaretiyle açıklama içermeli. CRITERIA_START ve CRITERIA_END etiketleri olmalı.\nHer kriter için 2-3 cümle somut analiz yaz.';
 
+  // Veri yoksa (küçük BIST hisseleri gibi) AI tahmini yapsın
+  if (!fd) {
+    enrichedPrompt += '\n\nVERİ NOTU: Yahoo Finance bu hisse için yapısal finansal veri döndürmedi. Sektör bilgine ve genel şirket profiline dayanarak en iyi tahmini yap. Tüm MULTIPLES değerlerini sektör ortalamasına göre tahmin et. Her kriterde "Veri sınırlı" uyarısını ekle ama analizi tamamla — boş bırakma.';
+  }
+
   // Pre-fill multiples in prompt text
   if (fd) {
     const n2 = (v,d=1) => v!=null?v.toFixed(d):'N/A';
@@ -172,6 +177,7 @@ async function fetchYahooData(yahooTicker) {
   const modules = 'summaryDetail,defaultKeyStatistics,financialData,price';
   let raw = null;
 
+  // Try both query1 and query2
   for (const base of ['query1', 'query2']) {
     try {
       const r = await fetch(
@@ -183,7 +189,37 @@ async function fetchYahooData(yahooTicker) {
       if (j?.quoteSummary?.result?.[0]) { raw = j.quoteSummary.result[0]; break; }
     } catch { continue; }
   }
-  if (!raw) throw new Error('No Yahoo data');
+
+  // Fallback: v8 chart endpoint for basic price data (works for more tickers)
+  if (!raw) {
+    try {
+      const r = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooTicker)}?interval=1d&range=5d`,
+        { headers: h }
+      );
+      if (r.ok) {
+        const j = await r.json();
+        const meta = j?.chart?.result?.[0]?.meta;
+        if (meta?.regularMarketPrice) {
+          // Return minimal data from chart endpoint
+          return {
+            currentPrice: meta.regularMarketPrice,
+            currency: meta.currency || (yahooTicker.endsWith('.IS') ? 'TRY' : 'USD'),
+            marketCap: meta.marketCap || null,
+            fiftyTwoWeekLow: meta.fiftyTwoWeekLow || null,
+            fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || null,
+            peRatio: null, forwardPE: null, pbRatio: null, pegRatio: null, evEbitda: null,
+            grossMargin: null, operatingMargin: null, profitMargin: null,
+            roe: null, roa: null, freeCashflow: null, operatingCashflow: null,
+            totalCash: null, totalDebt: null, debtToEquity: null, currentRatio: null,
+            revenueGrowth: null, earningsGrowth: null, institutionOwnership: null,
+            recommendationKey: null, targetMeanPrice: null, numberOfAnalystOpinions: null,
+          };
+        }
+      }
+    } catch {}
+    throw new Error('No Yahoo data');
+  }
 
   const { summaryDetail:sd={}, defaultKeyStatistics:ks={}, financialData:fd={}, price:pr={} } = raw;
   const f = v => v?.raw ?? null;
