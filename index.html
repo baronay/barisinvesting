@@ -146,6 +146,24 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
 /* USER CARD */
 .user-card{background:var(--sidebar);border-radius:0;padding:18px;}
 .user-avatar{width:40px;height:40px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:10px;}
+
+/* SIDEBAR USER SECTION */
+.user-sec{padding:12px 18px;border-top:1px solid var(--border-s);border-bottom:1px solid var(--border-s);}
+.user-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.user-top .user-avatar{width:32px;height:32px;font-size:13px;margin-bottom:0;flex-shrink:0;border-radius:0;background:var(--accent2);}
+.user-info{flex:1;min-width:0;}
+.user-info .user-email{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#a8b8d8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;}
+.user-status-line{display:flex;align-items:center;gap:5px;}
+.user-status-line .credits-bar{flex:1;height:2px;background:var(--border-s);}
+.user-status-line .user-credits-val{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:#a8b8d8;}
+.user-actions{display:flex;gap:5px;}
+.admin-panel-btn{flex:1;background:rgba(184,112,10,0.12);border:1px solid rgba(184,112,10,0.3);color:var(--warn);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:5px 8px;cursor:pointer;transition:all 0.15s;}
+.admin-panel-btn:hover{background:rgba(184,112,10,0.22);}
+.logout-btn{background:transparent;border:1px solid var(--border-s);color:#8892b0;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:5px 10px;cursor:pointer;transition:all 0.15s;}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger);}
+.credits-warn{font-size:9px;color:var(--danger);padding:4px 0;margin-bottom:5px;font-family:'IBM Plex Mono',monospace;}
+.sidebar-login-btn{display:flex;align-items:center;gap:7px;width:100%;background:rgba(168,184,216,0.08);border:none;border-top:1px solid var(--border-s);color:#8892b0;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:12px 18px;cursor:pointer;transition:all 0.2s;text-align:left;}
+.sidebar-login-btn:hover{background:rgba(168,184,216,0.14);color:#a8b8d8;}
 .user-email{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#a8b8d8;margin-bottom:4px;word-break:break-all;}
 .user-joined{font-size:9px;color:#8892b0;font-family:'IBM Plex Mono',monospace;}
 .user-credits-wrap{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-s);}
@@ -1014,15 +1032,18 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
 
   <!-- USER SECTION -->
   <div class="user-sec" id="sidebarUserSec" style="display:none">
-    <div class="user-email" id="sidebarUserEmail">—</div>
-    <div class="credits-row">
-      <div class="credits-bar-wrap">
-        <div class="credits-bar"><div class="credits-fill" id="sidebarCreditsFill" style="width:100%"></div></div>
+    <div class="user-top">
+      <div class="user-avatar" id="sidebarAvatar">?</div>
+      <div class="user-info">
+        <div class="user-email" id="sidebarUserEmail">—</div>
+        <div class="user-status-line">
+          <div class="credits-bar"><div class="credits-fill" id="sidebarCreditsFill" style="width:100%"></div></div>
+          <div class="user-credits-val" id="sidebarCreditsVal">3</div>
+          <span style="font-size:8px;color:var(--muted-s);font-family:'IBM Plex Mono',monospace">hak</span>
+        </div>
       </div>
-      <div class="user-credits-val" id="sidebarCreditsVal">3</div>
-      <span style="font-size:8px;color:var(--muted-s);font-family:'IBM Plex Mono',monospace">hak</span>
     </div>
-    <div class="credits-warn" id="creditsWarn" style="display:none">⚠ Son hakkın! Yeni hak için iletişime geç.</div>
+    <div class="credits-warn" id="creditsWarn" style="display:none">⚠ Son hakkın! Daha fazlası için iletişime geç.</div>
     <div class="user-actions">
       <button class="admin-panel-btn" id="sidebarAdminBtn" style="display:none" onclick="openAdmin()">⚙ Admin</button>
       <button class="logout-btn" onclick="logout()">Çıkış</button>
@@ -2234,7 +2255,7 @@ async function doAuth() {
   const emailIn = document.getElementById('authEmailIn');
   const errEl = document.getElementById('authErr');
   const marketingEl = document.getElementById('marketingConsent');
-  const email = emailIn?.value?.trim();
+  const email = (emailIn?.value || '').trim();
   if (!email || !email.includes('@')) {
     if (errEl) { errEl.textContent = 'Geçerli bir e-posta girin.'; errEl.style.display = 'block'; }
     return;
@@ -2242,42 +2263,43 @@ async function doAuth() {
   const btn = document.querySelector('.auth-submit');
   if (btn) { btn.disabled = true; btn.textContent = 'Kaydediliyor...'; }
   if (errEl) errEl.style.display = 'none';
+
+  // Her durumda çalışacak fallback kullanıcı
+  const fallbackUser = { email, credits: 3, is_admin: false, total_used: 0, offline: true };
+
   try {
     const r = await fetch('/api/auth?action=login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, marketingConsent: marketingEl?.checked ?? false })
     });
-    if (!r.ok) {
-      // Sunucu hatası — yine de email'i kaydet, misafir hakları ver
-      localStorage.setItem('bi_email', email);
-      hideAuthModal();
-      showToast('Giriş kaydedildi (çevrimdışı mod). 3 analiz hakkın var.', 'warn');
-      return;
-    }
     const data = await r.json();
-    if (data.error) {
-      // API hatası — yine de devam et
-      localStorage.setItem('bi_email', email);
-      hideAuthModal();
-      showToast(`Mail kaydedildi. ${data.error.includes('Supabase') ? 'Sunucu kurulumu bekleniyor.' : data.error}`, 'warn');
-      return;
+
+    if (data.user) {
+      curUser = data.user;
+    } else {
+      // Supabase yok veya hata — yine de giriş yap
+      curUser = fallbackUser;
     }
-    curUser = data.user;
-    localStorage.setItem('bi_email', email);
-    hideAuthModal();
-    updateCreditsUI();
-    updateSidebarUserUI();
-    await loadPortfolioFromCloud();
-    if (data.isNew) showToast('✓ Hoş geldin! 3 analiz hakkın hazır.', 'success');
-    else showToast(`✓ Tekrar hoş geldin! ${curUser.credits} hakkın var.`, 'success');
-  } catch (e) {
-    // Network hatası (fetch failed) — email'i kaydet, misafir olarak devam et
-    localStorage.setItem('bi_email', email);
-    hideAuthModal();
-    showToast('Mail kaydedildi. Bağlantı sorunu — misafir modunda devam ediliyor.', 'warn');
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Giriş Yap'; }
+  } catch {
+    // Network hatası — offline mod
+    curUser = fallbackUser;
   }
+
+  localStorage.setItem('bi_email', email);
+  hideAuthModal();
+  updateSidebarUserUI();
+  updateCreditsUI();
+  loadPortfolioFromCloud();
+
+  if (curUser.offline) {
+    showToast('✓ Mail kaydedildi. Çevrimdışı mod — 3 hakkın var.', 'warn');
+  } else if (curUser.credits === 3 && curUser.total_used === 0) {
+    showToast('✓ Hoş geldin! 3 ücretsiz analiz hakkın hazır.', 'success');
+  } else {
+    showToast(`✓ Tekrar hoş geldin! ${curUser.credits} hakkın var.`, 'success');
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Giriş Yap'; }
 }
 
 function skipAuth() {
@@ -2300,15 +2322,26 @@ function updateSidebarUserUI() {
   const loginBtn = document.getElementById('sidebarLoginBtn');
   const emailEl = document.getElementById('sidebarUserEmail');
   const adminBtn = document.getElementById('sidebarAdminBtn');
-  if (curUser) {
+  const avatarEl = document.getElementById('sidebarAvatar');
+
+  const email = curUser?.email || localStorage.getItem('bi_email');
+
+  if (email) {
     if (userSec) userSec.style.display = 'block';
     if (loginBtn) loginBtn.style.display = 'none';
-    if (emailEl) emailEl.textContent = curUser.email;
-    if (adminBtn) adminBtn.style.display = curUser.is_admin ? 'block' : 'none';
+    if (emailEl) emailEl.textContent = email;
+    if (adminBtn) adminBtn.style.display = curUser?.is_admin ? 'block' : 'none';
+    // Avatar harfi
+    if (avatarEl) {
+      avatarEl.textContent = email[0].toUpperCase();
+      avatarEl.title = email;
+      avatarEl.style.display = 'flex';
+    }
   } else {
     if (userSec) userSec.style.display = 'none';
     if (loginBtn) loginBtn.style.display = 'block';
     if (adminBtn) adminBtn.style.display = 'none';
+    if (avatarEl) avatarEl.style.display = 'none';
   }
   updateCreditsUI();
 }
@@ -2544,17 +2577,16 @@ loadWatchlist('BIST');
       const data = await r.json();
       if (data.user) {
         curUser = data.user;
-        updateSidebarUserUI();
-        await loadPortfolioFromCloud();
       } else {
-        localStorage.removeItem('bi_email');
-        updateSidebarUserUI();
-        loadPortfolioFromCloud(); // localStorage'dan
+        // Supabase yoksa bile email'i sakla, minimal kullanıcı oluştur
+        curUser = { email: savedEmail, credits: guestCredits, is_admin: false, offline: true };
       }
     } catch {
-      updateSidebarUserUI();
-      loadPortfolioFromCloud();
+      // Network hatası — email'i koru, offline kullanıcı oluştur
+      curUser = { email: savedEmail, credits: guestCredits, is_admin: false, offline: true };
     }
+    updateSidebarUserUI();
+    loadPortfolioFromCloud();
   } else {
     updateSidebarUserUI();
     loadPortfolioFromCloud();
