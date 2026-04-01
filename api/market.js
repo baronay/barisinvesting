@@ -43,10 +43,11 @@ async function getNews(res) {
   };
 
   const FEEDS = [
+    { url: 'https://tr.investing.com/rss/news.rss', source: 'Investing.com TR' },
+    { url: 'https://tr.investing.com/rss/news_14.rss', source: 'Investing.com Hisse' },
     { url: 'https://www.bloomberght.com/rss/haberler', source: 'Bloomberg HT' },
     { url: 'https://www.dunya.com/rss/dunya_ekonomi.xml', source: 'Dünya Ekonomi' },
     { url: 'https://www.bloomberght.com/rss/ekonomi', source: 'Bloomberg HT Ekonomi' },
-    { url: 'https://feeds.bloomberght.com/bloomberg-ht/haberler', source: 'Bloomberg HT' },
     { url: 'https://www.haberler.com/finans/rss/', source: 'Haberler Finans' },
     { url: 'https://www.ekonomim.com/rss', source: 'Ekonomim' },
   ];
