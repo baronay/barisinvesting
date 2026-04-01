@@ -130,12 +130,107 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
 .f-link:hover{border-color:#a8b8d8;color:#a8b8d8;}
 
 /* ── MAIN AREA ── */
-.main{flex:1;overflow-y:auto;min-width:0;background:var(--bg);}
-.main-content{padding:28px 36px;max-width:1200px;}
+.main{flex:1;overflow-y:auto;min-width:0;background:var(--bg);display:flex;}
+.main-content{flex:1;min-width:0;}
+.main-content{padding:0 !important;max-width:none;}
 .page{display:none;}
 .page.active{display:block;animation:fadeIn 0.25s ease;}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* ── RIGHT PANEL ── */
+.right-panel{width:300px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow-y:auto;}
+.rp-section{padding:16px 18px;border-bottom:1px solid var(--rule);}
+.rp-title{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:12px;}
+
+/* USER CARD */
+.user-card{background:var(--sidebar);border-radius:0;padding:18px;}
+.user-avatar{width:40px;height:40px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:10px;}
+.user-email{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#a8b8d8;margin-bottom:4px;word-break:break-all;}
+.user-joined{font-size:9px;color:#8892b0;font-family:'IBM Plex Mono',monospace;}
+.user-credits-wrap{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-s);}
+.user-credits-label{font-size:9px;color:#8892b0;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;text-transform:uppercase;}
+.user-credits-val{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#a8b8d8;}
+.user-credits-val.low{color:var(--danger);}
+.user-credits-val.unlimited{color:var(--success);}
+.credits-bar{height:3px;background:var(--border-s);margin-top:6px;}
+.credits-fill{height:100%;background:#a8b8d8;transition:width 0.5s;}
+.credits-fill.low{background:var(--danger);}
+.user-badge{display:inline-block;font-size:8px;padding:2px 6px;font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:1px;margin-top:6px;}
+.user-badge.admin{background:rgba(184,112,10,0.15);color:var(--warn);border:1px solid rgba(184,112,10,0.3);}
+.user-badge.free{background:rgba(168,184,216,0.1);color:#8892b0;border:1px solid var(--border-s);}
+.rp-login-btn{width:100%;background:var(--accent2);color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:600;padding:11px;cursor:pointer;letter-spacing:0.5px;transition:background 0.2s;}
+.rp-login-btn:hover{background:var(--accent);}
+.rp-login-hint{font-size:10px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.6;}
+.rp-logout-btn{width:100%;background:transparent;border:1px solid var(--border-s);color:#8892b0;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px;cursor:pointer;margin-top:8px;transition:all 0.15s;}
+.rp-logout-btn:hover{border-color:var(--danger);color:var(--danger);}
+
+/* RECENT ANALYSES */
+.recent-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--rule);cursor:pointer;transition:all 0.15s;}
+.recent-item:last-child{border-bottom:none;}
+.recent-item:hover .recent-ticker{color:var(--accent2);}
+.recent-ticker{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--accent);width:48px;flex-shrink:0;}
+.recent-fw{font-size:8px;color:var(--muted2);font-family:'IBM Plex Mono',monospace;}
+.recent-verdict{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:2px 7px;border:1px solid;}
+.recent-verdict.AL{color:var(--success);border-color:rgba(26,107,58,0.3);}
+.recent-verdict.BEKLE{color:var(--warn);border-color:rgba(184,112,10,0.3);}
+.recent-verdict.UZAK_DUR{color:var(--danger);border-color:rgba(192,57,43,0.3);}
+.recent-score{font-size:9px;color:var(--muted2);font-family:'IBM Plex Mono',monospace;}
+
+/* SAVE INDICATOR */
+.save-indicator{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--muted2);font-family:'IBM Plex Mono',monospace;padding:8px 18px;}
+.save-dot{width:6px;height:6px;border-radius:50%;background:var(--muted2);flex-shrink:0;}
+.save-dot.saved{background:var(--success);}
+.save-dot.saving{background:var(--warn);animation:pulse 1s infinite;}
+.save-dot.error{background:var(--danger);}
+
+/* ADMIN PANEL */
+.admin-panel{background:var(--surface2);border:1px solid rgba(184,112,10,0.3);padding:12px;margin-bottom:8px;}
+.admin-title{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--warn);font-family:'IBM Plex Mono',monospace;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.admin-stat{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--rule);}
+.admin-stat:last-child{border-bottom:none;}
+.admin-stat-label{font-size:9px;color:var(--muted2);font-family:'IBM Plex Mono',monospace;}
+.admin-stat-val{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;color:var(--text);}
+.admin-user-row{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--rule);font-size:9px;font-family:'IBM Plex Mono',monospace;}
+.admin-user-row:last-child{border-bottom:none;}
+.admin-user-email{flex:1;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.admin-user-credits{color:var(--accent2);font-weight:500;width:24px;text-align:center;}
+.admin-add-btn{background:transparent;border:1px solid var(--border);color:var(--muted2);font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 5px;cursor:pointer;}
+.admin-add-btn:hover{border-color:var(--success);color:var(--success);}
+.admin-del-btn{background:transparent;border:none;color:var(--muted2);cursor:pointer;font-size:11px;padding:0 2px;}
+.admin-del-btn:hover{color:var(--danger);}
+
+/* LOGIN MODAL */
+.login-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:800;align-items:center;justify-content:center;}
+.login-modal.visible{display:flex;}
+.login-box{background:var(--surface);border:1px solid var(--border);max-width:420px;width:94%;box-shadow:0 24px 60px rgba(0,0,0,0.12);}
+.login-header{background:var(--sidebar);padding:28px 28px 20px;}
+.login-tag{font-size:9px;letter-spacing:3px;color:#8892b0;text-transform:uppercase;margin-bottom:8px;font-family:'IBM Plex Mono',monospace;}
+.login-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#e8e6e0;line-height:1.2;}
+.login-sub{font-size:11px;color:#8892b0;margin-top:6px;line-height:1.8;}
+.login-body{padding:24px 28px;}
+.login-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);margin-bottom:6px;display:block;font-family:'IBM Plex Mono',monospace;}
+.login-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:12px 14px;outline:none;margin-bottom:14px;}
+.login-input:focus{border-color:var(--accent2);}
+.login-submit{width:100%;background:var(--accent2);color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;padding:13px;cursor:pointer;letter-spacing:0.5px;transition:background 0.2s;}
+.login-submit:hover{background:var(--accent);}
+.login-benefits{display:flex;flex-direction:column;gap:7px;margin-bottom:18px;}
+.login-benefit{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--muted);}
+.login-benefit-icon{width:18px;height:18px;background:rgba(36,81,163,0.1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;}
+.login-msg{font-size:10px;padding:8px 10px;margin-top:10px;font-family:'IBM Plex Mono',monospace;display:none;}
+.login-msg.ok{color:var(--success);background:rgba(26,107,58,0.06);border:1px solid rgba(26,107,58,0.2);}
+.login-msg.err{color:var(--danger);background:rgba(192,57,43,0.06);border:1px solid rgba(192,57,43,0.2);}
+.login-skip{width:100%;background:none;border:none;color:var(--muted2);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:10px;cursor:pointer;margin-top:6px;border-top:1px solid var(--rule);}
+.login-skip:hover{color:var(--text);}
+
+/* STATS MINI */
+.stat-mini{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);}
+.stat-mini-card{background:var(--surface);padding:10px 12px;}
+.stat-mini-lbl{font-size:8px;color:var(--muted2);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;font-family:'IBM Plex Mono',monospace;}
+.stat-mini-val{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--text);}
+
+@media(max-width:1100px){.right-panel{display:none;}}
+
 
 /* FW MODAL */
 .fw-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:700;align-items:center;justify-content:center;}
@@ -164,7 +259,7 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
 .fw-skip:hover{color:var(--text);}
 
 /* ── HERO ── */
-.hero{background:var(--sidebar);border:none;padding:32px 36px 26px;margin-bottom:0;position:relative;overflow:hidden;}
+.hero{background:var(--sidebar);border:none;padding:0;margin-bottom:0;position:relative;overflow:hidden;}
 .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent2),#4a7fd4,transparent);}
 .hero-tag{font-size:9px;letter-spacing:3px;color:#8892b0;text-transform:uppercase;margin-bottom:8px;font-family:'IBM Plex Mono',monospace;}
 .hero-title{font-family:'Playfair Display',serif;font-size:clamp(22px,2.8vw,34px);font-weight:700;line-height:1.2;margin-bottom:8px;color:#e8e6e0;}
@@ -591,6 +686,56 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
   .s-close{display:none;}
 }
 
+/* ── HERO 2-KOLON ── */
+.hero-inner{display:grid;grid-template-columns:1fr 280px;gap:0;align-items:stretch;min-height:220px;}
+.hero-left{padding:32px 36px 26px;}
+.hero-right{background:rgba(255,255,255,0.04);border-left:1px solid rgba(255,255,255,0.08);padding:20px 22px;display:flex;flex-direction:column;gap:0;}
+.hmp-title{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:3px;color:#8892b0;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.hmp-row{display:flex;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.hmp-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8892b0;width:68px;flex-shrink:0;}
+.hmp-val{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:#e8e6e0;flex:1;}
+.hmp-chg{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;text-align:right;min-width:50px;}
+.hmp-chg.pos{color:#6dbb8a;}
+.hmp-chg.neg{color:#e07070;}
+.hmp-divider{height:1px;background:rgba(255,255,255,0.08);margin:6px 0;}
+.hmp-time{font-family:'IBM Plex Mono',monospace;font-size:8px;color:#3a4260;margin-top:auto;padding-top:10px;}
+
+/* ── ANA SAYFA 2-KOLON ── */
+.home-two-col{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;}
+.home-col-news{min-width:0;}
+.home-col-right{min-width:0;}
+
+/* Haberler dikey liste (sol kolonda) */
+.news-grid-v{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:0;}
+.news-grid-v .news-card{border-left:3px solid transparent;padding:12px 14px;}
+
+/* Piyasa şerit dikey (sağ kolonda) */
+.mkt-strip-v{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:0;}
+.mkt-strip-v .mkt-card{display:flex;align-items:center;padding:9px 12px;gap:10px;}
+.mkt-strip-v .mkt-card .mkt-lbl{width:70px;flex-shrink:0;margin-bottom:0;}
+.mkt-strip-v .mkt-card .mkt-price{flex:1;}
+.mkt-strip-v .mkt-card .mkt-chg{text-align:right;margin-top:0;}
+
+/* Watchlist dikey (sağ kolonda) */
+.wl-grid-v{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);}
+.wl-grid-v .wl-card{display:flex;align-items:center;gap:10px;padding:10px 12px;}
+.wl-grid-v .wl-card .wl-ticker{font-size:13px;width:60px;flex-shrink:0;}
+.wl-grid-v .wl-card .wl-name{flex:1;margin-bottom:0;font-size:9px;}
+.wl-grid-v .wl-card .wl-price{margin-bottom:0;font-size:11px;}
+.wl-grid-v .wl-card .wl-chg{margin-bottom:0;font-size:10px;min-width:55px;text-align:right;}
+.wl-grid-v .wl-card .wl-tags{display:none;}
+.wl-grid-v .wl-card .wl-bar-wrap{display:none;}
+.wl-grid-v .wl-rank{margin-bottom:0;width:18px;flex-shrink:0;}
+
+@media(max-width:1100px){
+  .hero-inner{grid-template-columns:1fr;}
+  .hero-right{display:none;}
+  .home-two-col{grid-template-columns:1fr;}
+}
+@media(max-width:768px){
+  .hero-left{padding:20px 16px 18px;}
+}
+
 /* ── CRIT NAV BAR ── */
 .crit-nav-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px 0;}
 .crit-nav-btn{background:var(--surface);border:1px solid var(--border);color:var(--accent2);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:7px 16px;cursor:pointer;transition:all 0.15s;white-space:nowrap;font-weight:500;}
@@ -613,6 +758,75 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
 @media(max-width:768px){
   .crit-nav-bar{position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--rule);padding:8px 0 10px;margin-bottom:14px;}
 }
+
+/* ── AUTH MODAL ── */
+.auth-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:800;align-items:center;justify-content:center;}
+.auth-modal.visible{display:flex;}
+.auth-box{background:var(--surface);border:1px solid var(--border);max-width:420px;width:94%;box-shadow:0 24px 60px rgba(0,0,0,0.15);overflow:hidden;}
+.auth-header{background:var(--sidebar);padding:28px 28px 22px;}
+.auth-brand{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#e8e6e0;margin-bottom:4px;}
+.auth-brand span{color:#a8b8d8;}
+.auth-tagline{font-size:10px;color:#8892b0;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;}
+.auth-body{padding:24px 28px;}
+.auth-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.auth-sub{font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.auth-benefits{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;padding:14px;background:var(--surface2);border:1px solid var(--rule);}
+.auth-benefit{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text2);}
+.auth-benefit-icon{width:22px;height:22px;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;color:#fff;}
+.auth-email-row{display:flex;gap:8px;margin-bottom:12px;}
+.auth-email-in{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:11px 14px;outline:none;}
+.auth-email-in:focus{border-color:var(--accent2);}
+.auth-submit{background:var(--accent2);color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:600;padding:11px 20px;cursor:pointer;white-space:nowrap;transition:background 0.2s;}
+.auth-submit:hover{background:var(--accent);}
+.auth-note{font-size:9px;color:var(--muted2);font-family:'IBM Plex Mono',monospace;line-height:1.6;}
+.auth-err{font-size:10px;color:var(--danger);margin-top:8px;display:none;font-family:'IBM Plex Mono',monospace;}
+.auth-skip{width:100%;padding:10px;background:none;border:none;border-top:1px solid var(--rule);color:var(--muted2);font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;margin-top:4px;}
+.auth-skip:hover{color:var(--text);}
+
+/* ── USER BAR in hero ── */
+.user-bar{display:flex;align-items:center;gap:10px;padding:10px 0;margin-top:14px;border-top:1px solid rgba(168,184,216,0.2);}
+.user-email{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8892b0;}
+.user-credits-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;background:rgba(168,184,216,0.1);border:1px solid rgba(168,184,216,0.3);}
+.ucb-num{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:#a8b8d8;}
+.ucb-lbl{font-size:9px;color:#8892b0;font-family:'IBM Plex Mono',monospace;}
+.user-logout{background:none;border:1px solid rgba(168,184,216,0.2);color:#8892b0;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:4px 9px;cursor:pointer;margin-left:auto;transition:all 0.15s;}
+.user-logout:hover{border-color:#a8b8d8;color:#a8b8d8;}
+.credits-warn{font-size:10px;color:var(--warn);font-family:'IBM Plex Mono',monospace;padding:6px 10px;background:rgba(184,112,10,0.08);border:1px solid rgba(184,112,10,0.2);margin-top:8px;}
+
+/* ── ADMIN PANEL ── */
+.admin-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:900;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;}
+.admin-modal.visible{display:flex;}
+.admin-box{background:var(--surface);border:1px solid var(--border);width:100%;max-width:900px;box-shadow:0 24px 80px rgba(0,0,0,0.2);}
+.admin-hdr{background:var(--sidebar);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;}
+.admin-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#e8e6e0;}
+.admin-close{background:none;border:1px solid var(--border-s);color:#8892b0;font-size:14px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.admin-close:hover{color:#e8e6e0;}
+.admin-body{padding:24px;}
+.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:20px;}
+.admin-stat{background:var(--surface2);padding:14px;text-align:center;}
+.admin-stat-n{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--accent);margin-bottom:3px;}
+.admin-stat-l{font-size:9px;color:var(--muted2);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1px;}
+.admin-sec-title{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);font-family:'IBM Plex Mono',monospace;margin-bottom:10px;}
+.admin-user-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:20px;}
+.admin-user-table th{text-align:left;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);padding:7px 10px;border-bottom:2px solid var(--rule);font-family:'IBM Plex Mono',monospace;background:var(--surface2);}
+.admin-user-table td{padding:9px 10px;border-bottom:1px solid var(--rule);vertical-align:middle;}
+.admin-user-table tr:hover td{background:var(--surface2);}
+.admin-email{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text);}
+.admin-credit-inp{width:50px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:4px 6px;text-align:center;}
+.admin-add-btn{background:var(--success);color:#fff;border:none;font-size:9px;padding:4px 8px;cursor:pointer;font-family:'IBM Plex Mono',monospace;margin-left:4px;}
+.admin-del-btn{background:none;border:1px solid var(--danger);color:var(--danger);font-size:9px;padding:4px 7px;cursor:pointer;font-family:'IBM Plex Mono',monospace;}
+.admin-badge-admin{font-size:8px;padding:1px 5px;background:rgba(36,81,163,0.1);border:1px solid rgba(36,81,163,0.3);color:var(--accent2);font-family:'IBM Plex Mono',monospace;}
+.admin-refresh{background:var(--surface2);border:1px solid var(--border);color:var(--muted2);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:6px 12px;cursor:pointer;transition:all 0.15s;margin-bottom:10px;}
+.admin-refresh:hover{border-color:var(--accent2);color:var(--accent2);}
+.admin-link{display:none;}
+.admin-link.visible{display:block;font-size:10px;color:var(--muted2);margin-top:4px;font-family:'IBM Plex Mono',monospace;}
+
+/* ── CONTENT LAYOUT — max width centered ── */
+.main{flex:1;overflow-y:auto;min-width:0;background:var(--bg);}
+.main-content{padding:0 !important;max-width:none;}
+.page-body{padding:28px 40px;max-width:1400px;}
+@media(max-width:1100px){.page-body{padding:20px 24px;}}
+@media(max-width:768px){.page-body{padding:14px;padding-bottom:74px;}}
 </style>
 <body>
 
@@ -625,8 +839,62 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
 
 <button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()">☰</button>
 
+<!-- ── AUTH MODAL ── -->
+<div class="auth-modal" id="authModal" style="display:none">
+  <div class="auth-box">
+    <div class="auth-header">
+      <div class="auth-brand">Barış <span>Investing</span></div>
+      <div class="auth-tagline">YATIRIM ANALİZ MERKEZİ</div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-title">Ücretsiz başla</div>
+      <div class="auth-sub">E-posta adresinle kayıt ol. Kredi kartı gerekmez. Verileriniz hesabınıza bağlı kalır.</div>
+      <div class="auth-benefits">
+        <div class="auth-benefit"><div class="auth-benefit-icon">3</div><span><strong>3 ücretsiz analiz hakkı</strong> — kayıt anında</span></div>
+        <div class="auth-benefit"><div class="auth-benefit-icon">☁</div><span><strong>Portföy bulutta saklanır</strong> — her cihazdan erişim</span></div>
+        <div class="auth-benefit"><div class="auth-benefit-icon">🔒</div><span><strong>Şifre yok</strong> — sadece e-posta ile giriş</span></div>
+      </div>
+      <div class="auth-email-row">
+        <input class="auth-email-in" id="authEmailIn" type="email" placeholder="ornek@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')doAuth()"/>
+        <button class="auth-submit" onclick="doAuth()">Giriş Yap</button>
+      </div>
+      <label class="auth-consent">
+        <input type="checkbox" id="marketingConsent"/>
+        <span>Yeni analizler ve piyasa yorumları hakkında bana e-posta gönderebilirsiniz</span>
+      </label>
+      <div class="auth-note">Giriş yaparak gizlilik politikasını kabul etmiş olursunuz. E-posta adresiniz üçüncü taraflarla paylaşılmaz.</div>
+      <div class="auth-err" id="authErr" style="display:none"></div>
+      <button class="auth-skip" onclick="skipAuth()">Şimdi değil — misafir olarak devam et (3 hak)</button>
+    </div>
+  </div>
+</div>
 
-<!-- FW MODAL -->
+<!-- ── ADMIN MODAL ── -->
+<div class="admin-modal" id="adminModal" style="display:none">
+  <div class="admin-box">
+    <div class="admin-hdr">
+      <div class="admin-title">⚙ Admin Paneli — Barış Investing</div>
+      <button class="admin-close" onclick="closeAdmin()">✕</button>
+    </div>
+    <div class="admin-body">
+      <div class="admin-stats" id="adminStats">
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatUsers">—</div><div class="admin-stat-l">Kullanıcı</div></div>
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatAnalyze">—</div><div class="admin-stat-l">Toplam Analiz</div></div>
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatToday">—</div><div class="admin-stat-l">Bugün Kayıt</div></div>
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatCredits">—</div><div class="admin-stat-l">Kalan Haklar</div></div>
+      </div>
+      <div class="admin-sec-title">Kullanıcılar</div>
+      <button class="admin-refresh" onclick="loadAdminUsers()">↻ Yenile</button>
+      <div style="overflow-x:auto;">
+        <table class="admin-user-table">
+          <thead><tr><th>E-posta</th><th>Kayıt</th><th>Son Giriş</th><th>Toplam</th><th>Kalan Hak</th><th>Hak Ekle</th><th>İşlem</th></tr></thead>
+          <tbody id="adminUserBody"></tbody>
+        </table>
+      </div>
+      <div class="admin-link" id="adminNote"></div>
+    </div>
+  </div>
+</div>
 <div class="fw-modal" id="fwModal">
   <div class="fw-modal-box">
     <div class="fw-mhdr"><div class="fw-mtag">Barış Investing · Analiz Çerçevesi</div><div class="fw-mtitle">Hangi yatırımcı gözüyle bakmak istersin?</div><div class="fw-msub">Her iki çerçeve de 7 kritere göre hisseyi değerlendirir.</div></div>
@@ -744,6 +1012,27 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
     </div>
   </div>
 
+  <!-- USER SECTION -->
+  <div class="user-sec" id="sidebarUserSec" style="display:none">
+    <div class="user-email" id="sidebarUserEmail">—</div>
+    <div class="credits-row">
+      <div class="credits-bar-wrap">
+        <div class="credits-bar"><div class="credits-fill" id="sidebarCreditsFill" style="width:100%"></div></div>
+      </div>
+      <div class="user-credits-val" id="sidebarCreditsVal">3</div>
+      <span style="font-size:8px;color:var(--muted-s);font-family:'IBM Plex Mono',monospace">hak</span>
+    </div>
+    <div class="credits-warn" id="creditsWarn" style="display:none">⚠ Son hakkın! Yeni hak için iletişime geç.</div>
+    <div class="user-actions">
+      <button class="admin-panel-btn" id="sidebarAdminBtn" style="display:none" onclick="openAdmin()">⚙ Admin</button>
+      <button class="logout-btn" onclick="logout()">Çıkış</button>
+    </div>
+  </div>
+  <button class="sidebar-login-btn" id="sidebarLoginBtn" onclick="showAuthModal()">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+    E-posta ile giriş yap
+  </button>
+
   <div class="s-footer">
     <div class="s-footer-t">© 2026 Barış Investing</div>
     <div class="footer-links">
@@ -761,50 +1050,71 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
 <!-- ANALYZE + HOME PAGE (combined) -->
 <div class="page active" id="page-overview">
 
-  <!-- HERO at top -->
+  <!-- HERO at top — 2 kolon: sol arama, sağ piyasa özeti -->
   <div class="hero">
-    <div class="hero-tag">Barış Investing · Yatırım Analiz Merkezi</div>
-    <div class="hero-title">Hisseyi <span>Buffett, Lynch veya Dalio</span><br>çerçevesinden geçir</div>
-    <div class="hero-sub">Yahoo Finance verileriyle 7 kriterde AI destekli derinlemesine hisse analizi. Saniyeler içinde sonuç.</div>
-    <div class="hero-search-row">
-      <input class="hero-ticker-in" id="heroIn" placeholder="THYAO, AAPL..." autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
-      <select class="hero-fw-select" id="heroFwSel">
-        <option value="buffett">Buffett</option>
-        <option value="lynch">Lynch</option>
-        <option value="dalio">Dalio</option>
-      </select>
-      <button class="hero-search-btn" onclick="heroSearch()">ANALİZ ET →</button>
-      <div class="hero-ac" id="heroAc"></div>
-    </div>
-    <div class="hero-ex-row">
-      <button class="hero-ex-btn active" id="hex-bist" onclick="selHeroEx('BIST')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-tr"/></svg>BIST</button>
-      <button class="hero-ex-btn" id="hex-nyse" onclick="selHeroEx('NYSE')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-us"/></svg>NYSE</button>
-      <button class="hero-ex-btn" id="hex-nasdaq" onclick="selHeroEx('NASDAQ')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-us"/></svg>NASDAQ</button>
+    <div class="hero-inner">
+      <!-- Sol: arama -->
+      <div class="hero-left">
+        <div class="hero-tag">Barış Investing · Yatırım Analiz Merkezi</div>
+        <div class="hero-title">Hisseyi <span>Buffett, Lynch<br>veya Dalio</span> çerçevesinden geçir</div>
+        <div class="hero-sub">Yahoo Finance verileriyle 7 kriterde AI destekli hisse analizi.</div>
+        <div class="hero-search-row">
+          <input class="hero-ticker-in" id="heroIn" placeholder="THYAO, AAPL..." autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
+          <select class="hero-fw-select" id="heroFwSel">
+            <option value="buffett">Buffett</option>
+            <option value="lynch">Lynch</option>
+            <option value="dalio">Dalio</option>
+          </select>
+          <button class="hero-search-btn" onclick="heroSearch()">ANALİZ ET →</button>
+          <div class="hero-ac" id="heroAc"></div>
+        </div>
+        <div class="hero-ex-row">
+          <button class="hero-ex-btn active" id="hex-bist" onclick="selHeroEx('BIST')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-tr"/></svg>BIST</button>
+          <button class="hero-ex-btn" id="hex-nyse" onclick="selHeroEx('NYSE')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-us"/></svg>NYSE</button>
+          <button class="hero-ex-btn" id="hex-nasdaq" onclick="selHeroEx('NASDAQ')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-us"/></svg>NASDAQ</button>
+        </div>
+      </div>
+      <!-- Sağ: piyasa özeti -->
+      <div class="hero-right" id="heroMarketPanel">
+        <div class="hmp-title">CANLI PİYASA</div>
+        <div class="hmp-row" id="hmpSP500"><span class="hmp-lbl">S&P 500</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-row" id="hmpNAS"><span class="hmp-lbl">NASDAQ</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-row" id="hmpBIST"><span class="hmp-lbl">BİST 100</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-divider"></div>
+        <div class="hmp-row" id="hmpBTC"><span class="hmp-lbl">BTC</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-row" id="hmpGold"><span class="hmp-lbl">Altın</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-row" id="hmpOil"><span class="hmp-lbl">Petrol</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-time" id="hmpTime"></div>
+      </div>
     </div>
   </div>
 
-  <!-- MARKET STRIP -->
+  <!-- MARKET STRIP (tam genişlik, hero altı) -->
   <div class="page-body">
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-    <div class="sec-title" style="margin:0;flex:1">Piyasa Genel Görünümü</div>
-    <span style="font-size:8px;color:var(--success)" id="mktTime"></span>
-  </div>
-  <div class="mkt-strip" id="mktStrip"><div style="grid-column:1/-1;text-align:center;padding:12px;color:var(--muted2);font-size:10px">Yükleniyor...</div></div>
-
-  <!-- NEWS -->
-  <div class="sec-title">Son Dakika Piyasa Haberleri <span class="src-badge" id="srcBadge" style="margin-left:5px"></span></div>
-  <div class="news-grid" id="newsGrid"><div class="news-loading">Haberler yükleniyor...</div></div>
-
-  <!-- TOP 5 DİKKAT ÇEKEN HİSSE -->
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;margin-top:18px">
-    <div class="sec-title" style="margin:0;flex:1">🔥 Dikkat Çeken Hisseler</div>
-    <div style="display:flex;gap:4px">
-      <button class="wl-tab active" id="wl-bist" onclick="loadWatchlist('BIST')"><svg style="width:11px;height:7px"><use href="#f-tr"/></svg> BIST</button>
-      <button class="wl-tab" id="wl-us" onclick="loadWatchlist('US')"><svg style="width:11px;height:7px"><use href="#f-us"/></svg> ABD</button>
+  <div class="home-two-col">
+    <!-- SOL: Haberler -->
+    <div class="home-col-news">
+      <div class="sec-title">Son Dakika Piyasa Haberleri <span class="src-badge" id="srcBadge" style="margin-left:5px"></span></div>
+      <div class="news-grid-v" id="newsGrid"><div class="news-loading">Haberler yükleniyor...</div></div>
     </div>
-    <span style="font-size:8px;color:var(--muted2)" id="wlTime"></span>
+    <!-- SAĞ: Dikkat çeken + piyasa şerit -->
+    <div class="home-col-right">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div class="sec-title" style="margin:0;flex:1">Piyasa Genel Görünümü</div>
+        <span style="font-size:8px;color:var(--muted2)" id="mktTime"></span>
+      </div>
+      <div class="mkt-strip-v" id="mktStrip"><div style="text-align:center;padding:12px;color:var(--muted2);font-size:10px">Yükleniyor...</div></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;margin-top:16px">
+        <div class="sec-title" style="margin:0;flex:1">Dikkat Çeken Hisseler</div>
+        <div style="display:flex;gap:4px">
+          <button class="wl-tab active" id="wl-bist" onclick="loadWatchlist('BIST')"><svg style="width:11px;height:7px"><use href="#f-tr"/></svg> BIST</button>
+          <button class="wl-tab" id="wl-us" onclick="loadWatchlist('US')"><svg style="width:11px;height:7px"><use href="#f-us"/></svg> ABD</button>
+        </div>
+        <span style="font-size:8px;color:var(--muted2)" id="wlTime"></span>
+      </div>
+      <div class="wl-grid-v" id="wlGrid"><div class="news-loading">Yükleniyor...</div></div>
+    </div>
   </div>
-  <div class="wl-grid" id="wlGrid"><div class="news-loading">Yükleniyor...</div></div>
 
   <!-- ANALYSIS RESULTS (hidden until analyzed) -->
   <div id="analysisSection" style="display:none">
@@ -904,7 +1214,7 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
 <!-- PORTFOLIO PAGE -->
 <div class="page" id="page-portfolio">
 <div class="page-body">
-  <div class="pt-hdr"><div class="pt-title">Portföy<span>üm</span></div><button class="pt-ana-btn" onclick="analyzeAllPt()" id="ptAnaBtn">▶ Buffett + Lynch + Dalio</button></div>
+  <div class="pt-hdr"><div class="pt-title">Portföy<span>üm</span></div><span id="ptCloudSync" style="font-size:9px;color:var(--muted2);font-family:'IBM Plex Mono',monospace;margin-right:auto;margin-left:10px"></span><button class="pt-ana-btn" onclick="analyzeAllPt()" id="ptAnaBtn">▶ Buffett + Lynch + Dalio</button></div>
   <div class="pt-notifs" id="ptNotifs"></div>
   <div class="pt-add">
     <div class="pt-add-t">Hisse Ekle</div>
@@ -1097,18 +1407,34 @@ async function loadMkt(){
     mktCache=data.market;
     renderMkt(data.market);
     const e=document.getElementById('mktTime');if(e)e.textContent=`● ${new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})} güncel`;
-  }catch{document.getElementById('mktStrip').innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted2);font-size:10px;padding:12px">Piyasa verisi yüklenemedi</div>';}
+    const ht=document.getElementById('hmpTime');if(ht)ht.textContent=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})+' güncel';
+  }catch{
+    const s=document.getElementById('mktStrip');
+    if(s)s.innerHTML='<div style="text-align:center;color:var(--muted2);font-size:10px;padding:12px">Piyasa verisi yüklenemedi</div>';
+  }
 }
 
 function renderMkt(m){
   const g=document.getElementById('mktStrip');g.innerHTML='';
   MKT_CFG.forEach(cfg=>{
     const d=m[cfg.k];const card=document.createElement('div');
-    if(!d){card.className='mkt-card';card.innerHTML=`<div class="mkt-lbl">${cfg.l}</div><div class="mkt-price">—</div>`;g.appendChild(card);return;}
+    if(!d){card.className='mkt-card';card.innerHTML=`<div class="mkt-lbl">${cfg.l}</div><div class="mkt-price">—</div><div class="mkt-chg">—</div>`;g.appendChild(card);return;}
     const pos=d.change>=0;card.className=`mkt-card ${pos?'pos':'neg'}`;
-    const ps=d.price>10000?d.price.toLocaleString('tr-TR',{maximumFractionDigits:0}):d.price>100?d.price.toFixed(2):d.price>1?d.price.toFixed(2):d.price.toFixed(4);
-    card.innerHTML=`<div class="mkt-lbl">${cfg.l}</div><div class="mkt-price">${ps}</div><div class="mkt-chg ${pos?'pos':'neg'}">${pos?'▲':'▼'} %${Math.abs(d.change).toFixed(2)}</div>`;
+    const ps=d.price>10000?d.price.toLocaleString('tr-TR',{maximumFractionDigits:0}):d.price.toFixed(2);
+    card.innerHTML=`<div class="mkt-lbl">${cfg.l}</div><div class="mkt-price">${ps}</div><div class="mkt-chg ${pos?'pos':'neg'}">${pos?'▲':'▼'}%${Math.abs(d.change).toFixed(2)}</div>`;
     g.appendChild(card);
+  });
+  // Hero sağ panel
+  const hmpMap={sp500:'hmpSP500',nasdaq:'hmpNAS',bist100:'hmpBIST',btc:'hmpBTC',gold:'hmpGold',oil:'hmpOil'};
+  Object.entries(hmpMap).forEach(([k,id])=>{
+    const el=document.getElementById(id);if(!el)return;
+    const d=m[k];if(!d)return;
+    const pos=d.change>=0;
+    const ps=d.price>10000?d.price.toLocaleString('tr-TR',{maximumFractionDigits:0}):d.price.toFixed(2);
+    el.querySelector('.hmp-val').textContent=ps;
+    const chgEl=el.querySelector('.hmp-chg');
+    chgEl.textContent=`${pos?'+':''}${d.change.toFixed(2)}%`;
+    chgEl.className=`hmp-chg ${pos?'pos':'neg'}`;
   });
 }
 
@@ -1119,14 +1445,14 @@ async function loadNews(){
     const data=await r.json();
     if(data.source){const b=document.getElementById('srcBadge');if(b)b.textContent=data.source;}
     renderNews(data.news||[],g);
-  }catch{g.innerHTML='<div class="news-loading">Haberler yüklenemedi</div>';}
+  }catch{if(g)g.innerHTML='<div class="news-loading">Haberler yüklenemedi</div>';}
 }
 
 function renderNews(news,g){
   if(!news||!news.length){g.innerHTML='<div class="news-loading">Haber bulunamadı</div>';return;}
   g.innerHTML='';
   news.forEach(n=>{
-    const a=document.createElement('a');a.className='news-card';a.href=n.link||'#';a.target='_blank';
+    const a=document.createElement('a');a.className='news-card';a.href=n.link||'#';a.target='_blank';a.rel='noopener';
     a.innerHTML=`<div class="news-pub">${n.publisher||'—'}</div><div class="news-t">${n.title||'—'}</div><div class="news-time">${n.providerPublishTime?ago(n.providerPublishTime):''}</div>`;
     g.appendChild(a);
   });
@@ -1385,6 +1711,19 @@ async function doAnalyze(){
   const ticker=document.getElementById('tickerIn').value.trim().toUpperCase();
   const company=document.getElementById('coIn').value.trim()||(BIST[ticker]||'');
   if(!ticker)return;
+
+  // ── Hak kontrolü ──
+  const credits = curUser ? curUser.credits : guestCredits;
+  const isAdmin = curUser?.is_admin;
+  if (!isAdmin && credits <= 0) {
+    if (!getEmail()) {
+      showAuthModal();
+      showToast('Analiz hakkınız doldu. Giriş yaparak 3 ücretsiz hak kazanın.', 'warn');
+    } else {
+      showToast('Analiz hakkınız doldu. Bizimle iletişime geçin.', 'error');
+    }
+    return;
+  }
   document.getElementById('coIn').value=company;
   const btn=document.getElementById('anaBtn'),ov=document.getElementById('loadingOv'),eb=document.getElementById('errBar'),db=document.getElementById('dataBadge');
   const ex=EX_CFG[curEX];const fw=FW[curFW];
@@ -1397,6 +1736,13 @@ async function doAnalyze(){
   document.getElementById('badgeLive').style.display='none';
   ['ls1','ls2','ls3','ls4'].forEach((s,i)=>{document.getElementById(s).className='loading-step';setTimeout(()=>{if(i>0)document.getElementById(['ls1','ls2','ls3','ls4'][i-1]).classList.add('done');document.getElementById(s).classList.add('active');},i*700);});
   try{
+    // Analiz başlamadan hakkı düş
+    const creditResult = await consumeCredit();
+    if (!creditResult.ok) {
+      ov.classList.remove('visible');btn.disabled=false;
+      eb.textContent=creditResult.error;eb.classList.add('visible');
+      return;
+    }
     const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,prompt:fw.prompt(ticker,company,ex.l),exchange:curEX})});
     const data=await r.json();
     if(data.error)throw new Error(data.error);
@@ -1487,13 +1833,13 @@ function addToPt(){
   if(!qty||qty<=0){errEl.textContent='Geçerli adet gir';errEl.style.display='block';return;}
   const ei=portfolio.findIndex(p=>p.ticker===ticker&&p.exchange===exchange);
   if(ei>=0)portfolio[ei]={...portfolio[ei],buyPrice,qty,company:company||portfolio[ei].company};
-  else portfolio.push({ticker,company,exchange,currency,buyPrice,qty,bS:null,bV:null,lS:null,lV:null});
+  else portfolio.push({ticker,company,exchange,currency,buyPrice,qty,bS:null,bV:null,lS:null,lV:null,dS:null,dV:null});
   errEl.style.display='none';
   ['ptTk','ptCo','ptPr','ptQty'].forEach(id=>document.getElementById(id).value='');
-  renderPt();updateSbSummary();
+  renderPt();updateSbSummary();triggerPortfolioSave();
 }
 
-function removeFromPt(tk,ex){portfolio=portfolio.filter(p=>!(p.ticker===tk&&p.exchange===ex));renderPt();updateSbSummary();}
+function removeFromPt(tk,ex){portfolio=portfolio.filter(p=>!(p.ticker===tk&&p.exchange===ex));renderPt();updateSbSummary();triggerPortfolioSave();}
 
 async function analyzeAllPt(){
   if(!portfolio.length)return;
@@ -1525,6 +1871,7 @@ async function analyzeAllPt(){
     if(portfolio.indexOf(p)<portfolio.length-1)await new Promise(r=>setTimeout(r,400));
   }
   btn.disabled=false;btn.textContent='▶ Buffett + Lynch + Dalio';
+  triggerPortfolioSave();
 }
 
 function renderPt(){
@@ -1824,27 +2171,385 @@ function renderWatchlist(stocks) {
       switchTab('analiz'); closeSidebar();
       setTimeout(() => doAnalyze(), 100);
     };
-    const tagHTML = (s.tags || []).map(t => `<span class="wl-tag ${t.c}">${t.t}</span>`).join('');
+    const priceStr = s.price ? s.price.toFixed(2) + ' ' + (s.currency === 'TRY' ? '₺' : '$') : '—';
+    const chgStr = `${isUp ? '+' : ''}${s.chg ? s.chg.toFixed(2) : '0.00'}%`;
     card.innerHTML = `
-      <div class="wl-rank">${medals[i]} #${i+1}</div>
+      <div class="wl-rank">${medals[i]}</div>
       <div class="wl-ticker">${s.ticker}</div>
       <div class="wl-name">${s.name}</div>
-      <div class="wl-price">${s.price ? s.price.toFixed(2) + ' ' + (s.currency === 'TRY' ? '₺' : '$') : '—'}</div>
-      <div class="wl-chg ${isUp ? 'up' : 'dn'}">${isUp ? '+' : ''}${s.chg ? s.chg.toFixed(2) : '0.00'}%</div>
-      <div class="wl-tags">${tagHTML}</div>
+      <div class="wl-price">${priceStr}</div>
+      <div class="wl-chg ${isUp ? 'up' : 'dn'}">${chgStr}</div>
+      <div class="wl-tags">${(s.tags||[]).map(t=>`<span class="wl-tag ${t.c}">${t.t}</span>`).join('')}</div>
       <div class="wl-bar-wrap">
-        <div class="wl-bar-lbl"><span>52H Aralık</span><span>%${s.pos52 || 0}</span></div>
-        <div class="wl-bar"><div class="wl-bar-fill" style="width:${s.pos52 || 0}%"></div></div>
+        <div class="wl-bar-lbl"><span>52H</span><span>%${s.pos52||0}</span></div>
+        <div class="wl-bar"><div class="wl-bar-fill" style="width:${s.pos52||0}%"></div></div>
       </div>
     `;
     grid.appendChild(card);
   });
 }
 
+// ══════════════════════════════════════════════
+// AUTH STATE
+// ══════════════════════════════════════════════
+let curUser = null; // {email, credits, is_admin, ...}
+let guestCredits = parseInt(localStorage.getItem('guest_credits') ?? '3');
+
+function getEmail() { return curUser?.email || localStorage.getItem('bi_email') || null; }
+
+function updateCreditsUI() {
+  const credits = curUser ? curUser.credits : guestCredits;
+  const isAdmin = curUser?.is_admin;
+  const vbox = document.getElementById('verdictBox');
+  // Sidebar credit display
+  const cv = document.getElementById('sidebarCreditsVal');
+  const cb = document.getElementById('sidebarCreditsFill');
+  const cw = document.getElementById('creditsWarn');
+  if (cv) {
+    if (isAdmin) { cv.textContent = '∞'; cv.className = 'user-credits-val unlimited'; }
+    else { cv.textContent = credits; cv.className = 'user-credits-val' + (credits <= 1 ? ' low' : ''); }
+  }
+  if (cb) {
+    const pct = isAdmin ? 100 : Math.max(0, (credits / 3) * 100);
+    cb.style.width = pct + '%';
+    cb.className = 'credits-fill' + (credits <= 1 && !isAdmin ? ' low' : '');
+  }
+  if (cw) cw.style.display = (!isAdmin && credits <= 1) ? 'block' : 'none';
+  // Badge in sidebar user section
+  const badge = document.getElementById('userCreditsBadge');
+  if (badge) badge.textContent = isAdmin ? '∞' : credits + ' hak';
+  // Ana buton
+  const anaBtn = document.getElementById('anaBtn');
+  if (anaBtn) anaBtn.disabled = (!isAdmin && credits <= 0);
+}
+
+function showAuthModal() {
+  document.getElementById('authModal').style.display = 'flex';
+}
+function hideAuthModal() {
+  document.getElementById('authModal').style.display = 'none';
+}
+
+async function doAuth() {
+  const emailIn = document.getElementById('authEmailIn');
+  const errEl = document.getElementById('authErr');
+  const marketingEl = document.getElementById('marketingConsent');
+  const email = emailIn?.value?.trim();
+  if (!email || !email.includes('@')) {
+    if (errEl) { errEl.textContent = 'Geçerli bir e-posta girin.'; errEl.style.display = 'block'; }
+    return;
+  }
+  const btn = document.querySelector('.auth-submit');
+  if (btn) { btn.disabled = true; btn.textContent = 'Kaydediliyor...'; }
+  if (errEl) errEl.style.display = 'none';
+  try {
+    const r = await fetch('/api/auth?action=login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, marketingConsent: marketingEl?.checked ?? false })
+    });
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    curUser = data.user;
+    localStorage.setItem('bi_email', email);
+    hideAuthModal();
+    updateCreditsUI();
+    updateSidebarUserUI();
+    // Portföyü cloud'dan yükle
+    await loadPortfolioFromCloud();
+    if (data.isNew) showToast('✓ Hoş geldin! 3 analiz hakkın hazır.', 'success');
+    else showToast(`✓ Tekrar hoş geldin! ${curUser.credits} hakkın var.`, 'success');
+  } catch (e) {
+    if (errEl) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Giriş Yap'; }
+  }
+}
+
+function skipAuth() {
+  hideAuthModal();
+  showToast('Misafir olarak devam ediyorsunuz. 3 analiz hakkınız var.', 'warn');
+}
+
+function logout() {
+  curUser = null;
+  localStorage.removeItem('bi_email');
+  guestCredits = 3;
+  localStorage.setItem('guest_credits', '3');
+  updateCreditsUI();
+  updateSidebarUserUI();
+  showToast('Çıkış yapıldı.', 'warn');
+}
+
+function updateSidebarUserUI() {
+  const userSec = document.getElementById('sidebarUserSec');
+  const loginBtn = document.getElementById('sidebarLoginBtn');
+  const emailEl = document.getElementById('sidebarUserEmail');
+  const adminBtn = document.getElementById('sidebarAdminBtn');
+  if (curUser) {
+    if (userSec) userSec.style.display = 'block';
+    if (loginBtn) loginBtn.style.display = 'none';
+    if (emailEl) emailEl.textContent = curUser.email;
+    if (adminBtn) adminBtn.style.display = curUser.is_admin ? 'block' : 'none';
+  } else {
+    if (userSec) userSec.style.display = 'none';
+    if (loginBtn) loginBtn.style.display = 'block';
+    if (adminBtn) adminBtn.style.display = 'none';
+  }
+  updateCreditsUI();
+}
+
+// ── Toast bildirim ──
+function showToast(msg, type = 'success') {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 20px;border-radius:0;font-family:"IBM Plex Mono",monospace;font-size:11px;max-width:340px;text-align:center;transition:opacity 0.3s;border:1px solid;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  const styles = {
+    success: 'background:#f4f1ec;color:var(--success,#1a6b3a);border-color:rgba(26,107,58,0.3)',
+    warn: 'background:#f4f1ec;color:var(--warn,#b8700a);border-color:rgba(184,112,10,0.3)',
+    error: 'background:#f4f1ec;color:var(--danger,#c0392b);border-color:rgba(192,57,43,0.3)'
+  };
+  t.style.cssText += ';' + (styles[type] || styles.success);
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
+}
+
+// ══════════════════════════════════════════════
+// PORTFÖY CLOUD KAYIT
+// ══════════════════════════════════════════════
+let portfolioSaveTimer = null;
+
+async function savePortfolioToCloud() {
+  const email = getEmail();
+  if (!email) return; // misafir — localStorage'da kalır
+  try {
+    await fetch('/api/auth?action=save_portfolio', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, portfolio })
+    });
+  } catch {}
+}
+
+function triggerPortfolioSave() {
+  // localStorage her zaman
+  localStorage.setItem('bi_portfolio', JSON.stringify(portfolio));
+  // Cloud'a debounce ile
+  clearTimeout(portfolioSaveTimer);
+  portfolioSaveTimer = setTimeout(() => savePortfolioToCloud(), 1500);
+}
+
+async function loadPortfolioFromCloud() {
+  const email = getEmail();
+  if (!email) {
+    // localStorage'dan yükle
+    const saved = localStorage.getItem('bi_portfolio');
+    if (saved) { try { portfolio = JSON.parse(saved); renderPt(); } catch {} }
+    return;
+  }
+  try {
+    const r = await fetch('/api/auth?action=load_portfolio', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await r.json();
+    if (data.portfolio && Array.isArray(data.portfolio)) {
+      portfolio = data.portfolio;
+      renderPt();
+      if (data.updatedAt) {
+        const el = document.getElementById('ptCloudSync');
+        if (el) el.textContent = '☁ ' + new Date(data.updatedAt).toLocaleString('tr-TR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      }
+    }
+  } catch {}
+}
+
+// ══════════════════════════════════════════════
+// ANALİZ HAKKI KONTROLÜ
+// ══════════════════════════════════════════════
+async function consumeCredit() {
+  const email = getEmail();
+  if (email && curUser) {
+    // Cloud'dan düş
+    try {
+      const r = await fetch('/api/auth?action=use', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const d = await r.json();
+      if (d.error) return { ok: false, error: d.error };
+      curUser.credits = d.credits;
+      updateCreditsUI();
+      return { ok: true };
+    } catch (e) { return { ok: false, error: e.message }; }
+  } else {
+    // Misafir — localStorage
+    if (guestCredits <= 0) return { ok: false, error: 'Analiz hakkınız doldu. Giriş yaparak daha fazla hak kazanın.' };
+    guestCredits--;
+    localStorage.setItem('guest_credits', guestCredits);
+    updateCreditsUI();
+    return { ok: true };
+  }
+}
+
+// ══════════════════════════════════════════════
+// ADMIN PANELİ
+// ══════════════════════════════════════════════
+function openAdmin() {
+  document.getElementById('adminModal').style.display = 'flex';
+  loadAdminUsers();
+}
+function closeAdmin() {
+  document.getElementById('adminModal').style.display = 'none';
+}
+
+async function loadAdminUsers() {
+  const email = getEmail();
+  const secret = prompt('Admin şifresi:');
+  if (!secret) return;
+  const body = document.getElementById('adminUserBody');
+  const note = document.getElementById('adminNote');
+  if (body) body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:12px;color:var(--muted2)">Yükleniyor...</td></tr>';
+  try {
+    const r = await fetch('/api/auth?action=admin_users', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, secret })
+    });
+    const data = await r.json();
+    if (data.error) { if (note) note.textContent = '⚠ ' + data.error; return; }
+    // Stats
+    const s = data.stats;
+    document.getElementById('aStatUsers').textContent = s.total;
+    document.getElementById('aStatAnalyze').textContent = s.totalAnalyze;
+    document.getElementById('aStatToday').textContent = s.todayNew;
+    document.getElementById('aStatCredits').textContent = s.totalCredits;
+    if (note) note.textContent = `📧 Pazarlama izni: ${s.marketingConsent} kullanıcı`;
+    // Table
+    if (!body) return;
+    body.innerHTML = '';
+    (data.users || []).forEach(u => {
+      const tr = document.createElement('tr');
+      const joined = u.joined_at ? new Date(u.joined_at).toLocaleDateString('tr-TR') : '—';
+      const seen = u.last_seen ? new Date(u.last_seen).toLocaleDateString('tr-TR') : '—';
+      const mc = u.marketing_consent ? '✓' : '✗';
+      tr.innerHTML = `
+        <td style="font-family:'IBM Plex Mono',monospace;font-size:10px">${u.email}${u.is_admin?'<span style="color:var(--warn);margin-left:5px">[admin]</span>':''}${u.marketing_consent?'<span style="color:var(--success);margin-left:4px;font-size:8px" title="Pazarlama izni verdi">📧</span>':''}</td>
+        <td>${joined}</td>
+        <td>${seen}</td>
+        <td style="text-align:center">${u.total_used || 0}</td>
+        <td class="admin-user-credits">${u.is_admin ? '∞' : u.credits}</td>
+        <td>
+          <div style="display:flex;gap:4px;align-items:center">
+            <input type="number" id="cr_${u.email}" style="width:44px;background:var(--bg2);border:1px solid var(--border);padding:3px 5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text)" value="3" min="1" max="100"/>
+            <button onclick="addCredits('${u.email}','${secret}')" style="background:var(--accent2);color:#fff;border:none;padding:3px 8px;cursor:pointer;font-size:9px;font-family:'IBM Plex Mono',monospace">+Ekle</button>
+          </div>
+        </td>
+        <td><button onclick="deleteUser('${u.email}','${secret}')" style="background:none;border:1px solid var(--danger);color:var(--danger);padding:3px 7px;cursor:pointer;font-size:9px;font-family:'IBM Plex Mono',monospace">Sil</button></td>
+      `;
+      body.appendChild(tr);
+    });
+    // Export emails with consent
+    const consentEmails = (data.users || []).filter(u => u.marketing_consent).map(u => u.email);
+    if (consentEmails.length > 0) {
+      const expBtn = document.getElementById('adminExportBtn');
+      if (!expBtn) {
+        const btn = document.createElement('button');
+        btn.id = 'adminExportBtn';
+        btn.style.cssText = 'margin-top:10px;background:var(--success);color:#fff;border:none;padding:7px 14px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:10px;';
+        btn.textContent = `📧 ${consentEmails.length} mail adresini indir (izin verenler)`;
+        btn.onclick = () => {
+          const blob = new Blob([consentEmails.join('\n')], {type:'text/plain'});
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'barisinvesting_emails.txt';
+          a.click();
+        };
+        document.getElementById('adminNote').after(btn);
+      }
+    }
+  } catch (e) {
+    if (note) note.textContent = '⚠ Hata: ' + e.message;
+  }
+}
+
+async function addCredits(targetEmail, secret) {
+  const inp = document.getElementById('cr_' + targetEmail);
+  const credits = parseInt(inp?.value || 3);
+  const email = getEmail();
+  try {
+    const r = await fetch('/api/auth?action=admin_credits', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, secret, targetEmail, credits })
+    });
+    const d = await r.json();
+    if (d.ok) showToast(`✓ ${targetEmail} → ${d.credits} hak`, 'success');
+    else showToast('⚠ ' + d.error, 'error');
+  } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+}
+
+async function deleteUser(targetEmail, secret) {
+  if (!confirm(`${targetEmail} silinsin mi? Bu işlem geri alınamaz.`)) return;
+  const email = getEmail();
+  try {
+    const r = await fetch('/api/auth?action=admin_delete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, secret, targetEmail })
+    });
+    const d = await r.json();
+    if (d.ok) { showToast('✓ Kullanıcı silindi', 'success'); loadAdminUsers(); }
+    else showToast('⚠ ' + d.error, 'error');
+  } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════
 // INIT
-buildNav();buildChips();setupAC();loadMkt();loadNews();
+// ══════════════════════════════════════════════
+buildNav(); buildChips(); setupAC(); loadMkt(); loadNews();
 loadWatchlist('BIST');
-if(!localStorage.getItem('baris_fw_seen')){setTimeout(()=>{showFWModal();localStorage.setItem('baris_fw_seen','1');},1400);}
+
+// Auth init — saved email varsa otomatik yükle
+(async () => {
+  const savedEmail = localStorage.getItem('bi_email');
+  if (savedEmail) {
+    try {
+      const r = await fetch('/api/auth?action=me', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: savedEmail })
+      });
+      const data = await r.json();
+      if (data.user) {
+        curUser = data.user;
+        updateSidebarUserUI();
+        await loadPortfolioFromCloud();
+      } else {
+        localStorage.removeItem('bi_email');
+        updateSidebarUserUI();
+        loadPortfolioFromCloud(); // localStorage'dan
+      }
+    } catch {
+      updateSidebarUserUI();
+      loadPortfolioFromCloud();
+    }
+  } else {
+    updateSidebarUserUI();
+    loadPortfolioFromCloud();
+    // İlk ziyaret auth modal
+    if (!localStorage.getItem('baris_auth_seen')) {
+      setTimeout(() => {
+        showAuthModal();
+        localStorage.setItem('baris_auth_seen', '1');
+      }, 1800);
+    }
+  }
+})();
+
+if (!localStorage.getItem('baris_fw_seen')) {
+  setTimeout(() => { showFWModal(); localStorage.setItem('baris_fw_seen', '1'); }, 3500);
+}
 </script>
 
 <!-- BOTTOM NAVIGATION - MOBILE ONLY -->
