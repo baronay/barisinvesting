@@ -8,7 +8,7 @@ const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim();
 
 // ── Supabase REST helper ──
 async function sb(method, table, params = {}, body = null) {
-  if (!SB_URL || !SB_KEY) throw new Error('Supabase env vars eksik');
+  if (!SB_URL || !SB_KEY) throw new Error('SUPABASE_KURULUM_BEKLIYOR');
   let url = `${SB_URL}/rest/v1/${table}`;
   const qs = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => qs.set(k, v));
@@ -59,6 +59,14 @@ export default async function handler(req, res) {
     if (!email || !email.includes('@') || !email.includes('.')) {
       return res.status(400).json({ error: 'Geçerli bir e-posta girin.' });
     }
+    // Supabase kurulmamışsa — email'i kabul et ama DB'siz devam et
+    if (!SB_URL || !SB_KEY) {
+      return res.status(200).json({
+        user: { email: email.toLowerCase().trim(), credits: 3, is_admin: false, total_used: 0 },
+        isNew: true,
+        warning: 'Supabase kurulmamış — veriler kaydedilmedi.'
+      });
+    }
     const em = norm(email);
     try {
       let user = await getUser(em);
@@ -92,6 +100,7 @@ export default async function handler(req, res) {
   if (action === 'me' && req.method === 'POST') {
     const { email } = req.body || {};
     if (!email) return res.status(400).json({ error: 'Email gerekli' });
+    if (!SB_URL || !SB_KEY) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     try {
       const user = await getUser(norm(email));
       if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
@@ -105,6 +114,7 @@ export default async function handler(req, res) {
   if (action === 'use' && req.method === 'POST') {
     const { email } = req.body || {};
     if (!email) return res.status(400).json({ error: 'Email gerekli' });
+    if (!SB_URL || !SB_KEY) return res.status(200).json({ credits: 99, totalUsed: 0 }); // Supabase yoksa serbest
     const em = norm(email);
     try {
       const user = await getUser(em);
