@@ -2304,6 +2304,8 @@ async function doAuth() {
 
 function skipAuth() {
   hideAuthModal();
+  // Aynı session'da bir daha sorma
+  sessionStorage.setItem('auth_skipped', '1');
   showToast('Misafir olarak devam ediyorsunuz. 3 analiz hakkınız var.', 'warn');
 }
 
@@ -2590,12 +2592,9 @@ loadWatchlist('BIST');
   } else {
     updateSidebarUserUI();
     loadPortfolioFromCloud();
-    // İlk ziyaret auth modal
-    if (!localStorage.getItem('baris_auth_seen')) {
-      setTimeout(() => {
-        showAuthModal();
-        localStorage.setItem('baris_auth_seen', '1');
-      }, 1800);
+    // Email yoksa her zaman modal göster (kısa gecikme ile)
+    if (!sessionStorage.getItem('auth_skipped')) {
+      setTimeout(() => showAuthModal(), 1200);
     }
   }
 })();
