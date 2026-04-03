@@ -172,14 +172,41 @@ function sigPEG(v) {
 }
 function sigEV(v) { if(v==null)return 'N/A'; if(v<8)return 'ucuz'; if(v<15)return 'adil'; return 'pahalı'; }
 
+// Yahoo Finance crumb cache
+let _crumb = null;
+let _cookie = null;
+
+async function getYahooCrumb() {
+  if (_crumb && _cookie) return { crumb: _crumb, cookie: _cookie };
+  try {
+    // Step 1: Get cookie
+    const r1 = await fetch('https://fc.yahoo.com', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+      redirect: 'follow',
+    });
+    const cookies = r1.headers.get('set-cookie') || '';
+    const cookieVal = cookies.split(';')[0] || 'A=o; B=abc';
+
+    // Step 2: Get crumb
+    const r2 = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Cookie': cookieVal,
+        'Accept': 'text/plain',
+        'Referer': 'https://finance.yahoo.com/',
+      }
+    });
+    if (r2.ok) {
+      _crumb = await r2.text();
+      _cookie = cookieVal;
+      return { crumb: _crumb, cookie: _cookie };
+    }
+  } catch {}
+  return { crumb: null, cookie: null };
+}
+
 async function fetchYahooData(yahooTicker) {
-  const h = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept': 'application/json, text/plain, */*',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Origin': 'https://finance.yahoo.com',
-    'Referer': 'https://finance.yahoo.com/',
-  };
+  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
   let result = {
     currentPrice: null, currency: yahooTicker.endsWith('.IS') ? 'TRY' : 'USD',
@@ -192,79 +219,103 @@ async function fetchYahooData(yahooTicker) {
     recommendationKey: null, targetMeanPrice: null, numberOfAnalystOpinions: null,
   };
 
-  // 1. v7 quote — fiyat, temel istatistikler (en güvenilir)
-  try {
-    for (const base of ['query1', 'query2']) {
-      const r = await fetch(
-        `https://${base}.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(yahooTicker)}&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent,marketCap,fiftyTwoWeekLow,fiftyTwoWeekHigh,trailingPE,forwardPE,priceToBook,trailingEps,epsForward,targetMeanPrice,recommendationKey,numberOfAnalystOpinions,regularMarketVolume,averageDailyVolume3Month`,
-        { headers: h, signal: AbortSignal.timeout(6000) }
-      );
+  // Get crumb for authenticated requests
+  const { crumb, cookie } = await getYahooCrumb();
+
+  const makeHeaders = (withCookie = true) => ({
+    'User-Agent': UA,
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Referer': 'https://finance.yahoo.com/',
+    ...(withCookie && cookie ? { 'Cookie': cookie } : {}),
+  });
+
+  const crumbSuffix = crumb ? `&crumb=${encodeURIComponent(crumb)}` : '';
+
+  // 1. v7 quote — fiyat + temel metrikler (crumb ile)
+  for (const base of ['query2', 'query1']) {
+    try {
+      const fields = 'regularMarketPrice,currency,marketCap,fiftyTwoWeekLow,fiftyTwoWeekHigh,trailingPE,forwardPE,priceToBook,pegRatio,epsTrailingTwelveMonths,epsForward,targetMeanPrice,recommendationKey,numberOfAnalystOpinions,enterpriseToEbitda,profitMargins,grossMargins,operatingMargins,returnOnEquity,returnOnAssets,freeCashflow,operatingCashflow,totalCash,totalDebt,debtToEquity,currentRatio,revenueGrowth,earningsGrowth,heldPercentInstitutions,regularMarketVolume';
+      const url = `https://${base}.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(yahooTicker)}&fields=${fields}${crumbSuffix}`;
+      const r = await fetch(url, { headers: makeHeaders(), signal: AbortSignal.timeout(7000) });
       if (!r.ok) continue;
       const j = await r.json();
       const q = j?.quoteResponse?.result?.[0];
-      if (q) {
-        result.currentPrice = q.regularMarketPrice ?? null;
-        result.currency = q.currency ?? result.currency;
-        result.marketCap = q.marketCap ?? null;
-        result.fiftyTwoWeekLow = q.fiftyTwoWeekLow ?? null;
-        result.fiftyTwoWeekHigh = q.fiftyTwoWeekHigh ?? null;
-        result.peRatio = q.trailingPE ?? null;
-        result.forwardPE = q.forwardPE ?? null;
-        result.pbRatio = q.priceToBook ?? null;
-        result.targetMeanPrice = q.targetMeanPrice ?? null;
-        result.recommendationKey = q.recommendationKey ?? null;
-        result.numberOfAnalystOpinions = q.numberOfAnalystOpinions ?? null;
-        break;
-      }
-    }
-  } catch {}
+      if (!q || !q.regularMarketPrice) continue;
 
-  // 2. v10 quoteSummary — finansal oranlar (ROE, FCF, marjlar)
-  try {
-    const modules = 'defaultKeyStatistics,financialData,summaryDetail';
-    for (const base of ['query1', 'query2']) {
-      const r = await fetch(
-        `https://${base}.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(yahooTicker)}?modules=${modules}&corsDomain=finance.yahoo.com`,
-        { headers: h, signal: AbortSignal.timeout(6000) }
-      );
-      if (!r.ok) continue;
-      const j = await r.json();
-      const raw = j?.quoteSummary?.result?.[0];
-      if (!raw) continue;
-      const { summaryDetail:sd={}, defaultKeyStatistics:ks={}, financialData:fd={} } = raw;
-      const f = v => v?.raw ?? null;
-
-      if (!result.peRatio) result.peRatio = f(sd.trailingPE) || f(ks.trailingPE);
-      if (!result.forwardPE) result.forwardPE = f(sd.forwardPE) || f(ks.forwardPE);
-      if (!result.pbRatio) result.pbRatio = f(ks.priceToBook);
-      result.pegRatio = f(ks.pegRatio);
-      result.evEbitda = f(ks.enterpriseToEbitda);
-      result.grossMargin = f(fd.grossMargins);
-      result.operatingMargin = f(fd.operatingMargins);
-      result.profitMargin = f(fd.profitMargins);
-      result.roe = f(fd.returnOnEquity);
-      result.roa = f(fd.returnOnAssets);
-      result.freeCashflow = f(fd.freeCashflow);
-      result.operatingCashflow = f(fd.operatingCashflow);
-      result.totalCash = f(fd.totalCash);
-      result.totalDebt = f(fd.totalDebt);
-      result.debtToEquity = f(fd.debtToEquity);
-      result.currentRatio = f(fd.currentRatio);
-      result.revenueGrowth = f(fd.revenueGrowth);
-      result.earningsGrowth = f(fd.earningsGrowth);
-      result.institutionOwnership = f(ks.heldPercentInstitutions);
-      if (!result.targetMeanPrice) result.targetMeanPrice = f(fd.targetMeanPrice);
-      if (!result.recommendationKey) result.recommendationKey = fd.recommendationKey || null;
+      result.currentPrice = q.regularMarketPrice ?? null;
+      result.currency = q.currency ?? result.currency;
+      result.marketCap = q.marketCap ?? null;
+      result.fiftyTwoWeekLow = q.fiftyTwoWeekLow ?? null;
+      result.fiftyTwoWeekHigh = q.fiftyTwoWeekHigh ?? null;
+      result.peRatio = q.trailingPE ?? null;
+      result.forwardPE = q.forwardPE ?? null;
+      result.pbRatio = q.priceToBook ?? null;
+      result.pegRatio = q.pegRatio ?? null;
+      result.evEbitda = q.enterpriseToEbitda ?? null;
+      result.grossMargin = q.grossMargins ?? null;
+      result.operatingMargin = q.operatingMargins ?? null;
+      result.profitMargin = q.profitMargins ?? null;
+      result.roe = q.returnOnEquity ?? null;
+      result.roa = q.returnOnAssets ?? null;
+      result.freeCashflow = q.freeCashflow ?? null;
+      result.operatingCashflow = q.operatingCashflow ?? null;
+      result.totalCash = q.totalCash ?? null;
+      result.totalDebt = q.totalDebt ?? null;
+      result.debtToEquity = q.debtToEquity ?? null;
+      result.currentRatio = q.currentRatio ?? null;
+      result.revenueGrowth = q.revenueGrowth ?? null;
+      result.earningsGrowth = q.earningsGrowth ?? null;
+      result.institutionOwnership = q.heldPercentInstitutions ?? null;
+      result.targetMeanPrice = q.targetMeanPrice ?? null;
+      result.recommendationKey = q.recommendationKey ?? null;
+      result.numberOfAnalystOpinions = q.numberOfAnalystOpinions ?? null;
       break;
-    }
-  } catch {}
+    } catch { continue; }
+  }
 
-  // 3. v8 chart — son çare fiyat verisi
+  // 2. v10 quoteSummary — eksik finansalları tamamla (özellikle BIST)
+  if (!result.roe || !result.grossMargin) {
+    const modules = 'defaultKeyStatistics,financialData,summaryDetail';
+    for (const base of ['query2', 'query1']) {
+      try {
+        const url = `https://${base}.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(yahooTicker)}?modules=${modules}&corsDomain=finance.yahoo.com${crumbSuffix}`;
+        const r = await fetch(url, { headers: makeHeaders(), signal: AbortSignal.timeout(7000) });
+        if (!r.ok) continue;
+        const j = await r.json();
+        const raw = j?.quoteSummary?.result?.[0];
+        if (!raw) continue;
+        const { summaryDetail:sd={}, defaultKeyStatistics:ks={}, financialData:fd={} } = raw;
+        const f = v => v?.raw ?? null;
+
+        if (!result.peRatio) result.peRatio = f(sd.trailingPE) || f(ks.trailingPE);
+        if (!result.forwardPE) result.forwardPE = f(sd.forwardPE) || f(ks.forwardPE);
+        if (!result.pbRatio) result.pbRatio = f(ks.priceToBook);
+        if (!result.pegRatio) result.pegRatio = f(ks.pegRatio);
+        if (!result.evEbitda) result.evEbitda = f(ks.enterpriseToEbitda);
+        if (!result.grossMargin) result.grossMargin = f(fd.grossMargins);
+        if (!result.operatingMargin) result.operatingMargin = f(fd.operatingMargins);
+        if (!result.profitMargin) result.profitMargin = f(fd.profitMargins);
+        if (!result.roe) result.roe = f(fd.returnOnEquity);
+        if (!result.roa) result.roa = f(fd.returnOnAssets);
+        if (!result.freeCashflow) result.freeCashflow = f(fd.freeCashflow);
+        if (!result.totalCash) result.totalCash = f(fd.totalCash);
+        if (!result.totalDebt) result.totalDebt = f(fd.totalDebt);
+        if (!result.debtToEquity) result.debtToEquity = f(fd.debtToEquity);
+        if (!result.revenueGrowth) result.revenueGrowth = f(fd.revenueGrowth);
+        if (!result.earningsGrowth) result.earningsGrowth = f(fd.earningsGrowth);
+        if (!result.institutionOwnership) result.institutionOwnership = f(ks.heldPercentInstitutions);
+        break;
+      } catch { continue; }
+    }
+  }
+
+  // 3. v8 chart — son çare fiyat
   if (!result.currentPrice) {
     try {
       const r = await fetch(
-        `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooTicker)}?interval=1d&range=5d`,
-        { headers: h, signal: AbortSignal.timeout(5000) }
+        `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooTicker)}?interval=1d&range=5d${crumbSuffix}`,
+        { headers: makeHeaders(), signal: AbortSignal.timeout(5000) }
       );
       if (r.ok) {
         const j = await r.json();
@@ -272,7 +323,6 @@ async function fetchYahooData(yahooTicker) {
         if (meta?.regularMarketPrice) {
           result.currentPrice = meta.regularMarketPrice;
           result.currency = meta.currency || result.currency;
-          if (!result.marketCap) result.marketCap = meta.marketCap || null;
           if (!result.fiftyTwoWeekLow) result.fiftyTwoWeekLow = meta.fiftyTwoWeekLow || null;
           if (!result.fiftyTwoWeekHigh) result.fiftyTwoWeekHigh = meta.fiftyTwoWeekHigh || null;
         }
@@ -280,6 +330,6 @@ async function fetchYahooData(yahooTicker) {
     } catch {}
   }
 
-  if (!result.currentPrice) throw new Error('No Yahoo data');
+  if (!result.currentPrice) throw new Error('Yahoo Finance verisi alınamadı');
   return result;
 }
