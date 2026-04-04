@@ -1,12 +1,14 @@
-// /api/auth.js — Supabase destekli auth + analiz hakkı + portföy kayıt
-// ENV: SUPABASE_URL, SUPABASE_SERVICE_KEY, ADMIN_SECRET, ADMIN_EMAIL
+// /api/auth.js — Barış Investing Auth
+// Yenilikler: Referans sistemi, günlük bonus (+1 hak), gelişmiş admin istatistikleri
 
 const SB_URL = process.env.SUPABASE_URL;
 const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
 const FREE_CREDITS = 3;
+const REFERRAL_BONUS = 2;   // davet eden kazanır
+const REFERRED_BONUS = 1;   // davet edilen kazanır
+const DAILY_BONUS = 1;      // günlük ilk giriş bonusu
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim();
 
-// ── Supabase REST helper ──
 async function sb(method, table, params = {}, body = null) {
   if (!SB_URL || !SB_KEY) throw new Error('SUPABASE_KURULUM_BEKLIYOR');
   let url = `${SB_URL}/rest/v1/${table}`;
@@ -23,11 +25,7 @@ async function sb(method, table, params = {}, body = null) {
   if (method === 'POST') headers['Prefer'] = 'return=representation,resolution=merge-duplicates';
   if (method === 'PATCH') headers['Prefer'] = 'return=representation';
 
-  const r = await fetch(url, {
-    method,
-    headers,
-    ...(body ? { body: JSON.stringify(body) } : {})
-  });
+  const r = await fetch(url, { method, headers, ...(body ? { body: JSON.stringify(body) } : {}) });
   if (!r.ok) {
     const err = await r.text();
     throw new Error(`Supabase ${method} ${table}: ${r.status} ${err}`);
@@ -43,12 +41,28 @@ async function getUser(email) {
 
 function norm(e) { return (e || '').toLowerCase().trim(); }
 
-// ── Admin doğrulama yardımcısı ──
-// DÜZELTME: Hem ADMIN_SECRET hem ADMIN_EMAIL yeterli — ikisinden biri geçerliyse admin.
 function isAdminRequest(email, secret) {
   const emailMatch = ADMIN_EMAIL && norm(email) === ADMIN_EMAIL;
   const secretMatch = process.env.ADMIN_SECRET && secret === process.env.ADMIN_SECRET;
   return emailMatch || secretMatch;
+}
+
+function isToday(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+}
+
+function makeRefCode(email) {
+  let hash = 0;
+  for (let i = 0; i < email.length; i++) {
+    hash = ((hash << 5) - hash) + email.charCodeAt(i);
+    hash |= 0;
+  }
+  return 'BI' + Math.abs(hash).toString(36).toUpperCase().slice(0, 6);
 }
 
 export default async function handler(req, res) {
@@ -61,58 +75,96 @@ export default async function handler(req, res) {
 
   // ── LOGIN / KAYIT ──
   if (action === 'login' && req.method === 'POST') {
-    const { email, marketingConsent } = req.body || {};
+    const { email, marketingConsent, refCode } = req.body || {};
     if (!email || !email.includes('@') || !email.includes('.')) {
       return res.status(400).json({ error: 'Geçerli bir e-posta girin.' });
     }
 
     const em = norm(email);
-    // DÜZELTME: is_admin her zaman ADMIN_EMAIL ile karşılaştırılarak hesaplanır
     const isAdminUser = ADMIN_EMAIL ? em === ADMIN_EMAIL : false;
+    const myRefCode = makeRefCode(em);
 
-    // Supabase kurulmamışsa — admin emaili ile giriş yapılıyorsa is_admin=true ver
     if (!SB_URL || !SB_KEY) {
       return res.status(200).json({
-        user: { email: em, credits: isAdminUser ? 9999 : 3, is_admin: isAdminUser, total_used: 0 },
+        user: { email: em, credits: isAdminUser ? 9999 : 3, is_admin: isAdminUser, total_used: 0, ref_code: myRefCode },
         isNew: true,
-        warning: 'Supabase kurulmamış — veriler kaydedilmedi.'
+        warning: 'Supabase kurulmamış.'
       });
     }
 
     try {
       let user = await getUser(em);
       const isNew = !user;
+      let dailyBonus = false;
+      let refBonus = false;
+
       if (!user) {
+        // YENİ KULLANICI
+        let startCredits = FREE_CREDITS;
+        let referredBy = null;
+
+        if (refCode && refCode !== myRefCode) {
+          const refRows = await sb('GET', 'users', { 'ref_code': `eq.${refCode}`, 'select': 'email,credits,ref_count' }).catch(() => null);
+          const refUser = refRows?.[0];
+          if (refUser) {
+            referredBy = refUser.email;
+            startCredits += REFERRED_BONUS;
+            refBonus = true;
+            // Davet edene bonus ver
+            await sb('PATCH', 'users', { 'email': `eq.${refUser.email}` }, {
+              credits: (refUser.credits || 0) + REFERRAL_BONUS,
+              ref_count: (refUser.ref_count || 0) + 1,
+            }).catch(() => null);
+          }
+        }
+
+        const now = new Date().toISOString();
         const rows = await sb('POST', 'users', { 'on_conflict': 'email' }, {
           email: em,
-          credits: FREE_CREDITS,
+          credits: startCredits,
           total_used: 0,
           is_admin: isAdminUser,
           marketing_consent: !!marketingConsent,
-          joined_at: new Date().toISOString(),
-          last_seen: new Date().toISOString(),
+          joined_at: now,
+          last_seen: now,
+          last_bonus_at: now,
+          ref_code: myRefCode,
+          referred_by: referredBy,
+          ref_count: 0,
         });
-        user = rows?.[0] || { email: em, credits: FREE_CREDITS, is_admin: isAdminUser, total_used: 0 };
+        user = rows?.[0] || { email: em, credits: startCredits, is_admin: isAdminUser, total_used: 0, ref_code: myRefCode };
+
       } else {
-        // DÜZELTME: Mevcut kullanıcıda is_admin her girişte güncellenir
-        // (ADMIN_EMAIL değiştirilirse veya önceki girişte yanlış set edildiyse düzeltilir)
-        const updatePayload = {
+        // MEVCUT KULLANICI
+        const updates = {
           last_seen: new Date().toISOString(),
           is_admin: isAdminUser,
+          ref_code: user.ref_code || myRefCode,
           ...(marketingConsent !== undefined ? { marketing_consent: !!marketingConsent } : {})
         };
-        await sb('PATCH', 'users', { 'email': `eq.${em}` }, updatePayload);
-        user.last_seen = new Date().toISOString();
-        user.is_admin = isAdminUser; // Lokal state'i de güncelle
+
+        // Günlük bonus
+        if (!isAdminUser && !isToday(user.last_bonus_at)) {
+          updates.credits = (user.credits || 0) + DAILY_BONUS;
+          updates.last_bonus_at = new Date().toISOString();
+          dailyBonus = true;
+          user.credits = updates.credits;
+        }
+
+        await sb('PATCH', 'users', { 'email': `eq.${em}` }, updates);
+        user.last_seen = updates.last_seen;
+        user.is_admin = isAdminUser;
+        user.ref_code = updates.ref_code;
       }
-      return res.status(200).json({ user, isNew });
+
+      return res.status(200).json({ user, isNew, dailyBonus, refBonus });
+
     } catch (e) {
       console.error('login error:', e.message);
-      // Supabase hatası olsa bile ADMIN_EMAIL bilgisiyle fallback ver
       return res.status(200).json({
-        user: { email: em, credits: isAdminUser ? 9999 : 3, is_admin: isAdminUser, total_used: 0, offline: true },
+        user: { email: em, credits: isAdminUser ? 9999 : 3, is_admin: isAdminUser, total_used: 0, ref_code: myRefCode, offline: true },
         isNew: false,
-        warning: 'Veritabanı hatası — sınırlı mod: ' + e.message
+        warning: 'DB hatası: ' + e.message
       });
     }
   }
@@ -126,8 +178,8 @@ export default async function handler(req, res) {
       const em = norm(email);
       const user = await getUser(em);
       if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
-      // is_admin'i her zaman ENV'den hesapla — DB'deki eski değere güvenme
       user.is_admin = ADMIN_EMAIL ? em === ADMIN_EMAIL : user.is_admin;
+      if (!user.ref_code) user.ref_code = makeRefCode(em);
       return res.status(200).json({ user });
     } catch (e) {
       return res.status(500).json({ error: e.message });
@@ -145,14 +197,12 @@ export default async function handler(req, res) {
       const user = await getUser(em);
       if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
       if (user.credits <= 0 && !isAdminUser) {
-        return res.status(403).json({ error: 'Analiz hakkınız doldu. Daha fazlası için bizimle iletişime geçin.', credits: 0 });
+        return res.status(403).json({ error: 'Analiz hakkınız doldu.', credits: 0 });
       }
       const newCredits = isAdminUser ? user.credits : Math.max(0, user.credits - 1);
       const newTotal = (user.total_used || 0) + 1;
       await sb('PATCH', 'users', { 'email': `eq.${em}` }, {
-        credits: newCredits,
-        total_used: newTotal,
-        last_seen: new Date().toISOString(),
+        credits: newCredits, total_used: newTotal, last_seen: new Date().toISOString(),
       });
       return res.status(200).json({ credits: newCredits, totalUsed: newTotal });
     } catch (e) {
@@ -172,16 +222,9 @@ export default async function handler(req, res) {
       if (payload.length > 100000) return res.status(413).json({ error: 'Portföy çok büyük' });
       const existing = await sb('GET', 'portfolios', { 'email': `eq.${em}` });
       if (existing?.length > 0) {
-        await sb('PATCH', 'portfolios', { 'email': `eq.${em}` }, {
-          data: payload,
-          updated_at: new Date().toISOString()
-        });
+        await sb('PATCH', 'portfolios', { 'email': `eq.${em}` }, { data: payload, updated_at: new Date().toISOString() });
       } else {
-        await sb('POST', 'portfolios', {}, {
-          email: em,
-          data: payload,
-          updated_at: new Date().toISOString()
-        });
+        await sb('POST', 'portfolios', {}, { email: em, data: payload, updated_at: new Date().toISOString() });
       }
       return res.status(200).json({ ok: true });
     } catch (e) {
@@ -215,13 +258,17 @@ export default async function handler(req, res) {
     }
     try {
       const users = await sb('GET', 'users', { 'select': '*', 'order': 'joined_at.desc', 'limit': '500' });
-      const today = new Date(); today.setHours(0,0,0,0);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const week = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       const stats = {
         total: users?.length || 0,
         totalAnalyze: users?.reduce((s, u) => s + (u.total_used || 0), 0) || 0,
         todayNew: users?.filter(u => new Date(u.joined_at) >= today).length || 0,
+        weekNew: users?.filter(u => new Date(u.joined_at) >= week).length || 0,
         totalCredits: users?.reduce((s, u) => s + (u.credits || 0), 0) || 0,
         marketingConsent: users?.filter(u => u.marketing_consent).length || 0,
+        totalReferrals: users?.reduce((s, u) => s + (u.ref_count || 0), 0) || 0,
+        activeToday: users?.filter(u => isToday(u.last_seen)).length || 0,
       };
       return res.status(200).json({ users: users || [], stats });
     } catch (e) {
@@ -232,9 +279,7 @@ export default async function handler(req, res) {
   // ── ADMIN: hak ekle ──
   if (action === 'admin_credits' && req.method === 'POST') {
     const { email, secret, targetEmail, credits } = req.body || {};
-    if (!isAdminRequest(email, secret)) {
-      return res.status(403).json({ error: 'Yetkisiz erişim' });
-    }
+    if (!isAdminRequest(email, secret)) return res.status(403).json({ error: 'Yetkisiz erişim' });
     try {
       const target = await getUser(norm(targetEmail));
       if (!target) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
@@ -249,9 +294,7 @@ export default async function handler(req, res) {
   // ── ADMIN: kullanıcı sil ──
   if (action === 'admin_delete' && req.method === 'POST') {
     const { email, secret, targetEmail } = req.body || {};
-    if (!isAdminRequest(email, secret)) {
-      return res.status(403).json({ error: 'Yetkisiz erişim' });
-    }
+    if (!isAdminRequest(email, secret)) return res.status(403).json({ error: 'Yetkisiz erişim' });
     try {
       const tEm = norm(targetEmail);
       await sb('DELETE', 'users', { 'email': `eq.${tEm}` });
