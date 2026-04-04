@@ -230,11 +230,88 @@ async function consumeCredit() {
 
 // ── Referans bölümü ──
 function showRefSection() {
-  const sec     = document.getElementById('refSection');
-  const display = document.getElementById('refCodeDisplay');
-  if (!curUser?.ref_code || !sec) return;
-  sec.style.display = 'block';
-  if (display) display.textContent = curUser.ref_code;
+  if (!curUser?.ref_code) return;
+
+  // Eski varsa kaldır
+  const old = document.getElementById('refCardInject');
+  if (old) old.remove();
+
+  // CSS animasyonu ekle (bir kez)
+  if (!document.getElementById('refCardStyle')) {
+    const style = document.createElement('style');
+    style.id = 'refCardStyle';
+    style.textContent = `
+      @keyframes refPulse {
+        0%,100% { box-shadow: 0 0 0 0 rgba(168,184,216,0.0); }
+        50%      { box-shadow: 0 0 0 6px rgba(168,184,216,0.15); }
+      }
+      @keyframes refSlideIn {
+        from { opacity:0; transform: translateY(-8px); }
+        to   { opacity:1; transform: translateY(0); }
+      }
+      #refCardInject {
+        animation: refSlideIn 0.4s ease forwards, refPulse 2.5s ease-in-out 0.5s 3;
+      }
+      #refCardInject .ref-copy-btn:hover {
+        background: rgba(168,184,216,0.25) !important;
+        color: #ccd6f6 !important;
+      }
+      #refCardInject .ref-code-box {
+        transition: background 0.2s;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const card = document.createElement('div');
+  card.id = 'refCardInject';
+  card.style.cssText = `
+    margin: 10px 14px;
+    background: linear-gradient(135deg, rgba(36,81,163,0.18) 0%, rgba(26,31,46,0.6) 100%);
+    border: 1px solid rgba(168,184,216,0.25);
+    border-radius: 6px;
+    padding: 11px 13px;
+    position: relative;
+    overflow: hidden;
+  `;
+
+  card.innerHTML = `
+    <div style="position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle at top right, rgba(168,184,216,0.12), transparent 70%);pointer-events:none"></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+      <span style="font-size:13px">🎁</span>
+      <span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#a8b8d8;font-family:'IBM Plex Mono',monospace;font-weight:600">Arkadaşını Davet Et</span>
+    </div>
+    <div style="font-size:9px;color:#8892b0;line-height:1.7;margin-bottom:9px">
+      Her davet: sen <span style="color:#a8b8d8;font-weight:600">+2 hak</span>, arkadaşın <span style="color:#a8b8d8;font-weight:600">+1 hak</span> kazanır.
+    </div>
+    <div style="display:flex;gap:5px;align-items:center">
+      <div class="ref-code-box" style="flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(168,184,216,0.2);color:#ccd6f6;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;padding:6px 9px;letter-spacing:2px;border-radius:3px">
+        ${curUser.ref_code}
+      </div>
+      <button class="ref-copy-btn" onclick="copyRefLink()" style="background:rgba(168,184,216,0.12);border:1px solid rgba(168,184,216,0.25);color:#a8b8d8;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:6px 10px;cursor:pointer;border-radius:3px;white-space:nowrap">
+        ⎘ Kopyala
+      </button>
+    </div>
+    <div id="refStats" style="margin-top:7px;font-size:9px;color:#8892b0;font-family:'IBM Plex Mono',monospace">
+      ${curUser.ref_count > 0
+        ? `✓ ${curUser.ref_count} kişi davet ettin · +${curUser.ref_count * 2} hak kazandın`
+        : 'Henüz davet yok — ilk davetini yap!'}
+    </div>
+  `;
+
+  // Sidebar'da kullanıcı bölümünün hemen altına ekle
+  const userSec = document.getElementById('sidebarUserSec');
+  if (userSec) {
+    userSec.after(card);
+  } else {
+    // Fallback: sidebar'ın başına ekle
+    const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+    if (sidebar) sidebar.prepend(card);
+  }
+
+  // Eski static refSection'ı gizle (varsa)
+  const old2 = document.getElementById('refSection');
+  if (old2) old2.style.display = 'none';
 }
 
 function copyRefLink() {
@@ -242,7 +319,15 @@ function copyRefLink() {
   if (!code) return;
   const link = `${location.origin}?ref=${code}`;
   navigator.clipboard.writeText(link)
-    .then(() => showToast('✓ Davet linki kopyalandı!', 'success'))
+    .then(() => {
+      showToast('✓ Davet linki kopyalandı!', 'success');
+      // Butonu geçici olarak değiştir
+      const btn = document.querySelector('#refCardInject .ref-copy-btn');
+      if (btn) {
+        btn.textContent = '✓ Kopyalandı';
+        setTimeout(() => { btn.textContent = '⎘ Kopyala'; }, 2000);
+      }
+    })
     .catch(() => prompt('Davet linkini kopyala:', link));
 }
 
