@@ -895,32 +895,21 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
       <button class="admin-close" onclick="closeAdmin()">✕</button>
     </div>
     <div class="admin-body">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:20px">
-        <div class="admin-stat"><div class="admin-stat-n" id="aStatUsers">—</div><div class="admin-stat-l">Toplam Kullanıcı</div></div>
+      <div class="admin-stats" id="adminStats">
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatUsers">—</div><div class="admin-stat-l">Kullanıcı</div></div>
         <div class="admin-stat"><div class="admin-stat-n" id="aStatAnalyze">—</div><div class="admin-stat-l">Toplam Analiz</div></div>
         <div class="admin-stat"><div class="admin-stat-n" id="aStatToday">—</div><div class="admin-stat-l">Bugün Kayıt</div></div>
-        <div class="admin-stat"><div class="admin-stat-n" id="aStatWeek">—</div><div class="admin-stat-l">Bu Hafta Kayıt</div></div>
-        <div class="admin-stat"><div class="admin-stat-n" id="aStatActive">—</div><div class="admin-stat-l">Bugün Aktif</div></div>
         <div class="admin-stat"><div class="admin-stat-n" id="aStatCredits">—</div><div class="admin-stat-l">Kalan Haklar</div></div>
-        <div class="admin-stat"><div class="admin-stat-n" id="aStatReferrals">—</div><div class="admin-stat-l">Toplam Davet</div></div>
-        <div class="admin-stat"><div class="admin-stat-n" id="aStatConsent">—</div><div class="admin-stat-l">Mail İzni</div></div>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-        <input id="adminSearch" type="text" placeholder="E-posta ara..."
-          style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:7px 10px;outline:none"
-          oninput="filterAdminTable(this.value)"/>
-        <button class="admin-refresh" onclick="loadAdminUsers()" style="margin-bottom:0">↻ Yenile</button>
-        <button id="adminExportEmailsBtn" style="display:none;background:var(--success);color:#fff;border:none;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px 12px;cursor:pointer">↓ Mail İndir</button>
-      </div>
-      <div style="overflow-x:auto;max-height:420px;overflow-y:auto">
+      <div class="admin-sec-title">Kullanıcılar</div>
+      <button class="admin-refresh" onclick="loadAdminUsers()">↻ Yenile</button>
+      <div style="overflow-x:auto;">
         <table class="admin-user-table">
-          <thead style="position:sticky;top:0;z-index:1">
-            <tr><th>E-posta</th><th>Kayıt</th><th>Son Giriş</th><th style="text-align:center">Analiz</th><th style="text-align:center">Hak</th><th style="text-align:center">Davet</th><th>Hak Ekle</th><th>İşlem</th></tr>
-          </thead>
+          <thead><tr><th>E-posta</th><th>Kayıt</th><th>Son Giriş</th><th>Toplam</th><th>Kalan Hak</th><th>Hak Ekle</th><th>İşlem</th></tr></thead>
           <tbody id="adminUserBody"></tbody>
         </table>
       </div>
-      <div style="margin-top:10px;font-size:10px;color:var(--muted2);font-family:'IBM Plex Mono',monospace" id="adminNote"></div>
+      <div class="admin-link" id="adminNote"></div>
     </div>
   </div>
 </div>
@@ -1055,14 +1044,6 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
       </div>
     </div>
     <div class="credits-warn" id="creditsWarn" style="display:none">⚠ Son hakkın! Daha fazlası için iletişime geç.</div>
-    <div id="refSection" style="display:none;padding:10px 16px 6px;border-top:1px solid var(--border-s)">
-      <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#8892b0;font-family:'IBM Plex Mono',monospace;margin-bottom:6px">Arkadaşını Davet Et → +2 Hak</div>
-      <div style="display:flex;gap:4px;margin-bottom:5px">
-        <div id="refCodeDisplay" style="flex:1;background:#111827;border:1px solid var(--border-s);color:#a8b8d8;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 8px;letter-spacing:1px">—</div>
-        <button onclick="copyRefLink()" style="background:rgba(168,184,216,0.1);border:1px solid var(--border-s);color:#8892b0;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:5px 8px;cursor:pointer">⎘ Kopyala</button>
-      </div>
-      <div style="font-size:9px;color:#8892b0;line-height:1.6">Sen <span style="color:#a8b8d8">+2</span>, arkadaşın <span style="color:#a8b8d8">+1</span> hak kazanır.</div>
-    </div>
     <div class="user-actions">
       <button class="admin-panel-btn" id="sidebarAdminBtn" style="display:none" onclick="openAdmin()">⚙ Admin</button>
       <button class="logout-btn" onclick="logout()">Çıkış</button>
@@ -1323,8 +1304,6 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
 </div><!-- main -->
 </div><!-- app -->
 
-<script src="/auth-logic.js"></script>
-<script src="/admin-panel.js"></script>
 <script>
 // ===== DATA =====
 const BIST={'THYAO':'Türk Hava Yolları','EREGL':'Ereğli Demir Çelik','SAHOL':'Sabancı Holding','KCHOL':'Koç Holding','ASELS':'Aselsan','BIMAS':'BİM Mağazalar','TUPRS':'Tüpraş','AKBNK':'Akbank','ISCTR':'İş Bankası','FROTO':'Ford Otosan','TOASO':'Tofaş Otomobil','VAKBN':'Vakıfbank','PGSUS':'Pegasus','TAVHL':'TAV Havalimanları','SISE':'Şişecam','TURSG':'Türkiye Sigorta','GARAN':'Garanti BBVA','YKBNK':'Yapı Kredi','HALKB':'Halkbank','TCELL':'Turkcell','TTKOM':'Türk Telekom','ARCLK':'Arçelik','VESTL':'Vestel','ENKAI':'Enka İnşaat','PETKM':'Petkim','KOZAL':'Koza Altın','KRDMD':'Kardemir','SOKM':'Şok Marketler','MGROS':'Migros','ULKER':'Ülker','CCOLA':'Coca-Cola İçecek','MAVI':'Mavi Giyim','LOGO':'Logo Yazılım','EKGYO':'Emlak Konut','ENJSA':'Enerjisa'};
@@ -2326,9 +2305,13 @@ function renderWatchlist(stocks) {
 buildNav(); buildChips(); setupAC(); loadMkt(); loadNews();
 loadWatchlist('BIST');
 
+// Auth init — saved email varsa otomatik yükle
 if (!localStorage.getItem('baris_fw_seen')) {
   setTimeout(() => { showFWModal(); localStorage.setItem('baris_fw_seen', '1'); }, 3500);
 }
+</script>
+<script src="/auth-logic.js"></script>
+<script src="/admin-panel.js"></script>
 
 <!-- MOBILE HESAP SHEET -->
 <div id="mobileAccountSheet" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.5)" onclick="closeMobileAccount()">
