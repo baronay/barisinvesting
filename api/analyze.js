@@ -1,3 +1,29 @@
+// /api/analyze.js — Barış Investing analiz motoru
+// Yenilikler: In-memory önbellek (1 saat TTL), Yahoo crumb kalıcılığı,
+//             loading state desteği, daha sağlam hata yönetimi
+
+// ── In-Memory Cache (Vercel serverless'ta process başına yaşar) ──
+// Not: Vercel'de her "warm" instance'ı kendi cache'ini tutar.
+// Aynı instance'a gelen istekler (dakikalar içinde) cache'ten yanıt alır.
+// Farklı instance'lara düşen istekler tekrar çeker — bu normaldir ve kabul edilebilir.
+const analysisCache = new Map(); // key: "TICKER:type" → {data, ts}
+const CACHE_TTL = 60 * 60 * 1000; // 1 saat
+
+function getCached(key) {
+  const entry = analysisCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL) { analysisCache.delete(key); return null; }
+  return entry.data;
+}
+function setCache(key, data) {
+  // Cache'i temiz tut — 200'den fazla giriş olunca en eskisini sil
+  if (analysisCache.size >= 200) {
+    const firstKey = analysisCache.keys().next().value;
+    analysisCache.delete(firstKey);
+  }
+  analysisCache.set(key, { data, ts: Date.now() });
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -9,15 +35,30 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: 'API key eksik' });
 
   const yahooTicker = exchange === 'BIST' ? `${ticker}.IS` : ticker;
-  let financialData = null;
-  try { financialData = await fetchYahooData(yahooTicker); } catch(e) {
-    console.log('Yahoo failed:', e.message);
+
+  // ── Finansal veri: önce cache'e bak ──
+  const dataCacheKey = `data:${yahooTicker}`;
+  let financialData = getCached(dataCacheKey);
+  let dataFromCache = !!financialData;
+
+  if (!financialData) {
+    try {
+      financialData = await fetchYahooData(yahooTicker);
+      if (financialData) setCache(dataCacheKey, financialData);
+    } catch(e) {
+      console.log('Yahoo failed:', e.message);
+    }
   }
 
-  const isBuffett = prompt.includes('Warren Buffett') || prompt.includes('ROE:');
-  const isLynch = prompt.includes('Peter Lynch') || prompt.includes('STORY:');
+  const fd = financialData;
 
-  const systemPrompt = `Sen "Barış Investing" platformunun analiz motorusun. Warren Buffett ve Peter Lynch felsefesiyle profesyonel Türkçe analiz raporu yazıyorsun.
+  // Analiz tipi belirle
+  const isBuffett = prompt.includes('Warren Buffett') || prompt.includes('ROE:');
+  const isLynch   = prompt.includes('Peter Lynch') || prompt.includes('STORY:');
+  const isDalio   = prompt.includes('Ray Dalio') || prompt.includes('BORÇ_DÖNGÜSÜ:');
+  const analysisType = isBuffett ? 'buffett' : isLynch ? 'lynch' : isDalio ? 'dalio' : 'generic';
+
+  const systemPrompt = `Sen "Barış Investing" platformunun analiz motorusun. Warren Buffett, Peter Lynch ve Ray Dalio felsefesiyle profesyonel Türkçe analiz raporu yazıyorsun.
 
 ÜSLUP: Profesyonel analist. Chatbot değil. Sade ama ikna edici. 12 yaşında anlayabilir, fon yöneticisi ikna olur.
 FORMAT: Markdown yok. # yok. * yok. Düz metin. TOTAL_SCORE 0-7 arası tam sayı. 7 geçemez.
@@ -47,9 +88,8 @@ DALIO KURALLARI (Dalio analizi için):
 
 TÜRK HİSSELERİ: Nominal büyüme TÜFE altındaysa "REEL KÜÇÜLME" uyarısı ekle.`;
 
-  // Build enriched prompt with real data
+  // Zenginleştirilmiş prompt oluştur
   let enrichedPrompt = '';
-  const fd = financialData;
 
   if (fd) {
     const n = (v, d=1) => v != null ? v.toFixed(d) : 'N/A';
@@ -65,11 +105,8 @@ TÜRK HİSSELERİ: Nominal büyüme TÜFE altındaysa "REEL KÜÇÜLME" uyarıs�
 
     const nc = (fd.totalCash!=null&&fd.totalDebt!=null) ? fd.totalCash-fd.totalDebt : null;
     const upside = fd.currentPrice&&fd.targetMeanPrice ? ((fd.targetMeanPrice-fd.currentPrice)/fd.currentPrice*100).toFixed(1) : null;
-
-    // Approximate owner earnings: FCF is closest available proxy
     const ownerEarnings = fd.freeCashflow;
 
-    // Data validation
     let warnings = '';
     if (fd.peRatio != null && fd.peRatio > 0 && fd.peRatio < 3) warnings += 'VERİ UYARISI: F/K oranı anormal düşük — doğrulama gerekebilir.\n';
     if (fd.pbRatio != null && fd.pbRatio > 0 && fd.pbRatio < 0.2) warnings += 'VERİ UYARISI: F/DD oranı anormal düşük — varlık değerlemesi şüpheli.\n';
@@ -98,12 +135,10 @@ PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBITDA=${n(fd.e
   enrichedPrompt += prompt;
   enrichedPrompt += '\n\nKRİTİK KURAL: Aşağıdaki format ŞARTSIZ uygulanacak. Her PASS/FAIL/NEUTRAL satırı pipe (|) işaretiyle açıklama içermeli. CRITERIA_START ve CRITERIA_END etiketleri olmalı.\nHer kriter için 2-3 cümle somut analiz yaz.';
 
-  // Veri yoksa (küçük BIST hisseleri gibi) AI tahmini yapsın
   if (!fd) {
     enrichedPrompt += '\n\nVERİ NOTU: Yahoo Finance bu hisse için yapısal finansal veri döndürmedi. Sektör bilgine ve genel şirket profiline dayanarak en iyi tahmini yap. Tüm MULTIPLES değerlerini sektör ortalamasına göre tahmin et. Her kriterde "Veri sınırlı" uyarısını ekle ama analizi tamamla — boş bırakma.';
   }
 
-  // Pre-fill multiples in prompt text
   if (fd) {
     const n2 = (v,d=1) => v!=null?v.toFixed(d):'N/A';
     enrichedPrompt = enrichedPrompt
@@ -137,12 +172,12 @@ PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBITDA=${n(fd.e
 
     let result = data.content?.[0]?.text || '';
 
-    // Clamp TOTAL_SCORE to 7
+    // TOTAL_SCORE'u 7 ile sınırla
     result = result.replace(/TOTAL_SCORE:\s*(\d+)/i, (m, n) =>
       `TOTAL_SCORE: ${Math.min(7, Math.max(0, parseInt(n)))}`
     );
 
-    // Override multiples with real Yahoo data
+    // Yahoo verisini AI cevabına uygula (override)
     if (fd) {
       const n3 = (v,d=1) => v!=null?v.toFixed(d):'N/A';
       if(fd.peRatio!=null) result=result.replace(/PE:\s*[\d.]+\s*\|/,`PE: ${n3(fd.peRatio)} |`);
@@ -151,8 +186,12 @@ PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBITDA=${n(fd.e
       if(fd.evEbitda!=null) result=result.replace(/EV_EBITDA:\s*[\d.]+\s*\|/,`EV_EBITDA: ${n3(fd.evEbitda)} |`);
     }
 
-    console.log('OK length:', result.length, '| CRITERIA found:', result.includes('CRITERIA_START'), '| First criteria:', result.match(/STORY:|GROWTH:|BALANCE:/i)?.[0]);
-    return res.status(200).json({ result, financialData });
+    console.log(`OK ${ticker} | cache: ${dataFromCache} | length: ${result.length} | CRITERIA: ${result.includes('CRITERIA_START')}`);
+    return res.status(200).json({
+      result,
+      financialData,
+      meta: { dataFromCache, analysisType }
+    });
 
   } catch(err) {
     console.error('Error:', err.message);
@@ -160,7 +199,7 @@ PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBITDA=${n(fd.e
   }
 }
 
-// Signal helpers — Lynch PEG fixed (1.5-2.0 = dikkatli, not uygun)
+// ── Signal helpers ──
 function sigPE(v) { if(v==null)return 'N/A'; if(v<12)return 'ucuz'; if(v<22)return 'adil'; return 'pahalı'; }
 function sigPB(v) { if(v==null)return 'N/A'; if(v<1.5)return 'ucuz'; if(v<3)return 'adil'; return 'pahalı'; }
 function sigPEG(v) {
@@ -172,14 +211,18 @@ function sigPEG(v) {
 }
 function sigEV(v) { if(v==null)return 'N/A'; if(v<8)return 'ucuz'; if(v<15)return 'adil'; return 'pahalı'; }
 
-// Yahoo Finance crumb cache
+// ── Yahoo Finance crumb cache (process-level, warm instance'larda kalıcı) ──
 let _crumb = null;
 let _cookie = null;
+let _crumbTs = 0;
+const CRUMB_TTL = 55 * 60 * 1000; // 55 dakika (Yahoo crumb'ı 1 saat geçerli)
 
 async function getYahooCrumb() {
-  if (_crumb && _cookie) return { crumb: _crumb, cookie: _cookie };
+  // Geçerli crumb varsa tekrar al
+  if (_crumb && _cookie && Date.now() - _crumbTs < CRUMB_TTL) {
+    return { crumb: _crumb, cookie: _cookie };
+  }
   try {
-    // Step 1: Get cookie
     const r1 = await fetch('https://fc.yahoo.com', {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
       redirect: 'follow',
@@ -187,7 +230,6 @@ async function getYahooCrumb() {
     const cookies = r1.headers.get('set-cookie') || '';
     const cookieVal = cookies.split(';')[0] || 'A=o; B=abc';
 
-    // Step 2: Get crumb
     const r2 = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -199,6 +241,7 @@ async function getYahooCrumb() {
     if (r2.ok) {
       _crumb = await r2.text();
       _cookie = cookieVal;
+      _crumbTs = Date.now();
       return { crumb: _crumb, cookie: _cookie };
     }
   } catch {}
@@ -219,7 +262,6 @@ async function fetchYahooData(yahooTicker) {
     recommendationKey: null, targetMeanPrice: null, numberOfAnalystOpinions: null,
   };
 
-  // Get crumb for authenticated requests
   const { crumb, cookie } = await getYahooCrumb();
 
   const makeHeaders = (withCookie = true) => ({
@@ -232,7 +274,7 @@ async function fetchYahooData(yahooTicker) {
 
   const crumbSuffix = crumb ? `&crumb=${encodeURIComponent(crumb)}` : '';
 
-  // 1. v7 quote — fiyat + temel metrikler (crumb ile)
+  // 1. v7 quote — fiyat + temel metrikler
   for (const base of ['query2', 'query1']) {
     try {
       const fields = 'regularMarketPrice,currency,marketCap,fiftyTwoWeekLow,fiftyTwoWeekHigh,trailingPE,forwardPE,priceToBook,pegRatio,epsTrailingTwelveMonths,epsForward,targetMeanPrice,recommendationKey,numberOfAnalystOpinions,enterpriseToEbitda,profitMargins,grossMargins,operatingMargins,returnOnEquity,returnOnAssets,freeCashflow,operatingCashflow,totalCash,totalDebt,debtToEquity,currentRatio,revenueGrowth,earningsGrowth,heldPercentInstitutions,regularMarketVolume';
