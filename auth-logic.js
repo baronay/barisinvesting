@@ -133,7 +133,7 @@ function updateSidebarUserUI() {
     if (avatarEl) avatarEl.style.display = 'none';
   }
   updateCreditsUI();
-  updateMobileAccountUI();
+  if (typeof updateMobileAccountUI === 'function') updateMobileAccountUI();
 }
 
 // ── Toast ──
@@ -181,7 +181,7 @@ async function loadPortfolioFromCloud() {
   const email = getEmail();
   if (!email) {
     const saved = localStorage.getItem('bi_portfolio');
-    if (saved) { try { portfolio = JSON.parse(saved); renderPt(); } catch {} }
+    if (saved) { try { portfolio = JSON.parse(saved); if (typeof renderPt === 'function') renderPt(); } catch {} }
     return;
   }
   try {
@@ -192,7 +192,7 @@ async function loadPortfolioFromCloud() {
     const data = await r.json();
     if (data.portfolio && Array.isArray(data.portfolio)) {
       portfolio = data.portfolio;
-      renderPt();
+      if (typeof renderPt === 'function') renderPt();
       if (data.updatedAt) {
         const el = document.getElementById('ptCloudSync');
         if (el) el.textContent = '☁ ' + new Date(data.updatedAt).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
