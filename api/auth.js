@@ -20,7 +20,6 @@ async function sb(method, table, params = {}, body = null) {
     'Authorization': `Bearer ${SB_KEY}`,
     'Content-Type': 'application/json',
   };
-  // Prefer header — POST için return=representation, diğerleri için minimal
   if (method === 'POST') headers['Prefer'] = 'return=representation,resolution=merge-duplicates';
   if (method === 'PATCH') headers['Prefer'] = 'return=representation';
 
@@ -42,13 +41,15 @@ async function getUser(email) {
   return rows?.[0] || null;
 }
 
-async function upsertUser(user) {
-  return sb('POST', 'users', {}, user).catch(() =>
-    sb('PATCH', 'users', { 'email': `eq.${user.email}` }, user)
-  );
-}
-
 function norm(e) { return (e || '').toLowerCase().trim(); }
+
+// ── Admin doğrulama yardımcısı ──
+// DÜZELTME: Hem ADMIN_SECRET hem ADMIN_EMAIL yeterli — ikisinden biri geçerliyse admin.
+function isAdminRequest(email, secret) {
+  const emailMatch = ADMIN_EMAIL && norm(email) === ADMIN_EMAIL;
+  const secretMatch = process.env.ADMIN_SECRET && secret === process.env.ADMIN_SECRET;
+  return emailMatch || secretMatch;
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -64,41 +65,55 @@ export default async function handler(req, res) {
     if (!email || !email.includes('@') || !email.includes('.')) {
       return res.status(400).json({ error: 'Geçerli bir e-posta girin.' });
     }
-    // Supabase kurulmamışsa — email'i kabul et ama DB'siz devam et
+
+    const em = norm(email);
+    // DÜZELTME: is_admin her zaman ADMIN_EMAIL ile karşılaştırılarak hesaplanır
+    const isAdminUser = ADMIN_EMAIL ? em === ADMIN_EMAIL : false;
+
+    // Supabase kurulmamışsa — admin emaili ile giriş yapılıyorsa is_admin=true ver
     if (!SB_URL || !SB_KEY) {
       return res.status(200).json({
-        user: { email: email.toLowerCase().trim(), credits: 3, is_admin: false, total_used: 0 },
+        user: { email: em, credits: isAdminUser ? 9999 : 3, is_admin: isAdminUser, total_used: 0 },
         isNew: true,
         warning: 'Supabase kurulmamış — veriler kaydedilmedi.'
       });
     }
-    const em = norm(email);
+
     try {
       let user = await getUser(em);
       const isNew = !user;
       if (!user) {
-        // INSERT — upsert ile çakışmayı önle
         const rows = await sb('POST', 'users', { 'on_conflict': 'email' }, {
           email: em,
           credits: FREE_CREDITS,
           total_used: 0,
-          is_admin: em === ADMIN_EMAIL,
+          is_admin: isAdminUser,
           marketing_consent: !!marketingConsent,
           joined_at: new Date().toISOString(),
           last_seen: new Date().toISOString(),
         });
-        user = rows?.[0] || { email: em, credits: FREE_CREDITS, is_admin: em === ADMIN_EMAIL, total_used: 0 };
+        user = rows?.[0] || { email: em, credits: FREE_CREDITS, is_admin: isAdminUser, total_used: 0 };
       } else {
-        await sb('PATCH', 'users', { 'email': `eq.${em}` }, {
+        // DÜZELTME: Mevcut kullanıcıda is_admin her girişte güncellenir
+        // (ADMIN_EMAIL değiştirilirse veya önceki girişte yanlış set edildiyse düzeltilir)
+        const updatePayload = {
           last_seen: new Date().toISOString(),
+          is_admin: isAdminUser,
           ...(marketingConsent !== undefined ? { marketing_consent: !!marketingConsent } : {})
-        });
+        };
+        await sb('PATCH', 'users', { 'email': `eq.${em}` }, updatePayload);
         user.last_seen = new Date().toISOString();
+        user.is_admin = isAdminUser; // Lokal state'i de güncelle
       }
       return res.status(200).json({ user, isNew });
     } catch (e) {
       console.error('login error:', e.message);
-      return res.status(500).json({ error: 'Sunucu hatası: ' + e.message });
+      // Supabase hatası olsa bile ADMIN_EMAIL bilgisiyle fallback ver
+      return res.status(200).json({
+        user: { email: em, credits: isAdminUser ? 9999 : 3, is_admin: isAdminUser, total_used: 0, offline: true },
+        isNew: false,
+        warning: 'Veritabanı hatası — sınırlı mod: ' + e.message
+      });
     }
   }
 
@@ -108,8 +123,11 @@ export default async function handler(req, res) {
     if (!email) return res.status(400).json({ error: 'Email gerekli' });
     if (!SB_URL || !SB_KEY) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     try {
-      const user = await getUser(norm(email));
+      const em = norm(email);
+      const user = await getUser(em);
       if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+      // is_admin'i her zaman ENV'den hesapla — DB'deki eski değere güvenme
+      user.is_admin = ADMIN_EMAIL ? em === ADMIN_EMAIL : user.is_admin;
       return res.status(200).json({ user });
     } catch (e) {
       return res.status(500).json({ error: e.message });
@@ -120,15 +138,16 @@ export default async function handler(req, res) {
   if (action === 'use' && req.method === 'POST') {
     const { email } = req.body || {};
     if (!email) return res.status(400).json({ error: 'Email gerekli' });
-    if (!SB_URL || !SB_KEY) return res.status(200).json({ credits: 99, totalUsed: 0 }); // Supabase yoksa serbest
+    if (!SB_URL || !SB_KEY) return res.status(200).json({ credits: 99, totalUsed: 0 });
     const em = norm(email);
+    const isAdminUser = ADMIN_EMAIL ? em === ADMIN_EMAIL : false;
     try {
       const user = await getUser(em);
       if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
-      if (user.credits <= 0 && !user.is_admin) {
+      if (user.credits <= 0 && !isAdminUser) {
         return res.status(403).json({ error: 'Analiz hakkınız doldu. Daha fazlası için bizimle iletişime geçin.', credits: 0 });
       }
-      const newCredits = user.is_admin ? user.credits : Math.max(0, user.credits - 1);
+      const newCredits = isAdminUser ? user.credits : Math.max(0, user.credits - 1);
       const newTotal = (user.total_used || 0) + 1;
       await sb('PATCH', 'users', { 'email': `eq.${em}` }, {
         credits: newCredits,
@@ -151,7 +170,6 @@ export default async function handler(req, res) {
       if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
       const payload = JSON.stringify(portfolio || []);
       if (payload.length > 100000) return res.status(413).json({ error: 'Portföy çok büyük' });
-      // upsert into portfolios table
       const existing = await sb('GET', 'portfolios', { 'email': `eq.${em}` });
       if (existing?.length > 0) {
         await sb('PATCH', 'portfolios', { 'email': `eq.${em}` }, {
@@ -171,7 +189,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── PORTFÖY YÜKlE ──
+  // ── PORTFÖY YÜKLE ──
   if (action === 'load_portfolio' && req.method === 'POST') {
     const { email } = req.body || {};
     if (!email) return res.status(400).json({ error: 'Email gerekli' });
@@ -192,8 +210,8 @@ export default async function handler(req, res) {
   // ── ADMIN: kullanıcı listesi ──
   if (action === 'admin_users' && req.method === 'POST') {
     const { email, secret } = req.body || {};
-    if (secret !== process.env.ADMIN_SECRET && norm(email) !== ADMIN_EMAIL) {
-      return res.status(403).json({ error: 'Yetkisiz' });
+    if (!isAdminRequest(email, secret)) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
     try {
       const users = await sb('GET', 'users', { 'select': '*', 'order': 'joined_at.desc', 'limit': '500' });
@@ -214,8 +232,8 @@ export default async function handler(req, res) {
   // ── ADMIN: hak ekle ──
   if (action === 'admin_credits' && req.method === 'POST') {
     const { email, secret, targetEmail, credits } = req.body || {};
-    if (secret !== process.env.ADMIN_SECRET && norm(email) !== ADMIN_EMAIL) {
-      return res.status(403).json({ error: 'Yetkisiz' });
+    if (!isAdminRequest(email, secret)) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
     try {
       const target = await getUser(norm(targetEmail));
@@ -231,8 +249,8 @@ export default async function handler(req, res) {
   // ── ADMIN: kullanıcı sil ──
   if (action === 'admin_delete' && req.method === 'POST') {
     const { email, secret, targetEmail } = req.body || {};
-    if (secret !== process.env.ADMIN_SECRET && norm(email) !== ADMIN_EMAIL) {
-      return res.status(403).json({ error: 'Yetkisiz' });
+    if (!isAdminRequest(email, secret)) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
     try {
       const tEm = norm(targetEmail);
