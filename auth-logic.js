@@ -8,7 +8,7 @@
 
 // ── State ──
 let curUser = null;
-let guestCredits = parseInt(localStorage.getItem('guest_credits') ?? '3');
+let guestCredits = parseInt(localStorage.getItem('guest_credits') ?? '1');
 
 function getEmail() { return curUser?.email || localStorage.getItem('bi_email') || null; }
 
@@ -60,7 +60,7 @@ async function doAuth() {
   if (btn) { btn.disabled = true; btn.textContent = 'Kaydediliyor...'; }
   if (errEl) errEl.style.display = 'none';
 
-  const fallback = { email, credits: 3, is_admin: false, total_used: 0, offline: true };
+  const fallback = { email, credits: 5, is_admin: false, total_used: 0, offline: true };
 
   try {
     const r = await fetch('/api/auth?action=login', {
@@ -103,8 +103,8 @@ function skipAuth() {
 function logout() {
   curUser = null;
   localStorage.removeItem('bi_email');
-  guestCredits = 3;
-  localStorage.setItem('guest_credits', '3');
+  guestCredits = 1;
+  localStorage.setItem('guest_credits', '1');
   document.getElementById('refSection') && (document.getElementById('refSection').style.display = 'none');
   updateCreditsUI();
   updateSidebarUserUI();
