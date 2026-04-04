@@ -3,7 +3,7 @@
 
 const SB_URL = process.env.SUPABASE_URL;
 const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
-const FREE_CREDITS = 3;
+const FREE_CREDITS = 5;
 const REFERRAL_BONUS = 2;   // davet eden kazanır
 const REFERRED_BONUS = 1;   // davet edilen kazanır
 const DAILY_BONUS = 1;      // günlük ilk giriş bonusu
