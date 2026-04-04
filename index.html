@@ -895,21 +895,32 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
       <button class="admin-close" onclick="closeAdmin()">✕</button>
     </div>
     <div class="admin-body">
-      <div class="admin-stats" id="adminStats">
-        <div class="admin-stat"><div class="admin-stat-n" id="aStatUsers">—</div><div class="admin-stat-l">Kullanıcı</div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:20px">
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatUsers">—</div><div class="admin-stat-l">Toplam Kullanıcı</div></div>
         <div class="admin-stat"><div class="admin-stat-n" id="aStatAnalyze">—</div><div class="admin-stat-l">Toplam Analiz</div></div>
         <div class="admin-stat"><div class="admin-stat-n" id="aStatToday">—</div><div class="admin-stat-l">Bugün Kayıt</div></div>
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatWeek">—</div><div class="admin-stat-l">Bu Hafta Kayıt</div></div>
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatActive">—</div><div class="admin-stat-l">Bugün Aktif</div></div>
         <div class="admin-stat"><div class="admin-stat-n" id="aStatCredits">—</div><div class="admin-stat-l">Kalan Haklar</div></div>
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatReferrals">—</div><div class="admin-stat-l">Toplam Davet</div></div>
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatConsent">—</div><div class="admin-stat-l">Mail İzni</div></div>
       </div>
-      <div class="admin-sec-title">Kullanıcılar</div>
-      <button class="admin-refresh" onclick="loadAdminUsers()">↻ Yenile</button>
-      <div style="overflow-x:auto;">
+      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+        <input id="adminSearch" type="text" placeholder="E-posta ara..."
+          style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:7px 10px;outline:none"
+          oninput="filterAdminTable(this.value)"/>
+        <button class="admin-refresh" onclick="loadAdminUsers()" style="margin-bottom:0">↻ Yenile</button>
+        <button id="adminExportEmailsBtn" style="display:none;background:var(--success);color:#fff;border:none;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px 12px;cursor:pointer">↓ Mail İndir</button>
+      </div>
+      <div style="overflow-x:auto;max-height:420px;overflow-y:auto">
         <table class="admin-user-table">
-          <thead><tr><th>E-posta</th><th>Kayıt</th><th>Son Giriş</th><th>Toplam</th><th>Kalan Hak</th><th>Hak Ekle</th><th>İşlem</th></tr></thead>
+          <thead style="position:sticky;top:0;z-index:1">
+            <tr><th>E-posta</th><th>Kayıt</th><th>Son Giriş</th><th style="text-align:center">Analiz</th><th style="text-align:center">Hak</th><th style="text-align:center">Davet</th><th>Hak Ekle</th><th>İşlem</th></tr>
+          </thead>
           <tbody id="adminUserBody"></tbody>
         </table>
       </div>
-      <div class="admin-link" id="adminNote"></div>
+      <div style="margin-top:10px;font-size:10px;color:var(--muted2);font-family:'IBM Plex Mono',monospace" id="adminNote"></div>
     </div>
   </div>
 </div>
@@ -1044,6 +1055,14 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
       </div>
     </div>
     <div class="credits-warn" id="creditsWarn" style="display:none">⚠ Son hakkın! Daha fazlası için iletişime geç.</div>
+    <div id="refSection" style="display:none;padding:10px 16px 6px;border-top:1px solid var(--border-s)">
+      <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#8892b0;font-family:'IBM Plex Mono',monospace;margin-bottom:6px">Arkadaşını Davet Et → +2 Hak</div>
+      <div style="display:flex;gap:4px;margin-bottom:5px">
+        <div id="refCodeDisplay" style="flex:1;background:#111827;border:1px solid var(--border-s);color:#a8b8d8;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 8px;letter-spacing:1px">—</div>
+        <button onclick="copyRefLink()" style="background:rgba(168,184,216,0.1);border:1px solid var(--border-s);color:#8892b0;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:5px 8px;cursor:pointer">⎘ Kopyala</button>
+      </div>
+      <div style="font-size:9px;color:#8892b0;line-height:1.6">Sen <span style="color:#a8b8d8">+2</span>, arkadaşın <span style="color:#a8b8d8">+1</span> hak kazanır.</div>
+    </div>
     <div class="user-actions">
       <button class="admin-panel-btn" id="sidebarAdminBtn" style="display:none" onclick="openAdmin()">⚙ Admin</button>
       <button class="logout-btn" onclick="logout()">Çıkış</button>
@@ -2341,6 +2360,7 @@ function hideAuthModal() {
 }
 
 async function doAuth() {
+  const refCode = localStorage.getItem('bi_ref') || null;
   const emailIn = document.getElementById('authEmailIn');
   const errEl = document.getElementById('authErr');
   const marketingEl = document.getElementById('marketingConsent');
@@ -2353,24 +2373,24 @@ async function doAuth() {
   if (btn) { btn.disabled = true; btn.textContent = 'Kaydediliyor...'; }
   if (errEl) errEl.style.display = 'none';
 
-  // Her durumda çalışacak fallback kullanıcı
   const fallbackUser = { email, credits: 3, is_admin: false, total_used: 0, offline: true };
 
   try {
     const r = await fetch('/api/auth?action=login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, marketingConsent: marketingEl?.checked ?? false })
+      body: JSON.stringify({ email, marketingConsent: marketingEl?.checked ?? false, refCode })
     });
     const data = await r.json();
 
     if (data.user) {
       curUser = data.user;
+      localStorage.removeItem('bi_ref');
+      if (data.refBonus) showToast('🎁 Davet bonusu! +1 ekstra hak kazandın.', 'success');
+      if (data.dailyBonus) showToast('☀ Günlük bonus! +1 analiz hakkı eklendi.', 'success');
     } else {
-      // Supabase yok veya hata — yine de giriş yap
       curUser = fallbackUser;
     }
   } catch {
-    // Network hatası — offline mod
     curUser = fallbackUser;
   }
 
@@ -2379,6 +2399,7 @@ async function doAuth() {
   updateSidebarUserUI();
   updateCreditsUI();
   loadPortfolioFromCloud();
+  showRefSection();
 
   if (curUser.offline) {
     showToast('✓ Mail kaydedildi. Çevrimdışı mod — 3 hakkın var.', 'warn');
@@ -2553,77 +2574,139 @@ function closeAdmin() {
   document.getElementById('adminModal').style.display = 'none';
 }
 
+// Referans sistemi
+function showRefSection() {
+  const sec = document.getElementById('refSection');
+  const display = document.getElementById('refCodeDisplay');
+  if (!curUser?.ref_code || !sec) return;
+  sec.style.display = 'block';
+  if (display) display.textContent = curUser.ref_code;
+}
+
+function copyRefLink() {
+  const code = curUser?.ref_code;
+  if (!code) return;
+  const link = `${location.origin}?ref=${code}`;
+  navigator.clipboard.writeText(link).then(() => {
+    showToast('✓ Davet linki kopyalandı!', 'success');
+  }).catch(() => {
+    prompt('Davet linkini kopyala:', link);
+  });
+}
+
+// URL'de ref kodu varsa kaydet
+(function() {
+  const params = new URLSearchParams(location.search);
+  const ref = params.get('ref');
+  if (ref) localStorage.setItem('bi_ref', ref);
+})();
+
+// Admin panel
+let _adminSecret = null;
+let _adminAllUsers = [];
+
 async function loadAdminUsers() {
   const email = getEmail();
-  const secret = prompt('Admin şifresi:');
+  const secret = _adminSecret || prompt('Admin şifresi:');
   if (!secret) return;
+  _adminSecret = secret;
+
   const body = document.getElementById('adminUserBody');
   const note = document.getElementById('adminNote');
-  if (body) body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:12px;color:var(--muted2)">Yükleniyor...</td></tr>';
+  if (body) body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:16px;color:var(--muted2)">Yükleniyor...</td></tr>';
+
   try {
     const r = await fetch('/api/auth?action=admin_users', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, secret })
     });
     const data = await r.json();
-    if (data.error) { if (note) note.textContent = '⚠ ' + data.error; return; }
-    // Stats
-    const s = data.stats;
-    document.getElementById('aStatUsers').textContent = s.total;
-    document.getElementById('aStatAnalyze').textContent = s.totalAnalyze;
-    document.getElementById('aStatToday').textContent = s.todayNew;
-    document.getElementById('aStatCredits').textContent = s.totalCredits;
-    if (note) note.textContent = `📧 Pazarlama izni: ${s.marketingConsent} kullanıcı`;
-    // Table
-    if (!body) return;
-    body.innerHTML = '';
-    (data.users || []).forEach(u => {
-      const tr = document.createElement('tr');
-      const joined = u.joined_at ? new Date(u.joined_at).toLocaleDateString('tr-TR') : '—';
-      const seen = u.last_seen ? new Date(u.last_seen).toLocaleDateString('tr-TR') : '—';
-      const mc = u.marketing_consent ? '✓' : '✗';
-      tr.innerHTML = `
-        <td style="font-family:'IBM Plex Mono',monospace;font-size:10px">${u.email}${u.is_admin?'<span style="color:var(--warn);margin-left:5px">[admin]</span>':''}${u.marketing_consent?'<span style="color:var(--success);margin-left:4px;font-size:8px" title="Pazarlama izni verdi">📧</span>':''}</td>
-        <td>${joined}</td>
-        <td>${seen}</td>
-        <td style="text-align:center">${u.total_used || 0}</td>
-        <td class="admin-user-credits">${u.is_admin ? '∞' : u.credits}</td>
-        <td>
-          <div style="display:flex;gap:4px;align-items:center">
-            <input type="number" id="cr_${u.email}" style="width:44px;background:var(--bg2);border:1px solid var(--border);padding:3px 5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text)" value="3" min="1" max="100"/>
-            <button onclick="addCredits('${u.email}','${secret}')" style="background:var(--accent2);color:#fff;border:none;padding:3px 8px;cursor:pointer;font-size:9px;font-family:'IBM Plex Mono',monospace">+Ekle</button>
-          </div>
-        </td>
-        <td><button onclick="deleteUser('${u.email}','${secret}')" style="background:none;border:1px solid var(--danger);color:var(--danger);padding:3px 7px;cursor:pointer;font-size:9px;font-family:'IBM Plex Mono',monospace">Sil</button></td>
-      `;
-      body.appendChild(tr);
-    });
-    // Export emails with consent
-    const consentEmails = (data.users || []).filter(u => u.marketing_consent).map(u => u.email);
-    if (consentEmails.length > 0) {
-      const expBtn = document.getElementById('adminExportBtn');
-      if (!expBtn) {
-        const btn = document.createElement('button');
-        btn.id = 'adminExportBtn';
-        btn.style.cssText = 'margin-top:10px;background:var(--success);color:#fff;border:none;padding:7px 14px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:10px;';
-        btn.textContent = `📧 ${consentEmails.length} mail adresini indir (izin verenler)`;
-        btn.onclick = () => {
-          const blob = new Blob([consentEmails.join('\n')], {type:'text/plain'});
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = 'barisinvesting_emails.txt';
-          a.click();
-        };
-        document.getElementById('adminNote').after(btn);
-      }
+
+    if (data.error) {
+      _adminSecret = null;
+      if (note) note.textContent = '⚠ ' + data.error;
+      if (body) body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:16px;color:var(--danger)">Yetkisiz erişim</td></tr>';
+      return;
     }
+
+    const s = data.stats;
+    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val ?? '—'; };
+    set('aStatUsers', s.total);
+    set('aStatAnalyze', s.totalAnalyze);
+    set('aStatToday', s.todayNew);
+    set('aStatWeek', s.weekNew);
+    set('aStatActive', s.activeToday);
+    set('aStatCredits', s.totalCredits);
+    set('aStatReferrals', s.totalReferrals);
+    set('aStatConsent', s.marketingConsent);
+
+    if (note) note.textContent = `Toplam ${s.total} kullanıcı · ${s.marketingConsent} mail izni`;
+
+    const exportBtn = document.getElementById('adminExportEmailsBtn');
+    if (exportBtn) {
+      const consentEmails = (data.users || []).filter(u => u.marketing_consent).map(u => u.email);
+      exportBtn.style.display = consentEmails.length > 0 ? 'block' : 'none';
+      exportBtn.textContent = `↓ ${consentEmails.length} mail indir`;
+      exportBtn.onclick = () => {
+        const blob = new Blob([consentEmails.join('\n')], { type: 'text/plain' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = 'barisinvesting_emails.txt'; a.click();
+      };
+    }
+
+    _adminAllUsers = data.users || [];
+    renderAdminTable(_adminAllUsers, secret);
+
   } catch (e) {
     if (note) note.textContent = '⚠ Hata: ' + e.message;
   }
 }
 
+function renderAdminTable(users, secret) {
+  const body = document.getElementById('adminUserBody');
+  if (!body) return;
+  body.innerHTML = '';
+  users.forEach(u => {
+    const tr = document.createElement('tr');
+    const joined = u.joined_at ? new Date(u.joined_at).toLocaleDateString('tr-TR') : '—';
+    const seen = u.last_seen ? new Date(u.last_seen).toLocaleDateString('tr-TR') : '—';
+    const isActiveToday = u.last_seen && (Date.now() - new Date(u.last_seen).getTime() < 86400000);
+    const safeId = u.email.replace(/[@.]/g, '_');
+    tr.innerHTML = `
+      <td>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px">${u.email}</span>
+        ${u.is_admin ? '<span style="font-size:8px;padding:1px 4px;background:rgba(184,112,10,0.15);color:var(--warn);border:1px solid rgba(184,112,10,0.3);margin-left:4px">admin</span>' : ''}
+        ${u.marketing_consent ? '<span style="font-size:10px;color:var(--success);margin-left:3px" title="Mail izni">✉</span>' : ''}
+        ${u.referred_by ? '<span style="font-size:10px;color:var(--muted2);margin-left:3px" title="Davet ile katıldı">⤷</span>' : ''}
+      </td>
+      <td style="font-size:10px;color:var(--muted2)">${joined}</td>
+      <td style="font-size:10px;${isActiveToday ? 'color:var(--success)' : 'color:var(--muted2)'}">${seen}</td>
+      <td style="text-align:center;font-family:'Playfair Display',serif;font-size:13px">${u.total_used || 0}</td>
+      <td style="text-align:center;font-family:'Playfair Display',serif;font-size:13px;color:${(u.credits||0) <= 1 && !u.is_admin ? 'var(--danger)' : 'var(--accent2)'}">
+        ${u.is_admin ? '∞' : u.credits}
+      </td>
+      <td style="text-align:center;font-size:11px;color:var(--muted2)">${u.ref_count || 0}</td>
+      <td>
+        <div style="display:flex;gap:4px;align-items:center">
+          <input type="number" id="cr_${safeId}" style="width:44px;background:var(--bg2);border:1px solid var(--border);padding:3px 5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text);text-align:center" value="3" min="1" max="100"/>
+          <button onclick="addCredits('${u.email}','${secret}')" style="background:var(--accent2);color:#fff;border:none;padding:3px 8px;cursor:pointer;font-size:9px;font-family:'IBM Plex Mono',monospace">+Ekle</button>
+        </div>
+      </td>
+      <td><button onclick="deleteUser('${u.email}','${secret}')" style="background:none;border:1px solid var(--danger);color:var(--danger);padding:3px 7px;cursor:pointer;font-size:9px;font-family:'IBM Plex Mono',monospace">Sil</button></td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+function filterAdminTable(query) {
+  const q = query.toLowerCase().trim();
+  const filtered = q ? _adminAllUsers.filter(u => u.email.toLowerCase().includes(q)) : _adminAllUsers;
+  renderAdminTable(filtered, _adminSecret);
+}
+
 async function addCredits(targetEmail, secret) {
-  const inp = document.getElementById('cr_' + targetEmail);
+  const safeId = targetEmail.replace(/[@.]/g, '_');
+  const inp = document.getElementById('cr_' + safeId);
   const credits = parseInt(inp?.value || 3);
   const email = getEmail();
   try {
@@ -2679,6 +2762,7 @@ loadWatchlist('BIST');
     }
     updateSidebarUserUI();
     loadPortfolioFromCloud();
+    showRefSection();
   } else {
     updateSidebarUserUI();
     loadPortfolioFromCloud();
