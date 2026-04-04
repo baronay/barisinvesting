@@ -2151,6 +2151,95 @@ function mobileNav(tab) {
   }
 }
 
+// ===== MOBILE HESAP =====
+function openMobileAccount() {
+  const sheet = document.getElementById('mobileAccountSheet');
+  if (!sheet) return;
+  updateMobileAccountUI();
+  sheet.style.display = 'block';
+}
+
+function closeMobileAccount() {
+  const sheet = document.getElementById('mobileAccountSheet');
+  if (sheet) sheet.style.display = 'none';
+}
+
+function updateMobileAccountUI() {
+  const email = curUser?.email || localStorage.getItem('bi_email');
+  const guestDiv = document.getElementById('mobileAccountGuest');
+  const userDiv = document.getElementById('mobileAccountUser');
+  const avatar = document.getElementById('mobileAvatar');
+  const emailEl = document.getElementById('mobileUserEmail');
+  const creditVal = document.getElementById('mobileCreditVal');
+  const creditBar = document.getElementById('mobileCreditBar');
+  const bnIcon = document.getElementById('bnAccountIcon');
+  const bnLabel = document.getElementById('bnAccountLabel');
+
+  if (email) {
+    if (guestDiv) guestDiv.style.display = 'none';
+    if (userDiv) userDiv.style.display = 'block';
+    const letter = email[0].toUpperCase();
+    if (avatar) { avatar.textContent = letter; }
+    if (emailEl) emailEl.textContent = email;
+    const credits = curUser ? (curUser.is_admin ? '∞' : curUser.credits) : guestCredits;
+    if (creditVal) creditVal.textContent = credits + (curUser?.is_admin ? '' : '/3');
+    const pct = curUser?.is_admin ? 100 : Math.max(0, ((parseInt(credits)||0) / 3) * 100);
+    if (creditBar) creditBar.style.width = pct + '%';
+    // Bottom nav icon güncelle
+    if (bnIcon) { bnIcon.textContent = letter; bnIcon.style.background = 'var(--accent2)'; bnIcon.style.color = '#fff'; }
+    if (bnLabel) bnLabel.textContent = 'Hesap';
+  } else {
+    if (guestDiv) guestDiv.style.display = 'block';
+    if (userDiv) userDiv.style.display = 'none';
+    if (bnIcon) { bnIcon.textContent = '?'; bnIcon.style.background = 'var(--border-s)'; bnIcon.style.color = '#8892b0'; }
+    if (bnLabel) bnLabel.textContent = 'Giriş';
+  }
+}
+
+async function doMobileAuth() {
+  const emailIn = document.getElementById('mobileEmailIn');
+  const errEl = document.getElementById('mobileAuthErr');
+  const marketing = document.getElementById('mobileMarketingConsent');
+  const email = (emailIn?.value || '').trim();
+  if (!email || !email.includes('@')) {
+    if (errEl) { errEl.textContent = 'Geçerli bir e-posta girin.'; errEl.style.display = 'block'; }
+    return;
+  }
+  if (errEl) errEl.style.display = 'none';
+  const btn = document.querySelector('#mobileAccountSheet button');
+
+  const fallbackUser = { email, credits: 3, is_admin: false, total_used: 0, offline: true };
+  try {
+    const r = await fetch('/api/auth?action=login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, marketingConsent: marketing?.checked ?? false })
+    });
+    const data = await r.json();
+    curUser = data.user || fallbackUser;
+  } catch {
+    curUser = fallbackUser;
+  }
+  localStorage.setItem('bi_email', email);
+  closeMobileAccount();
+  updateMobileAccountUI();
+  updateSidebarUserUI();
+  updateCreditsUI();
+  loadPortfolioFromCloud();
+  showToast(curUser.offline ? '✓ Mail kaydedildi. 3 hakkın var.' : `✓ Hoş geldin! ${curUser.credits} hakkın var.`, 'success');
+}
+
+function mobileLogout() {
+  curUser = null;
+  localStorage.removeItem('bi_email');
+  guestCredits = 3;
+  localStorage.setItem('guest_credits', '3');
+  updateMobileAccountUI();
+  updateSidebarUserUI();
+  updateCreditsUI();
+  closeMobileAccount();
+  showToast('Çıkış yapıldı.', 'warn');
+}
+
 // WATCHLIST — Top 5 Dikkat Çeken Hisseler
 let wlMarket = 'BIST';
 async function loadWatchlist(market) {
@@ -2346,6 +2435,7 @@ function updateSidebarUserUI() {
     if (avatarEl) avatarEl.style.display = 'none';
   }
   updateCreditsUI();
+  updateMobileAccountUI();
 }
 
 // ── Toast bildirim ──
@@ -2604,6 +2694,42 @@ if (!localStorage.getItem('baris_fw_seen')) {
 }
 </script>
 
+<!-- MOBILE HESAP SHEET -->
+<div id="mobileAccountSheet" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.5)" onclick="closeMobileAccount()">
+  <div onclick="event.stopPropagation()" style="position:absolute;bottom:58px;left:0;right:0;background:var(--sidebar);border-top:1px solid var(--border-s);padding:20px;max-height:70vh;overflow-y:auto;">
+    <!-- Giriş yapılmamış -->
+    <div id="mobileAccountGuest">
+      <div style="font-family:'Playfair Display',serif;font-size:18px;color:#e8e6e0;margin-bottom:6px">Hesabın yok mu?</div>
+      <div style="font-size:11px;color:#8892b0;margin-bottom:16px;line-height:1.7">E-posta ile kayıt ol, 3 ücretsiz analiz hakkı kazan. Portföyün bulutta saklanır.</div>
+      <input id="mobileEmailIn" type="email" placeholder="e-posta adresin" autocomplete="email"
+        style="width:100%;background:#111827;border:1px solid var(--border-s);color:#e8e6e0;font-family:'IBM Plex Mono',monospace;font-size:13px;padding:12px 14px;outline:none;margin-bottom:8px;box-sizing:border-box;"
+        onkeydown="if(event.key==='Enter')doMobileAuth()"/>
+      <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;cursor:pointer">
+        <input type="checkbox" id="mobileMarketingConsent" style="margin-top:3px;flex-shrink:0"/>
+        <span style="font-size:10px;color:#8892b0;line-height:1.6">Yeni analizler ve piyasa yorumları hakkında bana e-posta gönderebilirsiniz</span>
+      </label>
+      <button onclick="doMobileAuth()" style="width:100%;background:var(--accent2);color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;padding:13px;cursor:pointer;margin-bottom:8px">Giriş Yap</button>
+      <div id="mobileAuthErr" style="display:none;font-size:10px;color:var(--danger);padding:6px;font-family:'IBM Plex Mono',monospace"></div>
+      <button onclick="closeMobileAccount()" style="width:100%;background:transparent;border:1px solid var(--border-s);color:#8892b0;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:10px;cursor:pointer">Şimdi değil</button>
+    </div>
+    <!-- Giriş yapılmış -->
+    <div id="mobileAccountUser" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div id="mobileAvatar" style="width:44px;height:44px;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">?</div>
+        <div>
+          <div id="mobileUserEmail" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a8b8d8;word-break:break-all"></div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+            <div style="font-size:9px;color:#8892b0;font-family:'IBM Plex Mono',monospace">ANALİZ HAKKI</div>
+            <div id="mobileCreditVal" style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#a8b8d8"></div>
+            <div style="height:2px;flex:1;background:var(--border-s);position:relative"><div id="mobileCreditBar" style="position:absolute;left:0;top:0;height:100%;background:#a8b8d8;transition:width 0.5s"></div></div>
+          </div>
+        </div>
+      </div>
+      <button onclick="mobileLogout()" style="width:100%;background:transparent;border:1px solid var(--danger);color:var(--danger);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:10px;cursor:pointer">Çıkış Yap</button>
+    </div>
+  </div>
+</div>
+
 <!-- BOTTOM NAVIGATION - MOBILE ONLY -->
 <nav class="bottom-nav" id="bottomNav">
   <button class="bn-tab active" id="bn-analiz" onclick="mobileNav('analiz')">
@@ -2617,6 +2743,10 @@ if (!localStorage.getItem('baris_fw_seen')) {
   <button class="bn-tab" id="bn-forum" onclick="mobileNav('forum')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
     <span>Forum</span>
+  </button>
+  <button class="bn-tab" id="bn-hesap" onclick="openMobileAccount()">
+    <div id="bnAccountIcon" style="width:22px;height:22px;border-radius:50%;background:var(--border-s);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:11px;font-weight:700;color:#8892b0">?</div>
+    <span id="bnAccountLabel">Hesap</span>
   </button>
 </nav>
 </body>
