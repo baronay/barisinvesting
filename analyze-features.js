@@ -162,7 +162,7 @@ function makeLogoEl(ticker, company) {
   return wrap;
 }
 
-async function injectCompanySnapshot(ticker, company, exchange, fwKey) {
+async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers = []) {
   const old = document.getElementById('snapshotCard');
   if (old) old.remove();
 
@@ -225,14 +225,19 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey) {
 
   // AI'dan veri çek
   try {
-    const prompt = `${exchange} borsasındaki "${ticker}"${company ? ` (${company})` : ''} şirketini analiz et.
+    const prompt = `${exchange} borsasındaki "${ticker}"${company ? ` (${company})` : ''} şirketi için kısa profil oluştur.
+
+KRİTİK KURAL: PEERS alanına SADECE bu şirketle AYNI sektörde ve AYNI iş kolunda faaliyet gösteren doğrudan rakipler yaz. Farklı sektörden şirket YAZMA.
+Örnek: THYAO için → PGSUS, TAVHL (havacılık). AEFES, KRDMD gibi farklı sektör şirketleri YASAK.
+Örnek: AKBNK için → GARAN, ISCTR, YKBNK (bankacılık). 
+Örnek: BIMAS için → MGROS, SOKM (perakende).
 
 Kesinlikle sadece şu formatı kullan, başka hiçbir şey yazma:
 
 BUSINESS: [Ne iş yaptığını 2 cümleyle anlat. Sade, anlaşılır Türkçe.]
-SECTOR: [Sektör — örn: Havacılık, Bankacılık, Teknoloji, Perakende]
+SECTOR: [Tek kelime/kısa sektör adı — örn: Havacılık, Bankacılık, Teknoloji]
 MOAT: [Rekabet avantajı 1 cümle — varsa somut belirt, yoksa "Sınırlı hendek" de]
-PEERS: [3-4 rakip ticker virgülle — örn: PGSUS, TAVHL, AEFES]
+PEERS: [2-4 AYNI SEKTÖR rakip ticker — farklı sektör YASAK]
 RISK: [En kritik 1 risk cümlesi]`;
 
     const r = await fetch('/api/analyze', {
@@ -251,7 +256,10 @@ RISK: [En kritik 1 risk cümlesi]`;
     const business = get('BUSINESS');
     const sector   = get('SECTOR');
     const moat     = get('MOAT');
-    const peers    = get('PEERS').split(',').map(p => p.trim()).filter(Boolean);
+    // FMP peer'ları varsa onları kullan (daha doğru), yoksa AI'dan al
+    const peers = fmpPeers.length > 0
+      ? fmpPeers
+      : get('PEERS').split(',').map(p => p.trim()).filter(Boolean);
     const risk     = get('RISK');
 
     clearInterval(dotTimer);
@@ -343,5 +351,8 @@ window.parseAndRender = function(ticker, company, text, fd, fwKey) {
   const score = sm ? Math.min(7, Math.max(0, parseInt(sm[1]))) : 0;
 
   trackMasterScore(ticker, ex, fw, score);
-  injectCompanySnapshot(ticker, company, ex, fw);
+
+  // FMP peer listesini fd'den al, yoksa snapshot kendi bulur
+  const fmpPeers = fd?.peers || [];
+  injectCompanySnapshot(ticker, company, ex, fw, fmpPeers);
 };
