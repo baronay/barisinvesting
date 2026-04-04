@@ -299,14 +299,13 @@ function showRefSection() {
     </div>
   `;
 
-  // Sidebar'da kullanıcı bölümünün hemen altına ekle
-  const userSec = document.getElementById('sidebarUserSec');
-  if (userSec) {
-    userSec.after(card);
+  // ANALİZ ET butonunun hemen altına ekle
+  const anaBtn = document.getElementById('anaBtn');
+  if (anaBtn) {
+    anaBtn.parentNode.insertBefore(card, anaBtn.nextSibling);
   } else {
-    // Fallback: sidebar'ın başına ekle
-    const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
-    if (sidebar) sidebar.prepend(card);
+    const userSec = document.getElementById('sidebarUserSec');
+    if (userSec) userSec.after(card);
   }
 
   // Eski static refSection'ı gizle (varsa)
