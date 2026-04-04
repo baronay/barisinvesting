@@ -61,17 +61,45 @@ async function fetchFmpData(ticker, exchange) {
 
     const currency = exchange === 'BIST' ? 'TRY' : (quote?.currency || 'USD');
 
-    // Peer listesi — aynı sektörden gerçek rakipler (FMP industry peer)
+    // ── Peer listesi: aynı industry, aynı exchange, piyasa değerine göre ──
     let peers = [];
+    const industry = profile?.industry ?? null;
+    const sector   = profile?.sector   ?? null;
+
     try {
-      const peerData = await fmp(`/stock-peers`, { symbol: sym });
-      const raw = peerData?.[0]?.peersList || [];
-      // Aynı exchange'den ilk 4 rakip
-      peers = raw
-        .filter(p => exchange === 'BIST' ? p.endsWith('.IS') : !p.endsWith('.IS'))
-        .slice(0, 4)
-        .map(p => p.replace('.IS', ''));
-    } catch {}
+      if (industry) {
+        // FMP screener ile aynı industry'deki şirketleri çek
+        const screenerParams = {
+          industry: industry,
+          limit: '50',
+          ...(exchange === 'BIST' ? { exchange: 'IST' } : { exchange: 'NASDAQ,NYSE' })
+        };
+        const screenerData = await fmp('/stock-screener', screenerParams);
+
+        peers = (screenerData || [])
+          .filter(p => {
+            if (!p.symbol || p.symbol === sym) return false;
+            // BIST için .IS ile bitmeli, diğerleri için bitmemeli
+            if (exchange === 'BIST') return p.symbol.endsWith('.IS');
+            return !p.symbol.endsWith('.IS');
+          })
+          .sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0)) // Piyasa değerine göre sırala
+          .slice(0, 4)
+          .map(p => p.symbol.replace('.IS', ''));
+      }
+
+      // Screener sonuç vermezse stock-peers fallback
+      if (peers.length === 0) {
+        const peerData = await fmp('/stock-peers', { symbol: sym });
+        const raw = peerData?.[0]?.peersList || [];
+        peers = raw
+          .filter(p => exchange === 'BIST' ? p.endsWith('.IS') : !p.endsWith('.IS'))
+          .slice(0, 4)
+          .map(p => p.replace('.IS', ''));
+      }
+    } catch(e) {
+      console.log('Peer fetch failed:', e.message);
+    }
 
     const result = {
       // Fiyat
@@ -122,11 +150,12 @@ async function fetchFmpData(ticker, exchange) {
       numberOfAnalystOpinions: null,
 
       // Ekstra FMP verileri
-      sector:    profile?.sector   ?? null,
-      industry:  profile?.industry ?? null,
+      sector:    sector,
+      industry:  industry,
       peers,
       description: profile?.description ?? null,
       website:   profile?.website  ?? null,
+      logoUrl:   `https://financialmodelingprep.com/image-stock/${sym}.png`,
       employees: profile?.fullTimeEmployees ?? null,
       country:   profile?.country  ?? null,
       dataSource: 'FMP',
