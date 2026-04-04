@@ -44,51 +44,45 @@ async function fetchFmpData(ticker, exchange) {
   if (cached) { console.log(`FMP cache hit: ${sym}`); return cached; }
 
   try {
-    // Paralel istek — limit korumak için sadece gerekli endpointler
-    const [quoteArr, profileArr, metricsArr, ratiosArr] = await Promise.allSettled([
+    // Ücretsiz tier'da çalışan endpointler: quote ve profile
+    const [quoteArr, profileArr] = await Promise.allSettled([
       fmp(`/quote/${sym}`),
       fmp(`/profile/${sym}`),
-      fmp(`/key-metrics-ttm/${sym}`),
-      fmp(`/ratios-ttm/${sym}`),
     ]);
 
     const quote   = quoteArr.status   === 'fulfilled' ? quoteArr.value?.[0]   : null;
     const profile = profileArr.status === 'fulfilled' ? profileArr.value?.[0] : null;
-    const metrics = metricsArr.status === 'fulfilled' ? metricsArr.value?.[0] : null;
-    const ratios  = ratiosArr.status  === 'fulfilled' ? ratiosArr.value?.[0]  : null;
+
+    console.log(`FMP quote: ${quote?.symbol}, price: ${quote?.price}, pe: ${quote?.pe}, pb: ${quote?.priceToBookRatio}`);
+    console.log(`FMP profile: ${profile?.companyName}, sector: ${profile?.sector}, industry: ${profile?.industry}`);
 
     if (!quote && !profile) throw new Error('FMP veri yok');
 
     const currency = exchange === 'BIST' ? 'TRY' : (quote?.currency || 'USD');
 
-    // ── Peer listesi: aynı industry, aynı exchange, piyasa değerine göre ──
+    // ── Peer listesi: aynı industry, aynı exchange ──
     let peers = [];
     const industry = profile?.industry ?? null;
     const sector   = profile?.sector   ?? null;
 
     try {
       if (industry) {
-        // FMP screener ile aynı industry'deki şirketleri çek
         const screenerParams = {
           industry: industry,
           limit: '50',
           ...(exchange === 'BIST' ? { exchange: 'IST' } : { exchange: 'NASDAQ,NYSE' })
         };
         const screenerData = await fmp('/stock-screener', screenerParams);
-
         peers = (screenerData || [])
           .filter(p => {
             if (!p.symbol || p.symbol === sym) return false;
-            // BIST için .IS ile bitmeli, diğerleri için bitmemeli
             if (exchange === 'BIST') return p.symbol.endsWith('.IS');
             return !p.symbol.endsWith('.IS');
           })
-          .sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0)) // Piyasa değerine göre sırala
+          .sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0))
           .slice(0, 4)
           .map(p => p.symbol.replace('.IS', ''));
       }
-
-      // Screener sonuç vermezse stock-peers fallback
       if (peers.length === 0) {
         const peerData = await fmp('/stock-peers', { symbol: sym });
         const raw = peerData?.[0]?.peersList || [];
@@ -102,62 +96,56 @@ async function fetchFmpData(ticker, exchange) {
     }
 
     const result = {
-      // Fiyat
-      currentPrice:      quote?.price             ?? null,
+      // Fiyat — quote'dan
+      currentPrice:      quote?.price          ?? null,
       currency,
-      marketCap:         quote?.marketCap          ?? profile?.mktCap ?? null,
-      fiftyTwoWeekLow:   quote?.yearLow            ?? null,
-      fiftyTwoWeekHigh:  quote?.yearHigh           ?? null,
+      marketCap:         quote?.marketCap       ?? profile?.mktCap ?? null,
+      fiftyTwoWeekLow:   quote?.yearLow         ?? null,
+      fiftyTwoWeekHigh:  quote?.yearHigh        ?? null,
 
-      // Değerleme — FMP'den (daha doğru)
-      peRatio:           ratios?.peRatioTTM        ?? quote?.pe ?? null,
-      forwardPE:         quote?.priceEpsEstimatedNextYear ?? null,
-      pbRatio:           ratios?.priceToBookRatioTTM ?? metrics?.pbRatioTTM ?? null,
-      pegRatio:          ratios?.pegRatioTTM       ?? null,
-      evEbitda:          metrics?.enterpriseValueOverEBITDATTM ?? ratios?.enterpriseValueMultipleTTM ?? null,
+      // Değerleme — FMP quote'dan (ücretsiz tier)
+      peRatio:           quote?.pe              ?? null,
+      forwardPE:         quote?.forwardPE       ?? null,
+      pbRatio:           quote?.priceToBookRatio ?? profile?.priceToBookRatio ?? null,
+      pegRatio:          quote?.pegRatio         ?? null,
+      evEbitda:          quote?.priceToSalesRatio ?? null, // EV/EBITDA yerine P/S (ücretsiz)
 
-      // Karlılık
-      grossMargin:       ratios?.grossProfitMarginTTM    ?? null,
-      operatingMargin:   ratios?.operatingProfitMarginTTM ?? null,
-      profitMargin:      ratios?.netProfitMarginTTM      ?? null,
+      // Karlılık — profile'dan
+      grossMargin:       null, // ücretsiz tier'da yok
+      operatingMargin:   null,
+      profitMargin:      profile?.priceEarningsRatio != null ? null : null,
 
       // Verimlilik
-      roe:               ratios?.returnOnEquityTTM       ?? metrics?.roeTTM ?? null,
-      roa:               ratios?.returnOnAssetsTTM       ?? metrics?.roaTTM ?? null,
-      roic:              metrics?.roicTTM                ?? null,
+      roe:               profile?.roe           ?? null,
+      roa:               profile?.roa            ?? null,
+      roic:              null,
 
       // Nakit & Borç
-      freeCashflow:      metrics?.freeCashFlowPerShareTTM != null && quote?.sharesOutstanding
-                           ? metrics.freeCashFlowPerShareTTM * quote.sharesOutstanding
-                           : null,
-      totalCash:         metrics?.cashPerShareTTM != null && quote?.sharesOutstanding
-                           ? metrics.cashPerShareTTM * quote.sharesOutstanding
-                           : null,
-      totalDebt:         metrics?.debtToEquityTTM != null && metrics?.bookValuePerShareTTM != null && quote?.sharesOutstanding
-                           ? metrics.debtToEquityTTM * metrics.bookValuePerShareTTM * quote.sharesOutstanding
-                           : null,
-      debtToEquity:      metrics?.debtToEquityTTM        ?? ratios?.debtEquityRatioTTM ?? null,
-      currentRatio:      ratios?.currentRatioTTM         ?? metrics?.currentRatioTTM ?? null,
+      freeCashflow:      null,
+      totalCash:         null,
+      totalDebt:         null,
+      debtToEquity:      null,
+      currentRatio:      null,
 
       // Büyüme
-      revenueGrowth:     metrics?.revenuePerShareTTM != null ? null : null, // FMP TTM büyüme yok, Yahoo'dan alınır
+      revenueGrowth:     null,
       earningsGrowth:    null,
 
       // Analist
-      institutionOwnership: null, // FMP'de ayrı endpoint, şimdilik null
-      recommendationKey:    quote?.analystRatings?.toLowerCase().replace(' ', '-') ?? null,
-      targetMeanPrice:      quote?.priceAvg50 ?? null,
+      institutionOwnership: null,
+      recommendationKey:    null,
+      targetMeanPrice:      quote?.priceAvg200   ?? null,
       numberOfAnalystOpinions: null,
 
-      // Ekstra FMP verileri
-      sector:    sector,
-      industry:  industry,
+      // Ekstra
+      sector,
+      industry,
       peers,
       description: profile?.description ?? null,
-      website:   profile?.website  ?? null,
-      logoUrl:   `https://financialmodelingprep.com/image-stock/${sym}.png`,
-      employees: profile?.fullTimeEmployees ?? null,
-      country:   profile?.country  ?? null,
+      website:     profile?.website      ?? null,
+      logoUrl:     profile?.image        ?? `https://financialmodelingprep.com/image-stock/${sym}.png`,
+      employees:   profile?.fullTimeEmployees ?? null,
+      country:     profile?.country      ?? null,
       dataSource: 'FMP',
     };
 
