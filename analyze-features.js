@@ -131,38 +131,67 @@ function checkMasterBadge(ticker, exchange) {
 
 
 // ── 2. ŞİRKET SNAPSHOT KARTI ────────────────────────────────────
-const CLEARBIT_DOMAINS = {
-  THYAO:'turkishairlines.com', EREGL:'erdemir.com.tr', SAHOL:'sabanci.com',
-  KCHOL:'koc.com.tr', ASELS:'aselsan.com.tr', BIMAS:'bim.com.tr',
-  TUPRS:'tupras.com.tr', AKBNK:'akbank.com', ISCTR:'isbank.com.tr',
-  FROTO:'fordotosan.com.tr', GARAN:'garantibbva.com.tr', TCELL:'turkcell.com.tr',
-  AAPL:'apple.com', MSFT:'microsoft.com', GOOGL:'google.com', AMZN:'amazon.com',
-  NVDA:'nvidia.com', META:'meta.com', TSLA:'tesla.com', NFLX:'netflix.com',
-  AMD:'amd.com', INTC:'intel.com', JPM:'jpmorganchase.com', V:'visa.com',
-};
+function makeLogoEl(ticker, company, website, fmpLogoUrl) {
+  const initial  = (company || ticker || '?')[0].toUpperCase();
 
-function makeLogoEl(ticker, company) {
-  const domain = CLEARBIT_DOMAINS[ticker];
-  const initial = (company || ticker || '?')[0].toUpperCase();
+  // Renkli avatar rengi — ticker'dan deterministik
+  const colors = ['#2451a3','#1a6b3a','#8b4513','#5b2d8e','#b8700a','#c0392b','#0f6e56'];
+  const colorIdx = ticker.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colors.length;
+  const avatarBg = colors[colorIdx];
+
   const wrap = document.createElement('div');
   wrap.className = 'snap-logo-placeholder';
 
-  if (domain) {
-    const img = document.createElement('img');
-    img.src = `https://logo.clearbit.com/${domain}`;
-    img.alt = ticker;
-    img.style.cssText = 'width:100%;height:100%;object-fit:contain;display:none;';
-    img.onload  = () => { wrap.innerHTML = ''; wrap.style.background = '#fff'; wrap.style.padding = '4px'; wrap.appendChild(img); img.style.display = 'block'; };
-    img.onerror = () => { wrap.textContent = initial; };
-    wrap.textContent = initial;
-    wrap.appendChild(img);
-  } else {
-    wrap.textContent = initial;
+  // Avatar (her zaman hazır — logo gelene kadar gösterilir)
+  function showAvatar() {
+    wrap.style.background = avatarBg;
+    wrap.style.border = 'none';
+    wrap.innerHTML = `<span style="color:#fff;font-family:'Playfair Display',serif;font-size:16px;font-weight:700">${initial}</span>`;
   }
+
+  // Logo yükleme denemeleri
+  function tryLoad(src, onFail) {
+    const img = new Image();
+    img.onload  = () => {
+      wrap.innerHTML = '';
+      wrap.style.background = '#fff';
+      wrap.style.padding = '3px';
+      wrap.style.border = '1px solid rgba(255,255,255,0.1)';
+      const imgEl = document.createElement('img');
+      imgEl.src = src;
+      imgEl.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:3px';
+      wrap.appendChild(imgEl);
+    };
+    img.onerror = onFail;
+    img.src = src;
+  }
+
+  // Avatar ile başla
+  showAvatar();
+
+  // 1. FMP logo
+  const fmpUrl = fmpLogoUrl || `https://financialmodelingprep.com/image-stock/${ticker}.png`;
+
+  // 2. Google favicon (website varsa domain al)
+  let googleUrl = null;
+  if (website) {
+    try {
+      const domain = new URL(website.startsWith('http') ? website : 'https://' + website).hostname;
+      googleUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    } catch {}
+  }
+
+  // Zincir: FMP → Google → Avatar (zaten gösteriliyor)
+  tryLoad(fmpUrl, () => {
+    if (googleUrl) {
+      tryLoad(googleUrl, () => { /* avatar zaten var */ });
+    }
+  });
+
   return wrap;
 }
 
-async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers = []) {
+async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers = [], website = null, logoUrl = null) {
   const old = document.getElementById('snapshotCard');
   if (old) old.remove();
 
@@ -184,7 +213,7 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
     border-bottom:1px solid var(--border-s,#3a4260);
   `;
 
-  const logoEl = makeLogoEl(ticker, company);
+  const logoEl = makeLogoEl(ticker, company, website, logoUrl);
   const titleWrap = document.createElement('div');
   titleWrap.innerHTML = `
     <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted-s,#8892b0);font-family:'IBM Plex Mono',monospace;margin-bottom:3px">Şirket Profili</div>
@@ -352,7 +381,9 @@ window.parseAndRender = function(ticker, company, text, fd, fwKey) {
 
   trackMasterScore(ticker, ex, fw, score);
 
-  // FMP peer listesini fd'den al, yoksa snapshot kendi bulur
-  const fmpPeers = fd?.peers || [];
-  injectCompanySnapshot(ticker, company, ex, fw, fmpPeers);
+  // FMP'den peer, website ve logoUrl al
+  const fmpPeers = fd?.peers   || [];
+  const website  = fd?.website  || null;
+  const logoUrl  = fd?.logoUrl  || null;
+  injectCompanySnapshot(ticker, company, ex, fw, fmpPeers, website, logoUrl);
 };
