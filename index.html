@@ -14,45 +14,55 @@
    Colors: Deep Navy · Electric Blue · Emerald/Amber
 ════════════════════════════════════════════════════ */
 :root{
-  --bg:#070d1a;
-  --bg2:#0a1120;
-  --surface:#0d1626;
-  --surface2:#111d30;
-  --surface3:#162038;
-  --sidebar:#08101f;
-  --sidebar2:#0c1628;
-  --sidebar3:#101e34;
-  --border:rgba(255,255,255,0.07);
-  --border2:rgba(255,255,255,0.05);
-  --border-s:rgba(255,255,255,0.06);
-  --glass:rgba(255,255,255,0.10);
-  --accent:#3b82f6;
-  --accent2:#2563eb;
-  --accent-dim:rgba(59,130,246,0.15);
-  --accent-glow:rgba(59,130,246,0.30);
-  --gold:#f59e0b;
-  --gold-dim:rgba(245,158,11,0.15);
-  --success:#10b981;
-  --success-dim:rgba(16,185,129,0.12);
-  --danger:#ef4444;
-  --danger-dim:rgba(239,68,68,0.12);
-  --warn:#f59e0b;
-  --warn-dim:rgba(245,158,11,0.12);
-  --lynch:#f97316;
-  --dalio:#a78bfa;
-  --text:#e8f0ff;
-  --text2:#8ba3cc;
-  --muted:#4d6285;
-  --muted2:#3a4f6a;
-  --muted-s:#6b84a8;
+  /* ── FINANCE DARK — Bloomberg/Terminal Palette ── */
+  --bg:#0e0e10;
+  --bg2:#131316;
+  --surface:#181820;
+  --surface2:#1e1e28;
+  --surface3:#23232f;
+  --sidebar:#0b0b0f;
+  --sidebar2:#111118;
+  --sidebar3:#17171f;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.04);
+  --border-s:rgba(255,255,255,0.07);
+  --glass:rgba(255,255,255,0.08);
+
+  /* ── ACCENT: Finance Blue (Bloomberg tarzı) ── */
+  --accent:#4a9eff;
+  --accent2:#2979e8;
+  --accent-dim:rgba(74,158,255,0.12);
+  --accent-glow:rgba(74,158,255,0.25);
+
+  --gold:#e8a020;
+  --gold-dim:rgba(232,160,32,0.12);
+
+  /* ── SEMANTIC: Klasik Finance Renkleri ── */
+  --success:#00c896;
+  --success-dim:rgba(0,200,150,0.10);
+  --danger:#ff4757;
+  --danger-dim:rgba(255,71,87,0.10);
+  --warn:#f0a500;
+  --warn-dim:rgba(240,165,0,0.10);
+
+  /* ── EKOL ── */
+  --lynch:#e07b39;
+  --dalio:#9b77cc;
+
+  /* ── TEXT: Terminal beyazı ── */
+  --text:#dde4f0;
+  --text2:#7a8a9e;
+  --muted:#4a5568;
+  --muted2:#323d4d;
+  --muted-s:#5a6a80;
   --rule:rgba(255,255,255,0.05);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{
   background:var(--bg);
   background-image:
-    radial-gradient(ellipse 90% 60% at 0% 0%,rgba(37,99,235,0.07) 0%,transparent 55%),
-    radial-gradient(ellipse 70% 50% at 100% 100%,rgba(167,139,250,0.05) 0%,transparent 50%);
+    radial-gradient(ellipse 60% 40% at 0% 0%,rgba(74,158,255,0.04) 0%,transparent 50%),
+    radial-gradient(ellipse 40% 30% at 100% 100%,rgba(155,119,204,0.03) 0%,transparent 50%);
   color:var(--text);
   font-family:'Outfit',sans-serif;
   min-height:100vh;overflow-x:hidden;
