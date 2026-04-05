@@ -228,7 +228,48 @@ async function fetchYahooData(yahooTicker) {
 
   if (!result.currentPrice) throw new Error(`Yahoo veri yok: ${yahooTicker}`);
 
-  // Logo URL — Google favicon (website varsa) veya placeholder
+  // ── BIST DÜZELTME: Yahoo bazı finansal verileri USD döndürüyor ──
+  // Fiyat TRY, kazanç/defter değeri USD gelince PE/PB çarpıyor.
+  // Kur tahmini: marketCap her zaman doğru gelir, onu kullanarak düzeltiriz.
+  if (yahooTicker.endsWith('.IS') && result.marketCap && result.currentPrice) {
+    // Hisse başı piyasa değerinden tahmini hisse sayısı
+    // Yahoo shares outstanding bazen gelmiyor, marketCap/price ile hesapla
+    const impliedShares = result.marketCap / result.currentPrice; // TRY bazında
+
+    // EPS tahmini: PE = price / EPS → EPS = price / PE
+    // Eğer PE mantıksızsa (>100 veya <0) ve ROE + PB varsa yeniden hesapla
+    if (result.peRatio && (result.peRatio > 100 || result.peRatio < 0)) {
+      // v10'dan gelen profitMargin ile EPS hesapla
+      // Net Kar = Gelir * Net Marj — ama gelir yok, FCF üzerinden tahmin et
+      // En sağlıklısı: PE'yi null yap, AI sektör karşılaştırması yapsın
+      console.log(`BIST PE düzeltme: ${result.peRatio} → null (anormal)`);
+      result.peRatio = null;
+    }
+
+    // PB düzeltme: pb > 10 ise muhtemelen USD/TRY karışıklığı
+    if (result.pbRatio && result.pbRatio > 10) {
+      console.log(`BIST PB düzeltme: ${result.pbRatio} → null (anormal)`);
+      result.pbRatio = null;
+    }
+
+    // FCF ve borç düzeltme: USD geliyorsa yaklaşık kur ile çevir (~35 TRY/USD)
+    // marketCap TRY bazında doğru, FCF USD ise büyük fark olur
+    if (result.freeCashflow && result.marketCap) {
+      const fcfToMarketCap = Math.abs(result.freeCashflow) / result.marketCap;
+      // FCF/MarketCap oranı %0.1 ile %50 arasında makul — dışarıdaysa USD'de gelmiş
+      if (fcfToMarketCap < 0.001) {
+        // USD → TRY çevir (yaklaşık kur)
+        const approxRate = 35;
+        result.freeCashflow      = result.freeCashflow      ? result.freeCashflow * approxRate : null;
+        result.operatingCashflow = result.operatingCashflow ? result.operatingCashflow * approxRate : null;
+        result.totalCash         = result.totalCash         ? result.totalCash * approxRate : null;
+        result.totalDebt         = result.totalDebt         ? result.totalDebt * approxRate : null;
+        console.log(`BIST USD→TRY çevrim yapıldı (x${approxRate})`);
+      }
+    }
+  }
+
+  // Logo URL — Google favicon
   if (result.website) {
     try {
       const domain = new URL(result.website.startsWith('http') ? result.website : 'https://' + result.website).hostname;
