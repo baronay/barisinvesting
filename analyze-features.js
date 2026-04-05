@@ -134,59 +134,39 @@ function checkMasterBadge(ticker, exchange) {
 function makeLogoEl(ticker, company, website, fmpLogoUrl) {
   const initial  = (company || ticker || '?')[0].toUpperCase();
 
-  // Renkli avatar rengi — ticker'dan deterministik
-  const colors = ['#2451a3','#1a6b3a','#8b4513','#5b2d8e','#b8700a','#c0392b','#0f6e56'];
+  // Deterministik renk
+  const colors = ['#2451a3','#1a6b3a','#8b4513','#5b2d8e','#b8700a','#c0392b','#0f6e56','#1a5276'];
   const colorIdx = ticker.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colors.length;
-  const avatarBg = colors[colorIdx];
 
   const wrap = document.createElement('div');
   wrap.className = 'snap-logo-placeholder';
+  wrap.style.background = colors[colorIdx];
+  wrap.style.border = 'none';
+  wrap.innerHTML = `<span style="color:#fff;font-family:'Playfair Display',serif;font-size:16px;font-weight:700">${initial}</span>`;
 
-  // Avatar (her zaman hazır — logo gelene kadar gösterilir)
-  function showAvatar() {
-    wrap.style.background = avatarBg;
-    wrap.style.border = 'none';
-    wrap.innerHTML = `<span style="color:#fff;font-family:'Playfair Display',serif;font-size:16px;font-weight:700">${initial}</span>`;
-  }
-
-  // Logo yükleme denemeleri
-  function tryLoad(src, onFail) {
+  function tryLoad(src) {
+    if (!src) return;
     const img = new Image();
-    img.onload  = () => {
+    img.onload = () => {
       wrap.innerHTML = '';
       wrap.style.background = '#fff';
       wrap.style.padding = '3px';
-      wrap.style.border = '1px solid rgba(255,255,255,0.1)';
+      wrap.style.border = '1px solid rgba(255,255,255,0.15)';
       const imgEl = document.createElement('img');
       imgEl.src = src;
       imgEl.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:3px';
       wrap.appendChild(imgEl);
     };
-    img.onerror = onFail;
     img.src = src;
   }
 
-  // Avatar ile başla
-  showAvatar();
-
-  // 1. FMP logo
-  const fmpUrl = fmpLogoUrl || `https://financialmodelingprep.com/image-stock/${ticker}.png`;
-
-  // 2. Google favicon (website varsa domain al)
-  let googleUrl = null;
+  // Google favicon — website varsa dene
   if (website) {
     try {
       const domain = new URL(website.startsWith('http') ? website : 'https://' + website).hostname;
-      googleUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+      tryLoad(`https://www.google.com/s2/favicons?domain=${domain}&sz=128`);
     } catch {}
   }
-
-  // Zincir: FMP → Google → Avatar (zaten gösteriliyor)
-  tryLoad(fmpUrl, () => {
-    if (googleUrl) {
-      tryLoad(googleUrl, () => { /* avatar zaten var */ });
-    }
-  });
 
   return wrap;
 }
