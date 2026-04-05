@@ -14,47 +14,63 @@
    Colors: Deep Navy · Electric Blue · Emerald/Amber
 ════════════════════════════════════════════════════ */
 :root{
-  /* ── KLASIK FİNANS TERMİNALİ: Krem + Lacivert ── */
-  --bg:#f4f1ec;
-  --bg2:#ede9e1;
-  --surface:#ffffff;
-  --surface2:#f9f7f3;
-  --surface3:#f2efe9;
-  --sidebar:#1a1f2e;
-  --sidebar2:#222840;
-  --sidebar3:#2d3452;
-  --border:#d4cfc6;
-  --border2:#c2bdb3;
-  --border-s:#3a4260;
-  --glass:rgba(26,31,46,0.08);
-  /* IBM Plex Mavi — kurumsal */
-  --accent:#1a4b8c;
-  --accent2:#2451a3;
-  --accent-dim:rgba(26,75,140,0.10);
-  --accent-glow:rgba(36,81,163,0.20);
-  --gold:#9a7d3a;
-  --gold-dim:rgba(154,125,58,0.12);
-  /* Klasik finance: Bloomberg yeşil/kırmızı */
-  --success:#1a6b3a;
-  --success-dim:rgba(26,107,58,0.10);
-  --danger:#c0392b;
-  --danger-dim:rgba(192,57,43,0.10);
-  --warn:#b8700a;
-  --warn-dim:rgba(184,112,10,0.10);
-  --lynch:#8b4513;
-  --dalio:#5b2d8e;
-  /* Text: koyu mürekkep tonu */
-  --text:#1a1a1a;
-  --text2:#3d3d3d;
-  --muted:#6b6560;
-  --muted2:#8a857e;
+  /* ══ BARIŞ INVESTING — KOYU FİNANS TERMİNALİ ══
+     Sidebar lacivert + tutarlı koyu içerik alanı
+     Tüm yazılar okunabilir, kontrast WCAG AA+ uyumlu */
+
+  /* ── ANA ARKA PLANLAR ── */
+  --bg:#13182a;          /* ana sayfa koyu lacivert */
+  --bg2:#0f1422;         /* biraz daha koyu */
+  --surface:#1c2235;     /* kart yüzeyi */
+  --surface2:#222840;    /* hover/secondary yüzey */
+  --surface3:#2a3250;    /* tertiary */
+
+  /* ── SIDEBAR ── */
+  --sidebar:#0e1220;     /* sidebar biraz daha koyu */
+  --sidebar2:#151929;
+  --sidebar3:#1c2235;
+
+  /* ── BORDER ── */
+  --border:rgba(255,255,255,0.08);
+  --border2:rgba(255,255,255,0.05);
+  --border-s:rgba(255,255,255,0.10);
+  --glass:rgba(255,255,255,0.06);
+
+  /* ── ACCENT: Kurumsal Bloomberg mavisi ── */
+  --accent:#4d8ef0;
+  --accent2:#2563eb;
+  --accent-dim:rgba(77,142,240,0.15);
+  --accent-glow:rgba(77,142,240,0.25);
+
+  --gold:#d4a843;
+  --gold-dim:rgba(212,168,67,0.15);
+
+  /* ── SEMANTIC: Klasik terminal renkleri ── */
+  --success:#22c55e;     /* parlak yeşil — pozitif */
+  --success-dim:rgba(34,197,94,0.12);
+  --danger:#f05252;      /* terminal kırmızısı */
+  --danger-dim:rgba(240,82,82,0.12);
+  --warn:#f59e0b;
+  --warn-dim:rgba(245,158,11,0.12);
+
+  --lynch:#e07b39;
+  --dalio:#9b77cc;
+
+  /* ── TEXT: Net, okunabilir ── */
+  --text:#e8edf8;        /* neredeyse beyaz, göz yormaz */
+  --text2:#a0aec8;       /* ikincil metin */
+  --muted:#5a6a8a;       /* muted */
+  --muted2:#3d4f6e;
   --muted-s:#8892b0;
-  --rule:#e8e4dc;
+
+  --rule:rgba(255,255,255,0.07);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{
   background:var(--bg);
-  /* clean cream bg — no gradient needed */
+  background-image:
+    radial-gradient(ellipse 70% 50% at 0% 0%, rgba(37,99,235,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(139,92,246,0.04) 0%, transparent 50%);
   color:var(--text);
   font-family:'IBM Plex Sans',sans-serif;
   min-height:100vh;overflow-x:hidden;
@@ -273,7 +289,7 @@ body{
 .hero-right{background:rgba(255,255,255,.025);border-left:1px solid var(--border-s);padding:20px 22px;display:flex;flex-direction:column;gap:0;position:relative;z-index:1;}
 .hero-tag{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;font-family:'IBM Plex Mono',monospace;}
 .hero-title{font-family:'IBM Plex Serif',serif;font-size:clamp(22px,2.8vw,34px);font-weight:700;line-height:1.2;margin-bottom:8px;color:#e8e6e0;}
-.hero-title span{color:#a8b8d8;}
+.hero-title span{color:#7aabf7;}
 .hero-sub{font-size:11px;color:var(--muted);max-width:480px;line-height:1.9;margin-bottom:18px;font-weight:300;}
 .hero-search-row{display:flex;max-width:580px;position:relative;}
 .hero-ticker-in{width:110px;flex-shrink:0;background:var(--surface2);border:1px solid var(--glass);border-right:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;padding:13px 14px;text-transform:uppercase;letter-spacing:2px;outline:none;transition:border-color .2s,box-shadow .2s;}
@@ -313,10 +329,10 @@ body{
 .mkt-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:20px;background:var(--border);border:1px solid var(--border);}
 .mkt-card{background:var(--surface);padding:12px 14px;cursor:pointer;border-left:3px solid transparent;transition:background .15s;}
 .mkt-card.pos{border-left-color:var(--success);}.mkt-card.neg{border-left-color:var(--danger);}
-.mkt-card:hover{background:var(--surface2);}
-.mkt-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;}
-.mkt-price{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--text);}
-.mkt-chg{font-size:9px;font-weight:600;margin-top:2px;font-family:'IBM Plex Mono',monospace;}
+.mkt-card:hover{background:var(--surface3);}
+.mkt-lbl{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted-s);margin-bottom:3px;font-family:'IBM Plex Mono',monospace;font-weight:500;}
+.mkt-price{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--text);letter-spacing:0.5px;}
+.mkt-chg{font-size:10px;font-weight:700;margin-top:2px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.3px;}
 .mkt-chg.pos{color:var(--success);}.mkt-chg.neg{color:var(--danger);}
 .news-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-bottom:24px;background:var(--border);border:1px solid var(--border);}
 .news-card{background:var(--surface);padding:14px 16px;cursor:pointer;text-decoration:none;display:block;border-left:3px solid transparent;transition:background .15s;}
@@ -342,7 +358,7 @@ body{
 .x-shr-btn{margin-left:auto;background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;}
 .x-shr-btn:hover{border-color:var(--text);color:var(--text);}
 .rd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-bottom:1px;background:var(--border);}
-.rd-card{background:var(--surface);border:1px solid var(--border);padding:12px 14px;border-left:3px solid var(--rule);transition:background .15s;}
+.rd-card{background:var(--surface);border:1px solid var(--border);padding:12px 14px;border-left:3px solid var(--border);transition:background .15s;}
 .rd-card:hover{background:var(--surface2);}
 .rd-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;font-family:'IBM Plex Mono',monospace;}
 .rd-val{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;color:var(--text);}
@@ -394,7 +410,7 @@ body{
 .radar-wrap{position:relative;height:180px;max-width:220px;margin:0 auto;}
 .crit-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:1px;background:var(--surface);border:1px solid var(--glass);}
 .crit-table th{text-align:left;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:8px 12px;border-bottom:2px solid var(--rule);background:var(--surface2);font-family:'IBM Plex Mono',monospace;}
-.crit-table td{padding:10px 12px;border-bottom:1px solid var(--rule);vertical-align:top;background:var(--surface);}
+.crit-table td{padding:10px 12px;border-bottom:1px solid var(--rule);vertical-align:top;}
 .crit-table tr:hover td{background:var(--surface2);cursor:pointer;}
 .cn{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;color:var(--muted);}
 .cname{font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:600;margin-bottom:2px;color:var(--text);}
@@ -473,7 +489,7 @@ body{
 .pt-tw{background:var(--surface);border:1px solid var(--glass);margin-bottom:14px;overflow-x:auto;}
 .pt-table{width:100%;border-collapse:collapse;font-size:10px;min-width:650px;}
 .pt-table th{text-align:left;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:7px 12px;border-bottom:2px solid var(--rule);background:var(--surface2);font-family:'IBM Plex Mono',monospace;}
-.pt-table td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:middle;background:var(--surface);}
+.pt-table td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:middle;}
 .pt-table tr:hover td{background:var(--surface2);}
 .pt-tk{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--accent);}
 .pt-co{font-size:8px;color:var(--muted);}
@@ -513,7 +529,7 @@ body{
 .pf-sub{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:700;padding:8px 16px;cursor:pointer;letter-spacing:.5px;transition:all .3s;}
 .pf-sub:hover{box-shadow:0 4px 16px var(--accent-glow);}
 .post-card{background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:6px;transition:background .15s;}
-.post-card:hover{background:var(--surface2);}
+.post-card:hover{background:var(--surface2);border-color:var(--border-s);}
 .post-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
 .post-avatar{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;}
 .post-nick{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--text);}
@@ -637,10 +653,10 @@ body{
 .news-grid-v{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:0;}
 .news-grid-v .news-card{border-left:3px solid transparent;padding:12px 14px;}
 .mkt-strip-v{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:0;}
-.mkt-strip-v .mkt-card{display:flex;align-items:center;padding:9px 12px;gap:10px;}
-.mkt-strip-v .mkt-card .mkt-lbl{width:70px;flex-shrink:0;margin-bottom:0;}
-.mkt-strip-v .mkt-card .mkt-price{flex:1;}
-.mkt-strip-v .mkt-card .mkt-chg{text-align:right;margin-top:0;}
+.mkt-strip-v .mkt-card{display:flex;align-items:center;padding:10px 14px;gap:10px;border-left:none;border-bottom:1px solid var(--rule);}
+.mkt-strip-v .mkt-card .mkt-lbl{width:72px;flex-shrink:0;margin-bottom:0;font-size:9px;letter-spacing:1.5px;}
+.mkt-strip-v .mkt-card .mkt-price{flex:1;font-size:14px;font-weight:600;}
+.mkt-strip-v .mkt-card .mkt-chg{text-align:right;margin-top:0;font-size:11px;font-weight:700;min-width:54px;}
 .wl-grid-v{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);}
 .wl-grid-v .wl-card{display:flex;align-items:center;gap:10px;padding:10px 12px;}
 .wl-grid-v .wl-card .wl-ticker{font-size:13px;width:60px;flex-shrink:0;}
@@ -721,8 +737,8 @@ body{
 @media(max-width:768px){.page-body{padding:14px;padding-bottom:74px;}}
 .page{display:none;}.page.active{display:block;animation:fadeIn .25s ease;}
 .right-panel{width:300px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border-s);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow-y:auto;}
-.rp-section{padding:16px 18px;border-bottom:1px solid var(--rule);}
-.rp-title{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.rp-section{padding:14px 16px;border-bottom:1px solid var(--rule);}
+.rp-title{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted-s);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--rule);}
 .recent-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--rule);cursor:pointer;transition:all .15s;}
 .recent-item:last-child{border-bottom:none;}
 .recent-item:hover .recent-ticker{color:var(--accent);}
@@ -737,15 +753,15 @@ body{
 /* ── TABLO PROFESYONELLİK: Excel-grade satır çizgileri ── */
 .crit-table td,.crit-table th{border-bottom:1px solid var(--rule);}
 .crit-table{border-collapse:collapse;}
-.crit-table tbody tr:nth-child(even) td{background:#faf8f5;}
-.crit-table tbody tr:hover td{background:#f0ede7 !important;}
+.crit-table tbody tr:nth-child(even) td{background:rgba(255,255,255,0.025);}
+.crit-table tbody tr:hover td{background:var(--surface2) !important;}
 .pt-table td,.pt-table th{border-bottom:1px solid var(--rule);}
 .pt-table{border-collapse:collapse;}
-.pt-table tbody tr:nth-child(even) td{background:#faf8f5;}
-.pt-table tbody tr:hover td{background:#f0ede7 !important;}
+.pt-table tbody tr:nth-child(even) td{background:rgba(255,255,255,0.025);}
+.pt-table tbody tr:hover td{background:var(--surface2) !important;}
 .admin-user-table td,.admin-user-table th{border-bottom:1px solid var(--rule);}
-.admin-user-table tbody tr:nth-child(even) td{background:#faf8f5;}
-.admin-user-table tbody tr:hover td{background:#f0ede7 !important;}
+.admin-user-table tbody tr:nth-child(even) td{background:rgba(255,255,255,0.025);}
+.admin-user-table tbody tr:hover td{background:var(--surface2) !important;}
 /* Veri tablosu dikey ayraçlar */
 .rd-card{border-right:1px solid var(--rule);}
 .mult-card{border-right:1px solid var(--rule);}
@@ -794,6 +810,133 @@ body{
   transition:background .2s;white-space:nowrap;
 }
 .ref-copy-btn:hover{background:var(--accent);}
+
+/* ══ KONTRAST & OKUNABILIRLIK DÜZELTMELERİ ══ */
+
+/* Sağ panel Canlı Piyasa — daha net hiyerarşi */
+.right-panel .mkt-strip-v{background:transparent;border:none;}
+.right-panel .mkt-strip-v .mkt-card{
+  background:transparent;
+  padding:9px 0;
+  border-left:none !important;
+  border-bottom:1px solid var(--rule);
+}
+.right-panel .mkt-strip-v .mkt-card:last-child{border-bottom:none;}
+.right-panel .mkt-strip-v .mkt-card .mkt-lbl{
+  font-size:9px;letter-spacing:1px;color:var(--text2);
+  font-weight:500;width:76px;
+}
+.right-panel .mkt-strip-v .mkt-card .mkt-price{
+  font-size:14px;font-weight:600;color:var(--text);font-family:'IBM Plex Mono',monospace;
+}
+.right-panel .mkt-strip-v .mkt-card .mkt-chg{
+  font-size:11px;font-weight:700;min-width:58px;text-align:right;
+}
+
+/* Stat mini — sağ panel küçük istatistikler */
+.stat-mini-val{font-family:'IBM Plex Serif',serif;font-size:16px;font-weight:700;color:var(--text);}
+.stat-mini-lbl{color:var(--text2);}
+
+/* Sec-title — bölüm başlıkları okunabilir */
+.sec-title{color:var(--text2);}
+.pg-title{color:var(--text2);}
+
+/* News card başlıkları — daha net */
+.news-t{color:var(--text);font-weight:500;}
+.news-pub{color:var(--muted-s);}
+.news-time{color:var(--muted);}
+
+/* Sidebar nav text — koyu tema uyumu */
+.nav-lbl{color:var(--muted2);}
+.s-footer-t{color:var(--muted2);}
+
+/* Wl-card içindeki yazılar */
+.wl-name{color:var(--text2);}
+.wl-price{color:var(--text);}
+.wl-rank{color:var(--muted-s);}
+
+/* Crit table içindeki yazılar */
+.cname{color:var(--text);}
+.cdesc{color:var(--text2);}
+.cn{color:var(--muted-s);}
+
+/* Ana sayfa hero sub text */
+.hero-sub{color:var(--text2);}
+.hero-tag{color:var(--muted-s);}
+
+/* Recent items */
+.recent-score{color:var(--text2);}
+.recent-fw{color:var(--muted-s);}
+
+/* Ana skor kartı — stat-val Serif büyük ve beyaz */
+.stat-val{color:var(--accent);}
+.stat-lbl{color:var(--text2);}
+.stat-sub{color:var(--text2);}
+
+/* RSI değeri */
+.rsi-v{color:var(--text);}
+.rsi-zones{color:var(--text2);}
+
+/* Mul değerler */
+.mult-val{color:var(--text);}
+.mult-lbl{color:var(--text2);}
+.mult-sub{color:var(--muted-s);}
+
+/* Card-t bölüm etiketleri */
+.card-t{color:var(--text2);}
+
+/* Ana metin — genel */
+.atext{color:var(--text2);line-height:2;}
+.ddesc{color:var(--text2);}
+
+/* Dnum (kriter numaraları) */
+.dnum{opacity:0.12;}
+
+/* PT ve forum içerik */
+.pt-nn{color:var(--text2);}
+.post-content{color:var(--text2);}
+.post-nick{color:var(--text);}
+
+/* Rd kart değerleri */
+.rd-val{color:var(--text);}
+.rd-lbl{color:var(--text2);}
+.rd-sub{color:var(--muted-s);}
+
+/* Hmp (hero mini piyasa sağ kolon) */
+.hmp-val{color:var(--text);}
+.hmp-lbl{color:var(--text2);}
+
+/* Mix (portföy dağılım) */
+.mix-pct{color:var(--text2);}
+.mix-cur{color:var(--muted-s);}
+
+/* Admin */
+.admin-email{color:var(--text);}
+.admin-stat-l{color:var(--text2);}
+
+/* Sticker (hisse başlığı) */
+.sticker{color:var(--text);}
+.sco{color:var(--text2);}
+
+/* Verdict box metin */
+.verdict-lbl{color:var(--muted-s);}
+
+/* Forum empty state */
+.forum-empty{color:var(--text2);}
+.forum-loading{color:var(--text2);}
+
+/* Crit dot ve nav num */
+.nav-num{color:var(--muted-s);}
+.nav-item{color:var(--text2);}
+.nav-item:hover{color:var(--text);}
+
+/* Ana buton — kontrast iyileştirme */
+.ana-btn,.hero-search-btn{font-weight:700;letter-spacing:0.8px;}
+
+/* mkt-strip (yatay) label ve değer */
+.mkt-strip .mkt-lbl{font-size:8px;letter-spacing:1.5px;}
+.mkt-strip .mkt-price{font-size:12px;font-weight:600;color:var(--text);}
+.mkt-strip .mkt-chg{font-size:10px;font-weight:700;}
 </style>
 <body>
 <div id="globalToast"><span class="toast-dot"></span><span class="toast-msg"></span></div>
@@ -965,7 +1108,7 @@ body{
   <!-- PORTFOY TAB -->
   <div class="tab-content" id="tab-portfoy-content">
     <div class="pt-sb">
-      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:7px">Portföy Özeti</div>
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:7px">Portföy Özeti</div>
       <div id="ptSbSummary" style="font-size:10px;color:var(--muted2)">Henüz hisse eklenmedi.</div>
       <button class="pt-sb-btn" onclick="showPage('portfolio');closeSidebar()">PORTFÖYÜ GÖR →</button>
     </div>
@@ -974,7 +1117,7 @@ body{
   <!-- FORUM TAB -->
   <div class="tab-content" id="tab-forum-content">
     <div class="forum-sb">
-      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:7px">Forum</div>
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:7px">Forum</div>
       <div style="font-size:10px;color:var(--muted2);line-height:1.6;margin-bottom:7px">Herkese açık. Analiz, görüş ve yorumlarını paylaş.</div>
       <button class="forum-new-sb-btn" onclick="showPage('forum');openPostForm();closeSidebar()">+ Analiz / Yorum Yaz</button>
       <button class="forum-new-sb-btn" style="border-color:var(--accent);color:var(--accent);margin-top:4px" onclick="showPage('forum');closeSidebar()">📋 Forum'u Gör</button>
