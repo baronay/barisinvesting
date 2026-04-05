@@ -560,10 +560,10 @@ body{
 .lsdot{width:5px;height:5px;background:currentColor;flex-shrink:0;border-radius:50%;}
 .shr-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:650;align-items:center;justify-content:center;}
 .shr-modal.visible{display:flex;}
-.shr-box{background:var(--surface);border:1px solid var(--glass);padding:20px;max-width:440px;width:94%;box-shadow:0 24px 80px rgba(0,0,0,.6);}
+.shr-box{background:var(--surface);border:1px solid var(--glass);padding:20px;max-width:660px;width:96%;box-shadow:0 24px 80px rgba(0,0,0,.6);}
 .shr-t{font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:800;margin-bottom:12px;color:var(--text);}
-.shr-cv{border:1px solid var(--glass);margin-bottom:10px;overflow:hidden;}
-.shr-cv canvas{display:block;width:100%;height:auto;}
+.shr-cv{border:1px solid var(--glass);margin-bottom:10px;overflow:hidden;background:#0e1220;}
+.shr-cv canvas{display:block;width:100%;height:auto;image-rendering:crisp-edges;}
 .shr-hint{font-size:10px;color:var(--muted);margin-bottom:10px;line-height:1.7;padding:9px;background:var(--surface2);border:1px solid var(--border-s);}
 .shr-btns{display:flex;gap:6px;}
 .sdl{flex:1;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:700;padding:9px;cursor:pointer;transition:all .3s;}
@@ -1898,6 +1898,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
     else verdict='BEKLE';
   }
   analysisData={ticker,company,statuses,details,score,verdict,fw:fwKey||curFW};
+  if(fd) analysisData.fd = fd; // finansal verileri canvas için sakla
 
   const ptIdx=portfolio.findIndex(p=>p.ticker===ticker&&p.exchange===curEX);
   if(ptIdx>=0){
@@ -2155,49 +2156,179 @@ function createPostCard(p){
 function openShr(){if(!analysisData)return;drawCanvas();document.getElementById('shrModal').classList.add('visible');}
 function closeShr(){document.getElementById('shrModal').classList.remove('visible');}
 function drawCanvas(){
-  const canvas=document.getElementById('shrCanvas');const ctx=canvas.getContext('2d');const W=600,H=420;canvas.width=W;canvas.height=H;
-  const fw=FW[curFW];const d=analysisData;
-  // Cream/parchment background
-  ctx.fillStyle='#f4f1ec';ctx.fillRect(0,0,W,H);
-  // Subtle texture lines
-  ctx.strokeStyle='rgba(26,58,107,0.04)';ctx.lineWidth=1;for(let y=0;y<H;y+=28){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-  // Dark header bar
-  ctx.fillStyle='#1a1f2e';ctx.fillRect(0,0,W,68);
-  // Accent rule under header
-  ctx.fillStyle='#2451a3';ctx.fillRect(0,68,W,3);
-  // Header text
-  ctx.fillStyle='#8892b0';ctx.font='500 9px "IBM Plex Mono",monospace';ctx.fillText('BARIŞ INVESTING  ·  YATIRIM ANALİZ MERKEZİ',24,22);
-  ctx.fillStyle='#e8e6e0';ctx.font='700 38px Georgia,serif';ctx.fillText(d.ticker,24,58);
-  if(curCo){ctx.fillStyle='#8892b0';ctx.font='400 11px "IBM Plex Mono",monospace';ctx.fillText(curCo.substring(0,40),24+ctx.measureText(d.ticker).width+14,55);}
-  // Verdict box
-  const vc=d.verdict==='AL'?'#1a6b3a':d.verdict==='UZAK_DUR'?'#c0392b':'#b8700a';
-  const vcl=d.verdict==='AL'?'rgba(26,107,58,0.12)':d.verdict==='UZAK_DUR'?'rgba(192,57,43,0.12)':'rgba(184,112,10,0.12)';
-  ctx.fillStyle=vcl;ctx.fillRect(W-156,12,134,46);
-  ctx.strokeStyle=vc;ctx.lineWidth=1;ctx.strokeRect(W-156,12,134,46);
-  ctx.fillStyle=vc;ctx.font='700 24px Georgia,serif';ctx.textAlign='center';ctx.fillText(d.verdict,W-89,40);ctx.font='500 9px "IBM Plex Mono",monospace';ctx.fillText(`${d.score}/${fw.criteria.length} KRİTER`,W-89,56);ctx.textAlign='left';
-  // Framework badge
-  ctx.fillStyle='rgba(36,81,163,0.08)';ctx.strokeStyle='#2451a3';ctx.lineWidth=1;ctx.strokeRect(24,82,90,18);ctx.fillRect(24,82,90,18);
-  ctx.fillStyle='#2451a3';ctx.font='600 8px "IBM Plex Mono",monospace';ctx.fillText(fw.name.toUpperCase(),30,94);
-  // Divider
-  ctx.strokeStyle='#d4cfc6';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(24,108);ctx.lineTo(W-24,108);ctx.stroke();
-  // Criteria grid
-  const cols=2,cW=(W-48)/cols,bH=28,sY=120;
+  const canvas=document.getElementById('shrCanvas');
+  const ctx=canvas.getContext('2d');
+  // ── 2× çözünürlük (bulanıklık sorunu çözümü) ──
+  const W=1200,H=800;
+  canvas.width=W; canvas.height=H;
+  canvas.style.width='600px'; canvas.style.height='400px';
+
+  const fw=FW[curFW]; const d=analysisData; const fd=d.fd||{};
+  const PASS_CLR='#22c55e', FAIL_CLR='#f05252', NEUT_CLR='#f59e0b';
+  const vc = d.verdict==='AL'?PASS_CLR : d.verdict==='UZAK_DUR'?FAIL_CLR : NEUT_CLR;
+  const fwClr = curFW==='lynch'?'#e07b39' : curFW==='dalio'?'#9b77cc' : '#4d8ef0';
+
+  // ── ARKA PLAN: koyu lacivert ──
+  ctx.fillStyle='#0e1220'; ctx.fillRect(0,0,W,H);
+
+  // Hafif ızgara dokusu
+  ctx.strokeStyle='rgba(255,255,255,0.025)'; ctx.lineWidth=1;
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  for(let x=0;x<W;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+
+  // ── SOL KENAR VURGU ──
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,fwClr); grad.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,4,H);
+
+  // ── HEADER BAR ──
+  ctx.fillStyle='#151929'; ctx.fillRect(0,0,W,100);
+  ctx.fillStyle=fwClr; ctx.fillRect(0,100,W,3);
+
+  // Logo / brand
+  ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font=`500 ${22}px "IBM Plex Mono",monospace`;
+  ctx.fillText('BARIŞ INVESTING  ·  YATIRIM ANALİZ MERKEZİ',48,38);
+
+  // Ticker büyük
+  ctx.fillStyle='#e8edf8'; ctx.font=`700 ${68}px "IBM Plex Serif","Georgia",serif`;
+  ctx.fillText(d.ticker,48,90);
+  const tkW=ctx.measureText(d.ticker).width;
+  if(d.company){
+    ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.font=`400 ${22}px "IBM Plex Mono",monospace`;
+    ctx.fillText((d.company||'').substring(0,32),48+tkW+20,82);
+  }
+
+  // ── VERDICT KUTUSU (sağ üst) ──
+  const verdictText = d.verdict==='AL'?'AL' : d.verdict==='UZAK_DUR'?'UZAK DUR' : 'BEKLE';
+  const vbW=260, vbH=78, vbX=W-vbW-48, vbY=12;
+  ctx.fillStyle=vc+'22'; ctx.fillRect(vbX,vbY,vbW,vbH);
+  ctx.strokeStyle=vc; ctx.lineWidth=2; ctx.strokeRect(vbX,vbY,vbW,vbH);
+  // Sol renkli kenar
+  ctx.fillStyle=vc; ctx.fillRect(vbX,vbY,5,vbH);
+  ctx.fillStyle=vc; ctx.font=`800 ${38}px "IBM Plex Serif","Georgia",serif`;
+  ctx.textAlign='center'; ctx.fillText(verdictText,vbX+vbW/2+4,vbY+46);
+  ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font=`500 ${18}px "IBM Plex Mono",monospace`;
+  ctx.fillText(`${d.score}/${fw.criteria.length} KRİTER`,vbX+vbW/2+4,vbY+70);
+  ctx.textAlign='left';
+
+  // Framework etiketi
+  ctx.fillStyle=fwClr+'33'; ctx.fillRect(48,114,180,32);
+  ctx.strokeStyle=fwClr+'88'; ctx.lineWidth=1; ctx.strokeRect(48,114,180,32);
+  ctx.fillStyle=fwClr; ctx.font=`600 ${20}px "IBM Plex Mono",monospace`;
+  ctx.fillText(fw.name.toUpperCase(),58,135);
+
+  // ── BÖLÜM AYRAÇ ──
+  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(48,158); ctx.lineTo(W-48,158); ctx.stroke();
+
+  // ═══════════════════════════════════════════════════
+  // SOL KOLON: Kriter tablosu (bar chart tarzı)
+  // ═══════════════════════════════════════════════════
+  const leftX=48, rightX=W/2+20, colW=(W/2-68);
+  const sY=174, rowH=52;
+
+  ctx.fillStyle='rgba(255,255,255,0.30)'; ctx.font=`600 ${18}px "IBM Plex Mono",monospace`;
+  ctx.fillText('KRİTER ANALİZİ',leftX,sY-10);
+
   fw.criteria.forEach((cr,i)=>{
-    const col=i%cols,row=Math.floor(i/cols);const x=24+col*cW,y=sY+row*(bH+5);
-    if(y+bH>H-44)return;
+    if(i>=7) return; // max 7 kriter
+    const y=sY+i*rowH;
     const s=d.statuses[i];
-    const clr=s==='pass'?'#1a6b3a':s==='fail'?'#c0392b':'#b8700a';
-    const bgClr=s==='pass'?'rgba(26,107,58,0.06)':s==='fail'?'rgba(192,57,43,0.06)':'rgba(184,112,10,0.06)';
-    ctx.fillStyle='#ffffff';ctx.fillRect(x,y,cW-10,bH);
-    ctx.fillStyle=bgClr;ctx.fillRect(x,y,cW-10,bH);
-    ctx.fillStyle=clr;ctx.fillRect(x,y,3,bH);
-    ctx.fillStyle='#1a1a1a';ctx.font='500 9px "IBM Plex Mono",monospace';ctx.fillText(cr.name.length>24?cr.name.substring(0,23)+'…':cr.name,x+9,y+11);
-    ctx.fillStyle=clr;ctx.font='600 8px "IBM Plex Mono",monospace';ctx.fillText(s==='pass'?'✓ GEÇTİ':s==='fail'?'✗ KALIDI':'◑ BELİRSİZ',x+9,y+22);
+    const clr=s==='pass'?PASS_CLR:s==='fail'?FAIL_CLR:NEUT_CLR;
+    const bgAlpha=s==='pass'?'12':s==='fail'?'12':'0a';
+
+    // Kriter satır arka planı
+    ctx.fillStyle='#'+parseInt('1c2235',16).toString(16); ctx.fillRect(leftX,y+2,colW,rowH-4);
+    ctx.fillStyle=clr+(bgAlpha); ctx.fillRect(leftX,y+2,colW,rowH-4);
+    // Sol renk çizgisi
+    ctx.fillStyle=clr; ctx.fillRect(leftX,y+2,4,rowH-4);
+
+    // Skor barı (arka plan)
+    const barX=leftX+colW-160, barY=y+rowH/2-6, barW=148, barH=12;
+    ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(barX,barY,barW,barH);
+    // Dolu kısım
+    const fillPct=s==='pass'?1:s==='fail'?0.15:0.5;
+    const barGrad=ctx.createLinearGradient(barX,0,barX+barW,0);
+    barGrad.addColorStop(0,clr+'cc'); barGrad.addColorStop(1,clr+'44');
+    ctx.fillStyle=barGrad; ctx.fillRect(barX,barY,barW*fillPct,barH);
+
+    // Kriter adı
+    ctx.fillStyle='#e8edf8'; ctx.font=`500 ${20}px "IBM Plex Mono",monospace`;
+    const crName=cr.name.length>22?cr.name.substring(0,21)+'…':cr.name;
+    ctx.fillText(crName,leftX+12,y+rowH/2+4);
+
+    // Durum etiketi
+    const label=s==='pass'?'✓ GEÇTİ':s==='fail'?'✗ KALDI':'◑ BELİRSİZ';
+    ctx.fillStyle=clr; ctx.font=`700 ${17}px "IBM Plex Mono",monospace`;
+    ctx.fillText(label,leftX+12,y+rowH/2+22);
   });
-  // Footer
-  ctx.fillStyle='#1a1f2e';ctx.fillRect(0,H-38,W,38);
-  ctx.fillStyle='#a8b8d8';ctx.font='500 10px "IBM Plex Mono",monospace';ctx.fillText('@barisinvesting',24,H-16);
-  ctx.fillStyle='#8892b0';ctx.textAlign='right';ctx.fillText('barisinvesting.vercel.app',W-24,H-16);ctx.textAlign='left';
+
+  // ═══════════════════════════════════════════════════
+  // SAĞ KOLON: Finansal veri tablosu
+  // ═══════════════════════════════════════════════════
+  ctx.fillStyle='rgba(255,255,255,0.30)'; ctx.font=`600 ${18}px "IBM Plex Mono",monospace`;
+  ctx.fillText('FİNANSAL VERİLER',rightX,sY-10);
+
+  const pct=v=>v!=null?`%${(v*100).toFixed(1)}`:'—';
+  const n2=v=>v!=null?Number(v).toFixed(2):'—';
+  const big=v=>{if(v==null)return'—';const a=Math.abs(v);if(a>=1e12)return`${(v/1e12).toFixed(1)}T`;if(a>=1e9)return`${(v/1e9).toFixed(1)}B`;if(a>=1e6)return`${(v/1e6).toFixed(1)}M`;return Number(v).toFixed(0);};
+
+  const metrics=[
+    ['F/K (TTM)',     n2(fd.peRatio),         fd.peRatio!=null&&fd.peRatio<22?PASS_CLR:fd.peRatio!=null&&fd.peRatio>35?FAIL_CLR:NEUT_CLR],
+    ['F/DD',         n2(fd.pbRatio),          fd.pbRatio!=null&&fd.pbRatio<3?PASS_CLR:fd.pbRatio!=null&&fd.pbRatio>8?FAIL_CLR:NEUT_CLR],
+    ['ROE',          pct(fd.roe),             fd.roe!=null&&fd.roe>0.15?PASS_CLR:fd.roe!=null&&fd.roe<0.05?FAIL_CLR:NEUT_CLR],
+    ['Brüt Marj',    pct(fd.grossMargin),     fd.grossMargin!=null&&fd.grossMargin>0.35?PASS_CLR:NEUT_CLR],
+    ['Net Marj',     pct(fd.profitMargin),    fd.profitMargin!=null&&fd.profitMargin>0.10?PASS_CLR:NEUT_CLR],
+    ['FCF',          big(fd.freeCashflow),    fd.freeCashflow!=null&&fd.freeCashflow>0?PASS_CLR:fd.freeCashflow!=null?FAIL_CLR:NEUT_CLR],
+    ['Piy. Değeri',  big(fd.marketCap),       '#8ba3cc'],
+  ];
+
+  const rW=(W-rightX-48), rRowH=52;
+  metrics.forEach(([label,val,clr],i)=>{
+    const y=sY+i*rRowH;
+    // Satır arka planı — alternatif renklendirme
+    ctx.fillStyle= i%2===0 ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.01)';
+    ctx.fillRect(rightX,y+2,rW,rRowH-4);
+
+    // Label
+    ctx.fillStyle='rgba(255,255,255,0.40)'; ctx.font=`400 ${18}px "IBM Plex Mono",monospace`;
+    ctx.fillText(label,rightX+12,y+rRowH/2-2);
+
+    // Değer — sağa hizalı
+    ctx.fillStyle=val==='—'?'rgba(255,255,255,0.2)':clr;
+    ctx.font=`700 ${22}px "IBM Plex Mono",monospace`;
+    ctx.textAlign='right';
+    ctx.fillText(val,rightX+rW-12,y+rRowH/2+10);
+    ctx.textAlign='left';
+
+    // Ayraç çizgisi
+    ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(rightX,y+rRowH); ctx.lineTo(rightX+rW,y+rRowH); ctx.stroke();
+  });
+
+  // ── ORTA AYRACI ──
+  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(W/2,158); ctx.lineTo(W/2,H-60); ctx.stroke();
+
+  // ── FOOTER ──
+  ctx.fillStyle='#0a0e1a'; ctx.fillRect(0,H-60,W,60);
+  ctx.fillStyle=fwClr; ctx.fillRect(0,H-60,W,2);
+
+  // Sol: @handle
+  ctx.fillStyle='rgba(255,255,255,0.50)'; ctx.font=`500 ${20}px "IBM Plex Mono",monospace`;
+  ctx.fillText('@barisinvesting',48,H-22);
+
+  // Orta: Fiyat ve tarih
+  if(fd.currentPrice){
+    ctx.fillStyle='#e8edf8'; ctx.font=`700 ${26}px "IBM Plex Mono",monospace`;
+    ctx.textAlign='center';
+    ctx.fillText(`${Number(fd.currentPrice).toFixed(2)} ${fd.currency||''}`,W/2,H-22);
+    ctx.textAlign='left';
+  }
+
+  // Sağ: domain
+  ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font=`500 ${20}px "IBM Plex Mono",monospace`;
+  ctx.textAlign='right'; ctx.fillText('barisinvesting.com',W-48,H-22); ctx.textAlign='left';
 }
 function dlShare(){const c=document.getElementById('shrCanvas');const l=document.createElement('a');l.download=`${curTicker}_${curFW}_analiz.png`;l.href=c.toDataURL('image/png');l.click();}
 function dlAndTweet(){
@@ -2214,7 +2345,7 @@ ${pass.slice(0,3).join(' ')}
 ${fail.slice(0,2).join(' ')}
 
 @barisinvesting ile analiz et 👇
-barisinvesting.vercel.app
+barisinvesting.com
 
 #Borsa #Yatırım #${d.ticker}`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,'_blank');
