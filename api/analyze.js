@@ -42,72 +42,117 @@ async function getYahooCrumb() {
   return { crumb: _crumb, cookie: _cookie };
 }
 
+// ── USD/TRY KUR TAHMİNİ ──────────────────────────────────────────
+// Yahoo BIST bilançolarını bazen USD bazında saklar (özellikle büyük şirketler).
+// marketCap her zaman TRY bazında doğru geldiğinden onu referans kullanıyoruz.
+// Güncel kuru API'den çekmek yerine: marketCap / (price * shares) ile tespit ediyoruz.
+// Fallback: 38 TRY/USD (konservatif tahmini, gerçek ~40-42 arası)
+const APPROX_USD_TRY = 38;
+
+// ── DEĞER BİRİMİ TESPİT MOTORU ───────────────────────────────────
+// val: test edilen değer
+// mktCap: TRY bazında piyasa değeri (referans)
+// minRatio / maxRatio: "makul" oran aralığı
+// label: log için
+function detectAndNormalize(val, mktCap, minRatio, maxRatio, label) {
+  if (val == null || mktCap == null || mktCap <= 0) return val;
+  const ratio = Math.abs(val) / mktCap;
+
+  console.log(`[Birim Tespit] ${label}: val=${val.toExponential(2)} mktCap=${mktCap.toExponential(2)} ratio=${ratio.toFixed(4)} (beklenen: ${minRatio}–${maxRatio})`);
+
+  if (ratio >= minRatio && ratio <= maxRatio) {
+    // Makul aralıkta — değiştirme
+    return val;
+  }
+
+  if (ratio < minRatio) {
+    // Çok küçük — USD olabilir, TRY'ye çevir
+    const asTRY = val * APPROX_USD_TRY;
+    const ratioTRY = Math.abs(asTRY) / mktCap;
+    if (ratioTRY >= minRatio && ratioTRY <= maxRatio) {
+      console.log(`[Birim] ${label}: USD→TRY ×${APPROX_USD_TRY}: ${val.toExponential(2)} → ${asTRY.toExponential(2)}`);
+      return asTRY;
+    }
+    // Belki binlik (bin TL → USD olarak yanlış yüklenmiş)
+    const asTRY_k = val * 1000;
+    const ratioK = Math.abs(asTRY_k) / mktCap;
+    if (ratioK >= minRatio && ratioK <= maxRatio) {
+      console.log(`[Birim] ${label}: ×1000: ${val.toExponential(2)} → ${asTRY_k.toExponential(2)}`);
+      return asTRY_k;
+    }
+    // Hem ×1000 hem USD
+    const asTRY_kU = val * 1000 * APPROX_USD_TRY;
+    const ratioKU = Math.abs(asTRY_kU) / mktCap;
+    if (ratioKU >= minRatio && ratioKU <= maxRatio) {
+      console.log(`[Birim] ${label}: ×1000×USD: ${val.toExponential(2)} → ${asTRY_kU.toExponential(2)}`);
+      return asTRY_kU;
+    }
+    console.log(`[Birim] ${label}: düzeltilemedi (ratio=${ratio.toFixed(6)} çok küçük)`);
+    return val; // en azından ham değeri döndür
+  }
+
+  if (ratio > maxRatio) {
+    // Çok büyük — 1000'e böl (bin TL bazında gelmiş)
+    const div1k = val / 1000;
+    const ratio1k = Math.abs(div1k) / mktCap;
+    if (ratio1k >= minRatio && ratio1k <= maxRatio) {
+      console.log(`[Birim] ${label}: ÷1000: ${val.toExponential(2)} → ${div1k.toExponential(2)}`);
+      return div1k;
+    }
+    const div1m = val / 1e6;
+    const ratio1m = Math.abs(div1m) / mktCap;
+    if (ratio1m >= minRatio && ratio1m <= maxRatio) {
+      console.log(`[Birim] ${label}: ÷1M: ${val.toExponential(2)} → ${div1m.toExponential(2)}`);
+      return div1m;
+    }
+    console.log(`[Birim] ${label}: düzeltilemedi (ratio=${ratio.toFixed(2)} çok büyük)`);
+    return val;
+  }
+
+  return val;
+}
+
 // ── BİRİM NORMALİZASYON ─────────────────────────────────────────
-// BIST: Yahoo finansal verileri TRY/USD/bin-TL karışık dönebiliyor.
-// Strateji: marketCap (genelde doğru TRY) referans → diğer değerleri normalize et.
-// Bilanço verileri (Assets, Liabilities) için ayrı threshold — bunlar büyük olabilir.
 function normalizeBISTUnits(result) {
   if (!result.marketCap || !result.currentPrice) return result;
-  const mktCap = result.marketCap; // TRY bazında doğru
+  const MC = result.marketCap; // TRY bazında referans
 
-  // Nakit akış ve borç verileri: mktCap ile karşılaştır
-  const detectCashFlow = (val, label) => {
-    if (val == null) return val;
-    const ratio = Math.abs(val) / mktCap;
-    if (ratio < 0.0001) {
-      const rate = 38;
-      console.log(`[Birim] ${label}: USD→TRY x${rate}: ${val} → ${val * rate}`);
-      return val * rate;
-    }
-    if (ratio > 50) {
-      console.log(`[Birim] ${label}: /1000: ${val} → ${val / 1000}`);
-      return val / 1000;
-    }
-    return val;
-  };
+  // Bilanço kalemleri: MC'nin 0.05x ile 200x arası normal
+  // (büyük holdinglerin varlıkları MC'nin 10-50 katı olabilir)
+  const BALANCE_MIN = 0.001, BALANCE_MAX = 500;
+  // Nakit akış kalemleri: MC'nin 0.001x ile 10x arası normal
+  const CASH_MIN = 0.0001, CASH_MAX = 20;
 
-  // Bilanço kalemleri: bunlar genelde mktCap'in birkaç katı olabilir
-  // Threshold farklı — Assets/Liabilities için çok büyük olmadıkça dokunma
-  const detectBalance = (val, label) => {
-    if (val == null) return val;
-    const ratio = Math.abs(val) / mktCap;
-    // Bilanço değerleri piyasa değerinin 0.01x ile 100x arasında normal
-    if (ratio < 0.00005) {
-      // Çok küçük → kesinlikle USD gelmiş
-      const rate = 38;
-      console.log(`[Birim] ${label}: USD→TRY x${rate}: ${val} → ${val * rate}`);
-      return val * rate;
-    }
-    if (ratio > 1000) {
-      // Aşırı büyük → bin TL bazında
-      console.log(`[Birim] ${label}: /1000: ${val} → ${val / 1000}`);
-      return val / 1000;
-    }
-    return val;
-  };
+  // Bilanço
+  result.totalAssets      = detectAndNormalize(result.totalAssets,      MC, BALANCE_MIN, BALANCE_MAX, 'Assets');
+  result.totalLiabilities = detectAndNormalize(result.totalLiabilities, MC, BALANCE_MIN, BALANCE_MAX, 'Liabilities');
+  // computedEquity (totalStockholderEquity) ayrıca normalize et — bu kritik!
+  if (result.computedEquity != null) {
+    result.computedEquity = detectAndNormalize(result.computedEquity, MC, BALANCE_MIN, BALANCE_MAX, 'StockholderEquity');
+  }
+  // Nakit akış
+  result.freeCashflow      = detectAndNormalize(result.freeCashflow,      MC, CASH_MIN, CASH_MAX, 'FCF');
+  result.operatingCashflow = detectAndNormalize(result.operatingCashflow, MC, CASH_MIN, CASH_MAX, 'OpCF');
+  result.totalCash         = detectAndNormalize(result.totalCash,         MC, CASH_MIN, CASH_MAX, 'Cash');
+  result.totalDebt         = detectAndNormalize(result.totalDebt,         MC, CASH_MIN, CASH_MAX, 'Debt');
+  result.netIncome         = detectAndNormalize(result.netIncome,         MC, CASH_MIN, CASH_MAX, 'NetIncome');
 
-  result.freeCashflow      = detectCashFlow(result.freeCashflow,      'FCF');
-  result.operatingCashflow = detectCashFlow(result.operatingCashflow, 'OpCF');
-  result.totalCash         = detectCashFlow(result.totalCash,         'Cash');
-  result.totalDebt         = detectCashFlow(result.totalDebt,         'Debt');
-  result.totalAssets       = detectBalance(result.totalAssets,        'Assets');
-  result.totalLiabilities  = detectBalance(result.totalLiabilities,   'Liabilities');
-  result.netIncome         = detectCashFlow(result.netIncome,         'NetIncome');
   return result;
 }
 
 // ── FORMÜL BAZLI PD/DD ve ROE ─────────────────────────────────────
 // Ham bilanço: Özsermaye = Varlıklar - Yükümlülükler
-// PD/DD = Piyasa Değeri / Özsermaye   ← BIST için her zaman bunu kullan
+// PD/DD = Piyasa Değeri / Özsermaye   ← BIST için her zaman formül
 // ROE   = Net Kâr / Özsermaye
-// isBIST=true ise Yahoo'nun hazır priceToBook değerini tamamen yoksay.
 function computeFromRawData(result, isBIST = false) {
   let equity = null;
+  let equitySource = '';
 
-  // 1. Doğrudan özsermaye geldiyse önce onu kullan
-  if (result.computedEquity && result.computedEquity > 0) {
+  // 1. Doğrudan özsermaye (totalStockholderEquity) — NORMALIZE EDİLMİŞ olması şart
+  if (result.computedEquity != null && result.computedEquity > 0) {
     equity = result.computedEquity;
-    console.log(`[Formül] Özsermaye (doğrudan): ${equity.toFixed(0)}`);
+    equitySource = 'totalStockholderEquity';
+    console.log(`[Equity] Doğrudan özsermaye: ${equity.toExponential(3)}`);
   }
 
   // 2. Varlıklar - Yükümlülükler
@@ -116,69 +161,102 @@ function computeFromRawData(result, isBIST = false) {
     if (calc > 0) {
       equity = calc;
       result.computedEquity = equity;
-      console.log(`[Formül] Özsermaye = Assets(${result.totalAssets.toFixed(0)}) - Liab(${result.totalLiabilities.toFixed(0)}) = ${equity.toFixed(0)}`);
+      equitySource = 'assets-liabilities';
+      console.log(`[Equity] Assets(${result.totalAssets.toExponential(3)}) - Liab(${result.totalLiabilities.toExponential(3)}) = ${equity.toExponential(3)}`);
     } else {
-      console.log(`[Formül] Özsermaye negatif (${calc.toFixed(0)}) — birim sorunu olabilir`);
+      console.log(`[Equity] Negatif özsermaye: ${calc.toExponential(3)} — muhtemelen birim hatası`);
+      // Birim hatası ihtimali — assets normalizasyonu yanlış gitmişse tekrar dene
+      // totalAssets × 38 (USD gelmiş) ile
+      if (result.totalAssets && result.totalLiabilities) {
+        const calcUSD = (result.totalAssets * APPROX_USD_TRY) - (result.totalLiabilities * APPROX_USD_TRY);
+        if (calcUSD > 0 && result.marketCap) {
+          const pbTest = result.marketCap / calcUSD;
+          if (pbTest > 0.05 && pbTest < 50) {
+            equity = calcUSD;
+            result.computedEquity = equity;
+            equitySource = 'assets-liabilities-USD×kur';
+            console.log(`[Equity] USD düzeltme: ${equity.toExponential(3)}`);
+          }
+        }
+      }
     }
   }
 
-  if (equity && equity > 0 && result.marketCap) {
-    // ── PD/DD ──
-    // BIST: Yahoo'nun hazır priceToBook değerini kesinlikle kullanma.
-    // Her zaman MC / Özsermaye formülünü uygula.
-    if (isBIST) {
-      const pbCalc = result.marketCap / equity;
+  // ── DEBUG: kritik değerleri her zaman logla ──
+  console.log(`[DEBUG PD/DD] marketCap=${result.marketCap?.toExponential(3)} equity=${equity?.toExponential(3)} equitySrc=${equitySource} MC/EQ=${equity ? (result.marketCap/equity).toFixed(3) : 'N/A'}`);
 
-      // Sanity check: BIST hisseleri için 0.1 - 15 arası normal
-      if (pbCalc > 0.05 && pbCalc < 50) {
-        result.pbRatio  = pbCalc;
-        result.pbSource = 'hesaplandi';
-        console.log(`[Formül BIST] PD/DD = ${pbCalc.toFixed(2)} (MC=${result.marketCap.toFixed(0)}, EQ=${equity.toFixed(0)})`);
+  if (!equity || equity <= 0 || !result.marketCap) {
+    console.log('[PD/DD] Özsermaye bulunamadı, hesaplama atlandı');
+    return result;
+  }
+
+  // ── PD/DD ──
+  if (isBIST) {
+    const pbCalc = result.marketCap / equity;
+    console.log(`[PD/DD] Ham hesap: MC=${result.marketCap.toExponential(3)} / EQ=${equity.toExponential(3)} = ${pbCalc.toFixed(3)}`);
+
+    // BIST için makul aralık: 0.1 – 20
+    if (pbCalc > 0.1 && pbCalc < 20) {
+      result.pbRatio  = parseFloat(pbCalc.toFixed(2));
+      result.pbSource = `formül (${equitySource})`;
+      console.log(`[PD/DD] ✓ ${result.pbRatio} — makul aralıkta`);
+    } else if (pbCalc >= 20 && pbCalc < 1000) {
+      // Büyük ihtimalle özsermaye USD, MC TRY → özsermayeyi TRY'ye çevir
+      const equityTRY = equity * APPROX_USD_TRY;
+      const pbTRY = result.marketCap / equityTRY;
+      console.log(`[PD/DD] Kur düzeltme denemesi: EQ×${APPROX_USD_TRY}=${equityTRY.toExponential(3)} → PD/DD=${pbTRY.toFixed(3)}`);
+      if (pbTRY > 0.1 && pbTRY < 20) {
+        result.pbRatio  = parseFloat(pbTRY.toFixed(2));
+        result.computedEquity = equityTRY;
+        result.pbSource = `formül-kur (${equitySource}×${APPROX_USD_TRY})`;
+        console.log(`[PD/DD] ✓ ${result.pbRatio} — kur düzeltmesiyle makul`);
       } else {
-        // Sanity başarısız → birim uyuşmazlığı, her iki yönde dene
-        // Önce assets/liab USD mı diye kontrol: x38 ile tekrar dene
-        const equityTRY = equity * 38;
-        const pbTRY = result.marketCap / equityTRY;
-        if (pbTRY > 0.05 && pbTRY < 50) {
-          result.pbRatio  = pbTRY;
-          result.computedEquity = equityTRY;
-          result.pbSource = 'hesaplandi-kur-duzeltme';
-          console.log(`[Formül BIST] PD/DD kur düzeltme: ${pbTRY.toFixed(2)} (EQ×38=${equityTRY.toFixed(0)})`);
+        // Özsermaye 1000 ile çarpılmış mı dene (bin TL)
+        const equity1k = equity * 1000;
+        const pb1k = result.marketCap / equity1k;
+        console.log(`[PD/DD] ×1000 denemesi: EQ×1000=${equity1k.toExponential(3)} → PD/DD=${pb1k.toFixed(3)}`);
+        if (pb1k > 0.1 && pb1k < 20) {
+          result.pbRatio  = parseFloat(pb1k.toFixed(2));
+          result.computedEquity = equity1k;
+          result.pbSource = `formül-1k (${equitySource}×1000)`;
+          console.log(`[PD/DD] ✓ ${result.pbRatio} — ×1000 düzeltmesiyle makul`);
         } else {
-          // Sonuç hâlâ saçma → Yahoo değerini güvenilmez işaretle ama silme
           result.pbRatio  = null;
-          result.pbSource = 'guvenilmez';
-          console.log(`[Formül BIST] PD/DD hesaplanamadı — sanity failed (pb=${pbCalc.toFixed(2)})`);
+          result.pbSource = 'hesaplanamadi';
+          console.log(`[PD/DD] ✗ Tüm denemeler başarısız. pbCalc=${pbCalc.toFixed(2)} pbTRY=${pbTRY.toFixed(2)} pb1k=${pb1k.toFixed(2)}`);
         }
       }
     } else {
-      // US/diğer: sadece boş/anormal ise formülle doldur
-      const pbBad = result.pbRatio == null || result.pbRatio <= 0 || result.pbRatio > 30;
-      if (pbBad) {
-        result.pbRatio  = result.marketCap / equity;
-        result.pbSource = 'hesaplandi';
-        console.log(`[Formül] PD/DD = ${result.pbRatio.toFixed(2)}`);
-      }
+      result.pbRatio  = null;
+      result.pbSource = 'hesaplanamadi';
+      console.log(`[PD/DD] ✗ Aralık dışı: ${pbCalc.toFixed(3)}`);
     }
-
-    // ── ROE ──
-    const roeBad = result.roe == null || result.roe === 0;
-    if (roeBad && result.netIncome != null) {
-      const roeCalc = result.netIncome / equity;
-      // Sanity: -200% ile +200% arası normal
-      if (Math.abs(roeCalc) < 2) {
-        result.roe      = roeCalc;
-        result.roeSource = 'hesaplandi';
-        console.log(`[Formül] ROE = %${(result.roe*100).toFixed(1)}`);
-      }
-    }
-
-    // ── Borç/Özsermaye ──
-    if (!result.debtToEquity && result.totalDebt) {
-      result.debtToEquity = (result.totalDebt / equity) * 100;
-      console.log(`[Formül] D/E = ${result.debtToEquity.toFixed(1)}`);
+  } else {
+    const pbBad = result.pbRatio == null || result.pbRatio <= 0 || result.pbRatio > 30;
+    if (pbBad) {
+      result.pbRatio  = parseFloat((result.marketCap / equity).toFixed(2));
+      result.pbSource = 'formül';
     }
   }
+
+  // ── ROE ──
+  const roeBad = result.roe == null || result.roe === 0;
+  if (roeBad && result.netIncome != null) {
+    const roeCalc = result.netIncome / equity;
+    if (Math.abs(roeCalc) <= 3) { // sanity: max ±300%
+      result.roe       = parseFloat(roeCalc.toFixed(4));
+      result.roeSource = `formül (${equitySource})`;
+      console.log(`[ROE] %${(result.roe*100).toFixed(1)}`);
+    } else {
+      console.log(`[ROE] Aralık dışı: ${(roeCalc*100).toFixed(1)}% — atlandı`);
+    }
+  }
+
+  // ── Borç/Özsermaye ──
+  if (!result.debtToEquity && result.totalDebt && equity > 0) {
+    result.debtToEquity = parseFloat(((result.totalDebt / equity) * 100).toFixed(1));
+  }
+
   return result;
 }
 
@@ -378,8 +456,14 @@ async function fetchYahooData(yahooTicker) {
             const se = fb(lat.totalStockholderEquity);
             if (ta != null) result.totalAssets      = ta;
             if (tl != null) result.totalLiabilities = tl;
-            if (se != null) result.computedEquity   = se; // doğrudan özsermaye
-            console.log(`[Bilanço] Assets=${ta} Liab=${tl} Equity=${se}`);
+            if (se != null) {
+              result.computedEquity = se; // normalize edilmemiş ham değer — BIST pipeline'da normalize edilecek
+              console.log(`[Bilanço Ham] Assets=${ta?.toExponential(3)} Liab=${tl?.toExponential(3)} StockholderEquity=${se?.toExponential(3)}`);
+            }
+            // Ham oranı logla — debug için kritik
+            if (result.marketCap && se) {
+              console.log(`[Ham PD/DD] MC/SE = ${result.marketCap.toExponential(3)} / ${se.toExponential(3)} = ${(result.marketCap/se).toFixed(2)} (normalize öncesi)`);
+            }
           }
         }
 
