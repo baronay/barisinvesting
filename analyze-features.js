@@ -338,7 +338,7 @@ function dlAndTweet() {
       failItems.length ? '❌ ' + failItems.join(' · ') : '',
       '',
       'Barış Investing ile analiz et 👇',
-      'barisinvesting.vercel.app',
+      'barisinvesting.com',
       '',
       `#Borsa #Yatırım #${d.ticker} #${curFW==='buffett'?'Buffett':curFW==='lynch'?'Lynch':'Dalio'}`,
     ].filter(l => l !== null).join('\n').trim();
