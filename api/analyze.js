@@ -522,9 +522,14 @@ async function fetchYahooData(yahooTicker) {
     // ADIM 0: TradingView Scanner API'sinden çarpanları çek
     let bistRatios = null;
     try {
-      const bistUrl = `${process.env.VERCEL_URL
-        ? 'https://' + process.env.VERCEL_URL
-        : 'http://localhost:3000'}/api/bist-ratios?ticker=${yahooTicker.replace('.IS', '')}`;
+      // VERCEL_URL deployment URL verir (xxx.vercel.app), production domain değil
+      // NEXT_PUBLIC_SITE_URL = barisinvesting.com olarak Vercel env'e ekle
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
+        ? 'https://' + process.env.NEXT_PUBLIC_SITE_URL.replace(/^https?:\/\//, '')
+        : process.env.VERCEL_URL
+          ? 'https://' + process.env.VERCEL_URL
+          : 'http://localhost:3000';
+      const bistUrl = `${baseUrl}/api/bist-ratios?ticker=${yahooTicker.replace('.IS', '')}`;
 
       const bistRes = await fetch(bistUrl, {
         signal: AbortSignal.timeout(12000),
@@ -583,13 +588,19 @@ async function fetchYahooData(yahooTicker) {
       result.bistRatiosDebug = bistRatios._raw ?? null;
     }
 
-    // ADIM 1: Yahoo'nun hazır pb değerini sıfırla — formülden hesaplanacak
+    // ADIM 1: PD/DD kaynağı belirleme
+    // TV'den PDDD geldiyse result.pbRatio zaten set edildi (ADIM 0) — dokunma
+    // TV'den gelmediyse Yahoo değerini sıfırla, formülden hesaplanacak
     const yahooPB = result.pbRatio;
-    if (!bistRatios?.PDDD) {
-      // TradingView'den PD/DD gelmediyse Yahoo'yu da sıfırla — formülden hesaplanacak
+    if (!bistRatios?.PDDD && !result.pbRatio) {
+      // İkisi de yok — formül hesabına bırak, zaten null
+      console.log('[BIST] PD/DD: TV yok, Yahoo yok — formül hesaplanacak');
+    } else if (!bistRatios?.PDDD && result.pbRatio) {
+      // Sadece Yahoo var — Yahoo BIST için güvenilmez, sıfırla
       result.pbRatio = null;
-      if (yahooPB) console.log(`[BIST] Yahoo pb=${yahooPB?.toFixed(2)} yoksayıldı`);
+      if (yahooPB) console.log(`[BIST] Yahoo pb=${yahooPB?.toFixed(2)} yoksayıldı — formül hesaplanacak`);
     }
+    // bistRatios.PDDD varsa result.pbRatio zaten TV değerini taşıyor — dokunma
 
     // ADIM 2: Birim normalizasyonu
     result = normalizeBISTUnits(result);
