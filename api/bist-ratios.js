@@ -26,6 +26,7 @@ const TV_COLUMNS = [
   'return_on_equity',             // 5 — ROE
   'debt_to_equity',               // 6 — Borç/Özsermaye
   'earnings_per_share_basic_ttm', // 7 — EPS (F/K yedek)
+  'earnings_growth_rate_ttm',     // 8 — Kazanç büyümesi TTM (PEG için)
 ];
 
 const IDX = Object.fromEntries(TV_COLUMNS.map((c, i) => [c, i]));
@@ -79,8 +80,9 @@ function parseRow(ticker, row) {
   const mc      = safeNum(col(d, 'market_cap_basic'), 0);
   const fdFavok = safeNum(col(d, 'enterprise_value_ebitda_ttm'));
   const roeRaw  = safeNum(col(d, 'return_on_equity'), 4);
-  const de      = safeNum(col(d, 'debt_to_equity'));
-  const eps     = safeNum(col(d, 'earnings_per_share_basic_ttm'));
+  const de        = safeNum(col(d, 'debt_to_equity'));
+  const eps       = safeNum(col(d, 'earnings_per_share_basic_ttm'));
+  const egrRaw    = safeNum(col(d, 'earnings_growth_rate_ttm'), 4); // TV: 0.12 = %12
 
   // TV return_on_equity zaten % cinsinden gelir (14.85 = %14.85), x100 yapma
   const roe = roeRaw;
@@ -103,6 +105,7 @@ function parseRow(ticker, row) {
     FD_FAVOK:     fdFavok,
     ROE:          roe,
     DebtEquity:   de,
+    EarningsGrowth: egrRaw,       // 0-1 arası (ör: 0.12 = %12) — analyze.js PEG için
     PiyasaDegeri: mc,
     GuncelFiyat:  fiyat,
     _raw,
