@@ -422,6 +422,19 @@ async function fetchYahooData(yahooTicker) {
         if (!result.forwardPE)          result.forwardPE  = f(sd.forwardPE)  ?? f(ks.forwardPE);
         // BIST: Yahoo'nun hazır priceToBook değerini çekme — formülle hesaplayacağız
         if (!isBIST && !result.pbRatio) result.pbRatio    = f(ks.priceToBook);
+
+        // BIST için Yahoo trailingPE güvenilmez (USD/TRY karışıklığı)
+        // Anormal PE → null yap, sonradan MarketCap/NetIncome ile hesaplanacak
+        if (isBIST && result.peRatio != null) {
+          if (result.peRatio <= 0 || result.peRatio > 200) {
+            console.log(`[BIST] Yahoo PE=${result.peRatio} anormal → null, formülle hesaplanacak`);
+            result.peRatio = null;
+          }
+        }
+
+        // trailingEps — BIST için PE hesaplamak üzere sakla
+        const trailingEps = f(ks.trailingEps);
+        if (trailingEps && isBIST) result._trailingEps = trailingEps;
         if (!result.pegRatio)           result.pegRatio   = f(ks.pegRatio);
         if (!result.evEbitda)           result.evEbitda   = f(ks.enterpriseToEbitda);
         if (!result.grossMargin)        result.grossMargin       = f(fd.grossMargins);
@@ -592,6 +605,35 @@ async function fetchYahooData(yahooTicker) {
         if (result.pbRatio == null && sc.pbRatio) { result.pbRatio = sc.pbRatio; result.pbSource = sc.source; }
         if (result.roe     == null && sc.roe)     { result.roe     = sc.roe;     result.roeSource = sc.source; }
         result.dataSource = sc.source;
+      }
+    }
+
+    // ADIM 6: PE hâlâ null → MarketCap / NetIncome formülü (son çare ama güvenilir)
+    // THYAO örneği: MC=408.48B TRY, NetIncome=~3.4B USD × 38 = 129.2B TRY → PE=3.15 ✓
+    if (result.peRatio == null && result.marketCap && result.netIncome) {
+      const niNorm = detectAndNormalize(result.netIncome, result.marketCap, 0.0001, 10, 'NetIncome_PE');
+      if (niNorm > 0) {
+        const peCalc = result.marketCap / niNorm;
+        if (peCalc > 0.5 && peCalc < 200) {
+          result.peRatio  = parseFloat(peCalc.toFixed(2));
+          result.peSource = 'formül(MC/NI)';
+          console.log(`[BIST PE Formül] MC=${result.marketCap.toExponential(3)} / NI=${niNorm.toExponential(3)} = ${result.peRatio}`);
+        }
+      }
+    }
+
+    // ADIM 7: EPS üzerinden PE — Yahoo trailingEps bazen doğru gelir
+    if (result.peRatio == null && result.currentPrice && result._trailingEps) {
+      const eps = result._trailingEps;
+      // EPS TRY bazında mı USD bazında mı kontrol et
+      const epsNorm = Math.abs(eps) < 10 ? eps * APPROX_USD_TRY : eps; // küçükse USD
+      if (epsNorm > 0 && result.currentPrice > 0) {
+        const peEps = result.currentPrice / epsNorm;
+        if (peEps > 0.5 && peEps < 200) {
+          result.peRatio  = parseFloat(peEps.toFixed(2));
+          result.peSource = 'formül(Fiyat/EPS)';
+          console.log(`[BIST PE EPS] Fiyat=${result.currentPrice} / EPS=${epsNorm.toFixed(2)} = ${result.peRatio}`);
+        }
       }
     }
 
