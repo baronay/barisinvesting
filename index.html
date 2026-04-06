@@ -1750,12 +1750,51 @@ body{
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         PDF İndir
       </a>
+      <button onclick="openTezShare()" style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:7px 14px;cursor:pointer;letter-spacing:1px;transition:all .2s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        X'te Paylaş
+      </button>
       <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.6">
         Bu tez yatırım tavsiyesi değildir.<br>Tüm projeksiyonlar tahmin içermektedir.
       </div>
       <button onclick="closeTezModal()" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:6px 14px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Kapat</button>
     </div>
 
+  </div>
+</div>
+
+<!-- ══ TEZ X PAYLAŞIM MODALI ══ -->
+<div id="tezShrModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);z-index:950;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeTezShrModal()" class="tez-modal">
+  <div style="background:var(--surface);border:1px solid var(--glass);border-top:3px solid #d4a843;max-width:660px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.6);animation:fadeIn .25s ease">
+    <!-- Header -->
+    <div style="padding:16px 20px;border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:8px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:#d4a843"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--text);letter-spacing:1px">NETAŞ — X Paylaşım Görseli</span>
+      </div>
+      <button onclick="closeTezShrModal()" style="background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Canvas preview -->
+    <div style="background:#0a0e1a;padding:12px;border-bottom:1px solid var(--rule)">
+      <canvas id="tezShrCanvas" style="display:block;width:100%;height:auto;image-rendering:crisp-edges"></canvas>
+    </div>
+    <!-- Hint -->
+    <div style="padding:10px 16px;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;border-bottom:1px solid var(--rule);line-height:1.7">
+      💡 "İndir & X'te Paylaş" butonuna tıkla — görsel indirilir, tweet penceresi açılır.
+    </div>
+    <!-- Buttons -->
+    <div style="padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="tweetTez()" style="flex:1;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:700;padding:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .3s;letter-spacing:.5px" onmouseover="this.style.boxShadow='0 4px 16px var(--accent-glow)'" onmouseout="this.style.boxShadow='none'">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        İndir & X'te Paylaş
+      </button>
+      <button onclick="dlTezShare()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:600;padding:11px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--text)'" onmouseout="this.style.borderColor='var(--border)'">
+        💾 Sadece İndir
+      </button>
+      <button onclick="closeTezShrModal()" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:11px 16px;cursor:pointer;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        Kapat
+      </button>
+    </div>
   </div>
 </div>
 
@@ -3470,6 +3509,267 @@ function openTez(id) {
 function closeTezModal() {
   document.getElementById('tezModal').classList.remove('visible');
   activeTez = null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// NETAŞ / TEZ X PAYLAŞIM CANVAS
+// ═══════════════════════════════════════════════════════════
+function openTezShare() {
+  if (!activeTez) return;
+  drawTezCanvas(activeTez);
+  document.getElementById('tezShrModal').classList.add('visible');
+}
+
+function closeTezShrModal() {
+  document.getElementById('tezShrModal').classList.remove('visible');
+}
+
+function drawTezCanvas(tez) {
+  const canvas = document.getElementById('tezShrCanvas');
+  const ctx    = canvas.getContext('2d');
+
+  // 2× çözünürlük — X'te keskin görünsün
+  const W = 1200, H = 675; // 16:9 Twitter card oranı
+  canvas.width = W; canvas.height = H;
+  canvas.style.width  = '600px';
+  canvas.style.height = '337px';
+
+  // ── ARKA PLAN ──
+  ctx.fillStyle = '#0e1220';
+  ctx.fillRect(0, 0, W, H);
+
+  // Hafif ızgara dokusu
+  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  for (let x = 0; x < W; x += 80) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+
+  // Sol şerit — altın rengi (tez ayırt edici renk)
+  const sGrad = ctx.createLinearGradient(0, 0, 0, H);
+  sGrad.addColorStop(0, '#d4a843');
+  sGrad.addColorStop(1, 'rgba(212,168,67,0)');
+  ctx.fillStyle = sGrad;
+  ctx.fillRect(0, 0, 5, H);
+
+  // ── HEADER BAR ──
+  ctx.fillStyle = '#12192e';
+  ctx.fillRect(0, 0, W, 110);
+  ctx.fillStyle = '#d4a843';
+  ctx.fillRect(0, 110, W, 2);
+
+  // Brand etiket
+  ctx.fillStyle = 'rgba(255,255,255,0.32)';
+  ctx.font = `500 ${22}px "IBM Plex Mono",monospace`;
+  ctx.fillText('BARIŞ INVESTING  ·  YATIRIM TEZİ', 48, 40);
+
+  // TICKER büyük
+  ctx.fillStyle = '#e8edf8';
+  ctx.font = `700 ${72}px "IBM Plex Serif","Georgia",serif`;
+  ctx.fillText(tez.ticker, 48, 96);
+  const tkW = ctx.measureText(tez.ticker).width;
+
+  // Şirket adı
+  ctx.fillStyle = 'rgba(255,255,255,0.42)';
+  ctx.font = `400 ${22}px "IBM Plex Mono",monospace`;
+  ctx.fillText('Netaş Telekomünikasyon A.Ş.', 48 + tkW + 18, 88);
+
+  // ── İZLE / KARAR KUTUSU ──
+  const WARN = '#f59e0b';
+  ctx.fillStyle = 'rgba(245,158,11,0.12)';
+  ctx.fillRect(W - 280, 16, 232, 76);
+  ctx.strokeStyle = WARN;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(W - 280, 16, 232, 76);
+  ctx.fillStyle = WARN;
+  ctx.fillRect(W - 280, 16, 6, 76);
+  ctx.fillStyle = WARN;
+  ctx.font = `700 ${36}px "IBM Plex Serif","Georgia",serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('İZLE', W - 164, 60);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font = `500 ${18}px "IBM Plex Mono",monospace`;
+  ctx.fillText('BEKLE — KOŞ. FIRSAT', W - 164, 82);
+  ctx.textAlign = 'left';
+
+  // ── BAŞLIK METNİ ──
+  ctx.fillStyle = '#d4a843';
+  ctx.font = `700 ${32}px "IBM Plex Serif","Georgia",serif`;
+  ctx.fillText('5G Fırsatı mı, Yoksa Tuzak mı?', 48, 150);
+
+  // ── SOL KOLON: Temel Metrikler Tablosu ──
+  const leftX = 48, rightCol = W / 2 + 16;
+  const tY = 176, rowH = 54;
+
+  const metrics = [
+    ['Güncel Fiyat',  '~60 TL',      'rgba(255,255,255,0.9)'],
+    ['Piy. Değeri',   '~3,76 Milyar TL', 'rgba(255,255,255,0.9)'],
+    ['2025 Gelir',    '12B TL  (+%31 YoY)', '#22c55e'],
+    ['2025 FAVÖK',    '307M TL (+%143 YoY)', '#22c55e'],
+    ['Net Kâr',       'Negatif  (-89M TL)', '#f05252'],
+    ['PD/Gelir',      '0.31x  (düşük çarpan)', '#22c55e'],
+  ];
+
+  // Sol başlık
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  ctx.font = `600 ${17}px "IBM Plex Mono",monospace`;
+  ctx.fillText('TEMEL FİNANSALLAR', leftX, tY - 10);
+
+  metrics.forEach(([lbl, val, clr], i) => {
+    const y = tY + i * rowH;
+    // Satır arka plan
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.01)';
+    ctx.fillRect(leftX, y, rightCol - leftX - 20, rowH - 2);
+    // Label
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.font = `400 ${17}px "IBM Plex Mono",monospace`;
+    ctx.fillText(lbl, leftX + 10, y + rowH / 2 - 2);
+    // Value
+    ctx.fillStyle = clr;
+    ctx.font = `600 ${20}px "IBM Plex Mono",monospace`;
+    ctx.textAlign = 'right';
+    ctx.fillText(val, rightCol - 30, y + rowH / 2 + 10);
+    ctx.textAlign = 'left';
+    // Ayraç
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(leftX, y + rowH); ctx.lineTo(rightCol - 20, y + rowH); ctx.stroke();
+  });
+
+  // ── ORTA AYRAÇ ──
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(W / 2, 165); ctx.lineTo(W / 2, H - 56); ctx.stroke();
+
+  // ── SAĞ KOLON: Senaryo Analizi ──
+  const scenX = rightCol, scenTitleY = tY - 10;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  ctx.font = `600 ${17}px "IBM Plex Mono",monospace`;
+  ctx.fillText('SENARYO ANALİZİ (2026)', scenX, scenTitleY);
+
+  const scenarios = [
+    { label: 'AYI',   price: '43–52 TL',  ebitda: 'FAVÖK: ~400M TL',  clr: '#f05252', bg: 'rgba(240,82,82,0.10)' },
+    { label: 'BAZ',   price: '70–85 TL',  ebitda: 'FAVÖK: ~525M TL',  clr: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
+    { label: 'BOĞA',  price: '88–105 TL', ebitda: 'FAVÖK: ~680M TL',  clr: '#22c55e', bg: 'rgba(34,197,94,0.10)' },
+  ];
+
+  const scenW = (W - scenX - 48) / 3 - 6;
+  scenarios.forEach((s, i) => {
+    const bx = scenX + i * (scenW + 8);
+    const by = tY;
+    const bh = rowH * 3 + 2;
+
+    ctx.fillStyle = s.bg; ctx.fillRect(bx, by, scenW, bh);
+    ctx.strokeStyle = s.clr + '55'; ctx.lineWidth = 1; ctx.strokeRect(bx, by, scenW, bh);
+    // Top accent
+    ctx.fillStyle = s.clr; ctx.fillRect(bx, by, scenW, 4);
+
+    ctx.fillStyle = s.clr;
+    ctx.font = `700 ${16}px "IBM Plex Mono",monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText(s.label, bx + scenW / 2, by + 26);
+
+    ctx.fillStyle = '#e8edf8';
+    ctx.font = `700 ${22}px "IBM Plex Serif","Georgia",serif`;
+    ctx.fillText(s.price, bx + scenW / 2, by + 60);
+
+    ctx.fillStyle = s.clr;
+    ctx.font = `500 ${15}px "IBM Plex Mono",monospace`;
+    ctx.fillText(s.ebitda, bx + scenW / 2, by + 84);
+    ctx.textAlign = 'left';
+  });
+
+  // ── SKOR BARLARI ──
+  const scoreY = tY + rowH * 3 + 18;
+
+  // Buffett bar
+  const barW = (W - scenX - 48 - 8) / 2 - 10;
+  const drawScoreBar = (x, y, score, max, clr, label) => {
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.font = `500 ${16}px "IBM Plex Mono",monospace`;
+    ctx.fillText(`${label}  ${score}/${max}`, x, y - 4);
+    const cellW = barW / max - 2;
+    for (let i = 0; i < max; i++) {
+      ctx.fillStyle = i < score ? clr : 'rgba(255,255,255,0.06)';
+      ctx.fillRect(x + i * (cellW + 2), y, cellW, 10);
+    }
+  };
+  drawScoreBar(scenX,          scoreY, 4, 7, '#4d8ef0', 'BUFFETT');
+  drawScoreBar(scenX + barW + 16, scoreY, 4, 7, '#e07b39', 'LYNCH');
+
+  // ── KATALIZÖR NOTLARI ──
+  const catY = scoreY + 32;
+  const cats = [
+    '✓ Turkcell Superbox — KAP\'a bildirildi',
+    '✓ 5G CapEx havuzu: 3–4 Milyar USD (2026–28)',
+    '⚠ Net kâr negatif — faiz yükü kritik engel',
+    '⚠ ZTE bağımlılığı — jeopolitik risk var',
+  ];
+  cats.forEach((c, i) => {
+    const isWarn = c.startsWith('⚠');
+    ctx.fillStyle = isWarn ? 'rgba(245,158,11,0.75)' : 'rgba(34,197,94,0.75)';
+    ctx.font = `400 ${16}px "IBM Plex Mono",monospace`;
+    ctx.fillText(c, scenX, catY + i * 26);
+  });
+
+  // ── FOOTER ──
+  ctx.fillStyle = '#0a0e1a';
+  ctx.fillRect(0, H - 56, W, 56);
+  ctx.fillStyle = '#d4a843';
+  ctx.fillRect(0, H - 56, W, 2);
+
+  // Sol: handle
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font = `500 ${20}px "IBM Plex Mono",monospace`;
+  ctx.fillText('@barisinvesting', 48, H - 20);
+
+  // Orta: tarih
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.textAlign = 'center';
+  ctx.font = `400 ${18}px "IBM Plex Mono",monospace`;
+  ctx.fillText('Nisan 2026  ·  Yatırım tavsiyesi değildir', W / 2, H - 20);
+
+  // Sağ: site
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.textAlign = 'right';
+  ctx.fillText('barisinvesting.com', W - 48, H - 20);
+  ctx.textAlign = 'left';
+}
+
+function dlTezShare() {
+  if (!activeTez) return;
+  const c = document.getElementById('tezShrCanvas');
+  const l = document.createElement('a');
+  l.download = `NETAS_yatirim_tezi_${activeTez.date?.replace(/\s/g,'_') || '2026'}.png`;
+  l.href = c.toDataURL('image/png');
+  l.click();
+  if (typeof showToast === 'function') showToast('✓ Görsel indirildi!');
+}
+
+function tweetTez() {
+  if (!activeTez) return;
+  dlTezShare();
+  const t = activeTez;
+  const text =
+`📊 BIST: $${t.ticker} — Yatırım Tezi
+
+5G Fırsatı mı, Yoksa Tuzak mı?
+
+📈 2025 Gelir: 12B TL (+%31 YoY)
+💥 FAVÖK: 307M TL (+%143 YoY)
+⚠️ Net Kâr: Hâlâ negatif
+
+Karar: İZLE (Koşullu Fırsat)
+Baz Hedef: 70–85 TL
+
+Detaylı tez 👇
+barisinvesting.com
+
+#NETAS #BIST #5G #Yatırım`;
+  setTimeout(() => {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+    closeTezShrModal();
+  }, 800);
 }
 
 // ESC ile kapat
