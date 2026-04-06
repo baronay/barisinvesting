@@ -1,642 +1,647 @@
 // /api/bist-ratios.js — Barış Investing
-// BIST Hisseleri için Çoklu Kaynak Rasyo API'si
-//
-// Kaynak önceliği:
-//   1. Google Finance (F/K ve PD/DD için en güvenilir)
-//   2. İş Yatırım scraping
-//   3. BigPara scraping
-//   4. Yahoo Finance (normalize edilmiş fallback)
-//
-// Kullanım: GET /api/bist-ratios?ticker=THYAO
-//           veya POST { ticker: "THYAO" }
-//
-// Vercel'e eklemek için:
-//   → /api/bist-ratios.js dosyasını oluştur, push et, hazır.
-//   → analyze.js'de BIST hisseleri için bu endpoint'i çağır.
+// BIST Hisseleri: Google Finance → İşYatırım → BigPara → Yahoo Formül
+// Vercel'e /api/bist-ratios.js olarak ekle
+// GET /api/bist-ratios?ticker=THYAO
 
-const CACHE = new Map();
+const CACHE     = new Map();
 const CACHE_TTL = 30 * 60 * 1000; // 30 dakika
 
-const UA_CHROME = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
-const UA_MOBILE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+// ── User-Agent'lar ──────────────────────────────────────────────
+const UA = {
+  chrome:  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  firefox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
+  safari:  'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15',
+  mobile:  'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.82 Mobile Safari/537.36',
+};
 
-// ═══════════════════════════════════════════════════════════
-// 1. GOOGLE FİNANCE
-// ═══════════════════════════════════════════════════════════
-// Google Finance BIST hisseleri için: THYAO:IST, EREGL:IST vb.
-// HTML yapısı: <div data-last-price="..."> ve tablo satırları
+const APPROX_USD_TRY = 38;
 
-async function fetchGoogleFinance(ticker) {
-  const result = { pe: null, pb: null, source: null };
-
-  // Hem masaüstü hem mobil dene — Cloudflare bypass için
-  const attempts = [
-    {
-      url: `https://www.google.com/finance/quote/${ticker}:IST`,
-      headers: {
-        'User-Agent': UA_CHROME,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Cache-Control': 'no-cache',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Upgrade-Insecure-Requests': '1',
-      }
-    },
-    {
-      url: `https://www.google.com/finance/quote/${ticker}:IST`,
-      headers: {
-        'User-Agent': UA_MOBILE,
-        'Accept': 'text/html,application/xhtml+xml,*/*;q=0.8',
-        'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8',
-      }
-    },
-    // Google Finance API endpoint (non-public ama çalışıyor)
-    {
-      url: `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${ticker}.IS&fields=trailingPE,priceToBook`,
-      headers: { 'User-Agent': UA_CHROME }
-    }
-  ];
-
-  for (const attempt of attempts) {
-    try {
-      const r = await fetch(attempt.url, {
-        headers: attempt.headers,
-        signal: AbortSignal.timeout(7000),
-        redirect: 'follow',
-      });
-
-      if (!r.ok) {
-        console.log(`[Google] ${ticker}: HTTP ${r.status}`);
-        continue;
-      }
-
-      const html = await r.text();
-      console.log(`[Google] ${ticker}: ${html.length} chars from ${attempt.url}`);
-
-      // ── Google Finance HTML parse stratejileri ──
-      // Google Finance HTML yapısı sık değişiyor, birden fazla pattern dene
-
-      // Pattern 1: JSON-LD içinde ratios
-      const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g);
-      if (jsonLdMatch) {
-        for (const block of jsonLdMatch) {
-          try {
-            const json = JSON.parse(block.replace(/<script[^>]*>|<\/script>/g, ''));
-            if (json.priceEarningsRatio || json['P/E Ratio']) {
-              result.pe = parseFloat(json.priceEarningsRatio || json['P/E Ratio']);
-              result.source = 'Google/JSON-LD';
-            }
-          } catch {}
-        }
-      }
-
-      // Pattern 2: data-* attribute'larından çek
-      // <div class="... P/E ratio ..."><span>...</span><span>4.23</span>
-      const patterns = [
-        // P/E — çeşitli Google Finance HTML versiyonları
-        { key: 'pe',  regexes: [
-          /P\/E ratio[^"]*"[^>]*>[^<]*<[^>]*>([0-9,]+\.?[0-9]*)/i,
-          /(?:Fiyat\/Kazanç|Price\/Earning|P\/E)[^0-9]*([0-9]+\.?[0-9]*)/i,
-          /"trailingPE"[^:]*:[^"]*"([0-9]+\.?[0-9]*)"/i,
-          /P\/E ratio<\/span>[^<]*<span[^>]*>([0-9]+\.?[0-9]*)/i,
-          // Google Finance data attribute
-          /data-label="P\/E ratio"[^>]*>([0-9]+\.?[0-9]*)/i,
-          // Table row format
-          /P\/E ratio<\/div>[^<]*<div[^>]*>([0-9]+\.?[0-9]*)/i,
-          // New Google Finance format (2024)
-          /YA-wl[^>]*>[^<]*<[^>]*>P\/E ratio[^<]*<[^>]*>[^<]*<[^>]*>([0-9]+\.?[0-9]*)/i,
-        ]},
-        // P/B
-        { key: 'pb',  regexes: [
-          /Price\/Book[^"]*"[^>]*>[^<]*<[^>]*>([0-9]+\.?[0-9]*)/i,
-          /(?:P\/B|Price\/Book|PD\/DD)[^0-9]*([0-9]+\.?[0-9]*)/i,
-          /"priceToBook"[^:]*:[^"]*"([0-9]+\.?[0-9]*)"/i,
-          /Price\/Book<\/span>[^<]*<span[^>]*>([0-9]+\.?[0-9]*)/i,
-          /Price\/Book<\/div>[^<]*<div[^>]*>([0-9]+\.?[0-9]*)/i,
-        ]},
-      ];
-
-      for (const { key, regexes } of patterns) {
-        if (result[key] != null) continue; // zaten bulunduysa geç
-        for (const rx of regexes) {
-          const m = html.match(rx);
-          if (m) {
-            const val = parseFloat(m[1].replace(',', '.'));
-            if (!isNaN(val) && val > 0 && val < 1000) {
-              result[key] = val;
-              result.source = result.source || 'Google/HTML';
-              console.log(`[Google] ${ticker} ${key}=${val} (regex match)`);
-              break;
-            }
-          }
-        }
-      }
-
-      // Pattern 3: Google Finance'in gömülü JS state'inden çek (en güvenilir)
-      // window.FINANCE_QUOTE_STORE veya benzeri global state
-      const storeMatch = html.match(/(?:FINANCE_QUOTE_STORE|AF_initDataCallback)[^{]*({[\s\S]{100,5000}})/);
-      if (storeMatch) {
-        try {
-          const peM = storeMatch[1].match(/"(?:pe|trailingPe|P\\u002FE)"\s*:\s*([0-9]+\.?[0-9]*)/i);
-          const pbM = storeMatch[1].match(/"(?:pb|priceToBook|P\\u002FB)"\s*:\s*([0-9]+\.?[0-9]*)/i);
-          if (peM && !result.pe) { result.pe = parseFloat(peM[1]); result.source = 'Google/Store'; }
-          if (pbM && !result.pb) { result.pb = parseFloat(pbM[1]); result.source = 'Google/Store'; }
-        } catch {}
-      }
-
-      // Başarılı sonuç aldıysak dur
-      if (result.pe != null || result.pb != null) {
-        return result;
-      }
-
-    } catch (e) {
-      console.log(`[Google] ${ticker} attempt error: ${e.message}`);
-    }
-  }
-
-  return result; // bulunamazsa null'lı döner
+// ════════════════════════════════════════════════════════════════
+// YARDIMCI: güvenli sayı parse
+// ════════════════════════════════════════════════════════════════
+function safeNum(s) {
+  if (s == null) return null;
+  const n = parseFloat(String(s).replace(',', '.').replace(/[^0-9.\-]/g, ''));
+  return isNaN(n) ? null : n;
 }
 
-// ═══════════════════════════════════════════════════════════
-// 2. İŞ YATIRIM SCRAPING
-// ═══════════════════════════════════════════════════════════
-async function fetchIsYatirim(ticker) {
-  const result = { pe: null, pb: null, roe: null, source: null };
+function inRange(v, min, max) { return v != null && v > min && v < max; }
 
+// ════════════════════════════════════════════════════════════════
+// 1. GOOGLE FİNANCE — 5 farklı parse stratejisi
+// ════════════════════════════════════════════════════════════════
+async function fetchGoogleFinance(ticker) {
+  const out = { pe: null, pb: null, peg: null, source: null };
+
+  // Google Finance URL formatları
   const urls = [
-    `https://www.isyatirim.com.tr/analiz-ve-bulten/hisse/${ticker}`,
-    `https://www.isyatirim.com.tr/_layouts/15/IsYatirim.Website/Common/Data.aspx/HisseSenetleri?hisse=${ticker}`,
+    `https://www.google.com/finance/quote/${ticker}:IST`,
+    `https://www.google.com/finance/quote/${ticker}:BIST`,
+  ];
+
+  const headerSets = [
+    // Masaüstü Chrome
+    {
+      'User-Agent':      UA.chrome,
+      'Accept':          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Sec-Fetch-Dest':  'document',
+      'Sec-Fetch-Mode':  'navigate',
+      'Sec-Fetch-Site':  'none',
+      'Sec-Fetch-User':  '?1',
+      'Upgrade-Insecure-Requests': '1',
+      'Cache-Control':   'no-cache',
+      'Pragma':          'no-cache',
+    },
+    // Firefox
+    {
+      'User-Agent':      UA.firefox,
+      'Accept':          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Connection':      'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+    },
+    // Mobil Android
+    {
+      'User-Agent':      UA.mobile,
+      'Accept':          'text/html,application/xhtml+xml,*/*;q=0.8',
+      'Accept-Language': 'tr-TR,tr;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+    },
   ];
 
   for (const url of urls) {
-    try {
-      const r = await fetch(url, {
-        headers: {
-          'User-Agent': UA_CHROME,
-          'Accept': 'text/html,application/xhtml+xml,*/*;q=0.8',
-          'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8',
-          'Referer': 'https://www.isyatirim.com.tr/',
-        },
-        signal: AbortSignal.timeout(7000),
-      });
+    for (const headers of headerSets) {
+      try {
+        const r = await fetch(url, {
+          headers,
+          signal: AbortSignal.timeout(9000),
+          redirect: 'follow',
+        });
 
+        if (!r.ok) { console.log(`[GF] ${ticker} HTTP ${r.status}`); continue; }
+
+        const html = await r.text();
+        console.log(`[GF] ${ticker}: ${html.length} chars — ${url}`);
+
+        if (html.length < 5000) { console.log(`[GF] Sayfa çok kısa, bot koruması olabilir`); continue; }
+
+        // ── Strateji 1: AF_initDataCallback gömülü JSON ──────────
+        // Google Finance tüm verileri bu callback içine gömer
+        // Format: AF_initDataCallback({key:'ds:...', data:function(){return [[...]];}})
+        const afBlocks = [...html.matchAll(/AF_initDataCallback\s*\(\s*\{[^}]*?data\s*:\s*function[^(]*\(\s*\)\s*\{return\s+([\s\S]{50,30000}?)\}\s*\}\s*\)/g)];
+        for (const blk of afBlocks) {
+          try {
+            const raw = blk[1].trim();
+            // AF block içindeki sayısal değerleri tara
+            // P/E, P/B, PEG değerleri genelde array içinde float olarak durur
+            // Tipik: [null,null,3.15,null,...] veya ["P/E ratio",3.15]
+            
+            // "P/E ratio" string'ini ara ve yakınındaki sayıyı al
+            const peIdx = raw.indexOf('P\\/E ratio') > 0 ? raw.indexOf('P\\/E ratio') : raw.indexOf('P/E ratio');
+            if (peIdx >= 0 && out.pe == null) {
+              const nearby = raw.slice(Math.max(0, peIdx - 50), peIdx + 150);
+              const nm = nearby.match(/([0-9]+\.[0-9]{1,3})/g);
+              if (nm) {
+                for (const n of nm) {
+                  const v = parseFloat(n);
+                  if (inRange(v, 0.5, 500)) { out.pe = v; console.log(`[GF AF-PE] ${ticker}: ${v}`); break; }
+                }
+              }
+            }
+
+            const pbIdx = raw.indexOf('Price\\/Book') > 0 ? raw.indexOf('Price\\/Book') :
+                          raw.indexOf('Price/Book') > 0  ? raw.indexOf('Price/Book')  : -1;
+            if (pbIdx >= 0 && out.pb == null) {
+              const nearby = raw.slice(Math.max(0, pbIdx - 50), pbIdx + 150);
+              const nm = nearby.match(/([0-9]+\.[0-9]{1,3})/g);
+              if (nm) {
+                for (const n of nm) {
+                  const v = parseFloat(n);
+                  if (inRange(v, 0.05, 50)) { out.pb = v; console.log(`[GF AF-PB] ${ticker}: ${v}`); break; }
+                }
+              }
+            }
+          } catch(e) { /* ignore parse errors */ }
+        }
+
+        // ── Strateji 2: HTML tablo satırları ─────────────────────
+        // <tr><td class="...">P/E ratio</td><td class="...">3.15</td></tr>
+        // veya <div class="P6K39c">P/E ratio</div><div class="YMlKec">3.15</div>
+        const tablePatterns = [
+          // Format: label span + value span bitişik
+          { key: 'pe',  rx: /(?:P\/E ratio|Fiyat\/Kazanç)[^<]{0,200}?(?:<[^>]+>){1,6}([0-9]+[.,][0-9]+)/ },
+          { key: 'pb',  rx: /(?:Price\/Book|F\/DD|PD\/DD)[^<]{0,200}?(?:<[^>]+>){1,6}([0-9]+[.,][0-9]+)/ },
+          { key: 'peg', rx: /(?:PEG ratio)[^<]{0,200}?(?:<[^>]+>){1,6}([0-9]+[.,][0-9]+)/ },
+        ];
+        for (const { key, rx } of tablePatterns) {
+          if (out[key] != null) continue;
+          const m = html.match(rx);
+          if (m) {
+            const v = safeNum(m[1]);
+            const maxV = key === 'pb' ? 50 : key === 'peg' ? 30 : 500;
+            if (inRange(v, 0.05, maxV)) {
+              out[key] = v;
+              out.source = out.source || 'Google/HTML';
+              console.log(`[GF HTML-${key}] ${ticker}: ${v}`);
+            }
+          }
+        }
+
+        // ── Strateji 3: JSON-LD structured data ──────────────────
+        const ldBlocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+        for (const blk of ldBlocks) {
+          try {
+            const obj = JSON.parse(blk[1]);
+            const peV = obj.priceEarningsRatio || obj['P/E Ratio'] || obj.trailingPE;
+            const pbV = obj.priceToBook || obj['Price/Book'];
+            if (peV && out.pe == null) { const v = safeNum(peV); if (inRange(v,0.5,500)) { out.pe = v; out.source='Google/LD'; } }
+            if (pbV && out.pb == null) { const v = safeNum(pbV); if (inRange(v,0.05,50))  { out.pb = v; out.source='Google/LD'; } }
+          } catch {}
+        }
+
+        // ── Strateji 4: Regex tabanlı ham sayı çıkarımı ──────────
+        // Google Finance HTML'inde veriler her zaman belirli CSS sınıflarıyla gelir
+        // class="YMlKec fxKbKc" gibi — sayı formatı: 3.15 veya 3,15
+        const cssNumPatterns = [
+          // P/E ratio context
+          { key: 'pe',  rxs: [
+            /"P\/E ratio"[^[]{0,300}\[null,null,([0-9.]+)/,
+            /P\/E\s*ratio[^>]*>[^<]*<[^>]*>([0-9]+[.,][0-9]+)/,
+            /isytiHjpZDIFc[^>]*>([0-9]+[.,][0-9]{1,3})[^0-9]/,
+            /EV-FAVOK.*?([0-9]+[.,][0-9]+).*?P\/E.*?([0-9]+[.,][0-9]+)/s,
+          ]},
+          { key: 'pb', rxs: [
+            /"Price\/Book"[^[]{0,300}\[null,null,([0-9.]+)/,
+            /Price\/Book[^>]*>[^<]*<[^>]*>([0-9]+[.,][0-9]+)/,
+          ]},
+          { key: 'peg', rxs: [
+            /"PEG ratio"[^[]{0,300}\[null,null,([0-9.]+)/,
+            /PEG\s*ratio[^>]*>[^<]*<[^>]*>([0-9]+[.,][0-9]+)/,
+          ]},
+        ];
+        for (const { key, rxs } of cssNumPatterns) {
+          if (out[key] != null) continue;
+          for (const rx of rxs) {
+            const m = html.match(rx);
+            if (m) {
+              const candidates = m.slice(1).filter(Boolean);
+              for (const c of candidates) {
+                const v = safeNum(c);
+                const maxV = key === 'pb' ? 50 : key === 'peg' ? 30 : 500;
+                if (inRange(v, 0.05, maxV)) {
+                  out[key] = v;
+                  out.source = out.source || 'Google/Regex';
+                  console.log(`[GF Regex-${key}] ${ticker}: ${v}`);
+                  break;
+                }
+              }
+              if (out[key] != null) break;
+            }
+          }
+        }
+
+        // ── Strateji 5: Sayfa içindeki tüm istatistik tablolarını tara ──
+        // Google Finance'in "About" bölümünde key stats tablosu var
+        // Satır formatı: "P/E ratio\n3.15" veya "P/E ratio3.15"
+        const aboutSection = html.match(/(?:About|Statistics|Key stats|Temel istatistikler)([\s\S]{0,8000}?)(?:Related|Benzer|Compare)/i);
+        if (aboutSection) {
+          const sec = aboutSection[1];
+          const kv = [
+            { key: 'pe',  labels: ['P/E ratio', 'Fiyat/Kazanç', 'P/E'],        max: 500 },
+            { key: 'pb',  labels: ['Price/Book', 'F/DD', 'PD/DD', 'P/B'],      max: 50  },
+            { key: 'peg', labels: ['PEG ratio', 'PEG'],                         max: 30  },
+          ];
+          for (const { key, labels, max } of kv) {
+            if (out[key] != null) continue;
+            for (const lbl of labels) {
+              const idx = sec.indexOf(lbl);
+              if (idx >= 0) {
+                const after = sec.slice(idx + lbl.length, idx + lbl.length + 120);
+                const numMatch = after.match(/([0-9]+[.,][0-9]{1,4})/);
+                if (numMatch) {
+                  const v = safeNum(numMatch[1]);
+                  if (inRange(v, 0.05, max)) {
+                    out[key] = v;
+                    out.source = out.source || 'Google/Section';
+                    console.log(`[GF Section-${key}] ${ticker}: ${v} (label:${lbl})`);
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        if (out.pe != null || out.pb != null) {
+          out.source = out.source || 'Google';
+          return out;
+        }
+
+      } catch(e) {
+        console.log(`[GF] ${ticker} fetch error: ${e.message}`);
+      }
+    }
+  }
+
+  console.log(`[GF] ${ticker}: tüm stratejiler başarısız`);
+  return out;
+}
+
+// ════════════════════════════════════════════════════════════════
+// 2. İŞ YATIRIM — Yapılandırılmış veri API'si
+// ════════════════════════════════════════════════════════════════
+async function fetchIsYatirim(ticker) {
+  const out = { pe: null, pb: null, roe: null, peg: null, source: null };
+
+  const endpoints = [
+    // Hisse özet API (JSON döner)
+    `https://www.isyatirim.com.tr/_layouts/15/IsYatirim.Website/Common/Data.aspx/HisseSenetleri?hisse=${ticker}`,
+    // Hisse detay sayfası
+    `https://www.isyatirim.com.tr/analiz-ve-bulten/hisse/${ticker}`,
+  ];
+
+  const headers = {
+    'User-Agent':      UA.chrome,
+    'Accept':          'text/html,application/json,*/*;q=0.8',
+    'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8',
+    'Referer':         'https://www.isyatirim.com.tr/',
+    'X-Requested-With': 'XMLHttpRequest',
+  };
+
+  for (const url of endpoints) {
+    try {
+      const r = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
       if (!r.ok) continue;
+
       const text = await r.text();
       console.log(`[İşYat] ${ticker}: ${text.length} chars`);
 
-      // İş Yatırım HTML pattern'leri
-      const patterns = [
-        { key: 'pe',  regexes: [
-          /F\/K[^0-9]*([0-9]+[.,][0-9]+)/i,
-          /Fiyat\/Kazanç[^0-9]*([0-9]+[.,][0-9]+)/i,
-          /"f_k"\s*:\s*"?([0-9]+\.?[0-9]*)"/i,
-          /"pe"\s*:\s*([0-9]+\.?[0-9]*)/i,
-        ]},
-        { key: 'pb',  regexes: [
-          /F\/DD[^0-9]*([0-9]+[.,][0-9]+)/i,
-          /PD\/DD[^0-9]*([0-9]+[.,][0-9]+)/i,
-          /Fiyat\/Defter[^0-9]*([0-9]+[.,][0-9]+)/i,
-          /"f_dd"\s*:\s*"?([0-9]+\.?[0-9]*)"/i,
-          /"pb"\s*:\s*([0-9]+\.?[0-9]*)/i,
-        ]},
-        { key: 'roe', regexes: [
-          /ROE[^0-9%]*%?\s*([0-9]+[.,][0-9]+)/i,
-          /"roe"\s*:\s*([0-9]+\.?[0-9]*)/i,
-        ]},
-      ];
+      // JSON yanıtı
+      if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+        try {
+          const data = JSON.parse(text);
+          const flat = JSON.stringify(data);
+          const extract = (keys) => {
+            for (const k of keys) {
+              const m = flat.match(new RegExp(`"${k}"\\s*:\\s*"?([0-9]+[.,]?[0-9]*)"?`, 'i'));
+              if (m) { const v = safeNum(m[1]); if (v != null && v > 0) return v; }
+            }
+            return null;
+          };
+          out.pe  = extract(['fk', 'f_k', 'pe', 'fiyatKazanc', 'piyasaDegerKazanc']);
+          out.pb  = extract(['fdd', 'f_dd', 'pb', 'pdDd', 'fiyatDefter']);
+          out.roe = extract(['roe', 'ozSermayeKarliligi']);
+          if (out.roe && out.roe > 3) out.roe /= 100; // yüzde → oran
+          if (out.pe || out.pb) { out.source = 'IsYatirim/JSON'; return out; }
+        } catch {}
+      }
 
-      for (const { key, regexes } of patterns) {
-        for (const rx of regexes) {
-          const m = text.match(rx);
+      // HTML scraping
+      const pairs = [
+        { key: 'pe',  labels: ['F/K', 'Fiyat/Kazanç'],        max: 300 },
+        { key: 'pb',  labels: ['F/DD', 'PD/DD', 'Fiyat/Defter'], max: 50  },
+        { key: 'roe', labels: ['ROE'],                          max: 200, pct: true },
+      ];
+      for (const { key, labels, max, pct } of pairs) {
+        for (const lbl of labels) {
+          const idx = text.indexOf(lbl);
+          if (idx < 0) continue;
+          const after = text.slice(idx + lbl.length, idx + lbl.length + 200);
+          const m = after.match(/([0-9]+[.,][0-9]+)/);
           if (m) {
-            const raw = m[1].replace(',', '.');
-            const val = parseFloat(raw);
-            if (!isNaN(val) && val > 0 && val < 500) {
-              result[key] = val;
-              // ROE genellikle yüzde olarak gelir
-              if (key === 'roe' && val > 3) result.roe = val / 100;
-              result.source = 'IsYatirim';
-              console.log(`[İşYat] ${ticker} ${key}=${val}`);
+            let v = safeNum(m[1]);
+            if (pct && v > 3) v /= 100;
+            if (inRange(v, 0.001, max)) {
+              out[key] = v;
+              out.source = 'IsYatirim/HTML';
+              console.log(`[İşYat ${key}] ${ticker}: ${v}`);
               break;
             }
           }
         }
       }
 
-      if (result.pe != null || result.pb != null) return result;
-
+      if (out.pe != null || out.pb != null) return out;
     } catch(e) {
-      console.log(`[İşYat] ${ticker} error: ${e.message}`);
+      console.log(`[İşYat] ${ticker}: ${e.message}`);
     }
   }
-
-  return result;
+  return out;
 }
 
-// ═══════════════════════════════════════════════════════════
-// 3. BİGPARA SCRAPING
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// 3. BİGPARA — Hürriyet finansal veri
+// ════════════════════════════════════════════════════════════════
 async function fetchBigPara(ticker) {
-  const result = { pe: null, pb: null, roe: null, source: null };
-
+  const out = { pe: null, pb: null, roe: null, source: null };
   const urls = [
     `https://bigpara.hurriyet.com.tr/hisse/${ticker.toLowerCase()}/hisse-senedi/`,
-    `https://bigpara.hurriyet.com.tr/hisse/${ticker.toLowerCase()}/`,
+    `https://bigpara.hurriyet.com.tr/hisse/${ticker.toLowerCase()}/temel-veriler/`,
   ];
 
   for (const url of urls) {
     try {
       const r = await fetch(url, {
         headers: {
-          'User-Agent': UA_CHROME,
-          'Accept': 'text/html,application/xhtml+xml,*/*;q=0.8',
+          'User-Agent':      UA.chrome,
+          'Accept':          'text/html,*/*;q=0.8',
           'Accept-Language': 'tr-TR,tr;q=0.9',
-          'Referer': 'https://bigpara.hurriyet.com.tr/',
+          'Referer':         'https://bigpara.hurriyet.com.tr/',
         },
-        signal: AbortSignal.timeout(7000),
+        signal: AbortSignal.timeout(8000),
       });
-
       if (!r.ok) continue;
       const text = await r.text();
       console.log(`[BigPara] ${ticker}: ${text.length} chars`);
 
-      const patterns = [
-        { key: 'pe',  regexes: [
-          /(?:Fiyat\/Kazanç|F\/K|FD\/Kazanç)[^<]*<[^>]+>\s*([0-9]+[.,][0-9]+)/i,
-          /"pe"\s*:\s*([0-9]+\.?[0-9]*)/i,
-          /piyasa-deger-kazanc[^"]*"[^>]*>([0-9]+[.,][0-9]+)/i,
-        ]},
-        { key: 'pb',  regexes: [
-          /(?:Piy\.Değer\/Defter|F\/DD|PD\/DD|Fiyat\/Defter)[^<]*<[^>]+>\s*([0-9]+[.,][0-9]+)/i,
-          /"pb"\s*:\s*([0-9]+\.?[0-9]*)/i,
-        ]},
-        { key: 'roe', regexes: [
-          /ROE[^<]*<[^>]+>\s*%?\s*([0-9]+[.,][0-9]+)/i,
-          /"roe"\s*:\s*([0-9]+\.?[0-9]*)/i,
-        ]},
+      const pairs = [
+        { key: 'pe',  labels: ['F/K', 'Fiyat/Kazanç', 'Piyasa Değ./Kazanç'], max: 300 },
+        { key: 'pb',  labels: ['F/DD', 'PD/DD', 'Piyasa Değ./Defter'],        max: 50  },
+        { key: 'roe', labels: ['ROE', 'Özsermaye Kârlılığı'],                  max: 200, pct: true },
       ];
-
-      for (const { key, regexes } of patterns) {
-        for (const rx of regexes) {
-          const m = text.match(rx);
+      for (const { key, labels, max, pct } of pairs) {
+        for (const lbl of labels) {
+          const idx = text.indexOf(lbl);
+          if (idx < 0) continue;
+          const after = text.slice(idx + lbl.length, idx + lbl.length + 250);
+          const m = after.match(/([0-9]+[.,][0-9]+)/);
           if (m) {
-            const val = parseFloat(m[1].replace(',', '.'));
-            if (!isNaN(val) && val > 0 && val < 500) {
-              result[key] = val;
-              if (key === 'roe' && val > 3) result.roe = val / 100;
-              result.source = 'BigPara';
-              console.log(`[BigPara] ${ticker} ${key}=${val}`);
+            let v = safeNum(m[1]);
+            if (pct && v > 3) v /= 100;
+            if (inRange(v, 0.001, max)) {
+              out[key] = v;
+              out.source = 'BigPara';
+              console.log(`[BigPara ${key}] ${ticker}: ${v}`);
               break;
             }
           }
         }
       }
-
-      if (result.pe != null || result.pb != null) return result;
-
+      if (out.pe != null || out.pb != null) return out;
     } catch(e) {
-      console.log(`[BigPara] ${ticker} error: ${e.message}`);
+      console.log(`[BigPara] ${ticker}: ${e.message}`);
     }
   }
-
-  return result;
+  return out;
 }
 
-// ═══════════════════════════════════════════════════════════
-// 4. YAHOO FİNANCE (AKILLI NORMALİZASYON)
-// ═══════════════════════════════════════════════════════════
-// Yahoo BIST verileri için USD/TRY birim uyumsuzluğunu gider
-async function fetchYahooNormalized(ticker) {
-  const result = { pe: null, pb: null, roe: null, marketCap: null, source: null };
+// ════════════════════════════════════════════════════════════════
+// 4. YAHOO FİNANCE — Akıllı normalize + formül fallback
+// ════════════════════════════════════════════════════════════════
+function normalizeToTRY(rawVal, marketCap, label) {
+  if (rawVal == null || marketCap == null) return rawVal;
+  const ratio = Math.abs(rawVal) / marketCap;
+  console.log(`[Norm] ${label}: val=${rawVal.toExponential(2)} mc=${marketCap.toExponential(2)} ratio=${ratio.toFixed(5)}`);
 
-  const APPROX_USD_TRY = 38; // konservatif tahmin
+  // 0.05x - 100x arası = makul
+  if (ratio >= 0.05 && ratio <= 100) return rawVal;
+
+  // Çok küçük → USD gelmiş
+  if (ratio < 0.05) {
+    const asTRY = rawVal * APPROX_USD_TRY;
+    if (Math.abs(asTRY) / marketCap >= 0.05) { console.log(`[Norm] ${label} × ${APPROX_USD_TRY}`); return asTRY; }
+    const asTRY_k = rawVal * 1000 * APPROX_USD_TRY;
+    if (Math.abs(asTRY_k) / marketCap >= 0.05) { console.log(`[Norm] ${label} ×1000×${APPROX_USD_TRY}`); return asTRY_k; }
+  }
+  // Çok büyük → binlik TL
+  if (ratio > 100) {
+    const div1k = rawVal / 1000;
+    if (Math.abs(div1k) / marketCap <= 100) { console.log(`[Norm] ${label} ÷1000`); return div1k; }
+  }
+  return rawVal;
+}
+
+async function fetchYahooNormalized(ticker) {
+  const out = { pe: null, pb: null, peg: null, roe: null, marketCap: null, currentPrice: null, source: null };
 
   let crumb = null, cookie = null;
   try {
     const r1 = await fetch('https://fc.yahoo.com', {
-      headers: { 'User-Agent': UA_CHROME }, redirect: 'follow',
-      signal: AbortSignal.timeout(5000)
+      headers: { 'User-Agent': UA.chrome }, redirect: 'follow', signal: AbortSignal.timeout(5000),
     });
     cookie = (r1.headers.get('set-cookie') || '').split(';')[0] || null;
     if (cookie) {
       const r2 = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', {
-        headers: { 'User-Agent': UA_CHROME, 'Cookie': cookie, 'Accept': 'text/plain' },
-        signal: AbortSignal.timeout(5000)
+        headers: { 'User-Agent': UA.chrome, 'Cookie': cookie, 'Accept': 'text/plain' },
+        signal: AbortSignal.timeout(5000),
       });
       if (r2.ok) crumb = (await r2.text()).trim();
     }
   } catch {}
 
   const cs = crumb ? `&crumb=${encodeURIComponent(crumb)}` : '';
-  const yhTicker = `${ticker}.IS`;
-  const headers = {
-    'User-Agent': UA_CHROME,
-    'Accept': 'application/json',
-    'Referer': 'https://finance.yahoo.com/',
-    ...(cookie ? { 'Cookie': cookie } : {}),
-  };
+  const yt = `${ticker}.IS`;
+  const h  = { 'User-Agent': UA.chrome, 'Accept': 'application/json', 'Referer': 'https://finance.yahoo.com/', ...(cookie ? {'Cookie': cookie} : {}) };
+  const f  = v => v?.raw ?? null;
 
   try {
-    // v10: quoteSummary ile hem istatistikler hem bilanço
-    const modules = 'defaultKeyStatistics,financialData,balanceSheetHistory,incomeStatementHistory';
-    const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(yhTicker)}?modules=${modules}${cs}`;
-    const r = await fetch(url, { headers, signal: AbortSignal.timeout(10000) });
-    if (!r.ok) throw new Error(`Yahoo v10: ${r.status}`);
-
-    const j = await r.json();
-    const raw = j?.quoteSummary?.result?.[0];
-    if (!raw) throw new Error('No result');
-
-    const ks  = raw.defaultKeyStatistics || {};
-    const fd  = raw.financialData || {};
-    const bsh = raw.balanceSheetHistory || {};
-    const ish = raw.incomeStatementHistory || {};
-    const f   = v => v?.raw ?? null;
-
-    // Piyasa değeri v7'den gelir, onu da al
-    const qUrl = `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(yhTicker)}&fields=marketCap,regularMarketPrice,currency${cs}`;
-    const qr = await fetch(qUrl, { headers, signal: AbortSignal.timeout(8000) });
-    let marketCap = null, currentPrice = null;
+    // Piyasa değeri + fiyat (v7)
+    const qr = await fetch(
+      `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(yt)}&fields=marketCap,regularMarketPrice,currency,trailingPE,priceToBook,epsTrailingTwelveMonths,pegRatio${cs}`,
+      { headers: h, signal: AbortSignal.timeout(8000) }
+    );
     if (qr.ok) {
       const qj = await qr.json();
-      const q = qj?.quoteResponse?.result?.[0];
-      marketCap    = q?.marketCap    ?? null; // TRY bazında
-      currentPrice = q?.regularMarketPrice ?? null;
-    }
+      const q  = qj?.quoteResponse?.result?.[0];
+      if (q) {
+        out.marketCap    = q.marketCap    ?? null;
+        out.currentPrice = q.regularMarketPrice ?? null;
+        // PE: 0.5-100 arasındaysa güven
+        const rawPE = q.trailingPE;
+        if (rawPE != null && inRange(rawPE, 0.5, 100)) out.pe = parseFloat(rawPE.toFixed(2));
+        // PB: 0.05-30 arasındaysa güven
+        const rawPB = q.priceToBook;
+        if (rawPB != null && inRange(rawPB, 0.05, 30)) out.pb = parseFloat(rawPB.toFixed(2));
+        // PEG
+        const rawPEG = q.pegRatio;
+        if (rawPEG != null && inRange(rawPEG, 0.01, 20)) out.peg = parseFloat(rawPEG.toFixed(2));
 
-    result.marketCap = marketCap;
-
-    // ── Bilanço verilerini çek ──
-    const sheets = bsh.balanceSheetStatements || [];
-    let equity = null;
-    if (sheets.length > 0) {
-      const lat = sheets[0];
-      const se  = f(lat.totalStockholderEquity);
-      const ta  = f(lat.totalAssets);
-      const tl  = f(lat.totalLiab);
-
-      console.log(`[Yahoo Debug] ${ticker}: MC=${marketCap?.toExponential(3)} SE=${se?.toExponential(3)} TA=${ta?.toExponential(3)} TL=${tl?.toExponential(3)}`);
-
-      // Birim tespiti — özsermayeyi normalize et
-      if (se != null && marketCap) {
-        equity = normalizeEquity(se, marketCap, ticker);
-      } else if (ta != null && tl != null && marketCap) {
-        const rawEquity = ta - tl;
-        if (rawEquity > 0) {
-          equity = normalizeEquity(rawEquity, marketCap, ticker);
-        }
+        out.source = 'Yahoo/v7';
+        console.log(`[Yahoo v7] ${ticker}: PE=${out.pe} PB=${out.pb} PEG=${out.peg} MC=${out.marketCap?.toExponential(3)}`);
       }
     }
 
-    // PE: önce Yahoo trailingPE dene, sonra formül
-    const yahooPE = f(ks.trailingPE) ?? f(ks.forwardPE);
-    if (yahooPE != null && yahooPE > 0.5 && yahooPE <= 100) {
-      result.pe = parseFloat(yahooPE.toFixed(2));
-      result.source = 'Yahoo/PE';
-    }
+    // Bilanço + gelir tablosu (v10) — formül için
+    const v10 = await fetch(
+      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(yt)}?modules=defaultKeyStatistics,financialData,balanceSheetHistory,incomeStatementHistory${cs}`,
+      { headers: h, signal: AbortSignal.timeout(10000) }
+    );
+    if (v10.ok) {
+      const vj  = await v10.json();
+      const raw = vj?.quoteSummary?.result?.[0];
+      if (raw) {
+        const ks  = raw.defaultKeyStatistics    || {};
+        const fd  = raw.financialData           || {};
+        const bsh = raw.balanceSheetHistory     || {};
+        const ish = raw.incomeStatementHistory  || {};
 
-    // PE Formül 1: MarketCap / NetIncome (en güvenilir BIST için)
-    if (!result.pe && marketCap) {
-      const stmts = ish.incomeStatementHistory || [];
-      if (stmts.length > 0) {
-        const niRaw = f(stmts[0].netIncome);
-        if (niRaw != null && niRaw !== 0) {
-          const niNorm = normalizeEquity(Math.abs(niRaw), marketCap, ticker);
-          if (niNorm > 0) {
-            const peCalc = marketCap / niNorm;
-            console.log(`[Yahoo PE Formül] MC=${marketCap.toExponential(3)} / NI(norm)=${niNorm.toExponential(3)} = ${peCalc.toFixed(2)}`);
-            if (peCalc > 0.5 && peCalc < 150) {
-              result.pe = parseFloat(peCalc.toFixed(2));
-              result.source = (result.source || '') + '+PE-formül(MC/NI)';
+        const MC = out.marketCap;
+
+        // ── Özsermaye (normalize edilmiş) ──
+        const sheets = bsh.balanceSheetStatements || [];
+        let equity = null;
+        if (sheets.length > 0) {
+          const lat = sheets[0];
+          const se  = f(lat.totalStockholderEquity);
+          const ta  = f(lat.totalAssets);
+          const tl  = f(lat.totalLiab);
+          const seN = MC ? normalizeToTRY(se, MC, 'SE') : se;
+          const taN = MC ? normalizeToTRY(ta, MC, 'TA') : ta;
+          const tlN = MC ? normalizeToTRY(tl, MC, 'TL') : tl;
+          if (seN != null && seN > 0) equity = seN;
+          else if (taN != null && tlN != null && taN - tlN > 0) equity = taN - tlN;
+          console.log(`[Yahoo Equity] ${ticker}: SE=${seN?.toExponential(3)} equity=${equity?.toExponential(3)}`);
+        }
+
+        // ── PB formül: MC / Özsermaye ──
+        if (out.pb == null && equity && MC) {
+          const pbCalc = MC / equity;
+          console.log(`[Yahoo PB Formül] ${ticker}: MC/EQ = ${MC.toExponential(3)} / ${equity.toExponential(3)} = ${pbCalc.toFixed(3)}`);
+          if (inRange(pbCalc, 0.05, 25)) {
+            out.pb = parseFloat(pbCalc.toFixed(2));
+            out.source = (out.source||'') + '+PB-formül';
+          }
+        }
+
+        // ── Net kâr (normalize) ──
+        const stmts = ish.incomeStatementHistory || [];
+        let netIncome = null;
+        if (stmts.length > 0) {
+          const niRaw = f(stmts[0].netIncome);
+          netIncome = MC ? normalizeToTRY(niRaw, MC, 'NI') : niRaw;
+          console.log(`[Yahoo NI] ${ticker}: niRaw=${niRaw?.toExponential(3)} niNorm=${netIncome?.toExponential(3)}`);
+        }
+
+        // ── PE formül: MC / Net Kâr ──
+        if (out.pe == null && netIncome && MC && netIncome > 0) {
+          const peCalc = MC / netIncome;
+          console.log(`[Yahoo PE Formül] ${ticker}: MC/NI = ${peCalc.toFixed(2)}`);
+          if (inRange(peCalc, 0.5, 150)) {
+            out.pe = parseFloat(peCalc.toFixed(2));
+            out.source = (out.source||'') + '+PE-MC/NI';
+          }
+        }
+
+        // ── PE formül 2: Fiyat / EPS ──
+        if (out.pe == null && out.currentPrice) {
+          const epsRaw = f(ks.trailingEps);
+          if (epsRaw != null && epsRaw !== 0) {
+            const epsNorm = Math.abs(epsRaw) < 20 ? epsRaw * APPROX_USD_TRY : epsRaw;
+            const peEps = out.currentPrice / epsNorm;
+            console.log(`[Yahoo PE EPS] ${ticker}: ${out.currentPrice} / ${epsNorm.toFixed(2)} = ${peEps.toFixed(2)}`);
+            if (inRange(peEps, 0.5, 150)) {
+              out.pe = parseFloat(peEps.toFixed(2));
+              out.source = (out.source||'') + '+PE-EPS';
             }
           }
         }
-      }
-    }
 
-    // PE Formül 2: Fiyat / EPS
-    if (!result.pe && currentPrice) {
-      const eps = f(ks.trailingEps);
-      if (eps != null && eps !== 0) {
-        // EPS çok küçükse USD → TRY çevir
-        const epsNorm = Math.abs(eps) < 20 ? eps * APPROX_USD_TRY : eps;
-        if (epsNorm > 0 && currentPrice > 0) {
-          const peEps = currentPrice / epsNorm;
-          console.log(`[Yahoo PE EPS] Fiyat=${currentPrice} / EPS(norm)=${epsNorm.toFixed(2)} = ${peEps.toFixed(2)}`);
-          if (peEps > 0.5 && peEps < 150) {
-            result.pe = parseFloat(peEps.toFixed(2));
-            result.source = (result.source || '') + '+PE-formül(EPS)';
+        // ── PEG: PE / Büyüme oranı ──
+        if (out.peg == null && out.pe != null) {
+          const egrRaw = f(ks.earningsGrowth) ?? f(fd.earningsGrowth) ?? f(fd.revenueGrowth);
+          if (egrRaw != null && egrRaw > 0) {
+            const egr = Math.abs(egrRaw) > 5 ? egrRaw / 100 : egrRaw; // % → oran
+            const peg = out.pe / (egr * 100);
+            if (inRange(peg, 0.01, 20)) {
+              out.peg = parseFloat(peg.toFixed(2));
+              out.source = (out.source||'') + '+PEG-formül';
+              console.log(`[Yahoo PEG] ${ticker}: PE=${out.pe} / büyüme=%${(egr*100).toFixed(1)} = ${out.peg}`);
+            }
           }
         }
-      }
-    }
 
-    // PB: Yahoo'yu kesinlikle kullanma, formülle hesapla
-    if (equity && equity > 0 && marketCap) {
-      const pbCalc = marketCap / equity;
-      console.log(`[Yahoo Norm] ${ticker}: PD/DD = ${marketCap.toExponential(3)} / ${equity.toExponential(3)} = ${pbCalc.toFixed(3)}`);
-      if (pbCalc > 0.1 && pbCalc < 25) {
-        result.pb = parseFloat(pbCalc.toFixed(2));
-        result.pbEquity = equity;
-        result.source = result.source || 'Yahoo/Formül';
-        result.source += '+PD/DD-formül';
-      }
-    }
-
-    // ROE
-    const roeRaw = f(fd.returnOnEquity);
-    if (roeRaw != null && Math.abs(roeRaw) < 5) {
-      result.roe = roeRaw;
-    } else if (equity && equity > 0) {
-      const stmts = ish.incomeStatementHistory || [];
-      if (stmts.length > 0) {
-        const ni = f(stmts[0].netIncome);
-        if (ni != null) {
-          const roeCalc = ni / equity;
-          if (Math.abs(roeCalc) < 3) result.roe = parseFloat(roeCalc.toFixed(4));
+        // ── ROE ──
+        const roeRaw = f(fd.returnOnEquity);
+        if (roeRaw != null && Math.abs(roeRaw) < 5) out.roe = roeRaw;
+        else if (equity && netIncome) {
+          const roeCalc = netIncome / equity;
+          if (Math.abs(roeCalc) < 3) out.roe = parseFloat(roeCalc.toFixed(4));
         }
       }
     }
-
   } catch(e) {
-    console.log(`[Yahoo] ${ticker} error: ${e.message}`);
+    console.log(`[Yahoo] ${ticker}: ${e.message}`);
   }
 
-  return result;
+  return out;
 }
 
-// ── Özsermaye birim normalizasyonu ──
-function normalizeEquity(rawEquity, marketCap, ticker) {
-  const APPROX_USD_TRY = 38;
-  const ratio = rawEquity / marketCap;
-
-  console.log(`[Normalize] ${ticker}: equity=${rawEquity.toExponential(3)} mc=${marketCap.toExponential(3)} ratio=${ratio.toFixed(4)}`);
-
-  // Makul aralık: özsermaye MC'nin %5'i ile 20 katı arasında
-  if (ratio >= 0.05 && ratio <= 20) return rawEquity;
-
-  // Çok küçük → USD gelmiş
-  if (ratio < 0.05) {
-    const asTRY = rawEquity * APPROX_USD_TRY;
-    const ratioTRY = asTRY / marketCap;
-    if (ratioTRY >= 0.05 && ratioTRY <= 20) {
-      console.log(`[Normalize] ${ticker}: USD→TRY ×${APPROX_USD_TRY} → ${asTRY.toExponential(3)}`);
-      return asTRY;
-    }
-    // Binlik USD
-    const asTRY_k = rawEquity * 1000 * APPROX_USD_TRY;
-    const ratioKU = asTRY_k / marketCap;
-    if (ratioKU >= 0.05 && ratioKU <= 20) {
-      console.log(`[Normalize] ${ticker}: binUSD→TRY ×${1000 * APPROX_USD_TRY} → ${asTRY_k.toExponential(3)}`);
-      return asTRY_k;
-    }
-  }
-
-  // Çok büyük → binlik TL
-  if (ratio > 20) {
-    const div1k = rawEquity / 1000;
-    if (div1k / marketCap >= 0.05 && div1k / marketCap <= 20) {
-      console.log(`[Normalize] ${ticker}: ÷1000 → ${div1k.toExponential(3)}`);
-      return div1k;
-    }
-  }
-
-  console.log(`[Normalize] ${ticker}: düzeltilemedi, ham değer kullanılıyor`);
-  return rawEquity;
-}
-
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
 // ANA ORKESTRASYUN
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
 async function getBISTRatios(ticker) {
   ticker = ticker.toUpperCase().trim();
   const cacheKey = `bist:${ticker}`;
 
-  // Cache kontrolü
   const cached = CACHE.get(cacheKey);
   if (cached && Date.now() - cached.ts < CACHE_TTL) {
-    console.log(`[Cache] ${ticker} cache hit`);
+    console.log(`[Cache HIT] ${ticker}`);
     return cached.data;
   }
 
-  const final = {
-    ticker,
-    pe:          null,
-    pb:          null,
-    roe:         null,
-    marketCap:   null,
-    source_pe:   null,
-    source_pb:   null,
-    sources_tried: [],
-    debug:       {},
-    ts:          new Date().toISOString(),
-  };
+  console.log(`\n${'═'.repeat(60)}\n[BIST Ratios] ${ticker} — sorgu başlıyor\n${'═'.repeat(60)}`);
 
-  // ── Paralel olarak birden fazla kaynağı dene ──
-  console.log(`\n${'═'.repeat(50)}\n[BIST Ratios] ${ticker} — sorgu başlıyor\n${'═'.repeat(50)}`);
-
-  const [googleResult, isYatResult, bigParaResult, yahooResult] = await Promise.allSettled([
+  // Paralel çek
+  const [gf, iy, bp, yh] = await Promise.allSettled([
     fetchGoogleFinance(ticker),
     fetchIsYatirim(ticker),
     fetchBigPara(ticker),
     fetchYahooNormalized(ticker),
-  ]);
+  ]).then(rs => rs.map(r => r.status === 'fulfilled' ? r.value : {}));
 
-  const google  = googleResult.status  === 'fulfilled' ? googleResult.value  : {};
-  const isYat   = isYatResult.status   === 'fulfilled' ? isYatResult.value   : {};
-  const bigPara = bigParaResult.status === 'fulfilled' ? bigParaResult.value : {};
-  const yahoo   = yahooResult.status   === 'fulfilled' ? yahooResult.value   : {};
+  const debug = { google: gf, isYat: iy, bigPara: bp, yahoo: yh };
+  console.log('[Debug]', JSON.stringify({ google: {pe:gf.pe, pb:gf.pb, peg:gf.peg}, isYat: {pe:iy.pe, pb:iy.pb}, bigPara: {pe:bp.pe, pb:bp.pb}, yahoo: {pe:yh.pe, pb:yh.pb, peg:yh.peg} }));
 
-  // Debug bilgisi
-  final.debug = {
-    google:  { pe: google.pe,  pb: google.pb,  source: google.source },
-    isYat:   { pe: isYat.pe,   pb: isYat.pb,   source: isYat.source },
-    bigPara: { pe: bigPara.pe, pb: bigPara.pb, source: bigPara.source },
-    yahoo:   { pe: yahoo.pe,   pb: yahoo.pb,   pbEquity: yahoo.pbEquity, source: yahoo.source },
+  // Öncelik sırası: Google > İşYat > BigPara > Yahoo
+  function pick(key, min, max) {
+    for (const src of [
+      { d: gf, name: 'Google'   },
+      { d: iy, name: 'IsYatirim' },
+      { d: bp, name: 'BigPara'  },
+      { d: yh, name: 'Yahoo'    },
+    ]) {
+      const v = src.d[key];
+      if (v != null && inRange(v, min, max)) return { val: v, src: src.name };
+    }
+    return { val: null, src: null };
+  }
+
+  const pe  = pick('pe',  0.3,  500);
+  const pb  = pick('pb',  0.03,  30);
+  const peg = pick('peg', 0.01,  20);
+  const roe = pick('roe', -5,     5);
+
+  const final = {
+    ticker,
+    pe:        pe.val,  source_pe:  pe.src,
+    pb:        pb.val,  source_pb:  pb.src,
+    peg:       peg.val, source_peg: peg.src,
+    roe:       roe.val, source_roe: roe.src,
+    marketCap:   yh.marketCap    ?? null,
+    currentPrice: yh.currentPrice ?? null,
+    debug,
+    signals: {
+      pe:  pe.val  == null ? 'N/A' : pe.val  < 10 ? 'ucuz' : pe.val  < 20 ? 'adil' : pe.val  < 35 ? 'dikkat' : 'pahalı',
+      pb:  pb.val  == null ? 'N/A' : pb.val  < 1  ? 'çok ucuz' : pb.val < 2 ? 'ucuz' : pb.val < 4 ? 'adil' : 'pahalı',
+      peg: peg.val == null ? 'N/A' : peg.val < 1  ? 'ucuz' : peg.val < 1.5 ? 'adil' : 'pahalı',
+    },
+    ts: new Date().toISOString(),
   };
 
-  final.marketCap = yahoo.marketCap;
+  console.log(`[BIST Final] ${ticker}: PE=${final.pe}(${final.source_pe}) PB=${final.pb}(${final.source_pb}) PEG=${final.peg}(${final.source_peg}) ROE=${final.roe}`);
 
-  // ── PE (F/K) — Öncelik: Google > İşYat > BigPara > Yahoo ──
-  // PE için Yahoo'ya da güvenebiliriz (pb kadar bozuk değil)
-  const peSources = [
-    { val: google.pe,  src: 'Google' },
-    { val: isYat.pe,  src: 'IsYatirim' },
-    { val: bigPara.pe, src: 'BigPara' },
-    { val: yahoo.pe,   src: 'Yahoo' },
-  ];
-  for (const { val, src } of peSources) {
-    if (val != null && val > 0 && val < 200) {
-      final.pe       = parseFloat(val.toFixed(2));
-      final.source_pe = src;
-      final.sources_tried.push(src);
-      break;
-    }
-  }
-
-  // ── PB (PD/DD) — Öncelik: Google > İşYat > BigPara > Yahoo/Formül ──
-  // PB için Yahoo HAM değerini kesinlikle kullanma, sadece Yahoo/Formül kabul et
-  const pbSources = [
-    { val: google.pb,  src: 'Google' },
-    { val: isYat.pb,  src: 'IsYatirim' },
-    { val: bigPara.pb, src: 'BigPara' },
-    { val: yahoo.pb,   src: yahoo.source ? yahoo.source : 'Yahoo/Formül' },
-  ];
-  for (const { val, src } of pbSources) {
-    if (val != null && val > 0.05 && val < 30) {
-      final.pb       = parseFloat(val.toFixed(2));
-      final.source_pb = src;
-      if (!final.sources_tried.includes(src)) final.sources_tried.push(src);
-      break;
-    }
-  }
-
-  // ROE
-  const roeSources = [google, isYat, bigPara, yahoo];
-  for (const src of roeSources) {
-    if (src.roe != null && Math.abs(src.roe) < 3) {
-      final.roe = parseFloat(src.roe.toFixed(4));
-      break;
-    }
-  }
-
-  // Sinyal hesapla (UI'da kullanmak için)
-  final.signals = {
-    pe_signal: sigPE(final.pe),
-    pb_signal: sigPB(final.pb),
-  };
-
-  console.log(`\n[BIST Final] ${ticker}: PE=${final.pe}(${final.source_pe}) PD/DD=${final.pb}(${final.source_pb}) ROE=${final.roe}`);
-
-  // Cache'e yaz
   CACHE.set(cacheKey, { data: final, ts: Date.now() });
-  if (CACHE.size > 200) CACHE.delete(CACHE.keys().next().value);
+  if (CACHE.size > 300) CACHE.delete(CACHE.keys().next().value);
 
   return final;
 }
 
-function sigPE(v) {
-  if (v == null) return 'N/A';
-  if (v < 10) return 'ucuz';
-  if (v < 20) return 'adil';
-  if (v < 35) return 'dikkat';
-  return 'pahalı';
-}
-function sigPB(v) {
-  if (v == null) return 'N/A';
-  if (v < 1)   return 'çok ucuz';
-  if (v < 2)   return 'ucuz';
-  if (v < 4)   return 'adil';
-  if (v < 8)   return 'pahalı';
-  return 'çok pahalı';
-}
-
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
 // VERCEL HANDLER
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -644,13 +649,13 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const ticker = req.query?.ticker || req.body?.ticker;
-  if (!ticker) return res.status(400).json({ error: 'ticker parametresi zorunlu' });
+  if (!ticker) return res.status(400).json({ error: 'ticker parametresi zorunlu. Örnek: ?ticker=THYAO' });
 
   try {
     const data = await getBISTRatios(ticker);
     return res.status(200).json(data);
   } catch(e) {
-    console.error('[BIST Ratios Error]', e.message);
+    console.error('[Handler Error]', e.message);
     return res.status(500).json({ error: e.message, ticker });
   }
 }
