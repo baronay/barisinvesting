@@ -1550,6 +1550,24 @@ body{
   font-size: 16px; color: var(--text2); margin-bottom: 6px;
 }
 .tez-empty-sub { font-size: 11px; color: var(--muted); }
+
+/* ── TEZ METRİK SATIRI ── */
+.tez-metric-item{
+  background:var(--surface2);
+  padding:10px 12px;
+}
+.tez-metric-lbl{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:3px;
+}
+.tez-metric-val{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13px;font-weight:600;color:var(--text);
+}
+/* Modal max-height scroll */
+.tez-modal-box{max-height:92vh;display:flex;flex-direction:column;}
+.tez-modal-body{overflow-y:auto;flex:1;}
 </style>
 <body>
 <div id="globalToast"><span class="toast-dot"></span><span class="toast-msg"></span></div>
@@ -1656,68 +1674,88 @@ body{
 <!-- ══ TEZ DETAY MODAL ══ -->
 <div class="tez-modal" id="tezModal" onclick="if(event.target===this)closeTezModal()">
   <div class="tez-modal-box">
+
+    <!-- Header -->
     <div class="tez-modal-hdr">
-      <div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
           <span class="tez-ticker" id="tezModalTicker">—</span>
           <span class="tez-exchange" id="tezModalExchange">—</span>
-          <span id="tezModalTag" class="tez-tag al">AL</span>
-          <span class="tez-date" id="tezModalDate">—</span>
+          <span id="tezModalTag" class="tez-tag izle">İZLE</span>
+          <span class="tez-date" id="tezModalDate" style="margin-left:auto">—</span>
         </div>
-        <div class="tez-title" id="tezModalTitle" style="font-size:20px">—</div>
+        <div class="tez-title" id="tezModalTitle" style="font-size:20px;line-height:1.3">—</div>
       </div>
-      <button class="tez-modal-close" onclick="closeTezModal()">✕</button>
+      <button class="tez-modal-close" onclick="closeTezModal()" style="margin-left:12px">✕</button>
     </div>
 
     <div class="tez-modal-body">
-      <!-- Hedef fiyat kartları -->
-      <div class="tez-modal-targets">
+
+      <!-- Buffett / Lynch skorları -->
+      <div id="tezModalScores"></div>
+
+      <!-- Temel metrikler grid -->
+      <div id="tezModalMetrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-bottom:16px"></div>
+
+      <!-- Hedef fiyat / getiri kartları -->
+      <div class="tez-modal-targets" style="margin-bottom:16px">
         <div class="tez-target-card">
-          <div class="tez-target-label">Hedef Fiyat</div>
+          <div class="tez-target-label">Baz Hedef</div>
           <div class="tez-target-val" id="tezTargetPrice">—</div>
-          <div class="tez-target-sub">12 aylık</div>
+          <div class="tez-target-sub" id="tezHorizon">—</div>
         </div>
         <div class="tez-target-card">
-          <div class="tez-target-label">Mevcut Fiyat</div>
+          <div class="tez-target-label">Güncel Fiyat</div>
           <div class="tez-target-val" id="tezCurrentPrice">—</div>
           <div class="tez-target-sub">Tez tarihi</div>
         </div>
         <div class="tez-target-card">
           <div class="tez-target-label">Potansiyel</div>
-          <div class="tez-target-val" style="color:var(--success)" id="tezUpside">—</div>
-          <div class="tez-target-sub" id="tezHorizon">—</div>
+          <div class="tez-target-val" style="color:var(--success);font-size:13px" id="tezUpside">—</div>
+          <div class="tez-target-sub">Senaryo bazlı</div>
         </div>
       </div>
 
-      <!-- Tez metni -->
-      <div class="tez-modal-section" style="margin-top:20px">
+      <!-- Senaryo analizi -->
+      <div class="tez-modal-section">
+        <div class="tez-modal-section-title">Senaryo Analizi (2026 Yıl Sonu)</div>
+        <div id="tezModalScenarios" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      </div>
+
+      <!-- Yatırım tezi -->
+      <div class="tez-modal-section">
         <div class="tez-modal-section-title">Yatırım Tezi</div>
         <div class="tez-modal-text" id="tezModalThesis">—</div>
       </div>
 
       <!-- Katalizörler -->
       <div class="tez-modal-section">
-        <div class="tez-modal-section-title">Katalizörler</div>
+        <div class="tez-modal-section-title">Katalizörler & Takvim</div>
         <div class="tez-modal-text" id="tezModalCat">—</div>
       </div>
 
       <!-- Riskler -->
       <div class="tez-modal-section">
-        <div class="tez-modal-section-title">Riskler</div>
+        <div class="tez-modal-section-title">Risk Matrisi</div>
         <div class="tez-modal-text" id="tezModalRisk">—</div>
       </div>
-    </div>
+
+      <!-- Sonuç / Genel Yargı -->
+      <div id="tezModalConclusion" style="display:none;background:var(--surface2);border:1px solid var(--border);border-left:4px solid var(--gold);padding:14px 16px;font-size:12px;color:var(--text2);line-height:1.8;font-family:'IBM Plex Sans',sans-serif;margin-top:4px"></div>
+
+    </div><!-- /body -->
 
     <div class="tez-modal-footer">
       <a class="tez-pdf-btn" id="tezPdfBtn" href="#" target="_blank" style="display:none">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         PDF İndir
       </a>
-      <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace">
-        Bu tez yatırım tavsiyesi değildir.
+      <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.6">
+        Bu tez yatırım tavsiyesi değildir.<br>Tüm projeksiyonlar tahmin içermektedir.
       </div>
-      <button onclick="closeTezModal()" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:6px 14px;cursor:pointer">Kapat</button>
+      <button onclick="closeTezModal()" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:6px 14px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Kapat</button>
     </div>
+
   </div>
 </div>
 
@@ -3201,31 +3239,81 @@ barisinvesting.com
 
 // Tez veritabanı — PDF entegrasyonu sonrası buraya eklenir
 const TEZLER = [
-  // Örnek format (PDF gelince doldurulacak):
-  // {
-  //   id: 'thyao-2024',
-  //   ticker: 'THYAO',
-  //   exchange: 'BIST',
-  //   title: 'Türk Hava Yolları: Küresel Genişleme Tezi',
-  //   date: '2024-12',
-  //   verdict: 'al',         // al | izle | uzak
-  //   tags: ['Ulaşım', 'Büyüme', 'BIST'],
-  //   summary: 'THYAO, dünya genelinde 340+ destinasyona uçarak küresel havacılık...',
-  //   thesis: '...',         // tam metin (paragraf)
-  //   catalysts: '...',      // katalizörler
-  //   risks: '...',          // riskler
-  //   targetPrice: '385',
-  //   currentPrice: '290',
-  //   upside: '%33',
-  //   horizon: '12-18 ay',
-  //   pdfUrl: null,          // PDF URL gelince doldur
-  // }
+  {
+    id: 'netas-2026-04',
+    ticker: 'NETAS',
+    exchange: 'BIST',
+    title: 'NETAŞ: 5G Fırsatı mı, Yoksa Tuzak mı?',
+    subtitle: 'Netaş Telekomünikasyon A.Ş. — Derinlemesine Yatırım Tezi',
+    date: 'Nisan 2026',
+    verdict: 'izle',
+    tags: ['Telekomünikasyon', '5G', 'Altyapı', 'BIST'],
+    currentPrice: '~60 TL',
+    priceRange: '43 – 99 TL',
+    marketCap: '~3,76 Milyar TL',
+    revenue2025: '12 Milyar TL (+%31 YoY)',
+    ebitda2025: '307 Milyon TL (+%143 YoY)',
+    netProfit: 'Negatif (-89M son çeyrek)',
+    buffettScore: 4,
+    lynchScore: 4,
+    maxScore: 7,
+    generalVerdict: 'BEKLE',
+    targetBear: '43–52 TL',
+    targetBase: '70–85 TL',
+    targetBull: '88–105 TL',
+    upside: 'Baz: %+25 | Boğa: %+57',
+    horizon: '12–18 ay',
+    summary: 'Turkcell Superbox anlaşması somut ve KAP\'a bildirilmiş. FAVÖK büyümesi gelir büyümesinin 4,5 katı — ölçek kaldıracı devrede. Ancak faiz yükü FAVÖK\'ü eritiyor, net kâr hâlâ negatif. Baz senaryo teyitlenene kadar izleme listesinde tutulmalı.',
+    thesis: `Netaş 2025 yılını güçlü bir operasyonel dönüşümle kapattı. Gelirlerin TL bazında %31 artması, dolar bazında ise %9 ilerlemesi, enflasyona rağmen reel büyümenin başladığına işaret ediyor. En kritik sinyal ise FAVÖK'ün %143 artarak 307 milyon TL'ye ulaşmasıdır — bu oran, gelir büyümesinin 4,5 katıdır ve ölçek kaldıracının devreye girdiğinin göstergesidir.
+
+Turkcell 2026 yatırım harcamalarını gelirlerine oranla yaklaşık %25 olarak hedeflediğini açıkladı. 241 milyar TL 2025 geliri üzerinden bu rakam yaklaşık 60 milyar TL CapEx anlamına geliyor. Netaş, FWA/Superbox cihaz tedariki, baz istasyonu entegrasyon hizmetleri ve kendi üretimi olan DC güç sistemleri aracılığıyla bu CapEx havuzundan %5–10 pay alabilir. Üç operatör toplamında 2026–2028 arası 5G altyapı harcaması 3–4 milyar dolar.
+
+Segment Bazında Brüt Marj Profili:
+• Yönetilen Hizmet/Yazılım: %30–40 (yüksek marjlı)
+• Kendi Üretimi (akü/DC): %25–35
+• Sistem Entegrasyonu: %15–25
+• Ekipman (ZTE dist.): %8–12 (düşük marjlı)
+
+Karışık ortalama brüt marj ~%15–18 seviyesinde. FAVÖK marji genel gider sonrası ~%2,5–4 bandında. Yönetilen hizmetler ve özel 5G ağ kurulumu yüksek marjlı segmentler — buraya doğru kayan miksleme tezin en kritik unsurudur.`,
+    catalysts: `• Turkcell Superbox anlaşması somut — KAP'a bildirildi, spekülatif değil
+• FAVÖK büyümesi gelir büyümesinin 4,5 katı — ölçek kaldıracı devrede
+• ZTE + yerlilik yükümlülüğü çift avantaj — yabancı rakipler engelde
+• PD/Gelir = 0,31x — ekipman/entegrasyon sektörü için düşük çarpan
+• Savunma + kamu + telecom üçlüsü — gelir çeşitlendirmesi sağlam
+• Turkcell CapEx 2026'da ~60 milyar TL — büyük potansiyel havuz
+
+Katalizör Takvimi:
+→ Nisan 2026: Türkiye 5G ticari başlangıcı — Turkcell Superbox aktif, Netaş cihazları sahada
+→ Mayıs 2026: Q1 2026 bilançosu — 5G gelirinin ilk izi, net zarar trendi kritik izlenecek
+→ H1 2026: Türk Telekom / Vodafone olası ek FWA anlaşması KAP duyurusu beklentisi
+→ Q3 2026: Net kâra yaklaşım — eşik aşılırsa kurumsal para akışı başlar
+→ 2027 başı: 5G-A / özel ağ ihaleleri — yüksek marjlı segment, asıl kârlılık burada`,
+    risks: `• Net kâr hâlâ negatif — faiz gideri FAVÖK'ü eritiyor, kurumsal para giremiyor [YÜKSEK]
+• FAVÖK marji %2,6 — ekipman dağıtımcısı marji, yazılım şirketi değil [YÜKSEK]
+• ZTE bağımlılık riski — ABD yaptırımı ihtimali, jeopolitik kırılganlık [ORTA]
+• 3 müşteriye konsantrasyon — Turkcell, Türk Telekom, Vodafone [ORTA]
+• Yönetimden rakamsal guidance yok — "hazır" retoriği, hedef yok [ORTA]
+• 2013'ten bu yana temettü yok — serbest nakit yatırımcıya dönmüyor [DÜŞÜK]
+• 5G CapEx beklentinin altında kalırsa büyüme hızı düşer [ORTA]
+• Yerlilik şartının kalkması durumunda yabancı rakip girişi kolaylaşır [DÜŞÜK]`,
+    scenarios: [
+      { label: 'Ayı', color: 'danger',  revenue: '~13,5 Milyar TL', ebitda: '~400M TL', price: '43–52 TL', desc: '5G CapEx yavaş geliyor, ek anlaşma yok. Net zarar devam eder.' },
+      { label: 'Baz', color: 'warn',    revenue: '~15 Milyar TL',   ebitda: '~525M TL', price: '70–85 TL', desc: 'Turkcell + 1 ek operatör anlaşması. Net zarar daralır ama pozitife geçemez.' },
+      { label: 'Boğa', color: 'success', revenue: '~17 Milyar TL', ebitda: '~680M TL', price: '88–105 TL', desc: '3 operatör de anlaşma + özel 5G ağ projeleri. Net kâr eşiği aşılır.' },
+    ],
+    valuation: {
+      pdGelir: '0,31x',
+      evFavok: '16–20x',
+      fairValue: 'Baz: 70–85 TL | Boğa: 88–105 TL',
+    },
+    conclusion: 'KOŞULLU FIRSAT — NET KÂR GÖRMEDEN GÜÇLÜ ALIM YOK. Netaş\'ın 5G hikayesi yapısal olarak sağlam: doğru müşteri, doğru teknoloji, doğru zamanlama. Ancak Buffett perspektifinden bakıldığında kritik engel ortada duruyor: serbest nakit üretilemiyor, faiz yükü kârı siliyor. Q1 2026 bilançosunda net zarar daralıyorsa ve telekom segmenti sipariş büyümesi %49 üzerinde kalıyorsa baz senaryoya geçiş teyitlenmiş sayılır. O an pozisyon zamanıdır.',
+    pdfUrl: null,
+  },
 ];
 
 let activeTez = null;
 
 function renderTezler() {
-  // Auth kontrolü
   const locked   = document.getElementById('tezler-locked');
   const unlocked = document.getElementById('tezler-content');
   const isLoggedIn = !!(curUser && curUser.email && !curUser.offline_guest);
@@ -3240,35 +3328,50 @@ function renderTezler() {
 
   const grid = document.getElementById('tezGrid');
   if (!TEZLER || TEZLER.length === 0) {
-    grid.innerHTML = `
-      <div class="tez-empty">
-        <div class="tez-empty-icon">📋</div>
-        <div class="tez-empty-title">İlk tez yakında geliyor</div>
-        <div class="tez-empty-sub">PDF tezleri entegre edildikçe burada görünecek.</div>
-      </div>`;
+    grid.innerHTML = `<div class="tez-empty"><div class="tez-empty-icon">📋</div><div class="tez-empty-title">İlk tez yakında geliyor</div><div class="tez-empty-sub">PDF tezleri entegre edildikçe burada görünecek.</div></div>`;
     return;
   }
 
-  grid.innerHTML = TEZLER.map(tez => `
+  grid.innerHTML = TEZLER.map(tez => {
+    const verdictLabel = tez.verdict === 'al' ? 'AL' : tez.verdict === 'izle' ? 'İZLE' : 'UZAK DUR';
+    const scoreBarB = Array.from({length: tez.maxScore}, (_,i) =>
+      `<div style="width:${100/tez.maxScore - 2}%;height:100%;background:${i < tez.buffettScore ? '#4d8ef0' : 'var(--rule)'};"></div>`
+    ).join('');
+    const scoreBarL = Array.from({length: tez.maxScore}, (_,i) =>
+      `<div style="width:${100/tez.maxScore - 2}%;height:100%;background:${i < tez.lynchScore ? '#e07b39' : 'var(--rule)'};"></div>`
+    ).join('');
+    return `
     <div class="tez-card" onclick="openTez('${tez.id}')">
       <div class="tez-card-header">
         <div class="tez-card-meta">
           <span class="tez-ticker">${tez.ticker}</span>
           <span class="tez-exchange">${tez.exchange}</span>
+          <span class="tez-tag ${tez.verdict}" style="font-size:8px">${verdictLabel}</span>
           <span class="tez-date">${tez.date}</span>
         </div>
         <div class="tez-title">${tez.title}</div>
         <div class="tez-summary">${tez.summary}</div>
+        <!-- Skor barları -->
+        <div style="display:flex;gap:12px;margin-top:10px;margin-bottom:2px">
+          <div style="flex:1">
+            <div style="font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:3px">BUFFETT ${tez.buffettScore}/${tez.maxScore}</div>
+            <div style="display:flex;gap:2px;height:5px">${scoreBarB}</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:3px">LYNCH ${tez.lynchScore}/${tez.maxScore}</div>
+            <div style="display:flex;gap:2px;height:5px">${scoreBarL}</div>
+          </div>
+        </div>
       </div>
       <div class="tez-card-footer">
-        <span class="tez-tag ${tez.verdict}">${tez.verdict === 'al' ? 'AL' : tez.verdict === 'izle' ? 'İZLE' : 'UZAK DUR'}</span>
-        ${tez.tags.map(t => `<span class="tez-tag izle" style="color:var(--text2);border-color:var(--border)">${t}</span>`).join('')}
-        <button class="tez-read-btn">
+        ${tez.tags.map(t => `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted);border:1px solid var(--border);padding:1px 6px">${t}</span>`).join('')}
+        <button class="tez-read-btn" style="margin-left:auto">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           Tezi Oku
         </button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function openTez(id) {
@@ -3277,30 +3380,91 @@ function openTez(id) {
   activeTez = tez;
 
   const modal = document.getElementById('tezModal');
-  document.getElementById('tezModalTicker').textContent  = tez.ticker;
+  const verdictLabel = tez.verdict === 'al' ? 'AL' : tez.verdict === 'izle' ? 'İZLE' : 'UZAK DUR';
+
+  // Header
+  document.getElementById('tezModalTicker').textContent   = tez.ticker;
   document.getElementById('tezModalExchange').textContent = tez.exchange;
-  document.getElementById('tezModalDate').textContent    = tez.date;
-  document.getElementById('tezModalTitle').textContent   = tez.title;
-  document.getElementById('tezModalTag').textContent     = tez.verdict === 'al' ? 'AL' : tez.verdict === 'izle' ? 'İZLE' : 'UZAK DUR';
-  document.getElementById('tezModalTag').className       = `tez-tag ${tez.verdict}`;
-  document.getElementById('tezModalThesis').textContent  = tez.thesis || '—';
-  document.getElementById('tezModalCat').textContent     = tez.catalysts || '—';
-  document.getElementById('tezModalRisk').textContent    = tez.risks || '—';
-  document.getElementById('tezTargetPrice').textContent  = tez.targetPrice || '—';
+  document.getElementById('tezModalDate').textContent     = tez.date;
+  document.getElementById('tezModalTitle').textContent    = tez.title;
+  const tagEl = document.getElementById('tezModalTag');
+  tagEl.textContent = verdictLabel;
+  tagEl.className   = `tez-tag ${tez.verdict}`;
+
+  // Hedef fiyat kartları
+  document.getElementById('tezTargetPrice').textContent  = tez.targetBase || '—';
   document.getElementById('tezCurrentPrice').textContent = tez.currentPrice || '—';
   document.getElementById('tezUpside').textContent       = tez.upside || '—';
   document.getElementById('tezHorizon').textContent      = tez.horizon || '—';
 
-  // PDF butonu
-  const pdfBtn = document.getElementById('tezPdfBtn');
-  if (tez.pdfUrl) {
-    pdfBtn.href = tez.pdfUrl;
-    pdfBtn.style.display = 'flex';
-  } else {
-    pdfBtn.style.display = 'none';
+  // Temel metrikler satırı
+  const metricsEl = document.getElementById('tezModalMetrics');
+  if (metricsEl) {
+    metricsEl.innerHTML = `
+      <div class="tez-metric-item"><div class="tez-metric-lbl">52H Aralık</div><div class="tez-metric-val">${tez.priceRange||'—'}</div></div>
+      <div class="tez-metric-item"><div class="tez-metric-lbl">Piy. Değeri</div><div class="tez-metric-val">${tez.marketCap||'—'}</div></div>
+      <div class="tez-metric-item"><div class="tez-metric-lbl">2025 Gelir</div><div class="tez-metric-val">${tez.revenue2025||'—'}</div></div>
+      <div class="tez-metric-item"><div class="tez-metric-lbl">2025 FAVÖK</div><div class="tez-metric-val">${tez.ebitda2025||'—'}</div></div>
+      <div class="tez-metric-item"><div class="tez-metric-lbl">PD/Gelir</div><div class="tez-metric-val" style="color:var(--success)">${tez.valuation?.pdGelir||'—'}</div></div>
+      <div class="tez-metric-item"><div class="tez-metric-lbl">EV/FAVÖK</div><div class="tez-metric-val">${tez.valuation?.evFavok||'—'}</div></div>
+    `;
   }
 
+  // Skor barları
+  const scoresEl = document.getElementById('tezModalScores');
+  if (scoresEl) {
+    const makeBar = (score, max, color, label) => {
+      const bars = Array.from({length: max}, (_,i) =>
+        `<div style="flex:1;height:8px;background:${i < score ? color : 'var(--rule)'};margin-right:2px;"></div>`
+      ).join('');
+      return `<div style="flex:1">
+        <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:4px">${label} <span style="color:${color};font-weight:700">${score}/${max}</span></div>
+        <div style="display:flex;gap:2px">${bars}</div>
+      </div>`;
+    };
+    scoresEl.innerHTML = `
+      <div style="display:flex;gap:16px;padding:14px 0">
+        ${makeBar(tez.buffettScore, tez.maxScore, '#4d8ef0', 'BUFFETT')}
+        ${makeBar(tez.lynchScore,   tez.maxScore, '#e07b39', 'LYNCH')}
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--surface2);padding:8px;border:1px solid var(--border)">
+          <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:4px">GENEL</div>
+          <div style="font-family:'IBM Plex Serif',serif;font-size:16px;font-weight:700;color:var(--warn)">${tez.generalVerdict}</div>
+        </div>
+      </div>`;
+  }
+
+  // Senaryo analizi
+  const scenEl = document.getElementById('tezModalScenarios');
+  if (scenEl && tez.scenarios) {
+    const colorMap = { danger: 'var(--danger)', warn: 'var(--warn)', success: 'var(--success)' };
+    scenEl.innerHTML = tez.scenarios.map(s => `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-top:3px solid ${colorMap[s.color]};padding:14px;flex:1;min-width:180px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:${colorMap[s.color]};font-family:'IBM Plex Mono',monospace;margin-bottom:6px">${s.label.toUpperCase()} SENARYO</div>
+        <div style="font-family:'IBM Plex Serif',serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:2px">${s.price}</div>
+        <div style="font-size:10px;color:${colorMap[s.color]};font-family:'IBM Plex Mono',monospace;margin-bottom:6px">FAVÖK: ${s.ebitda}</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.6">${s.desc}</div>
+      </div>`).join('');
+  }
+
+  // Tez metni bölümleri
+  document.getElementById('tezModalThesis').textContent   = tez.thesis    || '—';
+  document.getElementById('tezModalCat').textContent      = tez.catalysts || '—';
+  document.getElementById('tezModalRisk').textContent     = tez.risks     || '—';
+
+  // Sonuç kutusu
+  const concEl = document.getElementById('tezModalConclusion');
+  if (concEl) {
+    concEl.textContent = tez.conclusion || '';
+    concEl.style.display = tez.conclusion ? 'block' : 'none';
+  }
+
+  // PDF butonu
+  const pdfBtn = document.getElementById('tezPdfBtn');
+  if (tez.pdfUrl) { pdfBtn.href = tez.pdfUrl; pdfBtn.style.display = 'flex'; }
+  else            { pdfBtn.style.display = 'none'; }
+
   modal.classList.add('visible');
+  modal.scrollTop = 0;
 }
 
 function closeTezModal() {
