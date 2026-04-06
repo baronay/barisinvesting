@@ -2636,36 +2636,90 @@ function renderRealData(fd){
 function parseMult(text){
   const sec=text.match(/MULTIPLES_START([\s\S]*?)MULTIPLES_END/);if(!sec)return null;
   const raw=sec[1];const get=k=>{const m=raw.match(new RegExp(k+':\\s*([^\\n]+)','i'));return m?m[1].trim():null;};
-  return{pe:get('PE'),pb:get('PB'),ev:get('EV_EBITDA'),peg:get('PEG'),rsi:get('RSI'),price52w:get('PRICE_52W')};
+  return{pe:get('PE'),pb:get('PB'),ev:get('EV_EBITDA'),peg:get('PEG'),rsi:get('RSI'),price52w:get('PRICE_52W'),analyst:get('ANALYST')};
 }
 
 function renderMult(m){
-  if(!m)return;document.getElementById('multGrid').style.display='grid';
-  const pv=(str,isPEG=false)=>{
-    if(!str)return{val:'N/A',comment:'',sig:'sn'};
-    const p=str.split('|').map(s=>s.trim());
-    const lo=(p[1]||'').toLowerCase();
-    let sig='sn';
-    if(lo.includes('ucuz')||lo.includes('fırsat'))sig='sg';
-    else if(lo.includes('pahalı')||lo.includes('dikkatli'))sig='sb';
-    else if(lo.includes('adil')||lo.includes('makul'))sig='sw';
-    // PEG specific: truncate long comments
-    let comment=p[1]||'';
-    if(isPEG&&comment.length>20)comment=comment.substring(0,20)+'...';
-    return{val:p[0]||'N/A',comment,sig};
-  };
-  [['mPE',m.pe,false],['mPB',m.pb,false],['mEV',m.ev,false],['mPEG',m.peg,true]].forEach(([id,raw,isPEG])=>{const p=pv(raw,isPEG);document.getElementById(id).textContent=p.val;document.getElementById(id+'S').textContent=p.comment;const sig=document.getElementById(id+'Sig');sig.textContent=p.comment||'—';sig.className='mult-sig '+p.sig;});
+  if(!m)return;
+  document.getElementById('multGrid').style.display='grid';
+  const fd = (analysisData && analysisData.fd) ? analysisData.fd : {};
+
+  // Gerçek finansal veriden değer varsa AI metnini override et
+  // PE
+  const realPE  = fd.peRatio  != null ? fd.peRatio.toFixed(2)  : null;
+  const realPB  = fd.pbRatio  != null ? fd.pbRatio.toFixed(2)  : null;
+  const realPEG = fd.pegRatio != null ? fd.pegRatio.toFixed(2) : null;
+  const realEV  = fd.evEbitda != null ? fd.evEbitda.toFixed(1) : null;
+
+  // Sinyal üret
+  function mkSig(valStr, type) {
+    const v = parseFloat(valStr);
+    if (isNaN(v)) return 'sn';
+    if (type === 'pe')  return v < 12 ? 'sg' : v < 22 ? 'sw' : v < 35 ? 'sn' : 'sb';
+    if (type === 'pb')  return v < 1.5 ? 'sg' : v < 3 ? 'sw' : v < 6 ? 'sn' : 'sb';
+    if (type === 'peg') return v < 1 ? 'sg' : v < 1.5 ? 'sw' : 'sb';
+    if (type === 'ev')  return v < 8 ? 'sg' : v < 15 ? 'sw' : v > 20 ? 'sb' : 'sn';
+    return 'sn';
+  }
+  function mkComment(valStr, type) {
+    const v = parseFloat(valStr);
+    if (isNaN(v)) return '—';
+    if (type === 'pe')  return v < 12 ? 'UCUZ' : v < 22 ? 'ADİL' : v < 35 ? 'DİKKAT' : 'PAHALI';
+    if (type === 'pb')  return v < 1.5 ? 'UCUZ' : v < 3 ? 'ADİL' : v < 6 ? 'DİKKAT' : 'PAHALI';
+    if (type === 'peg') return v < 1 ? 'UCUZ — Lynch fırsatı' : v < 1.5 ? 'ADİL' : v < 2 ? 'DİKKATLİ OL' : 'PAHALI';
+    if (type === 'ev')  return v < 8 ? 'UCUZ' : v < 15 ? 'ADİL' : v < 20 ? 'DİKKAT' : 'PAHALI';
+    return '—';
+  }
+
+  function setCard(id, realVal, aiRaw, type) {
+    const valEl  = document.getElementById(id);
+    const subEl  = document.getElementById(id + 'S');
+    const sigEl  = document.getElementById(id + 'Sig');
+    if (!valEl) return;
+
+    // Gerçek veri öncelikli
+    if (realVal != null && !isNaN(parseFloat(realVal))) {
+      const v = parseFloat(realVal);
+      valEl.textContent = v.toFixed(type === 'ev' ? 1 : 2);
+      const comment = mkComment(realVal, type);
+      if (subEl) subEl.textContent = comment;
+      if (sigEl) { sigEl.textContent = comment; sigEl.className = 'mult-sig ' + mkSig(realVal, type); }
+    } else if (aiRaw) {
+      // AI metninden parse et
+      const p = aiRaw.split('|').map(s => s.trim());
+      const lo = (p[1]||'').toLowerCase();
+      let sig = 'sn';
+      if (lo.includes('ucuz')||lo.includes('fırsat')) sig = 'sg';
+      else if (lo.includes('pahalı')||lo.includes('dikkatli')) sig = 'sb';
+      else if (lo.includes('adil')||lo.includes('makul')) sig = 'sw';
+      valEl.textContent = p[0] || 'N/A';
+      if (subEl) subEl.textContent = p[1] || '—';
+      if (sigEl) { sigEl.textContent = p[1] || '—'; sigEl.className = 'mult-sig ' + sig; }
+    } else {
+      valEl.textContent = 'N/A';
+      if (subEl) subEl.textContent = 'VERİ YOK';
+      if (sigEl) { sigEl.textContent = 'VERİ YOK'; sigEl.className = 'mult-sig sn'; }
+    }
+  }
+
+  setCard('mPE',  realPE,  m.pe,  'pe');
+  setCard('mPB',  realPB,  m.pb,  'pb');
+  setCard('mEV',  realEV,  m.ev,  'ev');
+  setCard('mPEG', realPEG, m.peg, 'peg');
+
+  // RSI
   if(m.rsi){
     const rp=m.rsi.split('|').map(s=>s.trim());const rn=parseFloat(rp[0])||50;
-    const rc=rn>70?'#ff4d6a':rn<30?'#00e5a0':'#2d8fff';
+    const rc=rn>70?'#f05252':rn<30?'#22c55e':'#4d8ef0';
     document.getElementById('rsiCard').style.display='block';
     document.getElementById('rsiVal').textContent=rn.toFixed(0);document.getElementById('rsiVal').style.color=rc;
-    const fill=document.getElementById('rsiFill');fill.style.background=rn>70?'linear-gradient(90deg,#2d8fff,#ffb830,#ff4d6a)':rn<30?'#00e5a0':'#2d8fff';
+    const fill=document.getElementById('rsiFill');
+    fill.style.background=rn>70?'linear-gradient(90deg,#4d8ef0,#f59e0b,#f05252)':rn<30?'#22c55e':'#4d8ef0';
     setTimeout(()=>{fill.style.width=Math.min(100,rn)+'%';},100);
     const sig=document.getElementById('rsiSig');
-    if(rn>70){sig.textContent='AŞIRI ALIM';sig.style.cssText='color:#ff4d6a;border-color:rgba(255,77,106,0.3);background:rgba(255,77,106,0.1);';}
-    else if(rn<30){sig.textContent='AŞIRI SATIM';sig.style.cssText='color:#00e5a0;border-color:rgba(0,229,160,0.3);background:rgba(0,229,160,0.1);';}
-    else{sig.textContent='NÖTR BÖLGE';sig.style.cssText='color:#2d8fff;border-color:rgba(45,143,255,0.3);background:rgba(45,143,255,0.1);';}
+    if(rn>70){sig.textContent='AŞIRI ALIM';sig.style.cssText='color:#f05252;border-color:rgba(240,82,82,0.3);background:rgba(240,82,82,0.1);';}
+    else if(rn<30){sig.textContent='AŞIRI SATIM';sig.style.cssText='color:#22c55e;border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.1);';}
+    else{sig.textContent='NÖTR BÖLGE';sig.style.cssText='color:#4d8ef0;border-color:rgba(77,142,240,0.3);background:rgba(77,142,240,0.1);';}
   }
 }
 
