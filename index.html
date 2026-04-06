@@ -939,6 +939,617 @@ body{
 .mkt-strip .mkt-lbl{font-size:8px;letter-spacing:1.5px;}
 .mkt-strip .mkt-price{font-size:12px;font-weight:600;color:var(--text);}
 .mkt-strip .mkt-chg{font-size:10px;font-weight:700;}
+
+/* ══════════════════════════════════════════════════
+   YATIRIM TEZLERİ SAYFASI
+══════════════════════════════════════════════════ */
+
+/* Sidebar nav tab */
+.mnav-tab.tez { }
+
+/* Tez kartı grid */
+.tez-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* Tek tez kartı */
+.tez-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.tez-card:hover {
+  background: var(--surface2);
+  border-left-color: var(--accent);
+  box-shadow: 0 4px 20px rgba(77,142,240,0.12);
+  transform: translateY(-2px);
+}
+.tez-card.bull { border-left-color: var(--success); }
+.tez-card.bear { border-left-color: var(--danger); }
+.tez-card.neutral-tez { border-left-color: var(--warn); }
+
+.tez-card-header {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--rule);
+}
+.tez-ticker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.tez-ticker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 1px;
+}
+.tez-type-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid;
+}
+.tez-type-badge.bull { color: var(--success); border-color: rgba(34,197,94,0.4); background: var(--success-dim); }
+.tez-type-badge.bear { color: var(--danger); border-color: rgba(240,82,82,0.4); background: var(--danger-dim); }
+.tez-type-badge.neutral-tez { color: var(--warn); border-color: rgba(245,158,11,0.4); background: var(--warn-dim); }
+
+.tez-company {
+  font-size: 11px;
+  color: var(--text2);
+  margin-bottom: 4px;
+}
+.tez-sector {
+  font-size: 9px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+.tez-card-body {
+  padding: 12px 16px;
+  flex: 1;
+}
+.tez-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.tez-summary {
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.7;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tez-card-footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tez-date {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+}
+.tez-read-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Tez Okuma Modalı */
+.tez-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(6px);
+  z-index: 850;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 20px;
+  overflow-y: auto;
+}
+.tez-modal.visible { display: flex; }
+
+.tez-modal-box {
+  background: var(--surface);
+  border: 1px solid var(--glass);
+  width: 100%;
+  max-width: 820px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  animation: fadeIn 0.25s ease;
+}
+
+.tez-modal-header {
+  background: var(--sidebar);
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--border-s);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.tez-modal-meta { flex: 1; }
+.tez-modal-ticker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.tez-modal-company {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+.tez-modal-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+}
+.tez-modal-close {
+  background: none;
+  border: 1px solid var(--border-s);
+  color: var(--muted);
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.tez-modal-close:hover { color: var(--text); border-color: var(--text2); }
+
+.tez-modal-keypoints {
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--rule);
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 1px;
+  background: var(--border);
+}
+.tez-kp {
+  background: var(--surface2);
+  padding: 14px 16px;
+}
+.tez-kp-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.tez-kp-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+.tez-kp-val.pos { color: var(--success); }
+.tez-kp-val.neg { color: var(--danger); }
+
+.tez-modal-body {
+  padding: 24px 28px;
+}
+.tez-section-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+}
+.tez-text {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 2;
+  margin-bottom: 20px;
+  white-space: pre-line;
+}
+.tez-bullets {
+  margin-bottom: 20px;
+}
+.tez-bullet {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+.tez-bullet:last-child { border-bottom: none; }
+.tez-bullet-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+.tez-bullet-dot.risk { background: var(--danger); }
+
+.tez-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #fff;
+  border: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 10px 20px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.3s;
+  text-decoration: none;
+}
+.tez-pdf-btn:hover { box-shadow: 0 4px 16px var(--accent-glow); }
+
+/* Auth koruması overlay */
+.tez-auth-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 32px;
+  text-align: center;
+  gap: 16px;
+  border: 1px dashed var(--border-s);
+  margin: 24px 0;
+}
+.tez-auth-icon {
+  font-size: 36px;
+  opacity: 0.6;
+}
+.tez-auth-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+}
+.tez-auth-sub {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.7;
+  max-width: 400px;
+}
+.tez-auth-btn {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #fff;
+  border: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 12px 28px;
+  cursor: pointer;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: all 0.3s;
+}
+.tez-auth-btn:hover { box-shadow: 0 4px 16px var(--accent-glow); }
+
+/* Page header */
+.tez-page-header {
+  margin-bottom: 24px;
+}
+.tez-page-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.tez-page-sub {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+.tez-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text2);
+  font-size: 12px;
+  border: 1px dashed var(--border-s);
+}
+.tez-empty-icon { font-size: 32px; margin-bottom: 12px; }
+
+@media(max-width:768px) {
+  .tez-grid { grid-template-columns: 1fr; }
+  .tez-modal-keypoints { grid-template-columns: 1fr; }
+  .tez-modal-box { max-width: 100%; }
+}
+
+/* ══ YATIRIM TEZLERİ ══ */
+
+/* Sidebar nav özel */
+#nav-tezler { border-left-color: var(--gold) !important; }
+#nav-tezler.active { background: var(--gold-dim); color: var(--gold) !important; }
+#nav-tezler.active .nav-num { color: var(--gold) !important; }
+#nav-tezler:hover { color: var(--gold); }
+
+/* Kilitli ekran */
+.tez-lock-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 60px 20px; text-align: center;
+  max-width: 460px; margin: 0 auto;
+}
+.tez-lock-icon {
+  width: 72px; height: 72px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold); margin-bottom: 24px;
+}
+.tez-lock-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 28px; font-weight: 700;
+  color: var(--text); margin-bottom: 10px;
+}
+.tez-lock-sub {
+  font-size: 13px; color: var(--text2);
+  line-height: 1.8; margin-bottom: 28px;
+}
+.tez-lock-btn {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #fff; border: none;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px; font-weight: 700;
+  padding: 13px 28px; cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.3s;
+  margin-bottom: 12px; width: 100%; max-width: 320px;
+}
+.tez-lock-btn:hover { box-shadow: 0 6px 24px var(--accent-glow); }
+.tez-lock-hint {
+  font-size: 10px; color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Tez sayfası başlık */
+.tez-header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; flex-wrap: wrap;
+  gap: 12px; margin-bottom: 20px;
+}
+.tez-page-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 26px; font-weight: 700; color: var(--text);
+}
+.tez-page-title span { color: var(--gold); }
+.tez-page-sub {
+  font-size: 11px; color: var(--text2);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-top: 4px;
+}
+.tez-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold); border: 1px solid var(--gold);
+  background: var(--gold-dim);
+  padding: 4px 10px; align-self: flex-start;
+}
+
+/* Disclaimer */
+.tez-disclaimer {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warn);
+  margin-bottom: 24px; line-height: 1.6;
+}
+.tez-disclaimer svg { flex-shrink: 0; color: var(--warn); }
+
+/* Tez grid */
+.tez-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+@media(max-width: 768px) { .tez-grid { grid-template-columns: 1fr; } }
+
+/* Tez kartı */
+.tez-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--gold);
+  transition: all 0.2s; cursor: pointer;
+  position: relative; overflow: hidden;
+}
+.tez-card:hover {
+  background: var(--surface2);
+  border-color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(212,168,67,0.12);
+}
+.tez-card-header { padding: 16px 18px 12px; }
+.tez-card-meta {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px; flex-wrap: wrap;
+}
+.tez-ticker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px; font-weight: 700;
+  color: var(--accent); letter-spacing: 1px;
+}
+.tez-exchange {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px; color: var(--muted);
+  border: 1px solid var(--border); padding: 1px 5px;
+}
+.tez-date {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; color: var(--muted);
+  margin-left: auto;
+}
+.tez-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 16px; font-weight: 700;
+  color: var(--text); line-height: 1.35;
+  margin-bottom: 8px;
+}
+.tez-summary {
+  font-size: 11px; color: var(--text2);
+  line-height: 1.7; margin-bottom: 12px;
+}
+.tez-card-footer {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-top: 1px solid var(--rule);
+  background: var(--surface2); flex-wrap: wrap;
+}
+.tez-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px; font-weight: 600;
+  padding: 2px 7px; letter-spacing: 0.5px;
+  border: 1px solid;
+}
+.tez-tag.al { color: var(--success); border-color: rgba(34,197,94,0.3); background: var(--success-dim); }
+.tez-tag.izle { color: var(--warn); border-color: rgba(245,158,11,0.3); background: var(--warn-dim); }
+.tez-tag.uzak { color: var(--danger); border-color: rgba(240,82,82,0.3); background: var(--danger-dim); }
+.tez-read-btn {
+  margin-left: auto;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text2); font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; padding: 4px 10px; cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: center; gap: 4px;
+}
+.tez-read-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Tez detay modal */
+.tez-modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
+  z-index: 850; align-items: flex-start; justify-content: center;
+  padding: 32px 20px; overflow-y: auto;
+}
+.tez-modal.visible { display: flex; }
+.tez-modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--gold);
+  width: 100%; max-width: 760px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  animation: fadeIn 0.25s ease;
+}
+.tez-modal-hdr {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--rule);
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 12px;
+}
+.tez-modal-close {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); width: 30px; height: 30px;
+  cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.2s;
+}
+.tez-modal-close:hover { color: var(--text); border-color: var(--text); }
+.tez-modal-body { padding: 24px; }
+.tez-modal-section { margin-bottom: 20px; }
+.tez-modal-section-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 8px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+}
+.tez-modal-text {
+  font-size: 13px; color: var(--text2);
+  line-height: 2; white-space: pre-wrap;
+}
+.tez-modal-targets {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: var(--border); margin-top: 12px;
+}
+.tez-target-card {
+  background: var(--surface2); padding: 12px 14px;
+}
+.tez-target-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 4px;
+}
+.tez-target-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px; font-weight: 700; color: var(--text);
+}
+.tez-target-sub { font-size: 9px; color: var(--muted); margin-top: 2px; }
+.tez-modal-footer {
+  padding: 14px 24px; border-top: 1px solid var(--rule);
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface2); flex-wrap: wrap;
+}
+.tez-pdf-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--gold-dim); border: 1px solid var(--gold);
+  color: var(--gold); font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; font-weight: 700; padding: 7px 14px;
+  cursor: pointer; letter-spacing: 1px;
+  transition: all 0.2s; text-decoration: none;
+}
+.tez-pdf-btn:hover { background: rgba(212,168,67,0.25); }
+
+/* Boş durum */
+.tez-empty {
+  grid-column: 1 / -1;
+  display: flex; flex-direction: column;
+  align-items: center; padding: 60px 20px;
+  border: 1px dashed var(--border); text-align: center;
+}
+.tez-empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
+.tez-empty-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 16px; color: var(--text2); margin-bottom: 6px;
+}
+.tez-empty-sub { font-size: 11px; color: var(--muted); }
 </style>
 <body>
 <div id="globalToast"><span class="toast-dot"></span><span class="toast-msg"></span></div>
@@ -1042,6 +1653,74 @@ body{
   </div>
 </div>
 
+<!-- ══ TEZ DETAY MODAL ══ -->
+<div class="tez-modal" id="tezModal" onclick="if(event.target===this)closeTezModal()">
+  <div class="tez-modal-box">
+    <div class="tez-modal-hdr">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span class="tez-ticker" id="tezModalTicker">—</span>
+          <span class="tez-exchange" id="tezModalExchange">—</span>
+          <span id="tezModalTag" class="tez-tag al">AL</span>
+          <span class="tez-date" id="tezModalDate">—</span>
+        </div>
+        <div class="tez-title" id="tezModalTitle" style="font-size:20px">—</div>
+      </div>
+      <button class="tez-modal-close" onclick="closeTezModal()">✕</button>
+    </div>
+
+    <div class="tez-modal-body">
+      <!-- Hedef fiyat kartları -->
+      <div class="tez-modal-targets">
+        <div class="tez-target-card">
+          <div class="tez-target-label">Hedef Fiyat</div>
+          <div class="tez-target-val" id="tezTargetPrice">—</div>
+          <div class="tez-target-sub">12 aylık</div>
+        </div>
+        <div class="tez-target-card">
+          <div class="tez-target-label">Mevcut Fiyat</div>
+          <div class="tez-target-val" id="tezCurrentPrice">—</div>
+          <div class="tez-target-sub">Tez tarihi</div>
+        </div>
+        <div class="tez-target-card">
+          <div class="tez-target-label">Potansiyel</div>
+          <div class="tez-target-val" style="color:var(--success)" id="tezUpside">—</div>
+          <div class="tez-target-sub" id="tezHorizon">—</div>
+        </div>
+      </div>
+
+      <!-- Tez metni -->
+      <div class="tez-modal-section" style="margin-top:20px">
+        <div class="tez-modal-section-title">Yatırım Tezi</div>
+        <div class="tez-modal-text" id="tezModalThesis">—</div>
+      </div>
+
+      <!-- Katalizörler -->
+      <div class="tez-modal-section">
+        <div class="tez-modal-section-title">Katalizörler</div>
+        <div class="tez-modal-text" id="tezModalCat">—</div>
+      </div>
+
+      <!-- Riskler -->
+      <div class="tez-modal-section">
+        <div class="tez-modal-section-title">Riskler</div>
+        <div class="tez-modal-text" id="tezModalRisk">—</div>
+      </div>
+    </div>
+
+    <div class="tez-modal-footer">
+      <a class="tez-pdf-btn" id="tezPdfBtn" href="#" target="_blank" style="display:none">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        PDF İndir
+      </a>
+      <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace">
+        Bu tez yatırım tavsiyesi değildir.
+      </div>
+      <button onclick="closeTezModal()" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:6px 14px;cursor:pointer">Kapat</button>
+    </div>
+  </div>
+</div>
+
 <div class="app">
 <div class="sidebar" id="sidebar">
   <div class="brand">
@@ -1060,6 +1739,7 @@ body{
   <div class="main-nav">
     <div class="mnav-tab active" id="tab-analiz" onclick="switchTab('analiz')">Analiz</div>
     <div class="mnav-tab" id="tab-portfoy" onclick="switchTab('portfoy')">Portföy</div>
+    <div class="mnav-tab" id="tab-tez" onclick="switchTab('tez')">Tezler</div>
     <div class="mnav-tab" id="tab-forum" onclick="switchTab('forum')">Forum</div>
   </div>
 
@@ -1099,6 +1779,9 @@ body{
     <div class="nav-item active" id="nav-overview" onclick="showPage('overview');closeSidebar();">
       <span class="nav-num">00</span>Dashboard<span class="nav-status">◎</span>
     </div>
+    <div class="nav-item" id="nav-tezler" onclick="showPage('tezler');closeSidebar();">
+      <span class="nav-num">★</span>Yatırım Tezleri<span class="nav-status" style="font-size:9px;color:var(--gold)">ÜYE</span>
+    </div>
     <div class="nav-lbl" id="navLabel">Kriterler</div>
     <div id="navList"></div>
     <div class="verdict-sec">
@@ -1113,6 +1796,15 @@ body{
       <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:7px">Portföy Özeti</div>
       <div id="ptSbSummary" style="font-size:10px;color:var(--muted2)">Henüz hisse eklenmedi.</div>
       <button class="pt-sb-btn" onclick="showPage('portfolio');closeSidebar()">PORTFÖYÜ GÖR →</button>
+    </div>
+  </div>
+
+  <!-- TEZ TAB SIDEBAR -->
+  <div class="tab-content" id="tab-tez-content">
+    <div style="padding:14px 20px;">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-family:'IBM Plex Mono',monospace">Yatırım Tezleri</div>
+      <div style="font-size:10px;color:var(--text2);line-height:1.7;margin-bottom:12px">Barış'ın detaylı araştırma ve analiz tezleri. Sadece kayıtlı kullanıcılar için.</div>
+      <button class="pt-sb-btn" style="margin-top:0" onclick="showPage('tezler');closeSidebar()">TEZLERİ GÖR →</button>
     </div>
   </div>
 
@@ -1396,11 +2088,157 @@ body{
 </div><!-- /page-body -->
 </div>
 
+<!-- ══ YATIRIM TEZLERİ SAYFASI ══ -->
+<div class="page" id="page-tezler">
+<div class="page-body">
+
+  <!-- Kilitli durum — kullanıcı giriş yapmamış -->
+  <div id="tezler-locked" style="display:none">
+    <div class="tez-lock-wrap">
+      <div class="tez-lock-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <div class="tez-lock-title">Yatırım Tezleri</div>
+      <div class="tez-lock-sub">Bu bölüm yalnızca kayıtlı üyelere açıktır.<br>E-posta ile kayıt ol, tüm tezlere anında eriş.</div>
+      <button class="tez-lock-btn" onclick="showAuthModal()">E-posta ile Kayıt Ol — Ücretsiz</button>
+      <div class="tez-lock-hint">Kredi kartı gerekmez · Şifre yok · 30 saniyede hazır</div>
+    </div>
+  </div>
+
+  <!-- Açık durum — kullanıcı giriş yapmış -->
+  <div id="tezler-content" style="display:none">
+    <div class="tez-header">
+      <div>
+        <div class="tez-page-title">Yatırım <span>Tezleri</span></div>
+        <div class="tez-page-sub">Barış'ın araştırma notları ve uzun vadeli pozisyon tezleri</div>
+      </div>
+      <div class="tez-badge">ÜYE ÖZEL</div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="tez-disclaimer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Bu tezler yatırım tavsiyesi değildir. Kişisel araştırma ve eğitim amaçlıdır. Kendi araştırmanızı yapın.
+    </div>
+
+    <!-- Tez kartları grid -->
+    <div class="tez-grid" id="tezGrid">
+      <!-- Tezler buraya JS ile eklenecek -->
+      <div class="tez-empty">
+        <div class="tez-empty-icon">📋</div>
+        <div class="tez-empty-title">İlk tez yakında</div>
+        <div class="tez-empty-sub">PDF tezleri entegre edildikçe burada görünecek.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-body -->
+</div><!-- /page-tezler -->
+
 </div><!-- main-content -->
 </div><!-- main -->
 </div><!-- app -->
 
-<script>
+
+
+<!-- ══ YATİRİM TEZLERİ SAYFASI ══ -->
+<div class="page" id="page-tezler">
+  <div class="page-body">
+
+    <!-- AUTH GATE: Giriş yapmamış kullanıcı -->
+    <div id="tezler-locked" style="display:none">
+      <div class="tez-auth-gate">
+        <div class="tez-auth-icon">🔒</div>
+        <div class="tez-auth-title">Üye Girişi Gerekli</div>
+        <div class="tez-auth-sub">
+          Yatırım tezleri sadece kayıtlı üyelerimize özeldir.<br>
+          E-posta adresinle saniyeler içinde ücretsiz kaydol.
+        </div>
+        <button class="tez-auth-btn" onclick="showAuthModal()">
+          ✉ E-posta ile Giriş Yap
+        </button>
+        <div style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:4px">
+          Kayıt ücretsiz · Kredi kartı yok · Anında erişim
+        </div>
+      </div>
+    </div>
+
+    <!-- İÇERİK: Giriş yapmış kullanıcı -->
+    <div id="tezler-content" style="display:none">
+      <div class="tez-page-header">
+        <div class="tez-page-title">Yatırım Tezleri</div>
+        <div class="tez-page-sub">ARAŞTIRMA · ANALİZ · BARIŞ INVESTING</div>
+      </div>
+      <div class="tez-grid" id="tezGrid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ TEZ OKUMA MODALİ ══ -->
+<div class="tez-modal" id="tezModal" onclick="if(event.target===this)closeTezModal()">
+  <div class="tez-modal-box">
+    <div class="tez-modal-header">
+      <div class="tez-modal-meta">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+          <span class="tez-modal-ticker" id="tezModalTicker">—</span>
+          <span class="tez-tag" id="tezModalTag">—</span>
+          <span style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace" id="tezModalExchange">—</span>
+          <span style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace" id="tezModalDate">—</span>
+        </div>
+        <div class="tez-modal-title" id="tezModalTitle">—</div>
+      </div>
+      <button class="tez-modal-close" onclick="closeTezModal()">✕</button>
+    </div>
+
+    <!-- Özet Metrikler -->
+    <div class="tez-modal-keypoints">
+      <div class="tez-kp">
+        <div class="tez-kp-label">Güncel Fiyat</div>
+        <div class="tez-kp-val" id="tezCurrentPrice">—</div>
+      </div>
+      <div class="tez-kp">
+        <div class="tez-kp-label">Hedef Fiyat</div>
+        <div class="tez-kp-val pos" id="tezTargetPrice">—</div>
+      </div>
+      <div class="tez-kp">
+        <div class="tez-kp-label">Beklenen Getiri</div>
+        <div class="tez-kp-val pos" id="tezUpside">—</div>
+      </div>
+      <div class="tez-kp">
+        <div class="tez-kp-label">Zaman Ufku</div>
+        <div class="tez-kp-val" id="tezHorizon">—</div>
+      </div>
+    </div>
+
+    <!-- Tez İçeriği -->
+    <div class="tez-modal-body">
+      <div class="tez-section-title">Yatırım Tezi</div>
+      <div class="tez-text" id="tezModalThesis">—</div>
+
+      <div class="tez-section-title">Temel Katalizörler</div>
+      <div class="tez-text" id="tezModalCat">—</div>
+
+      <div class="tez-section-title">Başlıca Riskler</div>
+      <div class="tez-text" id="tezModalRisk">—</div>
+
+      <!-- PDF İndir -->
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--rule)">
+        <a class="tez-pdf-btn" id="tezPdfBtn" href="#" target="_blank" style="display:none">
+          📄 Tam Tezi PDF İndir
+        </a>
+      </div>
+
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--rule)">
+        <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.8">
+          ⚠ Bu tez yatırım tavsiyesi değildir. Araştırma ve bilgi amaçlıdır.
+        </div>
+      </div>
+    </div>
+  </div>
+</div><script>
 // ===== DATA =====
 const BIST={'THYAO':'Türk Hava Yolları','EREGL':'Ereğli Demir Çelik','SAHOL':'Sabancı Holding','KCHOL':'Koç Holding','ASELS':'Aselsan','BIMAS':'BİM Mağazalar','TUPRS':'Tüpraş','AKBNK':'Akbank','ISCTR':'İş Bankası','FROTO':'Ford Otosan','TOASO':'Tofaş Otomobil','VAKBN':'Vakıfbank','PGSUS':'Pegasus','TAVHL':'TAV Havalimanları','SISE':'Şişecam','TURSG':'Türkiye Sigorta','GARAN':'Garanti BBVA','YKBNK':'Yapı Kredi','HALKB':'Halkbank','TCELL':'Turkcell','TTKOM':'Türk Telekom','ARCLK':'Arçelik','VESTL':'Vestel','ENKAI':'Enka İnşaat','PETKM':'Petkim','KOZAL':'Koza Altın','KRDMD':'Kardemir','SOKM':'Şok Marketler','MGROS':'Migros','ULKER':'Ülker','CCOLA':'Coca-Cola İçecek','MAVI':'Mavi Giyim','LOGO':'Logo Yazılım','EKGYO':'Emlak Konut','ENJSA':'Enerjisa'};
 const BIST_P=['THYAO','EREGL','SAHOL','ASELS','BIMAS','KCHOL'];
@@ -1640,13 +2478,14 @@ function qFill(t,c,ex){selEx(ex);document.getElementById('tickerIn').value=t;doc
 
 // PAGES
 function showPage(type,idx){
-  ['overview','crit','portfolio','forum'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
+  ['overview','crit','portfolio','forum','tezler'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const e=document.getElementById('page-'+type);if(e)e.classList.add('active');
   if(type==='overview'){const n=document.getElementById('nav-overview');if(n)n.classList.add('active');}
   else if(type==='crit'){const n=document.getElementById('nav-'+idx);if(n)n.classList.add('active');renderCritDetail(idx);}
   else if(type==='portfolio')renderPt();
   else if(type==='forum')loadPosts();
+  else if(type==='tezler'){const n=document.getElementById('nav-tezler');if(n)n.classList.add('active');renderTezler();}
 }
 
 // TV CHART
@@ -2356,7 +3195,125 @@ barisinvesting.com
 }
 
 
-// ===== MOBILE BOTTOM NAV =====
+// ═══════════════════════════════════════════════════════════
+// YATIRIM TEZLERİ
+// ═══════════════════════════════════════════════════════════
+
+// Tez veritabanı — PDF entegrasyonu sonrası buraya eklenir
+const TEZLER = [
+  // Örnek format (PDF gelince doldurulacak):
+  // {
+  //   id: 'thyao-2024',
+  //   ticker: 'THYAO',
+  //   exchange: 'BIST',
+  //   title: 'Türk Hava Yolları: Küresel Genişleme Tezi',
+  //   date: '2024-12',
+  //   verdict: 'al',         // al | izle | uzak
+  //   tags: ['Ulaşım', 'Büyüme', 'BIST'],
+  //   summary: 'THYAO, dünya genelinde 340+ destinasyona uçarak küresel havacılık...',
+  //   thesis: '...',         // tam metin (paragraf)
+  //   catalysts: '...',      // katalizörler
+  //   risks: '...',          // riskler
+  //   targetPrice: '385',
+  //   currentPrice: '290',
+  //   upside: '%33',
+  //   horizon: '12-18 ay',
+  //   pdfUrl: null,          // PDF URL gelince doldur
+  // }
+];
+
+let activeTez = null;
+
+function renderTezler() {
+  // Auth kontrolü
+  const locked   = document.getElementById('tezler-locked');
+  const unlocked = document.getElementById('tezler-content');
+  const isLoggedIn = !!(curUser && curUser.email && !curUser.offline_guest);
+
+  if (!isLoggedIn) {
+    locked.style.display   = 'block';
+    unlocked.style.display = 'none';
+    return;
+  }
+  locked.style.display   = 'none';
+  unlocked.style.display = 'block';
+
+  const grid = document.getElementById('tezGrid');
+  if (!TEZLER || TEZLER.length === 0) {
+    grid.innerHTML = `
+      <div class="tez-empty">
+        <div class="tez-empty-icon">📋</div>
+        <div class="tez-empty-title">İlk tez yakında geliyor</div>
+        <div class="tez-empty-sub">PDF tezleri entegre edildikçe burada görünecek.</div>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = TEZLER.map(tez => `
+    <div class="tez-card" onclick="openTez('${tez.id}')">
+      <div class="tez-card-header">
+        <div class="tez-card-meta">
+          <span class="tez-ticker">${tez.ticker}</span>
+          <span class="tez-exchange">${tez.exchange}</span>
+          <span class="tez-date">${tez.date}</span>
+        </div>
+        <div class="tez-title">${tez.title}</div>
+        <div class="tez-summary">${tez.summary}</div>
+      </div>
+      <div class="tez-card-footer">
+        <span class="tez-tag ${tez.verdict}">${tez.verdict === 'al' ? 'AL' : tez.verdict === 'izle' ? 'İZLE' : 'UZAK DUR'}</span>
+        ${tez.tags.map(t => `<span class="tez-tag izle" style="color:var(--text2);border-color:var(--border)">${t}</span>`).join('')}
+        <button class="tez-read-btn">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Tezi Oku
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+function openTez(id) {
+  const tez = TEZLER.find(t => t.id === id);
+  if (!tez) return;
+  activeTez = tez;
+
+  const modal = document.getElementById('tezModal');
+  document.getElementById('tezModalTicker').textContent  = tez.ticker;
+  document.getElementById('tezModalExchange').textContent = tez.exchange;
+  document.getElementById('tezModalDate').textContent    = tez.date;
+  document.getElementById('tezModalTitle').textContent   = tez.title;
+  document.getElementById('tezModalTag').textContent     = tez.verdict === 'al' ? 'AL' : tez.verdict === 'izle' ? 'İZLE' : 'UZAK DUR';
+  document.getElementById('tezModalTag').className       = `tez-tag ${tez.verdict}`;
+  document.getElementById('tezModalThesis').textContent  = tez.thesis || '—';
+  document.getElementById('tezModalCat').textContent     = tez.catalysts || '—';
+  document.getElementById('tezModalRisk').textContent    = tez.risks || '—';
+  document.getElementById('tezTargetPrice').textContent  = tez.targetPrice || '—';
+  document.getElementById('tezCurrentPrice').textContent = tez.currentPrice || '—';
+  document.getElementById('tezUpside').textContent       = tez.upside || '—';
+  document.getElementById('tezHorizon').textContent      = tez.horizon || '—';
+
+  // PDF butonu
+  const pdfBtn = document.getElementById('tezPdfBtn');
+  if (tez.pdfUrl) {
+    pdfBtn.href = tez.pdfUrl;
+    pdfBtn.style.display = 'flex';
+  } else {
+    pdfBtn.style.display = 'none';
+  }
+
+  modal.classList.add('visible');
+}
+
+function closeTezModal() {
+  document.getElementById('tezModal').classList.remove('visible');
+  activeTez = null;
+}
+
+// ESC ile kapat
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeTezModal();
+  }
+});
 function mobileNav(tab) {
   // Update active tab
   ['analiz','portfoy','forum'].forEach(t => {
