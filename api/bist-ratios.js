@@ -1,9 +1,9 @@
-// /api/bist-ratios.js — Barış Investing v4
+// /api/bist-ratios.js — Barış Investing v5
 // Veri Kaynağı: TradingView Scanner API (turkey/scan)
-// FIX: Geniş kolon adı desteği + Yahoo fallback + debug modu
+// FIX v5: Sadece TradingView'in tanıdığı kolon adları — doğrulanmış liste
 // GET /api/bist-ratios?ticker=THYAO
 // GET /api/bist-ratios?ticker=THYAO,TUPRS,EREGL
-// GET /api/bist-ratios?ticker=THYAO&debug=1  ← ham TV yanıtını görmek için
+// GET /api/bist-ratios?ticker=THYAO&debug=1
 
 // ════════════════════════════════════════════════════════════════
 // ÖNBELLEK — 30 dakika
@@ -23,66 +23,41 @@ function setCache(key, data) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// KOLON TANIMLARI — birden fazla isim dene, ilk dolu olanı al
-// TradingView BIST için bazı kolonları farklı isimle sunuyor
+// KOLONLAR — sadece TradingView'in turkey/scan'da tanıdığı isimler
+// Hata alan: price_to_book_fq, enterprise_value_ebitda_fq, ev_ebitda
 // ════════════════════════════════════════════════════════════════
-// İstek atarken gönderilecek TÜM olası kolon adları
-const TV_ALL_COLUMNS = [
-  'close',
-
-  // F/K
-  'price_earnings_ttm',       // TTM — genellikle çalışır
-  'earnings_per_share_fq',    // EPS (yedek hesaplama için)
-
-  // F/DD — birden fazla isim dene
-  'price_book_ratio',         // standart
-  'price_to_book_fq',         // quarterly versiyon
-
-  // Piyasa Değeri
-  'market_cap_basic',
-
-  // FD/FAVÖK — birden fazla isim dene
-  'enterprise_value_ebitda_ttm',   // TTM
-  'enterprise_value_ebitda_fq',    // quarterly
-  'ev_ebitda',                     // kısa alias
-
-  // ROE — birden fazla isim dene
-  'return_on_equity',
-  'return_on_equity_fq',
-
-  // Büyüme (bonus)
-  'revenue_growth_rate_5y',
-  'earnings_growth_rate_5y',
+const TV_COLUMNS = [
+  'close',                       // 0  — Güncel fiyat (TRY)
+  'price_earnings_ttm',          // 1  — F/K (TTM)
+  'price_book_ratio',            // 2  — PD/DD
+  'market_cap_basic',            // 3  — Piyasa Değeri
+  'enterprise_value_ebitda_ttm', // 4  — FD/FAVÖK
+  'return_on_equity',            // 5  — ROE (0–1 arası)
+  'debt_to_equity',              // 6  — Borç/Özsermaye
+  'earnings_per_share_basic_ttm',// 7  — EPS (F/K yedek hesabı için)
+  'revenue_growth_rate_5y',      // 8  — 5 yıllık gelir büyümesi
 ];
 
-// Kolon index haritası — TV yanıtındaki d dizisinde hangi index ne?
-// fetchFromTradingView içinde dinamik olarak oluşturulacak
-function buildIndexMap(columns) {
-  const map = {};
-  columns.forEach((col, i) => { map[col] = i; });
-  return map;
-}
+// index → kolon adı haritası (d dizisinde hangi index ne)
+const IDX = Object.fromEntries(TV_COLUMNS.map((col, i) => [col, i]));
 
 // ════════════════════════════════════════════════════════════════
 // TradingView POST isteği
 // ════════════════════════════════════════════════════════════════
 async function fetchFromTradingView(tickers) {
-  const formattedTickers = tickers.map(t =>
+  const syms = tickers.map(t =>
     `BIST:${t.toUpperCase().replace('.IS', '').replace('BIST:', '')}`
   );
 
   const body = {
-    symbols: {
-      tickers: formattedTickers,
-      query:   { types: [] },
-    },
-    columns: TV_ALL_COLUMNS,
+    symbols: { tickers: syms, query: { types: [] } },
+    columns: TV_COLUMNS,
   };
 
-  console.log(`[TV] POST turkey/scan — ${formattedTickers.join(', ')} — ${TV_ALL_COLUMNS.length} kolon`);
+  console.log(`[TV v5] POST turkey/scan — ${syms.join(', ')}`);
 
   const res = await fetch('https://scanner.tradingview.com/turkey/scan', {
-    method:  'POST',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Accept':       'application/json',
@@ -96,61 +71,68 @@ async function fetchFromTradingView(tickers) {
 
   if (!res.ok) {
     const txt = await res.text().catch(() => '');
-    throw new Error(`TradingView HTTP ${res.status}: ${txt.slice(0, 300)}`);
+    throw new Error(`TradingView HTTP ${res.status}: ${txt.slice(0, 400)}`);
   }
 
   const json = await res.json();
-  console.log(`[TV] Yanıt: ${json?.data?.length ?? 0} satır — örnek d[0]: ${JSON.stringify(json?.data?.[0]?.d?.slice(0, 5))}`);
-  return { json, columns: TV_ALL_COLUMNS };
+  console.log(`[TV v5] Yanıt: ${json?.data?.length ?? 0} satır`);
+  if (json?.data?.[0]) {
+    console.log(`[TV v5] İlk satır d[]:`, JSON.stringify(json.data[0].d));
+  }
+  return json;
 }
 
 // ════════════════════════════════════════════════════════════════
-// Null-safe değer al + güvenli sayı parse
+// Yardımcılar
 // ════════════════════════════════════════════════════════════════
 function safeNum(v, decimals = 2) {
-  if (v == null || v === '' || v === 'NaN') return null;
+  if (v == null || v === '') return null;
   const n = parseFloat(v);
   if (isNaN(n) || !isFinite(n)) return null;
   return parseFloat(n.toFixed(decimals));
 }
 
-function getCol(d, idxMap, ...colNames) {
-  for (const name of colNames) {
-    const idx = idxMap[name];
-    if (idx == null) continue;
-    const v = d[idx];
-    if (v != null && v !== '' && !isNaN(v)) return parseFloat(v);
-  }
-  return null;
+function col(d, colName) {
+  const idx = IDX[colName];
+  if (idx == null) return null;
+  return d[idx] ?? null;
 }
 
 // ════════════════════════════════════════════════════════════════
-// Ham TradingView satırını → temiz objeye dönüştür
+// Satır parse → temiz obje
 // ════════════════════════════════════════════════════════════════
-function parseRow(ticker, row, idxMap) {
+function parseRow(ticker, row) {
   const d = row?.d ?? [];
 
-  const guncelFiyat = safeNum(getCol(d, idxMap, 'close'));
-  const fk          = safeNum(getCol(d, idxMap, 'price_earnings_ttm'));
-  const pddd        = safeNum(getCol(d, idxMap, 'price_book_ratio', 'price_to_book_fq'));
-  const piyasaDeg   = safeNum(getCol(d, idxMap, 'market_cap_basic'), 0);
-  const fdFavok     = safeNum(getCol(d, idxMap,
-    'enterprise_value_ebitda_ttm',
-    'enterprise_value_ebitda_fq',
-    'ev_ebitda'
-  ));
-  const roeRaw      = safeNum(getCol(d, idxMap, 'return_on_equity', 'return_on_equity_fq'), 4);
+  const guncelFiyat = safeNum(col(d, 'close'));
+  const fk          = safeNum(col(d, 'price_earnings_ttm'));
+  const pddd        = safeNum(col(d, 'price_book_ratio'));
+  const piyasaDeg   = safeNum(col(d, 'market_cap_basic'), 0);
+  const fdFavok     = safeNum(col(d, 'enterprise_value_ebitda_ttm'));
+  const roeRaw      = safeNum(col(d, 'return_on_equity'), 4);
+  const de          = safeNum(col(d, 'debt_to_equity'));
+  const eps         = safeNum(col(d, 'earnings_per_share_basic_ttm'));
+  const revGrowth   = safeNum(col(d, 'revenue_growth_rate_5y'), 4);
 
-  // ROE: TradingView 0.143 = %14.3 → % cinsine çevir
+  // ROE: TV 0.143 → %14.3
   const roe = roeRaw != null ? safeNum(roeRaw * 100, 2) : null;
 
-  // Değerleme sinyalleri
+  // Büyüme oranı: TV 0.12 → %12
+  const gelirBuyume = revGrowth != null ? safeNum(revGrowth * 100, 1) : null;
+
+  // F/K yedek: Fiyat / EPS (TV'nin price_earnings_ttm null gelirse)
+  let fkFinal = fk;
+  if (fkFinal == null && guncelFiyat != null && eps != null && eps > 0) {
+    fkFinal = safeNum(guncelFiyat / eps);
+    console.log(`[TV v5] ${ticker}: F/K EPS yedek: ${guncelFiyat}/${eps}=${fkFinal}`);
+  }
+
   const sinyaller = {
-    fk: fk == null ? 'N/A'
-      : fk < 0    ? 'ZARAR'
-      : fk < 10   ? 'UCUZ'
-      : fk < 20   ? 'ADİL'
-      : fk < 35   ? 'DİKKAT'
+    fk: fkFinal == null ? 'N/A'
+      : fkFinal < 0    ? 'ZARAR'
+      : fkFinal < 10   ? 'UCUZ'
+      : fkFinal < 20   ? 'ADİL'
+      : fkFinal < 35   ? 'DİKKAT'
       : 'PAHALI',
     pddd: pddd == null ? 'N/A'
       : pddd < 1       ? 'ÇOK UCUZ'
@@ -164,27 +146,25 @@ function parseRow(ticker, row, idxMap) {
       : 'PAHALI',
   };
 
-  // Debug: hangi kolondan hangi değer geldi
-  const debugKolonlar = {};
-  TV_ALL_COLUMNS.forEach((col, i) => {
-    const v = d[i];
-    if (v != null) debugKolonlar[col] = v;
+  // Ham değerler (debug için) — tüm kolonlar
+  const _raw = {};
+  TV_COLUMNS.forEach((colName, i) => {
+    if (d[i] != null) _raw[colName] = d[i];
   });
 
-  console.log(`[TV Parse] ${ticker}: FK=${fk} PDDD=${pddd} FD/FAVÖK=${fdFavok} ROE=%${roe} — Ham: ${JSON.stringify(debugKolonlar)}`);
+  console.log(`[TV v5 Parse] ${ticker}: FK=${fkFinal} PDDD=${pddd} FD/FAVÖK=${fdFavok} ROE=%${roe} D/E=${de}`);
 
   return {
     ticker,
-    // ── Ana çarpanlar ──
-    FK:          fk,
-    PDDD:        pddd,
-    FD_FAVOK:    fdFavok,
-    ROE:         roe,          // % cinsinden (14.3 = %14.3)
+    FK:           fkFinal,
+    PDDD:         pddd,
+    FD_FAVOK:     fdFavok,
+    ROE:          roe,
+    DebtEquity:   de,
+    GelirBuyume:  gelirBuyume,
     PiyasaDegeri: piyasaDeg,
-    GuncelFiyat: guncelFiyat,
-    // ── Ham TV değerleri (debug) ──
-    _raw:        debugKolonlar,
-    // ── Meta ──
+    GuncelFiyat:  guncelFiyat,
+    _raw,
     sinyaller,
     kaynak: 'TradingView',
     ts:     new Date().toISOString(),
@@ -200,29 +180,28 @@ async function getBISTRatios(tickers) {
 
   for (const t of tickers) {
     const cached = getCached(`tv:${t}`);
-    if (cached) { results[t] = cached; }
+    if (cached) { console.log(`[Cache HIT] ${t}`); results[t] = cached; }
     else        { toFetch.push(t); }
   }
-
   if (toFetch.length === 0) return results;
 
-  const { json, columns } = await fetchFromTradingView(toFetch);
-  const idxMap = buildIndexMap(columns);
-  const rows   = json?.data ?? [];
+  const json = await fetchFromTradingView(toFetch);
+  const rows = json?.data ?? [];
 
   for (const row of rows) {
     const sym = (row?.s ?? '').replace('BIST:', '').replace('.IS', '').toUpperCase();
     if (!sym) continue;
-    const parsed = parseRow(sym, row, idxMap);
+    const parsed = parseRow(sym, row);
     setCache(`tv:${sym}`, parsed);
     results[sym] = parsed;
   }
 
-  // Veri gelmeyen hisseler
+  // Yanıt gelmeyen hisseler
   for (const t of toFetch) {
     if (!results[t]) {
       results[t] = {
         ticker: t, FK: null, PDDD: null, FD_FAVOK: null, ROE: null,
+        DebtEquity: null, GelirBuyume: null,
         PiyasaDegeri: null, GuncelFiyat: null, _raw: {},
         sinyaller: { fk: 'N/A', pddd: 'N/A', fdFavok: 'N/A' },
         kaynak: 'TradingView', hata: 'Veri bulunamadı',
@@ -243,7 +222,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const raw      = req.query?.ticker ?? req.body?.ticker ?? '';
+  const raw       = req.query?.ticker ?? req.body?.ticker ?? '';
   const debugMode = req.query?.debug === '1';
 
   if (!raw) {
@@ -252,7 +231,7 @@ export default async function handler(req, res) {
       ornekler: [
         '/api/bist-ratios?ticker=THYAO',
         '/api/bist-ratios?ticker=THYAO,TUPRS',
-        '/api/bist-ratios?ticker=THYAO&debug=1  ← ham TV yanıtını görmek için',
+        '/api/bist-ratios?ticker=THYAO&debug=1',
       ],
     });
   }
@@ -264,12 +243,9 @@ export default async function handler(req, res) {
     .slice(0, 50);
 
   try {
-    // Debug modunda önbelleği bypass et
     if (debugMode) tickers.forEach(t => CACHE.delete(`tv:${t}`));
-
     const data = await getBISTRatios(tickers);
 
-    // Tekil sorgu → düz obje
     if (tickers.length === 1) {
       return res.status(200).json(data[tickers[0]] ?? { error: 'Veri bulunamadı', ticker: tickers[0] });
     }
@@ -277,10 +253,6 @@ export default async function handler(req, res) {
 
   } catch (e) {
     console.error('[Handler Error]', e.message);
-    return res.status(500).json({
-      error:  e.message,
-      tickers,
-      ipucu:  'Vercel Runtime Logs kontrol edin. TradingView erişilemez olabilir.',
-    });
+    return res.status(500).json({ error: e.message, tickers });
   }
 }
