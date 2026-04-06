@@ -506,10 +506,60 @@ async function fetchYahooData(yahooTicker) {
   // ── BIST DÜZELTME PIPELINE ────────────────────────────────────
   if (isBIST) {
 
-    // ADIM 1: Yahoo'nun hazır pb değerini sıfırla — her zaman formülden hesaplayacağız
+    // ADIM 0: Çoklu kaynak rasyo API'sini çağır (Google Finance öncelikli)
+    // Bu endpoint Google Finance + İşYatırım + BigPara + Yahoo normalize sıralamasıyla çalışır
+    let bistRatios = null;
+    try {
+      // Vercel'de kendi endpoint'imizi çağırıyoruz (relative URL)
+      const bistUrl = `${process.env.VERCEL_URL
+        ? 'https://' + process.env.VERCEL_URL
+        : 'http://localhost:3000'}/api/bist-ratios?ticker=${yahooTicker.replace('.IS', '')}`;
+
+      const bistRes = await fetch(bistUrl, {
+        signal: AbortSignal.timeout(12000), // çoklu kaynak — daha uzun timeout
+        headers: { 'Accept': 'application/json' }
+      });
+      if (bistRes.ok) {
+        bistRatios = await bistRes.json();
+        console.log(`[BIST API] Rasyo sonuçları: PE=${bistRatios.pe}(${bistRatios.source_pe}) PD/DD=${bistRatios.pb}(${bistRatios.source_pb})`);
+      }
+    } catch(e) {
+      console.log(`[BIST API] Çağrı başarısız: ${e.message} — fallback pipeline devam ediyor`);
+    }
+
+    // BIST API'den gelen değerleri uygula
+    if (bistRatios) {
+      // PE — kaynak Google/İşYat/BigPara ise doğrudan kullan, Yahoo ise anormal kontrolü yap
+      if (bistRatios.pe != null && bistRatios.pe > 0 && bistRatios.pe < 200) {
+        result.peRatio  = bistRatios.pe;
+        result.peSource = bistRatios.source_pe;
+        console.log(`[BIST API] PE override: ${result.peRatio} (${result.peSource})`);
+      }
+      // PB — her zaman BIST API'yi tercih et (formül tabanlı)
+      if (bistRatios.pb != null && bistRatios.pb > 0.05 && bistRatios.pb < 25) {
+        result.pbRatio  = bistRatios.pb;
+        result.pbSource = bistRatios.source_pb;
+        console.log(`[BIST API] PD/DD override: ${result.pbRatio} (${result.pbSource})`);
+      }
+      // ROE
+      if (bistRatios.roe != null && Math.abs(bistRatios.roe) < 3) {
+        if (!result.roe) result.roe = bistRatios.roe;
+      }
+      // MarketCap
+      if (bistRatios.marketCap && !result.marketCap) {
+        result.marketCap = bistRatios.marketCap;
+      }
+      // Debug bilgisini kaydet
+      result.bistRatiosDebug = bistRatios.debug;
+    }
+
+    // ADIM 1: Yahoo'nun hazır pb değerini sıfırla — formülden hesaplanacak
     const yahooPB = result.pbRatio;
-    result.pbRatio = null;
-    if (yahooPB) console.log(`[BIST] Yahoo pb=${yahooPB.toFixed(2)} yoksayıldı, formül kullanılacak`);
+    if (!bistRatios?.pb) {
+      // BIST API'den pb gelmediyse Yahoo'yu da sıfırla
+      result.pbRatio = null;
+      if (yahooPB) console.log(`[BIST] Yahoo pb=${yahooPB?.toFixed(2)} yoksayıldı`);
+    }
 
     // ADIM 2: Birim normalizasyonu
     result = normalizeBISTUnits(result);
@@ -519,17 +569,22 @@ async function fetchYahooData(yahooTicker) {
       console.log(`[BIST] PE anormal: ${result.peRatio} → null`); result.peRatio = null;
     }
     if (result.roe && Math.abs(result.roe) > 5) {
-      // ROE >500% → oran değil yüzde gelmiş, 100'e böl
       console.log(`[BIST] ROE anormal: ${result.roe} → ${result.roe/100}`);
       result.roe = result.roe / 100;
     }
 
     // ADIM 4: Ham bilanço verisiyle PD/DD ve ROE formül hesabı (isBIST=true)
-    result = computeFromRawData(result, true);
+    // BIST API'den pb geldiyse formül override etmesin
+    if (!result.pbRatio) {
+      result = computeFromRawData(result, true);
+    } else {
+      // Sadece ROE ve D/E için formülü çalıştır
+      result = computeFromRawData(result, false);
+    }
 
-    // ADIM 5: Hâlâ kritik eksik varsa scraping dene
-    if (result.pbRatio == null || result.roe == null) {
-      console.log('[BIST] Kritik veri eksik → scraping...');
+    // ADIM 5: Hâlâ kritik eksik varsa eski scraping dene
+    if (result.pbRatio == null || result.peRatio == null) {
+      console.log('[BIST] Kritik veri eksik → legacy scraping...');
       const t = yahooTicker.replace('.IS', '');
       const sc = await scrapeBISTFallback(t);
       if (sc.source) {
@@ -540,7 +595,7 @@ async function fetchYahooData(yahooTicker) {
       }
     }
 
-    console.log(`[BIST Final] PD/DD=${result.pbRatio?.toFixed(2)} (src:${result.pbSource}) ROE=${result.roe ? (result.roe*100).toFixed(1)+'%' : 'N/A'} Equity=${result.computedEquity?.toFixed(0)}`);
+    console.log(`[BIST Final] PE=${result.peRatio?.toFixed(2)}(${result.peSource||'?'}) PD/DD=${result.pbRatio?.toFixed(2)}(${result.pbSource}) ROE=${result.roe ? (result.roe*100).toFixed(1)+'%' : 'N/A'}`);
   }
 
   // Logo
