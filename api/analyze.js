@@ -519,63 +519,67 @@ async function fetchYahooData(yahooTicker) {
   // ── BIST DÜZELTME PIPELINE ────────────────────────────────────
   if (isBIST) {
 
-    // ADIM 0: Çoklu kaynak rasyo API'sini çağır (Google Finance öncelikli)
-    // Bu endpoint Google Finance + İşYatırım + BigPara + Yahoo normalize sıralamasıyla çalışır
+    // ADIM 0: TradingView Scanner API'sinden çarpanları çek
     let bistRatios = null;
     try {
-      // Vercel'de kendi endpoint'imizi çağırıyoruz (relative URL)
       const bistUrl = `${process.env.VERCEL_URL
         ? 'https://' + process.env.VERCEL_URL
         : 'http://localhost:3000'}/api/bist-ratios?ticker=${yahooTicker.replace('.IS', '')}`;
 
       const bistRes = await fetch(bistUrl, {
-        signal: AbortSignal.timeout(12000), // çoklu kaynak — daha uzun timeout
+        signal: AbortSignal.timeout(12000),
         headers: { 'Accept': 'application/json' }
       });
       if (bistRes.ok) {
         bistRatios = await bistRes.json();
-        console.log(`[BIST API] Rasyo sonuçları: PE=${bistRatios.pe}(${bistRatios.source_pe}) PD/DD=${bistRatios.pb}(${bistRatios.source_pb})`);
+        // TradingView v3: alan adları FK, PDDD, FD_FAVOK, ROE
+        console.log(`[BIST API] TradingView sonuçları: FK=${bistRatios.FK} PDDD=${bistRatios.PDDD} FD_FAVOK=${bistRatios.FD_FAVOK} ROE=%${bistRatios.ROE}`);
       }
     } catch(e) {
       console.log(`[BIST API] Çağrı başarısız: ${e.message} — fallback pipeline devam ediyor`);
     }
 
-    // BIST API'den gelen değerleri uygula
+    // TradingView verilerini result'a uygula
     if (bistRatios) {
-      // PE — Google > İşYat > BigPara > Yahoo formül sıralaması
-      if (bistRatios.pe != null && bistRatios.pe > 0.3 && bistRatios.pe < 200) {
-        result.peRatio  = bistRatios.pe;
-        result.peSource = bistRatios.source_pe;
-        console.log(`[BIST API] PE override: ${result.peRatio} (${result.peSource})`);
+      // PE (F/K) — TradingView price_earnings_ttm → result.peRatio
+      if (bistRatios.FK != null && bistRatios.FK > 0.3 && bistRatios.FK < 500) {
+        result.peRatio  = bistRatios.FK;
+        result.peSource = 'TradingView';
+        console.log(`[BIST TV] F/K override: ${result.peRatio}`);
       }
-      // PB — her zaman BIST API'yi tercih et
-      if (bistRatios.pb != null && bistRatios.pb > 0.03 && bistRatios.pb < 30) {
-        result.pbRatio  = bistRatios.pb;
-        result.pbSource = bistRatios.source_pb;
-        console.log(`[BIST API] PD/DD override: ${result.pbRatio} (${result.pbSource})`);
+      // PB (PD/DD) — TradingView price_book_ratio → result.pbRatio
+      if (bistRatios.PDDD != null && bistRatios.PDDD > 0.03 && bistRatios.PDDD < 30) {
+        result.pbRatio  = bistRatios.PDDD;
+        result.pbSource = 'TradingView';
+        console.log(`[BIST TV] PD/DD override: ${result.pbRatio}`);
       }
-      // PEG — Google Finance'dan geliyorsa kullan
-      if (bistRatios.peg != null && bistRatios.peg > 0.01 && bistRatios.peg < 20) {
-        result.pegRatio  = bistRatios.peg;
-        result.pegSource = bistRatios.source_peg;
-        console.log(`[BIST API] PEG override: ${result.pegRatio} (${result.pegSource})`);
+      // EV/EBITDA (FD/FAVÖK) — TradingView enterprise_value_ebitda_ttm → result.evEbitda
+      if (bistRatios.FD_FAVOK != null && bistRatios.FD_FAVOK > 0 && bistRatios.FD_FAVOK < 200) {
+        result.evEbitda  = bistRatios.FD_FAVOK;
+        result.evSource  = 'TradingView';
+        console.log(`[BIST TV] FD/FAVÖK override: ${result.evEbitda}`);
       }
-      // ROE
-      if (bistRatios.roe != null && Math.abs(bistRatios.roe) < 3) {
-        if (!result.roe) result.roe = bistRatios.roe;
+      // ROE — TradingView % cinsinden verir (ör: 14.3 = %14.3), result.roe 0-1 arası bekler
+      if (bistRatios.ROE != null) {
+        const roeDecimal = bistRatios.ROE / 100; // %14.3 → 0.143
+        if (Math.abs(roeDecimal) < 5 && !result.roe) {
+          result.roe       = roeDecimal;
+          result.roeSource = 'TradingView';
+          console.log(`[BIST TV] ROE override: %${bistRatios.ROE} → ${roeDecimal}`);
+        }
       }
-      // MarketCap
-      if (bistRatios.marketCap && !result.marketCap) {
-        result.marketCap = bistRatios.marketCap;
+      // PiyasaDegeri (MarketCap) — fallback için
+      if (bistRatios.PiyasaDegeri && !result.marketCap) {
+        result.marketCap = bistRatios.PiyasaDegeri;
       }
-      // Debug bilgisini kaydet
-      result.bistRatiosDebug = bistRatios.debug;
+      // Debug
+      result.bistRatiosDebug = bistRatios._raw ?? null;
     }
 
     // ADIM 1: Yahoo'nun hazır pb değerini sıfırla — formülden hesaplanacak
     const yahooPB = result.pbRatio;
-    if (!bistRatios?.pb) {
-      // BIST API'den pb gelmediyse Yahoo'yu da sıfırla
+    if (!bistRatios?.PDDD) {
+      // TradingView'den PD/DD gelmediyse Yahoo'yu da sıfırla — formülden hesaplanacak
       result.pbRatio = null;
       if (yahooPB) console.log(`[BIST] Yahoo pb=${yahooPB?.toFixed(2)} yoksayıldı`);
     }
