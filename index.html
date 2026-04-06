@@ -3071,184 +3071,151 @@ function createPostCard(p){
 }
 
 // SHARE
-function openShr(){if(!analysisData)return;drawCanvas();document.getElementById('shrModal').classList.add('visible');}
-function closeShr(){document.getElementById('shrModal').classList.remove('visible');}
+function openShr(){
+  if(!analysisData){ showToast('⚠ Önce bir hisse analiz edin'); return; }
+  drawCanvas();
+  const m=document.getElementById('shrModal');
+  if(m){ m.classList.add('visible'); m.scrollTop=0; }
+}
+function closeShr(){
+  const m=document.getElementById('shrModal');
+  if(m) m.classList.remove('visible');
+}
 function drawCanvas(){
   const canvas=document.getElementById('shrCanvas');
+  if(!canvas){ console.error('shrCanvas bulunamadı'); return; }
   const ctx=canvas.getContext('2d');
-  // ── 2× çözünürlük (bulanıklık sorunu çözümü) ──
-  const W=1200,H=800;
+  // ── 2× retina çözünürlük ──
+  const W=1200, H=800;
   canvas.width=W; canvas.height=H;
   canvas.style.width='600px'; canvas.style.height='400px';
 
   const fw=FW[curFW]; const d=analysisData; const fd=d.fd||{};
-  const PASS_CLR='#22c55e', FAIL_CLR='#f05252', NEUT_CLR='#f59e0b';
-  const vc = d.verdict==='AL'?PASS_CLR : d.verdict==='UZAK_DUR'?FAIL_CLR : NEUT_CLR;
-  const fwClr = curFW==='lynch'?'#e07b39' : curFW==='dalio'?'#9b77cc' : '#4d8ef0';
+  const PASS='#22c55e', FAIL='#f05252', NEUT='#f59e0b';
+  const vc  = d.verdict==='AL'?PASS : d.verdict==='UZAK_DUR'?FAIL : NEUT;
+  const fwC = curFW==='lynch'?'#e07b39' : curFW==='dalio'?'#9b77cc' : '#4d8ef0';
 
-  // ── ARKA PLAN: koyu lacivert ──
+  // ─── ARKA PLAN ───
   ctx.fillStyle='#0e1220'; ctx.fillRect(0,0,W,H);
-
-  // Hafif ızgara dokusu
   ctx.strokeStyle='rgba(255,255,255,0.025)'; ctx.lineWidth=1;
   for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
   for(let x=0;x<W;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
 
-  // ── SOL KENAR VURGU ──
-  const grad=ctx.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,fwClr); grad.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=grad; ctx.fillRect(0,0,4,H);
+  // Sol kenar gradient
+  const sg=ctx.createLinearGradient(0,0,0,H);
+  sg.addColorStop(0,fwC); sg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sg; ctx.fillRect(0,0,5,H);
 
-  // ── HEADER BAR ──
-  ctx.fillStyle='#151929'; ctx.fillRect(0,0,W,100);
-  ctx.fillStyle=fwClr; ctx.fillRect(0,100,W,3);
-
-  // Logo / brand
-  ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font=`500 ${22}px "IBM Plex Mono",monospace`;
+  // ─── HEADER ───
+  ctx.fillStyle='#151929'; ctx.fillRect(0,0,W,108);
+  ctx.fillStyle=fwC; ctx.fillRect(0,108,W,3);
+  ctx.fillStyle='rgba(255,255,255,0.32)';
+  ctx.font=`500 22px "IBM Plex Mono",monospace`;
   ctx.fillText('BARIŞ INVESTING  ·  YATIRIM ANALİZ MERKEZİ',48,38);
-
-  // Ticker büyük
-  ctx.fillStyle='#e8edf8'; ctx.font=`700 ${68}px "IBM Plex Serif","Georgia",serif`;
-  ctx.fillText(d.ticker,48,90);
+  ctx.fillStyle='#e8edf8'; ctx.font=`700 66px "IBM Plex Serif","Georgia",serif`;
+  ctx.fillText(d.ticker,48,96);
   const tkW=ctx.measureText(d.ticker).width;
-  if(d.company){
-    ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.font=`400 ${22}px "IBM Plex Mono",monospace`;
-    ctx.fillText((d.company||'').substring(0,32),48+tkW+20,82);
-  }
+  if(d.company){ ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font=`400 22px "IBM Plex Mono",monospace`; ctx.fillText((d.company||'').substring(0,28),48+tkW+16,86); }
 
-  // ── VERDICT KUTUSU (sağ üst) ──
-  const verdictText = d.verdict==='AL'?'AL' : d.verdict==='UZAK_DUR'?'UZAK DUR' : 'BEKLE';
-  const vbW=260, vbH=78, vbX=W-vbW-48, vbY=12;
+  // Framework badge
+  ctx.fillStyle=fwC+'33'; ctx.fillRect(48,116,170,30);
+  ctx.strokeStyle=fwC+'88'; ctx.lineWidth=1; ctx.strokeRect(48,116,170,30);
+  ctx.fillStyle=fwC; ctx.font=`600 18px "IBM Plex Mono",monospace`;
+  ctx.fillText(fw.name.toUpperCase(),58,136);
+
+  // Verdict kutusu
+  const vbW=240,vbH=74,vbX=W-vbW-48,vbY=14;
   ctx.fillStyle=vc+'22'; ctx.fillRect(vbX,vbY,vbW,vbH);
   ctx.strokeStyle=vc; ctx.lineWidth=2; ctx.strokeRect(vbX,vbY,vbW,vbH);
-  // Sol renkli kenar
   ctx.fillStyle=vc; ctx.fillRect(vbX,vbY,5,vbH);
-  ctx.fillStyle=vc; ctx.font=`800 ${38}px "IBM Plex Serif","Georgia",serif`;
-  ctx.textAlign='center'; ctx.fillText(verdictText,vbX+vbW/2+4,vbY+46);
-  ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font=`500 ${18}px "IBM Plex Mono",monospace`;
-  ctx.fillText(`${d.score}/${fw.criteria.length} KRİTER`,vbX+vbW/2+4,vbY+70);
+  ctx.font=`800 36px "IBM Plex Serif","Georgia",serif`; ctx.textAlign='center';
+  ctx.fillStyle=vc; ctx.fillText(d.verdict==='AL'?'AL':d.verdict==='UZAK_DUR'?'UZAK DUR':'BEKLE',vbX+vbW/2+4,vbY+44);
+  ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.font=`500 18px "IBM Plex Mono",monospace`;
+  ctx.fillText(`${d.score}/${fw.criteria.length} KRİTER`,vbX+vbW/2+4,vbY+66);
   ctx.textAlign='left';
 
-  // Framework etiketi
-  ctx.fillStyle=fwClr+'33'; ctx.fillRect(48,114,180,32);
-  ctx.strokeStyle=fwClr+'88'; ctx.lineWidth=1; ctx.strokeRect(48,114,180,32);
-  ctx.fillStyle=fwClr; ctx.font=`600 ${20}px "IBM Plex Mono",monospace`;
-  ctx.fillText(fw.name.toUpperCase(),58,135);
+  const divX=W/2, sY=158;
 
-  // ── BÖLÜM AYRAÇ ──
-  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(48,158); ctx.lineTo(W-48,158); ctx.stroke();
+  // ─── SOL KOLON: Kriter bar chart ───
+  ctx.fillStyle='rgba(255,255,255,0.28)'; ctx.font=`600 17px "IBM Plex Mono",monospace`;
+  ctx.fillText('KRİTER ANALİZİ',48,sY-8);
 
-  // ═══════════════════════════════════════════════════
-  // SOL KOLON: Kriter tablosu (bar chart tarzı)
-  // ═══════════════════════════════════════════════════
-  const leftX=48, rightX=W/2+20, colW=(W/2-68);
-  const sY=174, rowH=52;
-
-  ctx.fillStyle='rgba(255,255,255,0.30)'; ctx.font=`600 ${18}px "IBM Plex Mono",monospace`;
-  ctx.fillText('KRİTER ANALİZİ',leftX,sY-10);
-
+  const colW=divX-68, rowH=Math.min(52, (H-sY-80)/Math.max(fw.criteria.length,1));
   fw.criteria.forEach((cr,i)=>{
-    if(i>=7) return; // max 7 kriter
     const y=sY+i*rowH;
     const s=d.statuses[i];
-    const clr=s==='pass'?PASS_CLR:s==='fail'?FAIL_CLR:NEUT_CLR;
-    const bgAlpha=s==='pass'?'12':s==='fail'?'12':'0a';
-
-    // Kriter satır arka planı
-    ctx.fillStyle='#'+parseInt('1c2235',16).toString(16); ctx.fillRect(leftX,y+2,colW,rowH-4);
-    ctx.fillStyle=clr+(bgAlpha); ctx.fillRect(leftX,y+2,colW,rowH-4);
-    // Sol renk çizgisi
-    ctx.fillStyle=clr; ctx.fillRect(leftX,y+2,4,rowH-4);
-
-    // Skor barı (arka plan)
-    const barX=leftX+colW-160, barY=y+rowH/2-6, barW=148, barH=12;
-    ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(barX,barY,barW,barH);
-    // Dolu kısım
-    const fillPct=s==='pass'?1:s==='fail'?0.15:0.5;
-    const barGrad=ctx.createLinearGradient(barX,0,barX+barW,0);
-    barGrad.addColorStop(0,clr+'cc'); barGrad.addColorStop(1,clr+'44');
-    ctx.fillStyle=barGrad; ctx.fillRect(barX,barY,barW*fillPct,barH);
-
-    // Kriter adı
-    ctx.fillStyle='#e8edf8'; ctx.font=`500 ${20}px "IBM Plex Mono",monospace`;
-    const crName=cr.name.length>22?cr.name.substring(0,21)+'…':cr.name;
-    ctx.fillText(crName,leftX+12,y+rowH/2+4);
-
-    // Durum etiketi
-    const label=s==='pass'?'✓ GEÇTİ':s==='fail'?'✗ KALDI':'◑ BELİRSİZ';
-    ctx.fillStyle=clr; ctx.font=`700 ${17}px "IBM Plex Mono",monospace`;
-    ctx.fillText(label,leftX+12,y+rowH/2+22);
+    const clr=s==='pass'?PASS:s==='fail'?FAIL:NEUT;
+    const bg =s==='pass'?PASS+'14':s==='fail'?FAIL+'14':NEUT+'0e';
+    ctx.fillStyle='#1c2235'; ctx.fillRect(48,y+2,colW,rowH-4);
+    ctx.fillStyle=bg; ctx.fillRect(48,y+2,colW,rowH-4);
+    ctx.fillStyle=clr; ctx.fillRect(48,y+2,4,rowH-4);
+    // Bar (sağda)
+    const bx=48+colW-150, bW=138, bH=10, by=y+rowH/2-5;
+    ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(bx,by,bW,bH);
+    const fp=s==='pass'?1:s==='fail'?0.12:0.5;
+    const bg2=ctx.createLinearGradient(bx,0,bx+bW,0);
+    bg2.addColorStop(0,clr+'cc'); bg2.addColorStop(1,clr+'44');
+    ctx.fillStyle=bg2; ctx.fillRect(bx,by,bW*fp,bH);
+    // Metin
+    ctx.fillStyle='#d8e4f8'; ctx.font=`500 18px "IBM Plex Mono",monospace`;
+    const nm=cr.name.length>22?cr.name.substring(0,21)+'…':cr.name;
+    ctx.fillText(nm,60,y+rowH/2+4);
+    const lbl=s==='pass'?'✓ GEÇTİ':s==='fail'?'✗ KALDI':'◑ BELİRSİZ';
+    ctx.fillStyle=clr; ctx.font=`600 15px "IBM Plex Mono",monospace`;
+    ctx.fillText(lbl,60,y+rowH/2+20);
   });
 
-  // ═══════════════════════════════════════════════════
-  // SAĞ KOLON: Finansal veri tablosu
-  // ═══════════════════════════════════════════════════
-  ctx.fillStyle='rgba(255,255,255,0.30)'; ctx.font=`600 ${18}px "IBM Plex Mono",monospace`;
-  ctx.fillText('FİNANSAL VERİLER',rightX,sY-10);
+  // ─── SAĞ KOLON: Finansal veri tablosu (PDF tarzı) ───
+  const rX=divX+20, rW=W-rX-48;
+  ctx.fillStyle='rgba(255,255,255,0.28)'; ctx.font=`600 17px "IBM Plex Mono",monospace`;
+  ctx.fillText('FİNANSAL VERİLER',rX,sY-8);
 
   const pct=v=>v!=null?`%${(v*100).toFixed(1)}`:'—';
-  const n2=v=>v!=null?Number(v).toFixed(2):'—';
+  const n2 =v=>v!=null?Number(v).toFixed(2):'—';
   const big=v=>{if(v==null)return'—';const a=Math.abs(v);if(a>=1e12)return`${(v/1e12).toFixed(1)}T`;if(a>=1e9)return`${(v/1e9).toFixed(1)}B`;if(a>=1e6)return`${(v/1e6).toFixed(1)}M`;return Number(v).toFixed(0);};
 
-  const metrics=[
-    ['F/K (TTM)',     n2(fd.peRatio),         fd.peRatio!=null&&fd.peRatio<22?PASS_CLR:fd.peRatio!=null&&fd.peRatio>35?FAIL_CLR:NEUT_CLR],
-    ['F/DD',         n2(fd.pbRatio),          fd.pbRatio!=null&&fd.pbRatio<3?PASS_CLR:fd.pbRatio!=null&&fd.pbRatio>8?FAIL_CLR:NEUT_CLR],
-    ['ROE',          pct(fd.roe),             fd.roe!=null&&fd.roe>0.15?PASS_CLR:fd.roe!=null&&fd.roe<0.05?FAIL_CLR:NEUT_CLR],
-    ['Brüt Marj',    pct(fd.grossMargin),     fd.grossMargin!=null&&fd.grossMargin>0.35?PASS_CLR:NEUT_CLR],
-    ['Net Marj',     pct(fd.profitMargin),    fd.profitMargin!=null&&fd.profitMargin>0.10?PASS_CLR:NEUT_CLR],
-    ['FCF',          big(fd.freeCashflow),    fd.freeCashflow!=null&&fd.freeCashflow>0?PASS_CLR:fd.freeCashflow!=null?FAIL_CLR:NEUT_CLR],
-    ['Piy. Değeri',  big(fd.marketCap),       '#8ba3cc'],
+  const rows=[
+    ['F/K (P/E)',    n2(fd.peRatio),       fd.peRatio!=null&&fd.peRatio<20?PASS:fd.peRatio>40?FAIL:NEUT],
+    ['F/DD (P/B)',   n2(fd.pbRatio),       fd.pbRatio!=null&&fd.pbRatio<2?PASS:fd.pbRatio>6?FAIL:NEUT],
+    ['ROE',          pct(fd.roe),          fd.roe!=null&&fd.roe>0.15?PASS:fd.roe!=null&&fd.roe<0.05?FAIL:NEUT],
+    ['Brüt Marj',   pct(fd.grossMargin),  fd.grossMargin!=null&&fd.grossMargin>0.3?PASS:NEUT],
+    ['Net Marj',    pct(fd.profitMargin), fd.profitMargin!=null&&fd.profitMargin>0.1?PASS:NEUT],
+    ['FCF',         big(fd.freeCashflow), fd.freeCashflow!=null&&fd.freeCashflow>0?PASS:fd.freeCashflow!=null?FAIL:NEUT],
+    ['Piy. Değeri', big(fd.marketCap),    '#8ba3cc'],
   ];
 
-  const rW=(W-rightX-48), rRowH=52;
-  metrics.forEach(([label,val,clr],i)=>{
+  const rRowH=Math.min(52,(H-sY-80)/rows.length);
+  rows.forEach(([lbl,val,clr],i)=>{
     const y=sY+i*rRowH;
-    // Satır arka planı — alternatif renklendirme
-    ctx.fillStyle= i%2===0 ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.01)';
-    ctx.fillRect(rightX,y+2,rW,rRowH-4);
-
-    // Label
-    ctx.fillStyle='rgba(255,255,255,0.40)'; ctx.font=`400 ${18}px "IBM Plex Mono",monospace`;
-    ctx.fillText(label,rightX+12,y+rRowH/2-2);
-
-    // Değer — sağa hizalı
+    ctx.fillStyle=i%2===0?'rgba(255,255,255,0.025)':'rgba(255,255,255,0.01)';
+    ctx.fillRect(rX,y+2,rW,rRowH-4);
+    ctx.fillStyle='rgba(255,255,255,0.38)'; ctx.font=`400 17px "IBM Plex Mono",monospace`;
+    ctx.fillText(lbl,rX+10,y+rRowH/2-2);
     ctx.fillStyle=val==='—'?'rgba(255,255,255,0.2)':clr;
-    ctx.font=`700 ${22}px "IBM Plex Mono",monospace`;
-    ctx.textAlign='right';
-    ctx.fillText(val,rightX+rW-12,y+rRowH/2+10);
-    ctx.textAlign='left';
-
-    // Ayraç çizgisi
+    ctx.font=`700 20px "IBM Plex Mono",monospace`; ctx.textAlign='right';
+    ctx.fillText(val,rX+rW-10,y+rRowH/2+10); ctx.textAlign='left';
     ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(rightX,y+rRowH); ctx.lineTo(rightX+rW,y+rRowH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rX,y+rRowH); ctx.lineTo(rX+rW,y+rRowH); ctx.stroke();
   });
 
-  // ── ORTA AYRACI ──
-  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(W/2,158); ctx.lineTo(W/2,H-60); ctx.stroke();
+  // Orta ayraç
+  ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(divX,sY-20); ctx.lineTo(divX,H-56); ctx.stroke();
 
-  // ── FOOTER ──
-  ctx.fillStyle='#0a0e1a'; ctx.fillRect(0,H-60,W,60);
-  ctx.fillStyle=fwClr; ctx.fillRect(0,H-60,W,2);
-
-  // Sol: @handle
-  ctx.fillStyle='rgba(255,255,255,0.50)'; ctx.font=`500 ${20}px "IBM Plex Mono",monospace`;
-  ctx.fillText('@barisinvesting',48,H-22);
-
-  // Orta: Fiyat ve tarih
+  // ─── FOOTER ───
+  ctx.fillStyle='#0a0e1a'; ctx.fillRect(0,H-56,W,56);
+  ctx.fillStyle=fwC; ctx.fillRect(0,H-56,W,2);
+  ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.font=`500 20px "IBM Plex Mono",monospace`;
+  ctx.fillText('@barisinvesting',48,H-20);
   if(fd.currentPrice){
-    ctx.fillStyle='#e8edf8'; ctx.font=`700 ${26}px "IBM Plex Mono",monospace`;
-    ctx.textAlign='center';
-    ctx.fillText(`${Number(fd.currentPrice).toFixed(2)} ${fd.currency||''}`,W/2,H-22);
-    ctx.textAlign='left';
+    ctx.fillStyle='#e8edf8'; ctx.font=`700 24px "IBM Plex Mono",monospace`; ctx.textAlign='center';
+    ctx.fillText(`${Number(fd.currentPrice).toFixed(2)} ${fd.currency||'TRY'}`,W/2,H-20); ctx.textAlign='left';
   }
-
-  // Sağ: domain
-  ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font=`500 ${20}px "IBM Plex Mono",monospace`;
-  ctx.textAlign='right'; ctx.fillText('barisinvesting.com',W-48,H-22); ctx.textAlign='left';
+  ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font=`500 20px "IBM Plex Mono",monospace`;
+  ctx.textAlign='right'; ctx.fillText('barisinvesting.com',W-48,H-20); ctx.textAlign='left';
 }
-function dlShare(){const c=document.getElementById('shrCanvas');const l=document.createElement('a');l.download=`${curTicker}_${curFW}_analiz.png`;l.href=c.toDataURL('image/png');l.click();}
+
+  function dlShare(){const c=document.getElementById('shrCanvas');const l=document.createElement('a');l.download=`${curTicker}_${curFW}_analiz.png`;l.href=c.toDataURL('image/png');l.click();}
 function dlAndTweet(){
   dlShare();
   setTimeout(()=>{
