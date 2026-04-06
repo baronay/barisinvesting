@@ -542,17 +542,23 @@ async function fetchYahooData(yahooTicker) {
 
     // BIST API'den gelen değerleri uygula
     if (bistRatios) {
-      // PE — kaynak Google/İşYat/BigPara ise doğrudan kullan, Yahoo ise anormal kontrolü yap
-      if (bistRatios.pe != null && bistRatios.pe > 0 && bistRatios.pe < 200) {
+      // PE — Google > İşYat > BigPara > Yahoo formül sıralaması
+      if (bistRatios.pe != null && bistRatios.pe > 0.3 && bistRatios.pe < 200) {
         result.peRatio  = bistRatios.pe;
         result.peSource = bistRatios.source_pe;
         console.log(`[BIST API] PE override: ${result.peRatio} (${result.peSource})`);
       }
-      // PB — her zaman BIST API'yi tercih et (formül tabanlı)
-      if (bistRatios.pb != null && bistRatios.pb > 0.05 && bistRatios.pb < 25) {
+      // PB — her zaman BIST API'yi tercih et
+      if (bistRatios.pb != null && bistRatios.pb > 0.03 && bistRatios.pb < 30) {
         result.pbRatio  = bistRatios.pb;
         result.pbSource = bistRatios.source_pb;
         console.log(`[BIST API] PD/DD override: ${result.pbRatio} (${result.pbSource})`);
+      }
+      // PEG — Google Finance'dan geliyorsa kullan
+      if (bistRatios.peg != null && bistRatios.peg > 0.01 && bistRatios.peg < 20) {
+        result.pegRatio  = bistRatios.peg;
+        result.pegSource = bistRatios.source_peg;
+        console.log(`[BIST API] PEG override: ${result.pegRatio} (${result.pegSource})`);
       }
       // ROE
       if (bistRatios.roe != null && Math.abs(bistRatios.roe) < 3) {
