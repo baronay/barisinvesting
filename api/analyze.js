@@ -584,6 +584,32 @@ async function fetchYahooData(yahooTicker) {
       if (bistRatios.PiyasaDegeri && !result.marketCap) {
         result.marketCap = bistRatios.PiyasaDegeri;
       }
+
+      // PEG HESABI — F/K ÷ Kazanç Büyümesi (%)
+      // Öncelik: TradingView EarningsGrowth → Yahoo earningsGrowth → revenueGrowth
+      if (!result.pegRatio && result.peRatio) {
+        // TV'den gelen büyüme (0-1 arası, ör: 0.12 = %12)
+        const tvGrowth    = bistRatios?.EarningsGrowth ?? null;
+        // Yahoo'dan gelen büyüme (0-1 arası)
+        const yahooGrowth = result.earningsGrowth ?? result.revenueGrowth ?? null;
+        // TV öncelikli
+        const growthRaw   = (tvGrowth != null && tvGrowth > 0) ? tvGrowth : yahooGrowth;
+
+        if (growthRaw != null && growthRaw > 0) {
+          const growthPct = Math.abs(growthRaw) > 5
+            ? growthRaw          // TV zaten % cinsinden gönderiyor olabilir
+            : growthRaw * 100;   // 0.12 → %12
+          if (growthPct > 0.5 && growthPct < 200) {
+            const peg = result.peRatio / growthPct;
+            if (peg > 0.01 && peg < 20) {
+              result.pegRatio  = parseFloat(peg.toFixed(2));
+              result.pegSource = tvGrowth ? 'formül(FK/TV-Büyüme)' : 'formül(FK/Yahoo-Büyüme)';
+              console.log(`[BIST PEG] FK=${result.peRatio} / Büyüme=%${growthPct.toFixed(1)} = PEG ${result.pegRatio} (${result.pegSource})`);
+            }
+          }
+        }
+      }
+
       // Debug
       result.bistRatiosDebug = bistRatios._raw ?? null;
     }
