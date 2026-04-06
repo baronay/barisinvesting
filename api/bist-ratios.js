@@ -1,547 +1,260 @@
-// /api/bist-ratios.js — Barış Investing v2
-// BIST Hisseleri: Mynet/Finans → İşYatırım → BigPara → Yahoo (canlı kur ile)
+// /api/bist-ratios.js — Barış Investing v3
+// Veri Kaynağı: TradingView Scanner API (turkey/scan)
+// Scraping YOK — sadece native fetch ile POST isteği
 // GET /api/bist-ratios?ticker=THYAO
+// GET /api/bist-ratios?ticker=THYAO,TUPRS,EREGL  (toplu sorgu)
 
+// ════════════════════════════════════════════════════════════════
+// ÖNBELLEK — 30 dakika
+// ════════════════════════════════════════════════════════════════
 const CACHE     = new Map();
-const CACHE_TTL = 30 * 60 * 1000; // 30 dakika
+const CACHE_TTL = 30 * 60 * 1000;
 
-// ── User-Agent'lar ──────────────────────────────────────────────
-const UA = {
-  chrome:  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-  firefox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
-  mobile:  'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.82 Mobile Safari/537.36',
-};
+function getCached(key) {
+  const e = CACHE.get(key);
+  if (!e) return null;
+  if (Date.now() - e.ts > CACHE_TTL) { CACHE.delete(key); return null; }
+  return e.data;
+}
 
-// ── Canlı USD/TRY kur cache ──────────────────────────────────────
-let _usdtry = 38.5;
-let _usdtryTs = 0;
-const USDTRY_TTL = 30 * 60 * 1000; // 30 dk
-
-async function getUsdTry() {
-  if (Date.now() - _usdtryTs < USDTRY_TTL) return _usdtry;
-  try {
-    // Yahoo Finance'den USDTRY anlık kur
-    const r = await fetch(
-      'https://query1.finance.yahoo.com/v7/finance/quote?symbols=USDTRY%3DX&fields=regularMarketPrice',
-      { headers: { 'User-Agent': UA.chrome }, signal: AbortSignal.timeout(5000) }
-    );
-    if (r.ok) {
-      const j = await r.json();
-      const price = j?.quoteResponse?.result?.[0]?.regularMarketPrice;
-      if (price && price > 10 && price < 200) {
-        _usdtry = price;
-        _usdtryTs = Date.now();
-        console.log(`[Kur] USDTRY = ${_usdtry}`);
-        return _usdtry;
-      }
-    }
-  } catch (e) {
-    console.log(`[Kur] Hata: ${e.message} — fallback ${_usdtry} kullanılıyor`);
-  }
-  return _usdtry;
+function setCache(key, data) {
+  if (CACHE.size >= 500) CACHE.delete(CACHE.keys().next().value);
+  CACHE.set(key, { data, ts: Date.now() });
 }
 
 // ════════════════════════════════════════════════════════════════
-// YARDIMCILAR
+// TradingView Scanner sütun tanımları
 // ════════════════════════════════════════════════════════════════
-function safeNum(s) {
-  if (s == null) return null;
-  const n = parseFloat(String(s).replace(',', '.').replace(/[^0-9.\-]/g, ''));
-  return isNaN(n) ? null : n;
-}
-
-function inRange(v, min, max) { return v != null && v > min && v < max; }
-
-// ════════════════════════════════════════════════════════════════
-// 1. MYNET FİNANS — Türkiye'nin en güvenilir BIST scrape kaynağı
-// F/K ve PD/DD'yi TRY bazında direkt sunuyor
-// ════════════════════════════════════════════════════════════════
-async function fetchMynet(ticker) {
-  const out = { pe: null, pb: null, roe: null, source: null };
-
-  const urls = [
-    `https://finans.mynet.com/borsa/hisseler/${ticker.toLowerCase()}/temel-veriler/`,
-    `https://finans.mynet.com/borsa/hisseler/${ticker.toLowerCase()}/`,
-  ];
-
-  for (const url of urls) {
-    try {
-      const r = await fetch(url, {
-        headers: {
-          'User-Agent':      UA.chrome,
-          'Accept':          'text/html,application/xhtml+xml,*/*;q=0.8',
-          'Accept-Language': 'tr-TR,tr;q=0.9',
-          'Referer':         'https://finans.mynet.com/borsa/',
-        },
-        signal: AbortSignal.timeout(9000),
-        redirect: 'follow',
-      });
-      if (!r.ok) { console.log(`[Mynet] ${ticker} HTTP ${r.status}`); continue; }
-
-      const text = await r.text();
-      console.log(`[Mynet] ${ticker}: ${text.length} chars`);
-
-      if (text.length < 3000) continue; // bot koruması
-
-      const pairs = [
-        { key: 'pe',  labels: ['F/K', 'Fiyat/Kazanç', 'FK'],           max: 500 },
-        { key: 'pb',  labels: ['PD/DD', 'F/DD', 'Fiyat/Defter Değeri'], max: 50  },
-        { key: 'roe', labels: ['ROE', 'Özsermaye Kârlılığı', 'Özkaynak Kârlılığı'], max: 300, pct: true },
-      ];
-
-      for (const { key, labels, max, pct } of pairs) {
-        for (const lbl of labels) {
-          const idx = text.indexOf(lbl);
-          if (idx < 0) continue;
-          const after = text.slice(idx + lbl.length, idx + lbl.length + 300);
-          const m = after.match(/([0-9]+[.,][0-9]+)/);
-          if (m) {
-            let v = safeNum(m[1]);
-            if (pct && v > 3) v /= 100;
-            if (inRange(v, 0.001, max)) {
-              out[key] = v;
-              out.source = 'Mynet';
-              console.log(`[Mynet ${key}] ${ticker}: ${v}`);
-              break;
-            }
-          }
-        }
-      }
-
-      if (out.pe != null || out.pb != null) return out;
-    } catch (e) {
-      console.log(`[Mynet] ${ticker}: ${e.message}`);
-    }
-  }
-  return out;
-}
+const TV_COLUMNS = [
+  'close',                       // 0 — Güncel fiyat (TRY)
+  'price_earnings_ttm',          // 1 — F/K (TTM)
+  'price_book_ratio',            // 2 — PD/DD
+  'market_cap_basic',            // 3 — Piyasa Değeri
+  'enterprise_value_ebitda_ttm', // 4 — FD/FAVÖK
+  'return_on_equity',            // 5 — ROE (0-1 arası, ör: 0.08 = %8)
+];
 
 // ════════════════════════════════════════════════════════════════
-// 2. İŞ YATIRIM — Yapılandırılmış veri API'si
+// TradingView'e POST isteği
 // ════════════════════════════════════════════════════════════════
-async function fetchIsYatirim(ticker) {
-  const out = { pe: null, pb: null, roe: null, peg: null, source: null };
+async function fetchFromTradingView(tickers) {
+  const formattedTickers = tickers.map(t =>
+    `BIST:${t.toUpperCase().replace('.IS', '')}`
+  );
 
-  const endpoints = [
-    `https://www.isyatirim.com.tr/_layouts/15/IsYatirim.Website/Common/Data.aspx/HisseSenetleri?hisse=${ticker}`,
-    `https://www.isyatirim.com.tr/analiz-ve-bulten/hisse/${ticker}`,
-  ];
-
-  const headers = {
-    'User-Agent':       UA.chrome,
-    'Accept':           'text/html,application/json,*/*;q=0.8',
-    'Accept-Language':  'tr-TR,tr;q=0.9,en-US;q=0.8',
-    'Referer':          'https://www.isyatirim.com.tr/',
-    'X-Requested-With': 'XMLHttpRequest',
-  };
-
-  for (const url of endpoints) {
-    try {
-      const r = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
-      if (!r.ok) continue;
-
-      const text = await r.text();
-      console.log(`[İşYat] ${ticker}: ${text.length} chars`);
-
-      if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
-        try {
-          const data = JSON.parse(text);
-          const flat = JSON.stringify(data);
-          const extract = (keys) => {
-            for (const k of keys) {
-              const m = flat.match(new RegExp(`"${k}"\\s*:\\s*"?([0-9]+[.,]?[0-9]*)"?`, 'i'));
-              if (m) { const v = safeNum(m[1]); if (v != null && v > 0) return v; }
-            }
-            return null;
-          };
-          out.pe  = extract(['fk', 'f_k', 'pe', 'fiyatKazanc', 'piyasaDegerKazanc']);
-          out.pb  = extract(['fdd', 'f_dd', 'pb', 'pdDd', 'fiyatDefter']);
-          out.roe = extract(['roe', 'ozSermayeKarliligi']);
-          if (out.roe && out.roe > 3) out.roe /= 100;
-          if (out.pe || out.pb) { out.source = 'IsYatirim/JSON'; return out; }
-        } catch {}
-      }
-
-      const pairs = [
-        { key: 'pe',  labels: ['F/K', 'Fiyat/Kazanç'],           max: 300 },
-        { key: 'pb',  labels: ['F/DD', 'PD/DD', 'Fiyat/Defter'], max: 50  },
-        { key: 'roe', labels: ['ROE'],                             max: 200, pct: true },
-      ];
-      for (const { key, labels, max, pct } of pairs) {
-        for (const lbl of labels) {
-          const idx = text.indexOf(lbl);
-          if (idx < 0) continue;
-          const after = text.slice(idx + lbl.length, idx + lbl.length + 200);
-          const m = after.match(/([0-9]+[.,][0-9]+)/);
-          if (m) {
-            let v = safeNum(m[1]);
-            if (pct && v > 3) v /= 100;
-            if (inRange(v, 0.001, max)) {
-              out[key] = v;
-              out.source = 'IsYatirim/HTML';
-              console.log(`[İşYat ${key}] ${ticker}: ${v}`);
-              break;
-            }
-          }
-        }
-      }
-
-      if (out.pe != null || out.pb != null) return out;
-    } catch (e) {
-      console.log(`[İşYat] ${ticker}: ${e.message}`);
-    }
-  }
-  return out;
-}
-
-// ════════════════════════════════════════════════════════════════
-// 3. BİGPARA — Hürriyet finansal veri
-// ════════════════════════════════════════════════════════════════
-async function fetchBigPara(ticker) {
-  const out = { pe: null, pb: null, roe: null, source: null };
-  const urls = [
-    `https://bigpara.hurriyet.com.tr/hisse/${ticker.toLowerCase()}/hisse-senedi/`,
-    `https://bigpara.hurriyet.com.tr/hisse/${ticker.toLowerCase()}/temel-veriler/`,
-  ];
-
-  for (const url of urls) {
-    try {
-      const r = await fetch(url, {
-        headers: {
-          'User-Agent':      UA.chrome,
-          'Accept':          'text/html,*/*;q=0.8',
-          'Accept-Language': 'tr-TR,tr;q=0.9',
-          'Referer':         'https://bigpara.hurriyet.com.tr/',
-        },
-        signal: AbortSignal.timeout(8000),
-      });
-      if (!r.ok) continue;
-      const text = await r.text();
-      console.log(`[BigPara] ${ticker}: ${text.length} chars`);
-
-      const pairs = [
-        { key: 'pe',  labels: ['F/K', 'Fiyat/Kazanç', 'Piyasa Değ./Kazanç'], max: 300 },
-        { key: 'pb',  labels: ['F/DD', 'PD/DD', 'Piyasa Değ./Defter'],        max: 50  },
-        { key: 'roe', labels: ['ROE', 'Özsermaye Kârlılığı'],                  max: 200, pct: true },
-      ];
-      for (const { key, labels, max, pct } of pairs) {
-        for (const lbl of labels) {
-          const idx = text.indexOf(lbl);
-          if (idx < 0) continue;
-          const after = text.slice(idx + lbl.length, idx + lbl.length + 250);
-          const m = after.match(/([0-9]+[.,][0-9]+)/);
-          if (m) {
-            let v = safeNum(m[1]);
-            if (pct && v > 3) v /= 100;
-            if (inRange(v, 0.001, max)) {
-              out[key] = v;
-              out.source = 'BigPara';
-              console.log(`[BigPara ${key}] ${ticker}: ${v}`);
-              break;
-            }
-          }
-        }
-      }
-      if (out.pe != null || out.pb != null) return out;
-    } catch (e) {
-      console.log(`[BigPara] ${ticker}: ${e.message}`);
-    }
-  }
-  return out;
-}
-
-// ════════════════════════════════════════════════════════════════
-// 4. YAHOO FİNANCE — Canlı kur ile doğru normalize
-// ════════════════════════════════════════════════════════════════
-async function fetchYahooNormalized(ticker) {
-  const out = { pe: null, pb: null, peg: null, roe: null, marketCap: null, currentPrice: null, source: null };
-
-  // Canlı kur al
-  const USD_TRY = await getUsdTry();
-
-  // ── normalizeToTRY: MarketCap referansıyla birim tespit ──
-  // MarketCap her zaman TRY cinsinden doğru gelir (Yahoo bunu doğru yapar)
-  // Diğer bilanço rakamlarını buna göre normalize ediyoruz
-  function normalizeToTRY(rawVal, marketCap, label) {
-    if (rawVal == null || marketCap == null) return rawVal;
-    const ratio = Math.abs(rawVal) / marketCap;
-    console.log(`[Norm] ${label}: val=${rawVal.toExponential(2)} mc=${marketCap.toExponential(2)} ratio=${ratio.toFixed(5)}`);
-
-    // Makul aralık: 1% - 1000% arası
-    if (ratio >= 0.001 && ratio <= 10) return rawVal;
-
-    // Çok küçük → USD cinsinden gelmiş → TRY'ye çevir
-    if (ratio < 0.001) {
-      const asTRY = rawVal * USD_TRY;
-      const r2 = Math.abs(asTRY) / marketCap;
-      if (r2 >= 0.001 && r2 <= 10) {
-        console.log(`[Norm] ${label} × ${USD_TRY.toFixed(1)} (USD→TRY)`);
-        return asTRY;
-      }
-      // Binlik USD → TRY
-      const asTRY_k = rawVal * 1000 * USD_TRY;
-      const r3 = Math.abs(asTRY_k) / marketCap;
-      if (r3 >= 0.001 && r3 <= 10) {
-        console.log(`[Norm] ${label} ×1000×${USD_TRY.toFixed(1)} (binlik USD→TRY)`);
-        return asTRY_k;
-      }
-    }
-
-    // Çok büyük → bin TRY cinsinden → normal TRY'ye çevir
-    if (ratio > 10) {
-      const div1k = rawVal / 1000;
-      const r2 = Math.abs(div1k) / marketCap;
-      if (r2 >= 0.001 && r2 <= 10) {
-        console.log(`[Norm] ${label} ÷1000 (binlik TRY→TRY)`);
-        return div1k;
-      }
-    }
-
-    console.log(`[Norm] ${label}: normalize edilemedi, ham değer döndürülüyor`);
-    return rawVal;
-  }
-
-  let crumb = null, cookie = null;
-  try {
-    const r1 = await fetch('https://fc.yahoo.com', {
-      headers: { 'User-Agent': UA.chrome }, redirect: 'follow', signal: AbortSignal.timeout(5000),
-    });
-    cookie = (r1.headers.get('set-cookie') || '').split(';')[0] || null;
-    if (cookie) {
-      const r2 = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', {
-        headers: { 'User-Agent': UA.chrome, 'Cookie': cookie, 'Accept': 'text/plain' },
-        signal: AbortSignal.timeout(5000),
-      });
-      if (r2.ok) crumb = (await r2.text()).trim();
-    }
-  } catch {}
-
-  const cs = crumb ? `&crumb=${encodeURIComponent(crumb)}` : '';
-  const yt = `${ticker}.IS`;
-  const h  = { 'User-Agent': UA.chrome, 'Accept': 'application/json', 'Referer': 'https://finance.yahoo.com/', ...(cookie ? { 'Cookie': cookie } : {}) };
-  const f  = v => v?.raw ?? null;
-
-  try {
-    // ── v7 quote: fiyat, MC, ve Yahoo'nun kendi PE/PB'si ──
-    const qr = await fetch(
-      `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(yt)}&fields=marketCap,regularMarketPrice,currency,trailingPE,priceToBook,pegRatio${cs}`,
-      { headers: h, signal: AbortSignal.timeout(8000) }
-    );
-    if (qr.ok) {
-      const qj = await qr.json();
-      const q  = qj?.quoteResponse?.result?.[0];
-      if (q) {
-        out.marketCap    = q.marketCap ?? null;
-        out.currentPrice = q.regularMarketPrice ?? null;
-        // Yahoo'nun trailingPE'si BIST için genellikle doğru gelir (hisse fiyatı / EPS)
-        const rawPE = q.trailingPE;
-        if (rawPE != null && inRange(rawPE, 0.5, 200)) out.pe = parseFloat(rawPE.toFixed(2));
-        // PriceToBook ise sorunlu olabilir — inRange ile filtrele
-        const rawPB = q.priceToBook;
-        if (rawPB != null && inRange(rawPB, 0.03, 30)) out.pb = parseFloat(rawPB.toFixed(2));
-        const rawPEG = q.pegRatio;
-        if (rawPEG != null && inRange(rawPEG, 0.01, 20)) out.peg = parseFloat(rawPEG.toFixed(2));
-        out.source = 'Yahoo/v7';
-        console.log(`[Yahoo v7] ${ticker}: PE=${out.pe} PB=${out.pb} MC=${out.marketCap?.toExponential(3)} USDTRY=${USD_TRY}`);
-      }
-    }
-
-    // ── v10 quoteSummary: bilanço ve gelir tablosu (formül için) ──
-    const v10 = await fetch(
-      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(yt)}?modules=defaultKeyStatistics,financialData,balanceSheetHistory,incomeStatementHistory${cs}`,
-      { headers: h, signal: AbortSignal.timeout(10000) }
-    );
-    if (v10.ok) {
-      const vj  = await v10.json();
-      const raw = vj?.quoteSummary?.result?.[0];
-      if (raw) {
-        const ks  = raw.defaultKeyStatistics  || {};
-        const fd  = raw.financialData         || {};
-        const bsh = raw.balanceSheetHistory   || {};
-        const ish = raw.incomeStatementHistory || {};
-        const MC  = out.marketCap;
-
-        // ── Özsermaye (normalize edilmiş TRY) ──
-        const sheets = bsh.balanceSheetStatements || [];
-        let equity = null;
-        if (sheets.length > 0) {
-          const lat = sheets[0];
-          const se  = f(lat.totalStockholderEquity);
-          const ta  = f(lat.totalAssets);
-          const tl  = f(lat.totalLiab);
-          const seN = MC ? normalizeToTRY(se, MC, 'SE') : se;
-          const taN = MC ? normalizeToTRY(ta, MC, 'TA') : ta;
-          const tlN = MC ? normalizeToTRY(tl, MC, 'TL') : tl;
-          if (seN != null && seN > 0) equity = seN;
-          else if (taN != null && tlN != null && taN - tlN > 0) equity = taN - tlN;
-          console.log(`[Yahoo Equity] ${ticker}: equity=${equity?.toExponential(3)} (USDTRY=${USD_TRY})`);
-        }
-
-        // ── PB formül: MC / Özsermaye (Yahoo PB başarısızsa) ──
-        if (out.pb == null && equity && MC) {
-          const pbCalc = MC / equity;
-          console.log(`[Yahoo PB Formül] ${ticker}: ${MC.toExponential(3)} / ${equity.toExponential(3)} = ${pbCalc.toFixed(3)}`);
-          if (inRange(pbCalc, 0.03, 25)) {
-            out.pb = parseFloat(pbCalc.toFixed(2));
-            out.source = (out.source || '') + '+PB-formül';
-          }
-        }
-
-        // ── Net kâr (normalize TRY) ──
-        const stmts = ish.incomeStatementHistory || [];
-        let netIncome = null;
-        if (stmts.length > 0) {
-          const niRaw = f(stmts[0].netIncome);
-          netIncome = MC ? normalizeToTRY(niRaw, MC, 'NI') : niRaw;
-        }
-
-        // ── PE formül: MC / Net Kâr (Yahoo PE başarısızsa) ──
-        if (out.pe == null && netIncome && MC && netIncome > 0) {
-          const peCalc = MC / netIncome;
-          console.log(`[Yahoo PE Formül] ${ticker}: MC/NI = ${peCalc.toFixed(2)}`);
-          if (inRange(peCalc, 0.5, 200)) {
-            out.pe = parseFloat(peCalc.toFixed(2));
-            out.source = (out.source || '') + '+PE-formül';
-          }
-        }
-
-        // ── PE formül 2: Fiyat / EPS (normalize) ──
-        if (out.pe == null && out.currentPrice) {
-          const epsRaw = f(ks.trailingEps);
-          if (epsRaw != null && epsRaw !== 0) {
-            // EPS < 20 ise USD cinsinden gelmiş
-            const epsNorm = Math.abs(epsRaw) < 20 ? epsRaw * USD_TRY : epsRaw;
-            const peEps = out.currentPrice / epsNorm;
-            console.log(`[Yahoo PE EPS] ${ticker}: ${out.currentPrice} / ${epsNorm.toFixed(2)} = ${peEps.toFixed(2)} (USDTRY=${USD_TRY})`);
-            if (inRange(peEps, 0.5, 200)) {
-              out.pe = parseFloat(peEps.toFixed(2));
-              out.source = (out.source || '') + '+PE-EPS';
-            }
-          }
-        }
-
-        // ── PEG ──
-        if (out.peg == null && out.pe != null) {
-          const egrRaw = f(ks.earningsGrowth) ?? f(fd.earningsGrowth) ?? f(fd.revenueGrowth);
-          if (egrRaw != null && egrRaw > 0) {
-            const egr = Math.abs(egrRaw) > 5 ? egrRaw / 100 : egrRaw;
-            const peg = out.pe / (egr * 100);
-            if (inRange(peg, 0.01, 20)) {
-              out.peg = parseFloat(peg.toFixed(2));
-              out.source = (out.source || '') + '+PEG-formül';
-            }
-          }
-        }
-
-        // ── ROE ──
-        const roeRaw = f(fd.returnOnEquity);
-        if (roeRaw != null && Math.abs(roeRaw) < 5) out.roe = roeRaw;
-        else if (equity && netIncome) {
-          const roeCalc = netIncome / equity;
-          if (Math.abs(roeCalc) < 3) out.roe = parseFloat(roeCalc.toFixed(4));
-        }
-      }
-    }
-  } catch (e) {
-    console.log(`[Yahoo] ${ticker}: ${e.message}`);
-  }
-
-  return out;
-}
-
-// ════════════════════════════════════════════════════════════════
-// ANA ORKESTRASYON
-// Öncelik: Mynet → İşYatırım → BigPara → Yahoo
-// ════════════════════════════════════════════════════════════════
-async function getBISTRatios(ticker) {
-  ticker = ticker.toUpperCase().trim();
-  const cacheKey = `bist:${ticker}`;
-
-  const cached = CACHE.get(cacheKey);
-  if (cached && Date.now() - cached.ts < CACHE_TTL) {
-    console.log(`[Cache HIT] ${ticker}`);
-    return cached.data;
-  }
-
-  console.log(`\n${'═'.repeat(60)}\n[BIST Ratios v2] ${ticker} — sorgu başlıyor\n${'═'.repeat(60)}`);
-
-  // Paralel çek
-  const [mn, iy, bp, yh] = await Promise.allSettled([
-    fetchMynet(ticker),
-    fetchIsYatirim(ticker),
-    fetchBigPara(ticker),
-    fetchYahooNormalized(ticker),
-  ]).then(rs => rs.map(r => r.status === 'fulfilled' ? r.value : {}));
-
-  console.log('[Debug]', JSON.stringify({
-    mynet:   { pe: mn.pe,  pb: mn.pb  },
-    isYat:   { pe: iy.pe,  pb: iy.pb  },
-    bigPara: { pe: bp.pe,  pb: bp.pb  },
-    yahoo:   { pe: yh.pe,  pb: yh.pb, peg: yh.peg },
-  }));
-
-  // Öncelik sırası: Mynet > İşYatırım > BigPara > Yahoo
-  function pick(key, min, max) {
-    for (const src of [
-      { d: mn, name: 'Mynet'     },
-      { d: iy, name: 'IsYatirim' },
-      { d: bp, name: 'BigPara'   },
-      { d: yh, name: 'Yahoo'     },
-    ]) {
-      const v = src.d[key];
-      if (v != null && inRange(v, min, max)) return { val: v, src: src.name };
-    }
-    return { val: null, src: null };
-  }
-
-  const pe  = pick('pe',  0.3,  500);
-  const pb  = pick('pb',  0.03,  30);
-  const peg = pick('peg', 0.01,  20);
-  const roe = pick('roe', -5,     5);
-
-  const final = {
-    ticker,
-    pe:        pe.val,  source_pe:  pe.src,
-    pb:        pb.val,  source_pb:  pb.src,
-    peg:       peg.val, source_peg: peg.src,
-    roe:       roe.val, source_roe: roe.src,
-    marketCap:    yh.marketCap    ?? null,
-    currentPrice: yh.currentPrice ?? null,
-    usdtry:       _usdtry,
-    debug: { mynet: mn, isYat: iy, bigPara: bp, yahoo: yh },
-    signals: {
-      pe:  pe.val  == null ? 'N/A' : pe.val  < 10 ? 'ucuz' : pe.val  < 20 ? 'adil' : pe.val  < 35 ? 'dikkat' : 'pahalı',
-      pb:  pb.val  == null ? 'N/A' : pb.val  < 1  ? 'çok ucuz' : pb.val < 2 ? 'ucuz' : pb.val < 4 ? 'adil' : 'pahalı',
-      peg: peg.val == null ? 'N/A' : peg.val < 1  ? 'ucuz' : peg.val < 1.5 ? 'adil' : 'pahalı',
+  const body = {
+    symbols: {
+      tickers: formattedTickers,
+      query:   { types: [] },
     },
-    ts: new Date().toISOString(),
+    columns: TV_COLUMNS,
   };
 
-  console.log(`[BIST Final] ${ticker}: PE=${final.pe}(${final.source_pe}) PB=${final.pb}(${final.source_pb}) PEG=${final.peg}(${final.source_peg}) ROE=${final.roe} USDTRY=${_usdtry}`);
+  console.log(`[TradingView] POST → turkey/scan | Hisseler: ${formattedTickers.join(', ')}`);
 
-  CACHE.set(cacheKey, { data: final, ts: Date.now() });
-  if (CACHE.size > 300) CACHE.delete(CACHE.keys().next().value);
+  const response = await fetch('https://scanner.tradingview.com/turkey/scan', {
+    method:  'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept':       'application/json',
+      'Origin':       'https://www.tradingview.com',
+      'Referer':      'https://www.tradingview.com/',
+      'User-Agent':   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    },
+    body:   JSON.stringify(body),
+    signal: AbortSignal.timeout(12000),
+  });
 
-  return final;
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(`TradingView HTTP ${response.status}: ${errText.slice(0, 300)}`);
+  }
+
+  const json = await response.json();
+  console.log(`[TradingView] Yanıt: ${json?.data?.length ?? 0} satır`);
+  return json;
+}
+
+// ════════════════════════════════════════════════════════════════
+// Ham TradingView satırını → temiz objeye dönüştür
+// data.data[0].d dizisi → { FK, PDDD, FD_FAVOK, ROE, ... }
+// ════════════════════════════════════════════════════════════════
+function parseRow(ticker, row) {
+  const d = row?.d ?? [];
+
+  // Güvenli sayı çıkarımı — null/NaN kontrolü
+  const safeVal = (idx, decimals = 4) => {
+    const v = d[idx];
+    if (v == null || v === '' || (typeof v === 'number' && isNaN(v))) return null;
+    const n = parseFloat(v);
+    return isNaN(n) ? null : parseFloat(n.toFixed(decimals));
+  };
+
+  const guncelFiyat = safeVal(0, 2);
+  const fk          = safeVal(1, 2);   // F/K
+  const pddd        = safeVal(2, 2);   // PD/DD
+  const piyasaDeg   = safeVal(3, 0);   // Piyasa Değeri (TRY)
+  const fdFavok     = safeVal(4, 2);   // FD/FAVÖK
+  const roeRaw      = safeVal(5, 4);   // ROE — TradingView 0.143 = %14.3 verir
+
+  // ROE'yi yüzdeye çevir (0.143 → 14.3)
+  const roe = roeRaw != null ? parseFloat((roeRaw * 100).toFixed(2)) : null;
+
+  // Değerleme sinyalleri
+  const sinyaller = {
+    fk: fk == null       ? 'N/A'
+      : fk < 0           ? 'ZARAR'
+      : fk < 10          ? 'UCUZ'
+      : fk < 20          ? 'ADİL'
+      : fk < 35          ? 'DİKKAT'
+      : 'PAHALI',
+    pddd: pddd == null   ? 'N/A'
+      : pddd < 1         ? 'ÇOK UCUZ'
+      : pddd < 2         ? 'UCUZ'
+      : pddd < 4         ? 'ADİL'
+      : 'PAHALI',
+    fdFavok: fdFavok == null ? 'N/A'
+      : fdFavok < 0         ? 'NEGATİF'
+      : fdFavok < 8         ? 'UCUZ'
+      : fdFavok < 15        ? 'ADİL'
+      : 'PAHALI',
+  };
+
+  return {
+    ticker,
+    // ── Ana çarpanlar (Barış Investing formatı) ──
+    FK:          fk,
+    PDDD:        pddd,
+    FD_FAVOK:    fdFavok,
+    ROE:         roe,          // % cinsinden, ör: 14.3
+    PiyasaDegeri: piyasaDeg,   // TRY
+    GuncelFiyat: guncelFiyat,  // TRY
+    // ── Ham TV değerleri (debug için) ──
+    _raw: {
+      close:                       d[0] ?? null,
+      price_earnings_ttm:          d[1] ?? null,
+      price_book_ratio:            d[2] ?? null,
+      market_cap_basic:            d[3] ?? null,
+      enterprise_value_ebitda_ttm: d[4] ?? null,
+      return_on_equity:            d[5] ?? null,
+    },
+    // ── Meta ──
+    sinyaller,
+    kaynak: 'TradingView',
+    ts:     new Date().toISOString(),
+  };
+}
+
+// ════════════════════════════════════════════════════════════════
+// Ana işlev — tekil veya toplu hisse
+// ════════════════════════════════════════════════════════════════
+async function getBISTRatios(tickers) {
+  const results  = {};
+  const toFetch  = [];
+
+  // Önbellekten kontrol
+  for (const t of tickers) {
+    const key    = `tv:${t}`;
+    const cached = getCached(key);
+    if (cached) {
+      console.log(`[Cache HIT] ${t}`);
+      results[t] = cached;
+    } else {
+      toFetch.push(t);
+    }
+  }
+
+  if (toFetch.length === 0) return results;
+
+  // TradingView'e tek POST ile tüm hisseleri sor
+  const json = await fetchFromTradingView(toFetch);
+  const rows  = json?.data ?? [];
+
+  for (const row of rows) {
+    // row.s = "BIST:THYAO"
+    const sym = (row?.s ?? '').replace('BIST:', '').replace('.IS', '').toUpperCase();
+    if (!sym) continue;
+
+    const parsed   = parseRow(sym, row);
+    const key      = `tv:${sym}`;
+    setCache(key, parsed);
+    results[sym]   = parsed;
+    console.log(`[TV Parse] ${sym}: FK=${parsed.FK} PDDD=${parsed.PDDD} FD/FAVÖK=${parsed.FD_FAVOK} ROE=%${parsed.ROE}`);
+  }
+
+  // Veri gelmeyen hisseler için boş kayıt
+  for (const t of toFetch) {
+    if (!results[t]) {
+      results[t] = {
+        ticker:       t,
+        FK:           null,
+        PDDD:         null,
+        FD_FAVOK:     null,
+        ROE:          null,
+        PiyasaDegeri: null,
+        GuncelFiyat:  null,
+        _raw:         {},
+        sinyaller:    { fk: 'N/A', pddd: 'N/A', fdFavok: 'N/A' },
+        kaynak:       'TradingView',
+        hata:         'TradingView bu hisse için veri döndürmedi',
+        ts:           new Date().toISOString(),
+      };
+    }
+  }
+
+  return results;
 }
 
 // ════════════════════════════════════════════════════════════════
 // VERCEL HANDLER
 // ════════════════════════════════════════════════════════════════
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin',  '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const ticker = req.query?.ticker || req.body?.ticker;
-  if (!ticker) return res.status(400).json({ error: 'ticker parametresi zorunlu. Örnek: ?ticker=THYAO' });
+  // ticker: tekil veya virgülle ayrılmış liste
+  const raw = req.query?.ticker ?? req.body?.ticker ?? '';
+
+  if (!raw) {
+    return res.status(400).json({
+      error: 'ticker parametresi zorunlu',
+      ornekler: [
+        '/api/bist-ratios?ticker=THYAO',
+        '/api/bist-ratios?ticker=THYAO,TUPRS,EREGL',
+      ],
+    });
+  }
+
+  // Temizle ve normalize et
+  const tickers = raw
+    .split(',')
+    .map(t => t.trim().toUpperCase().replace('.IS', '').replace('BIST:', ''))
+    .filter(Boolean)
+    .slice(0, 50); // güvenlik limiti
 
   try {
-    const data = await getBISTRatios(ticker);
+    const data = await getBISTRatios(tickers);
+
+    // Tekil sorgu → düz obje döndür (analyze.js geriye uyumluluk)
+    if (tickers.length === 1) {
+      const result = data[tickers[0]];
+      return res.status(200).json(
+        result ?? { error: 'Veri bulunamadı', ticker: tickers[0] }
+      );
+    }
+
+    // Çoklu sorgu → { THYAO: {...}, TUPRS: {...} }
     return res.status(200).json(data);
+
   } catch (e) {
     console.error('[Handler Error]', e.message);
-    return res.status(500).json({ error: e.message, ticker });
+    return res.status(500).json({
+      error:   e.message,
+      tickers,
+      ipucu:   'TradingView Scanner erişilemiyor. Vercel Runtime Logs kontrol edin.',
+    });
   }
 }
