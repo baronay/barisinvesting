@@ -82,7 +82,8 @@ function parseRow(ticker, row) {
   const de      = safeNum(col(d, 'debt_to_equity'));
   const eps     = safeNum(col(d, 'earnings_per_share_basic_ttm'));
 
-  const roe = roeRaw != null ? safeNum(roeRaw * 100, 2) : null;
+  // TV return_on_equity zaten % cinsinden gelir (14.85 = %14.85), x100 yapma
+  const roe = roeRaw;
 
   // F/K yedek: fiyat / EPS
   let fkFinal = fk;
