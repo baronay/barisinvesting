@@ -391,14 +391,48 @@ async function fetchYahooNormalized(ticker) {
       }
     }
 
-    // PE: Yahoo'dan doğrudan al, sadece bariz hata varsa yoksay
+    // PE: önce Yahoo trailingPE dene, sonra formül
     const yahooPE = f(ks.trailingPE) ?? f(ks.forwardPE);
-    if (yahooPE != null && yahooPE > 0 && yahooPE <= 200) {
+    if (yahooPE != null && yahooPE > 0.5 && yahooPE <= 100) {
       result.pe = parseFloat(yahooPE.toFixed(2));
-      result.source = 'Yahoo';
+      result.source = 'Yahoo/PE';
     }
-    // Hâlâ saçmaysa null'la
-    if (result.pe != null && (result.pe > 200 || result.pe < 0)) result.pe = null;
+
+    // PE Formül 1: MarketCap / NetIncome (en güvenilir BIST için)
+    if (!result.pe && marketCap) {
+      const stmts = ish.incomeStatementHistory || [];
+      if (stmts.length > 0) {
+        const niRaw = f(stmts[0].netIncome);
+        if (niRaw != null && niRaw !== 0) {
+          const niNorm = normalizeEquity(Math.abs(niRaw), marketCap, ticker);
+          if (niNorm > 0) {
+            const peCalc = marketCap / niNorm;
+            console.log(`[Yahoo PE Formül] MC=${marketCap.toExponential(3)} / NI(norm)=${niNorm.toExponential(3)} = ${peCalc.toFixed(2)}`);
+            if (peCalc > 0.5 && peCalc < 150) {
+              result.pe = parseFloat(peCalc.toFixed(2));
+              result.source = (result.source || '') + '+PE-formül(MC/NI)';
+            }
+          }
+        }
+      }
+    }
+
+    // PE Formül 2: Fiyat / EPS
+    if (!result.pe && currentPrice) {
+      const eps = f(ks.trailingEps);
+      if (eps != null && eps !== 0) {
+        // EPS çok küçükse USD → TRY çevir
+        const epsNorm = Math.abs(eps) < 20 ? eps * APPROX_USD_TRY : eps;
+        if (epsNorm > 0 && currentPrice > 0) {
+          const peEps = currentPrice / epsNorm;
+          console.log(`[Yahoo PE EPS] Fiyat=${currentPrice} / EPS(norm)=${epsNorm.toFixed(2)} = ${peEps.toFixed(2)}`);
+          if (peEps > 0.5 && peEps < 150) {
+            result.pe = parseFloat(peEps.toFixed(2));
+            result.source = (result.source || '') + '+PE-formül(EPS)';
+          }
+        }
+      }
+    }
 
     // PB: Yahoo'yu kesinlikle kullanma, formülle hesapla
     if (equity && equity > 0 && marketCap) {
