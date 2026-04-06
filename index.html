@@ -343,22 +343,23 @@ body{
 .news-t{font-size:12px;color:var(--text);line-height:1.55;font-family:'IBM Plex Sans',sans-serif;font-weight:500;margin-bottom:4px;}
 .news-time{font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
 .news-loading{text-align:center;padding:20px;color:var(--muted);font-size:10px;grid-column:1/-1;font-family:'IBM Plex Mono',monospace;}
-.stock-hdr{display:none;background:var(--sidebar);padding:14px 18px;margin-bottom:1px;align-items:center;gap:12px;flex-wrap:wrap;position:relative;border-bottom:3px solid var(--accent2);}
+.stock-hdr{display:none;background:var(--sidebar);padding:16px 20px;margin-bottom:1px;align-items:center;gap:14px;flex-wrap:wrap;position:relative;border-bottom:2px solid var(--gold);}
 .stock-hdr.visible{display:flex;}
-.stock-logo{width:34px;height:34px;background:var(--surface2);border:1px solid var(--border-s);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--text2);overflow:hidden;flex-shrink:0;}
+.stock-logo{width:38px;height:38px;background:var(--surface2);border:1px solid rgba(212,168,67,0.25);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--text2);overflow:hidden;flex-shrink:0;border-radius:4px;}
 .stock-logo img{width:100%;height:100%;object-fit:contain;}
-.hflag{width:22px;height:15px;flex-shrink:0;}
-.sticker{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:var(--text);letter-spacing:2px;}
+.hflag{display:none;}
+.stock-flag-pill{display:inline-flex;align-items:center;gap:4px;background:rgba(212,168,67,0.10);border:1px solid rgba(212,168,67,0.25);border-radius:3px;padding:2px 7px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--gold);letter-spacing:1px;margin-top:3px;}
+.sticker{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:var(--text);letter-spacing:2px;}
 .sco{font-size:10px;color:var(--muted);margin-top:2px;}
 .sbadges{display:flex;flex-direction:column;gap:3px;}
 .badge{font-size:8px;letter-spacing:1px;padding:2px 6px;border:1px solid;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;}
-.badge-ex{color:var(--text2);border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.04);}
-.badge-fw{color:var(--accent);border-color:rgba(59,130,246,.35);background:var(--accent-dim);}
+.badge-ex{color:var(--gold);border-color:rgba(212,168,67,.30);background:rgba(212,168,67,.08);}
+.badge-fw{color:var(--gold);border-color:rgba(212,168,67,.40);background:rgba(212,168,67,.12);font-weight:600;}
 .badge-fw.lynch{color:var(--lynch);border-color:rgba(249,115,22,.35);background:rgba(249,115,22,.08);}
 .badge-fw.dalio{color:var(--dalio);border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.08);}
 .badge-live{color:var(--success);border-color:rgba(16,185,129,.4);background:var(--success-dim);}
-.x-shr-btn{margin-left:auto;background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;}
-.x-shr-btn:hover{border-color:var(--text);color:var(--text);}
+.x-shr-btn{margin-left:auto;background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.45);color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:8px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;border-radius:3px;letter-spacing:.5px;}
+.x-shr-btn:hover{background:rgba(212,168,67,0.22);border-color:var(--gold);color:#f0c84a;box-shadow:0 0 10px rgba(212,168,67,0.15);}
 .rd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-bottom:1px;background:var(--border);}
 .rd-card{background:var(--surface);border:1px solid var(--border);padding:12px 14px;border-left:3px solid var(--border);transition:background .15s;}
 .rd-card:hover{background:var(--surface2);}
@@ -384,8 +385,8 @@ body{
 .sb{color:var(--danger);border-color:rgba(239,68,68,.3);background:var(--danger-dim);}
 .sn{color:var(--muted);border-color:var(--border2);}
 .rsi-card,.rng-card,.ana-card{background:var(--surface);border:1px solid var(--border);padding:14px 16px;margin-bottom:1px;}
-.card-t{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;}
-.cdot{width:5px;height:5px;background:var(--accent);flex-shrink:0;border-radius:50%;}
+.card-t{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;}
+.cdot{width:5px;height:5px;background:var(--gold);flex-shrink:0;border-radius:50%;}
 .rsi-wrap{display:flex;align-items:center;gap:14px;}
 .rsi-gauge{flex:1;}
 .rsi-bg{height:5px;background:var(--rule);overflow:hidden;margin-bottom:5px;}
@@ -885,7 +886,7 @@ body{
 .mult-sub{color:var(--muted-s);}
 
 /* Card-t bölüm etiketleri */
-.card-t{color:var(--text2);}
+.card-t{color:var(--gold);}
 
 /* Ana metin — genel */
 .atext{color:var(--text2);line-height:2;}
@@ -1310,6 +1311,9 @@ body{
 #nav-tezler.active { background: var(--gold-dim); color: var(--gold) !important; }
 #nav-tezler.active .nav-num { color: var(--gold) !important; }
 #nav-tezler:hover { color: var(--gold); }
+/* Analiz aktif menü de gold */
+#nav-analiz.active { border-left-color: var(--gold) !important; background: var(--gold-dim); color: var(--gold) !important; }
+#nav-analiz.active .nav-num { color: var(--gold) !important; }
 
 /* Kilitli ekran */
 .tez-lock-wrap {
@@ -2006,10 +2010,16 @@ body{
   <div id="analysisSection" style="display:none">
     <div class="stock-hdr" id="stockHdr">
       <div class="stock-logo" id="stockLogo">—</div>
-      <svg class="hflag"><use id="hflagUse" href="#f-tr"/></svg>
-      <div><div class="sticker" id="stockTicker">—</div><div class="sco" id="stockCo">—</div></div>
-      <div class="sbadges"><span class="badge badge-ex" id="badgeEx">—</span><span class="badge badge-fw" id="badgeFw">—</span><span class="badge badge-live" id="badgeLive" style="display:none">● Canlı</span></div>
-      <button class="x-shr-btn" onclick="openShr()"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X'te Paylaş</button>
+      <div>
+        <div class="sticker" id="stockTicker">—</div>
+        <div class="sco" id="stockCo">—</div>
+        <span class="stock-flag-pill" id="stockFlagPill"><svg style="width:14px;height:10px;flex-shrink:0"><use id="hflagUse" href="#f-tr"/></svg><span id="stockExLabel">BIST</span></span>
+      </div>
+      <div class="sbadges">
+        <span class="badge badge-fw" id="badgeFw">—</span>
+        <span class="badge badge-live" id="badgeLive" style="display:none">● Canlı</span>
+      </div>
+      <button class="x-shr-btn" onclick="openShr()"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>𝕏 Paylaş</button>
     </div>
     <div class="rd-grid" id="rdGrid" style="display:none">
       <div class="rd-card"><div class="rd-lbl">Güncel Fiyat</div><div class="rd-val" id="rdPrice">—</div><div class="rd-live">● Yahoo Finance</div></div>
@@ -2893,6 +2903,8 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   document.getElementById('stockCo').textContent=company||'';
   document.getElementById('badgeEx').textContent=ex.l;
   const bfw=document.getElementById('badgeFw');bfw.textContent=fw.name;bfw.className='badge badge-fw '+(fwKey||curFW);
+  // Exchange label pill güncelle
+  const exLbl=document.getElementById('stockExLabel');if(exLbl)exLbl.textContent=curExchange||'BIST';
   document.getElementById('stockHdr').classList.add('visible');
   document.getElementById('statScore').textContent=`${score}/${fw.criteria.length}`;
   const pc=statuses.filter(s=>s==='pass').length,fc=statuses.filter(s=>s==='fail').length;
