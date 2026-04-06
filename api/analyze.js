@@ -558,6 +558,13 @@ async function fetchYahooData(yahooTicker) {
         result.evEbitda  = bistRatios.FD_FAVOK;
         result.evSource  = 'TradingView';
         console.log(`[BIST TV] FD/FAVÖK override: ${result.evEbitda}`);
+      } else {
+        // TV'den EV/FAVÖK gelmediyse Yahoo'nun anormal değerini temizle
+        // (Yahoo BIST için EV/EBITDA'yı çoğunlukla yanlış hesaplıyor)
+        if (result.evEbitda != null && (result.evEbitda > 50 || result.evEbitda < 0)) {
+          console.log(`[BIST TV] EV/FAVÖK anormal Yahoo değeri temizlendi: ${result.evEbitda}`);
+          result.evEbitda = null;
+        }
       }
       // ROE — TradingView % cinsinden verir (ör: 14.3 = %14.3), result.roe 0-1 arası bekler
       if (bistRatios.ROE != null) {
