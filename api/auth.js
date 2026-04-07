@@ -1,3 +1,15 @@
+// Admin brute force koruması
+const _adminAttempts = new Map();
+function checkAdminRateLimit(ip) {
+  const now = Date.now();
+  const window = 15 * 60 * 1000; // 15 dakika
+  const max = 10;
+  const hits = (_adminAttempts.get(ip) || []).filter(t => now - t < window);
+  hits.push(now);
+  _adminAttempts.set(ip, hits);
+  return hits.length <= max;
+}
+
 // /api/auth.js — Barış Investing Auth
 // Yenilikler: Referans sistemi, günlük bonus (+1 hak), gelişmiş admin istatistikleri
 
@@ -42,9 +54,10 @@ async function getUser(email) {
 function norm(e) { return (e || '').toLowerCase().trim(); }
 
 function isAdminRequest(email, secret) {
+  if (!email || !secret) return false;
   const emailMatch = ADMIN_EMAIL && norm(email) === ADMIN_EMAIL;
   const secretMatch = process.env.ADMIN_SECRET && secret === process.env.ADMIN_SECRET;
-  return emailMatch || secretMatch;
+  return emailMatch && secretMatch; // IKISI DE gerekli
 }
 
 function isToday(dateStr) {
@@ -66,7 +79,10 @@ function makeRefCode(email) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  const allowed = ['https://www.barisinvesting.com','https://barisinvesting.com'];
+  if (allowed.includes(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
+  else if (process.env.NODE_ENV !== 'production') res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -76,7 +92,8 @@ export default async function handler(req, res) {
   // ── LOGIN / KAYIT ──
   if (action === 'login' && req.method === 'POST') {
     const { email, marketingConsent, refCode } = req.body || {};
-    if (!email || !email.includes('@') || !email.includes('.')) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!email || !emailRegex.test(email) || email.length > 254) {
       return res.status(400).json({ error: 'Geçerli bir e-posta girin.' });
     }
 
@@ -252,6 +269,8 @@ export default async function handler(req, res) {
 
   // ── ADMIN: kullanıcı listesi ──
   if (action === 'admin_users' && req.method === 'POST') {
+    const adminIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
+    if (!checkAdminRateLimit(adminIp)) return res.status(429).json({ error: 'Çok fazla deneme.' });
     const { email, secret } = req.body || {};
     if (!isAdminRequest(email, secret)) {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
