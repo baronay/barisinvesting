@@ -1,845 +1,4146 @@
-// /api/analyze.js — Barış Investing
-// Veri Motoru: Yahoo Finance (v7 quote + v10 quoteSummary + balanceSheetHistory)
-// BIST Fallback: Ham bilanço verisiyle PD/DD ve ROE formül hesabı
-// Son Çare: BIST site scraping (İş Yatırım / BigPara)
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yatırım Analiz Merkezi — Barış Investing</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230e1220'/%3E%3Crect x='0' y='0' width='4' height='32' fill='%234d8ef0'/%3E%3Ctext x='8' y='23' font-family='Georgia,serif' font-weight='700' font-size='18' fill='%23e8edf8'%3EBİ%3C/text%3E%3C/svg%3E">
+<link rel="shortcut icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230e1220'/%3E%3Crect x='0' y='0' width='4' height='32' fill='%234d8ef0'/%3E%3Ctext x='8' y='23' font-family='Georgia,serif' font-weight='700' font-size='18' fill='%23e8edf8'%3EBİ%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;600;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<style>
+/* ════════════════════════════════════════════════════
+   BARIŞ INVESTING — PREMIUM DARK THEME v3
+   Font: Outfit + JetBrains Mono
+   Colors: Deep Navy · Electric Blue · Emerald/Amber
+════════════════════════════════════════════════════ */
+:root{
+  /* ══ BARIŞ INVESTING — KOYU FİNANS TERMİNALİ ══
+     Sidebar lacivert + tutarlı koyu içerik alanı
+     Tüm yazılar okunabilir, kontrast WCAG AA+ uyumlu */
 
-// ── ÖNBELLEK ────────────────────────────────────────────────────
-const cache = new Map();
-const CACHE_TTL = 60 * 60 * 1000;
+  /* ── ANA ARKA PLANLAR ── */
+  --bg:#13182a;          /* ana sayfa koyu lacivert */
+  --bg2:#0f1422;         /* biraz daha koyu */
+  --surface:#1c2235;     /* kart yüzeyi */
+  --surface2:#222840;    /* hover/secondary yüzey */
+  --surface3:#2a3250;    /* tertiary */
 
-function getCached(key) {
-  const e = cache.get(key);
-  if (!e) return null;
-  if (Date.now() - e.ts > CACHE_TTL) { cache.delete(key); return null; }
-  return e.data;
+  /* ── SIDEBAR ── */
+  --sidebar:#0e1220;     /* sidebar biraz daha koyu */
+  --sidebar2:#151929;
+  --sidebar3:#1c2235;
+
+  /* ── BORDER ── */
+  --border:rgba(255,255,255,0.08);
+  --border2:rgba(255,255,255,0.05);
+  --border-s:rgba(255,255,255,0.10);
+  --glass:rgba(255,255,255,0.06);
+
+  /* ── ACCENT: Kurumsal Bloomberg mavisi ── */
+  --accent:#4d8ef0;
+  --accent2:#2563eb;
+  --accent-dim:rgba(77,142,240,0.15);
+  --accent-glow:rgba(77,142,240,0.25);
+
+  --gold:#d4a843;
+  --gold-dim:rgba(212,168,67,0.15);
+
+  /* ── SEMANTIC: Klasik terminal renkleri ── */
+  --success:#22c55e;     /* parlak yeşil — pozitif */
+  --success-dim:rgba(34,197,94,0.12);
+  --danger:#f05252;      /* terminal kırmızısı */
+  --danger-dim:rgba(240,82,82,0.12);
+  --warn:#f59e0b;
+  --warn-dim:rgba(245,158,11,0.12);
+
+  --lynch:#e07b39;
+  --dalio:#9b77cc;
+
+  /* ── TEXT: Net, okunabilir ── */
+  --text:#e8edf8;        /* neredeyse beyaz, göz yormaz */
+  --text2:#a0aec8;       /* ikincil metin */
+  --muted:#5a6a8a;       /* muted */
+  --muted2:#3d4f6e;
+  --muted-s:#8892b0;
+
+  --rule:rgba(255,255,255,0.07);
 }
-function setCache(key, data) {
-  if (cache.size >= 300) cache.delete(cache.keys().next().value);
-  cache.set(key, { data, ts: Date.now() });
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:var(--bg);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 0% 0%, rgba(37,99,235,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(139,92,246,0.04) 0%, transparent 50%);
+  color:var(--text);
+  font-family:'IBM Plex Sans',sans-serif;
+  min-height:100vh;overflow-x:hidden;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.app{display:flex;min-height:100vh;}
+.mobile-toggle{display:none;position:fixed;top:12px;left:12px;z-index:1100;background:var(--surface2);border:1px solid var(--glass);color:var(--text2);width:40px;height:40px;cursor:pointer;font-size:18px;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+
+/* ── TOAST ── */
+#globalToast{
+  position:fixed;bottom:28px;right:28px;z-index:9999;
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface2);border:1px solid var(--accent);
+  color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;
+  padding:10px 18px;
+  opacity:0;transform:translateY(12px);
+  transition:opacity 0.3s ease,transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events:none;box-shadow:0 8px 32px var(--accent-glow);
+}
+#globalToast.visible{opacity:1;transform:translateY(0);}
+#globalToast .toast-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite;flex-shrink:0;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:272px;background:var(--sidebar);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;overflow-x:hidden;flex-shrink:0;border-right:1px solid var(--border-s);}
+.brand{padding:20px 20px 14px;border-bottom:1px solid var(--border-s);}
+.brand-top{display:flex;align-items:flex-start;justify-content:space-between;}
+.brand-tag{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:5px;font-family:'IBM Plex Mono',monospace;}
+.brand-name{font-family:'IBM Plex Serif',serif;font-size:18px;font-weight:700;color:#e8e6e0;line-height:1.2;}
+.brand-name span{color:var(--accent);}
+.brand-sub{font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:.5px;}
+.brand-socials{display:flex;gap:6px;margin-top:10px;}
+.soc-link{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid var(--border-s);color:var(--muted);text-decoration:none;transition:all .2s;font-size:10px;}
+.soc-link:hover{border-color:var(--accent);color:var(--accent);box-shadow:0 0 12px var(--accent-glow);}
+.s-close{display:none;background:none;border:1px solid var(--border-s);color:var(--muted);width:26px;height:26px;cursor:pointer;font-size:12px;align-items:center;justify-content:center;}
+.s-close:hover{color:var(--text);}
+.main-nav{display:flex;border-bottom:1px solid var(--border-s);}
+.mnav-tab{flex:1;padding:10px 4px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);cursor:pointer;text-align:center;border-bottom:2px solid transparent;transition:all .2s;font-family:'IBM Plex Mono',monospace;}
+.mnav-tab:hover{color:var(--text2);}
+.mnav-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-content{display:none;}.tab-content.active{display:block;}
+.s-input{padding:14px 20px;border-bottom:1px solid var(--border-s);}
+.s-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block;font-family:'IBM Plex Mono',monospace;}
+.ex-row{display:flex;gap:4px;margin-bottom:10px;}
+.ex-btn{flex:1;background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:6px 2px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:3px;}
+.ex-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+.flag-s{width:14px;height:9px;flex-shrink:0;}
+.ac-wrap{position:relative;margin-bottom:8px;}
+.ticker-row{display:flex;gap:5px;}
+.t-input{width:80px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border-s);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;padding:8px 10px;text-transform:uppercase;letter-spacing:2px;outline:none;transition:border-color .2s,box-shadow .2s;}
+.t-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+.t-input::placeholder{color:var(--muted);font-size:9px;letter-spacing:1px;font-weight:400;}
+.co-input{flex:1;min-width:0;background:var(--surface2);border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Sans',sans-serif;font-size:10px;padding:8px 9px;outline:none;}
+.ac-drop{display:none;position:absolute;top:100%;left:0;right:0;background:var(--sidebar2);border:1px solid var(--border-s);border-top:none;z-index:200;max-height:175px;overflow-y:auto;}
+.ac-drop.visible{display:block;}
+.ac-item{padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border-s);display:flex;align-items:center;gap:8px;}
+.ac-item:hover{background:var(--sidebar3);}
+.ac-t{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--accent);width:52px;flex-shrink:0;}
+.ac-n{font-size:9px;color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fw-row{display:flex;gap:4px;margin-bottom:10px;}
+.fw-btn{flex:1;background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px 4px;cursor:pointer;transition:all .2s;}
+.fw-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+.fw-btn.la{background:rgba(249,115,22,.10);border-color:rgba(249,115,22,.35);color:var(--lynch);}
+.ana-btn{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:700;padding:12px;cursor:pointer;letter-spacing:1px;position:relative;overflow:hidden;transition:transform .25s cubic-bezier(0.34,1.56,0.64,1),box-shadow .25s;}
+.ana-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.18),transparent);opacity:0;transition:opacity .25s;}
+.ana-btn:hover{background:var(--accent);box-shadow:0 4px 14px rgba(36,81,163,0.25);}
+.ana-btn:hover::after{opacity:1;}
+.ana-btn:active{transform:translateY(0);box-shadow:none;}
+.ana-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.data-badge{display:none;font-size:9px;color:var(--success);padding:4px 8px;background:var(--success-dim);border:1px solid rgba(16,185,129,.3);margin-top:6px;text-align:center;font-family:'IBM Plex Mono',monospace;}
+.data-badge.visible{display:block;}
+.err-bar{display:none;background:var(--danger-dim);border:1px solid rgba(239,68,68,.3);color:var(--danger);padding:6px 10px;font-size:9px;margin-top:6px;}
+.err-bar.visible{display:block;}
+.pop-sec{padding:10px 20px;border-bottom:1px solid var(--border-s);}
+.pop-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-family:'IBM Plex Mono',monospace;}
+.pop-grp{margin-bottom:6px;}
+.pop-grp-t{font-size:9px;color:var(--muted);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;}
+.pop-chips{display:flex;flex-wrap:wrap;gap:3px;}
+.pop-chip{font-size:9px;padding:3px 7px;border:1px solid var(--border-s);color:var(--muted);cursor:pointer;font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;gap:3px;background:transparent;transition:all .15s;}
+.pop-chip:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.chip-f{width:11px;height:7px;flex-shrink:0;}
+.nav-lbl{padding:10px 20px 3px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);font-family:'IBM Plex Mono',monospace;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 20px;cursor:pointer;border-left:2px solid transparent;font-size:10px;color:var(--muted);transition:all .15s;}
+.nav-item:hover{background:var(--surface2);color:var(--text2);}
+.nav-item.active{border-left-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.nav-num{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;color:var(--muted2);width:18px;flex-shrink:0;}
+.nav-item.active .nav-num{color:var(--accent);}
+.nav-status{margin-left:auto;font-size:11px;flex-shrink:0;}
+.verdict-sec{padding:10px 20px;margin-top:auto;border-top:1px solid var(--border-s);}
+.verdict-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-family:'IBM Plex Mono',monospace;}
+.verdict-box{font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:700;padding:8px 12px;text-align:center;border:1px solid var(--border-s);color:var(--muted);letter-spacing:1px;}
+.verdict-box.buy{border-color:rgba(16,185,129,.4);color:var(--success);background:var(--success-dim);}
+.verdict-box.watch{border-color:rgba(245,158,11,.4);color:var(--warn);background:var(--warn-dim);}
+.verdict-box.avoid{border-color:rgba(239,68,68,.4);color:var(--danger);background:var(--danger-dim);}
+.pt-sb{padding:14px 20px;}
+.pt-sb-btn{display:block;width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:700;padding:9px;cursor:pointer;letter-spacing:.5px;text-align:center;margin-top:10px;transition:box-shadow .25s;}
+.pt-sb-btn:hover{box-shadow:0 4px 16px var(--accent-glow);}
+.forum-sb{padding:14px 20px;}
+.forum-new-sb-btn{display:block;width:100%;background:transparent;border:1px solid rgba(16,185,129,.35);color:var(--success);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:8px;cursor:pointer;text-align:left;margin-top:8px;letter-spacing:1px;transition:all .2s;}
+.forum-new-sb-btn:hover{background:var(--success-dim);}
+.s-footer{padding:10px 20px;border-top:1px solid var(--border-s);margin-top:auto;}
+.s-footer-t{font-size:9px;color:var(--muted2);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;}
+.footer-links{display:flex;gap:5px;}
+.f-link{font-size:9px;color:var(--muted);text-decoration:none;padding:2px 6px;border:1px solid var(--border-s);transition:all .2s;font-family:'IBM Plex Mono',monospace;}
+.f-link:hover{border-color:var(--accent);color:var(--accent);}
+.user-sec{padding:12px 18px;border-top:1px solid var(--border-s);border-bottom:1px solid var(--border-s);}
+.user-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.user-avatar{width:40px;height:40px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Sans',sans-serif;font-size:16px;font-weight:800;color:#fff;margin-bottom:10px;}
+.user-top .user-avatar{width:32px;height:32px;font-size:13px;margin-bottom:0;flex-shrink:0;}
+.user-info{flex:1;min-width:0;}
+.user-info .user-email{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;}
+.user-status-line{display:flex;align-items:center;gap:5px;}
+.user-status-line .credits-bar{flex:1;height:2px;background:var(--border-s);}
+.user-status-line .user-credits-val{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--text2);}
+.user-actions{display:flex;gap:5px;}
+.admin-panel-btn{flex:1;background:var(--warn-dim);border:1px solid rgba(245,158,11,.3);color:var(--warn);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:5px 8px;cursor:pointer;transition:all .15s;}
+.admin-panel-btn:hover{background:rgba(245,158,11,.2);}
+.logout-btn{background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:5px 10px;cursor:pointer;transition:all .15s;}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger);}
+.credits-warn{font-size:9px;color:var(--danger);padding:4px 0;margin-bottom:5px;font-family:'IBM Plex Mono',monospace;}
+.sidebar-login-btn{display:flex;align-items:center;gap:7px;width:100%;background:rgba(59,130,246,.05);border:none;border-top:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:12px 18px;cursor:pointer;transition:all .2s;text-align:left;}
+.sidebar-login-btn:hover{background:var(--accent-dim);color:var(--accent);}
+.user-email{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text2);margin-bottom:4px;word-break:break-all;}
+.user-joined{font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+.user-credits-wrap{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-s);}
+.user-credits-label{font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;text-transform:uppercase;}
+.user-credits-val{font-family:'IBM Plex Sans',sans-serif;font-size:22px;font-weight:800;color:var(--accent);}
+.user-credits-val.low{color:var(--danger);}
+.user-credits-val.unlimited{color:var(--success);}
+.credits-bar{height:3px;background:var(--border-s);margin-top:6px;}
+.credits-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .5s;}
+.credits-fill.low{background:var(--danger);}
+.user-badge{display:inline-block;font-size:8px;padding:2px 6px;font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:1px;margin-top:6px;}
+.user-badge.admin{background:var(--warn-dim);color:var(--warn);border:1px solid rgba(245,158,11,.3);}
+.user-badge.free{background:rgba(59,130,246,.06);color:var(--muted);border:1px solid var(--border-s);}
+.user-card{background:var(--surface);padding:18px;}
+.rp-login-btn{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:700;padding:11px;cursor:pointer;letter-spacing:.5px;transition:all .3s;}
+.rp-login-btn:hover{box-shadow:0 4px 20px var(--accent-glow);}
+.rp-login-hint{font-size:10px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.6;}
+.rp-logout-btn{width:100%;background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px;cursor:pointer;margin-top:8px;transition:all .15s;}
+.rp-logout-btn:hover{border-color:var(--danger);color:var(--danger);}
+.save-indicator{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;padding:8px 18px;}
+.save-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.save-dot.saved{background:var(--success);}
+.save-dot.saving{background:var(--warn);animation:pulse 1s infinite;}
+.save-dot.error{background:var(--danger);}
+.admin-panel{background:var(--surface2);border:1px solid rgba(245,158,11,.2);padding:12px;margin-bottom:8px;}
+.admin-title{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--warn);font-family:'IBM Plex Mono',monospace;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.admin-stat{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--rule);}
+.admin-stat:last-child{border-bottom:none;}
+.admin-stat-label{font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+.admin-stat-val{font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:700;color:var(--text);}
+.admin-user-row{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--rule);font-size:9px;font-family:'IBM Plex Mono',monospace;}
+.admin-user-row:last-child{border-bottom:none;}
+.admin-user-email{flex:1;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.admin-user-credits{color:var(--accent);font-weight:500;width:24px;text-align:center;}
+.admin-add-btn{background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 5px;cursor:pointer;}
+.admin-add-btn:hover{border-color:var(--success);color:var(--success);}
+.admin-del-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 2px;}
+.admin-del-btn:hover{color:var(--danger);}
+.login-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:800;align-items:center;justify-content:center;}
+.login-modal.visible{display:flex;}
+.login-box{background:var(--surface);border:1px solid var(--glass);max-width:420px;width:94%;box-shadow:0 24px 80px rgba(0,0,0,.6);}
+.login-header{background:var(--sidebar);padding:28px 28px 20px;border-bottom:1px solid var(--border-s);}
+.login-tag{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;font-family:'IBM Plex Mono',monospace;}
+.login-title{font-family:'IBM Plex Sans',sans-serif;font-size:22px;font-weight:800;color:var(--text);}
+.login-sub{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.7;}
+.login-body{padding:24px 28px;}
+.login-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block;font-family:'IBM Plex Mono',monospace;}
+.login-input{width:100%;background:var(--surface2);border:1px solid var(--border-s);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:12px 14px;outline:none;margin-bottom:14px;transition:border-color .2s,box-shadow .2s;}
+.login-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+.login-submit{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:700;padding:13px;cursor:pointer;letter-spacing:.5px;transition:all .3s;}
+.login-submit:hover{box-shadow:0 6px 24px var(--accent-glow);}
+.login-benefits{display:flex;flex-direction:column;gap:7px;margin-bottom:18px;}
+.login-benefit{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--text2);}
+.login-benefit-icon{width:18px;height:18px;background:var(--accent-dim);border:1px solid rgba(59,130,246,.3);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;}
+.login-msg{font-size:10px;padding:8px 10px;margin-top:10px;font-family:'IBM Plex Mono',monospace;display:none;}
+.login-msg.ok{color:var(--success);background:var(--success-dim);border:1px solid rgba(16,185,129,.3);}
+.login-msg.err{color:var(--danger);background:var(--danger-dim);border:1px solid rgba(239,68,68,.3);}
+.login-skip{width:100%;background:none;border:none;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:10px;cursor:pointer;margin-top:6px;border-top:1px solid var(--rule);}
+.login-skip:hover{color:var(--text);}
+.stat-mini{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);}
+.stat-mini-card{background:var(--surface2);padding:10px 12px;}
+.stat-mini-lbl{font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;font-family:'IBM Plex Mono',monospace;}
+.stat-mini-val{font-family:'IBM Plex Sans',sans-serif;font-size:16px;font-weight:800;color:var(--text);}
+@media(max-width:1100px){.right-panel{display:none;}}
+.fw-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:700;align-items:center;justify-content:center;}
+.fw-modal.visible{display:flex;}
+.fw-modal-box{background:var(--surface);border:1px solid var(--glass);max-width:560px;width:94%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.fw-mhdr{padding:24px 28px 16px;border-bottom:1px solid var(--rule);}
+.fw-mtag{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;font-family:'IBM Plex Mono',monospace;}
+.fw-mtitle{font-family:'IBM Plex Sans',sans-serif;font-size:22px;font-weight:800;color:var(--text);}
+.fw-msub{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.7;}
+.fw-opts{display:grid;grid-template-columns:1fr 1fr;}
+.fw-opt{padding:22px;cursor:pointer;border:none;background:var(--surface2);text-align:left;position:relative;overflow:hidden;transition:background .2s;}
+.fw-opt:first-child{border-right:1px solid var(--rule);}
+.fw-opt:hover{background:var(--surface3);}
+.fw-opt::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.fw-opt.buffett::before{background:linear-gradient(90deg,var(--accent2),var(--accent));}
+.fw-opt.lynch::before{background:var(--lynch);}
+.fw-opt.dalio::before{background:var(--dalio);}
+.fw-opt-name{font-family:'IBM Plex Sans',sans-serif;font-size:15px;font-weight:700;margin-bottom:5px;}
+.fw-opt.buffett .fw-opt-name{color:var(--accent);}
+.fw-opt.lynch .fw-opt-name{color:var(--lynch);}
+.fw-opt.dalio .fw-opt-name{color:var(--dalio);}
+.fw-opt-desc{font-size:10px;color:var(--muted);line-height:1.7;margin-bottom:8px;}
+.fw-tags-wrap{display:flex;flex-wrap:wrap;gap:3px;}
+.fw-tag{font-size:8px;padding:2px 6px;border:1px solid var(--border-s);color:var(--muted);background:rgba(255,255,255,.03);}
+.fw-skip{width:100%;padding:11px;background:none;border:none;border-top:1px solid var(--rule);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;}
+.fw-skip:hover{color:var(--text);}
+.hero{background:var(--sidebar);position:relative;overflow:hidden;padding:0;margin-bottom:0;border:none;}
+.hero::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 90% at -5% 50%,rgba(37,99,235,.13) 0%,transparent 60%),radial-gradient(ellipse 60% 70% at 105% 50%,rgba(167,139,250,.08) 0%,transparent 55%);}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),var(--dalio),transparent);}
+.hero-inner{display:grid;grid-template-columns:1fr 280px;gap:0;align-items:stretch;min-height:220px;}
+.hero-left{padding:32px 36px 26px;position:relative;z-index:1;}
+.hero-right{background:rgba(255,255,255,.025);border-left:1px solid var(--border-s);padding:20px 22px;display:flex;flex-direction:column;gap:0;position:relative;z-index:1;}
+.hero-tag{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;font-family:'IBM Plex Mono',monospace;}
+.hero-title{font-family:'IBM Plex Serif',serif;font-size:clamp(22px,2.8vw,34px);font-weight:700;line-height:1.2;margin-bottom:8px;color:#e8e6e0;}
+.hero-title span{color:#7aabf7;}
+.hero-sub{font-size:11px;color:var(--muted);max-width:480px;line-height:1.9;margin-bottom:18px;font-weight:300;}
+.hero-search-row{display:flex;max-width:580px;position:relative;}
+.hero-ticker-in{width:110px;flex-shrink:0;background:var(--surface2);border:1px solid var(--glass);border-right:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;padding:13px 14px;text-transform:uppercase;letter-spacing:2px;outline:none;transition:border-color .2s,box-shadow .2s;}
+.hero-ticker-in:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+.hero-ticker-in::placeholder{color:var(--muted);font-size:9px;letter-spacing:1px;font-weight:400;}
+.hero-fw-select{background:var(--surface2);border:1px solid var(--glass);border-right:none;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:13px 10px;cursor:pointer;outline:none;min-width:110px;}
+.hero-fw-select option{background:var(--surface2);}
+.hero-search-btn{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:700;padding:13px 24px;cursor:pointer;letter-spacing:1.5px;white-space:nowrap;position:relative;overflow:hidden;transition:transform .25s cubic-bezier(0.34,1.56,0.64,1),box-shadow .25s;}
+.hero-search-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.22),transparent);opacity:0;transition:opacity .25s;}
+.hero-search-btn:hover{background:var(--accent);box-shadow:0 4px 16px rgba(36,81,163,0.25);}
+.hero-search-btn:hover::after{opacity:1;}
+.hero-search-btn:active{transform:translateY(0);}
+.hero-ac{display:none;position:absolute;top:100%;left:0;right:calc(100% - 580px);background:var(--sidebar2);border:1px solid var(--glass);border-top:none;z-index:50;max-height:200px;overflow-y:auto;}
+.hero-ac.visible{display:block;}
+.hero-ex-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.hero-ex-btn{background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:5px 12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:4px;}
+.hero-ex-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.hmp-title{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--rule);}
+.hmp-row{display:flex;align-items:center;padding:5px 0;border-bottom:1px solid var(--rule);}
+.hmp-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);width:68px;flex-shrink:0;}
+.hmp-val{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--text);flex:1;}
+.hmp-chg{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;text-align:right;min-width:50px;}
+.hmp-chg.pos{color:var(--success);}.hmp-chg.neg{color:var(--danger);}
+.hmp-divider{height:1px;background:var(--rule);margin:6px 0;}
+.hmp-time{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted2);margin-top:auto;padding-top:10px;}
+.user-bar{display:flex;align-items:center;gap:10px;padding:10px 0;margin-top:14px;border-top:1px solid var(--border-s);}
+.user-credits-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;background:var(--accent-dim);border:1px solid rgba(59,130,246,.3);}
+.ucb-num{font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:800;color:var(--accent);}
+.ucb-lbl{font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+.user-logout{background:none;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:4px 9px;cursor:pointer;margin-left:auto;transition:all .15s;}
+.user-logout:hover{border-color:var(--danger);color:var(--danger);}
+.sec-title{font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:10px;padding-top:2px;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--rule);}
+.src-badge{font-size:8px;color:var(--muted);padding:2px 6px;border:1px solid var(--border2);font-family:'IBM Plex Mono',monospace;}
+.pg-title{font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.pg-title::after{content:'';flex:1;height:1px;background:var(--rule);min-width:20px;}
+.mkt-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:20px;background:var(--border);border:1px solid var(--border);}
+.mkt-card{background:var(--surface);padding:12px 14px;cursor:pointer;border-left:3px solid transparent;transition:background .15s;}
+.mkt-card.pos{border-left-color:var(--success);}.mkt-card.neg{border-left-color:var(--danger);}
+.mkt-card:hover{background:var(--surface3);}
+.mkt-lbl{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted-s);margin-bottom:3px;font-family:'IBM Plex Mono',monospace;font-weight:500;}
+.mkt-price{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--text);letter-spacing:0.5px;}
+.mkt-chg{font-size:10px;font-weight:700;margin-top:2px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.3px;}
+.mkt-chg.pos{color:var(--success);}.mkt-chg.neg{color:var(--danger);}
+.news-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-bottom:24px;background:var(--border);border:1px solid var(--border);}
+.news-card{background:var(--surface);padding:14px 16px;cursor:pointer;text-decoration:none;display:block;border-left:3px solid transparent;transition:background .15s;}
+.news-card:hover{background:var(--surface2);border-left-color:var(--accent);}
+.news-pub{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;}
+.news-t{font-size:12px;color:var(--text);line-height:1.55;font-family:'IBM Plex Sans',sans-serif;font-weight:500;margin-bottom:4px;}
+.news-time{font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+.news-loading{text-align:center;padding:20px;color:var(--muted);font-size:10px;grid-column:1/-1;font-family:'IBM Plex Mono',monospace;}
+.stock-hdr{display:none;background:var(--sidebar);padding:14px 18px;margin-bottom:1px;align-items:center;gap:12px;flex-wrap:wrap;position:relative;border-bottom:3px solid var(--accent2);}
+.stock-hdr.visible{display:flex;}
+.stock-logo{width:34px;height:34px;background:var(--surface2);border:1px solid var(--border-s);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--text2);overflow:hidden;flex-shrink:0;}
+.stock-logo img{width:100%;height:100%;object-fit:contain;}
+.hflag{width:22px;height:15px;flex-shrink:0;}
+.sticker{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:var(--text);letter-spacing:2px;}
+.sco{font-size:10px;color:var(--muted);margin-top:2px;}
+.sbadges{display:flex;flex-direction:column;gap:3px;}
+.badge{font-size:8px;letter-spacing:1px;padding:2px 6px;border:1px solid;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;}
+.badge-ex{color:var(--text2);border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.04);}
+.badge-fw{color:var(--accent);border-color:rgba(59,130,246,.35);background:var(--accent-dim);}
+.badge-fw.lynch{color:var(--lynch);border-color:rgba(249,115,22,.35);background:rgba(249,115,22,.08);}
+.badge-fw.dalio{color:var(--dalio);border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.08);}
+.badge-live{color:var(--success);border-color:rgba(16,185,129,.4);background:var(--success-dim);}
+.x-shr-btn{margin-left:auto;background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;}
+.x-shr-btn:hover{border-color:var(--text);color:var(--text);}
+.rd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-bottom:1px;background:var(--border);}
+.rd-card{background:var(--surface);border:1px solid var(--border);padding:12px 14px;border-left:3px solid var(--border);transition:background .15s;}
+.rd-card:hover{background:var(--surface2);}
+.rd-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;font-family:'IBM Plex Mono',monospace;}
+.rd-val{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;color:var(--text);}
+.rd-sub{font-size:9px;color:var(--muted);margin-top:2px;}
+.rd-live{font-size:9px;color:var(--success);font-family:'IBM Plex Mono',monospace;}
+.ov-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-bottom:1px;background:var(--border);}
+.stat-card{background:var(--surface);border:1px solid var(--border);padding:18px 22px;border-left:4px solid var(--accent);position:relative;overflow:hidden;}
+.stat-card::after{content:'';position:absolute;top:0;right:0;width:100px;height:100%;background:linear-gradient(90deg,transparent,var(--accent-dim));pointer-events:none;}
+.stat-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;}
+.stat-val{font-family:'IBM Plex Serif',serif;font-size:32px;font-weight:700;color:var(--accent);line-height:1;}
+.stat-sub{font-size:9px;color:var(--muted);margin-top:4px;font-family:'IBM Plex Mono',monospace;}
+.mult-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-bottom:1px;background:var(--border);}
+.mult-card{background:var(--surface);border:1px solid var(--border);padding:12px 14px;text-align:left;transition:background .15s;}
+.mult-card:hover{background:var(--surface2);}
+.mult-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;}
+.mult-val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--text);}
+.mult-sub{font-size:9px;color:var(--muted);margin-top:2px;}
+.mult-sig{font-size:8px;font-weight:600;letter-spacing:1px;padding:2px 6px;border:1px solid;margin-top:3px;display:inline-block;font-family:'IBM Plex Mono',monospace;}
+.sg{color:var(--success);border-color:rgba(16,185,129,.3);background:var(--success-dim);}
+.sw{color:var(--warn);border-color:rgba(245,158,11,.3);background:var(--warn-dim);}
+.sb{color:var(--danger);border-color:rgba(239,68,68,.3);background:var(--danger-dim);}
+.sn{color:var(--muted);border-color:var(--border2);}
+.rsi-card,.rng-card,.ana-card{background:var(--surface);border:1px solid var(--border);padding:14px 16px;margin-bottom:1px;}
+.card-t{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;}
+.cdot{width:5px;height:5px;background:var(--accent);flex-shrink:0;border-radius:50%;}
+.rsi-wrap{display:flex;align-items:center;gap:14px;}
+.rsi-gauge{flex:1;}
+.rsi-bg{height:5px;background:var(--rule);overflow:hidden;margin-bottom:5px;}
+.rsi-fill{height:100%;transition:width 1s ease;}
+.rsi-zones{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+.rsi-vbox{text-align:center;flex-shrink:0;}
+.rsi-v{font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:700;}
+.rsi-sig{display:inline-block;font-size:8px;font-weight:600;letter-spacing:1px;padding:2px 6px;border:1px solid;margin-top:3px;font-family:'IBM Plex Mono',monospace;}
+.rng-labels{display:flex;justify-content:space-between;margin-bottom:5px;font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+.rng-bwrap{position:relative;height:4px;background:var(--rule);margin-bottom:5px;}
+.rng-bfill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--danger),var(--warn),var(--success));width:100%;}
+.rng-marker{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;background:var(--accent);border:2px solid var(--surface);transition:left 1s ease;border-radius:50%;}
+.rng-meta{display:flex;justify-content:space-between;font-size:9px;font-family:'IBM Plex Mono',monospace;}
+.ana-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-bottom:8px;background:var(--border);}
+.ana-s{text-align:center;padding:9px;background:var(--surface2);}
+.ana-sl{font-size:8px;color:var(--muted);margin-bottom:3px;letter-spacing:1px;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;}
+.ana-sv{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;color:var(--text);}
+.cons-bar{height:3px;overflow:hidden;display:flex;gap:1px;margin-bottom:4px;}
+.cb{background:var(--success);}.ch{background:var(--warn);}.cs{background:var(--danger);}
+.cons-lbls{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+.ana-note{font-size:10px;color:var(--text2);padding:8px 10px;background:var(--surface2);border:1px solid var(--glass);border-left:3px solid var(--accent);line-height:1.7;margin-top:8px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:1px;}
+.chart-wrap{position:relative;height:145px;}
+.radar-wrap{position:relative;height:180px;max-width:220px;margin:0 auto;}
+.crit-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:1px;background:var(--surface);border:1px solid var(--glass);}
+.crit-table th{text-align:left;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:8px 12px;border-bottom:2px solid var(--rule);background:var(--surface2);font-family:'IBM Plex Mono',monospace;}
+.crit-table td{padding:10px 12px;border-bottom:1px solid var(--rule);vertical-align:top;}
+.crit-table tr:hover td{background:var(--surface2);cursor:pointer;}
+.cn{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;color:var(--muted);}
+.cname{font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:600;margin-bottom:2px;color:var(--text);}
+.cdesc{font-size:9px;color:var(--muted);line-height:1.5;}
+.sp{display:inline-flex;align-items:center;gap:3px;font-size:8px;font-weight:600;letter-spacing:1px;padding:3px 7px;font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
+.sp.pass{background:var(--success-dim);color:var(--success);border:1px solid rgba(16,185,129,.3);}
+.sp.fail{background:var(--danger-dim);color:var(--danger);border:1px solid rgba(239,68,68,.3);}
+.sp.neutral{background:var(--warn-dim);color:var(--warn);border:1px solid rgba(245,158,11,.3);}
+.sp.pending{background:var(--surface2);color:var(--muted);border:1px solid var(--border-s);}
+.dtxt{font-size:9px;color:var(--muted);line-height:1.6;max-width:220px;}
+.dh{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;padding:14px 16px;background:var(--surface2);border:1px solid var(--glass);border-left:4px solid var(--accent);}
+.dnum{font-family:'IBM Plex Sans',sans-serif;font-size:36px;font-weight:800;color:var(--accent);opacity:.15;line-height:1;flex-shrink:0;}
+.dname{font-family:'IBM Plex Serif',serif;font-size:16px;font-weight:700;margin-bottom:3px;color:var(--text);}
+.ddesc{font-size:10px;color:var(--muted);line-height:1.7;}
+.ablock{background:var(--surface2);border:1px solid var(--glass);padding:14px;margin-bottom:10px;}
+.ablock-t{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-family:'IBM Plex Mono',monospace;}
+.atext{font-size:11px;line-height:2;color:var(--text2);}
+.sr{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.sr-lbl{font-size:9px;color:var(--muted);width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'IBM Plex Mono',monospace;}
+.sr-bar{flex:1;height:2px;background:var(--rule);}
+.sr-fill{height:100%;transition:width 1s ease;width:0;}
+.sr-fill.pass{background:var(--success);}.sr-fill.fail{background:var(--danger);}.sr-fill.neutral{background:var(--warn);}
+.sr-val{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;width:16px;text-align:right;}
+.pt-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.pt-title{font-family:'IBM Plex Serif',serif;font-size:18px;font-weight:700;color:var(--text);}
+.pt-title span{color:var(--accent);}
+.pt-ana-btn{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:700;padding:8px 14px;cursor:pointer;letter-spacing:.5px;transition:all .3s;}
+.pt-ana-btn:hover{box-shadow:0 4px 16px var(--accent-glow);}
+.pt-notifs{margin-bottom:14px;}
+.pt-notif{background:var(--surface);border:1px solid var(--glass);padding:12px 14px;margin-bottom:6px;position:relative;overflow:hidden;animation:fadeIn .3s ease;border-left:3px solid var(--border-s);}
+.pt-notif.analyzing{border-left-color:var(--accent);}.pt-notif.done-good{border-left-color:var(--success);}.pt-notif.done-mid{border-left-color:var(--warn);}.pt-notif.done-bad{border-left-color:var(--danger);}
+.pt-nt{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--accent);}
+.pt-nc{font-size:9px;color:var(--muted);}
+.pt-scrs{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap;}
+.pt-sb2{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid var(--border-s);font-size:10px;background:var(--surface2);}
+.pt-sb2.b{border-left:2px solid var(--accent);}.pt-sb2.l{border-left:2px solid var(--lynch);}
+.ptsl{font-size:8px;color:var(--muted);letter-spacing:1px;font-family:'IBM Plex Mono',monospace;}
+.ptsv{font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:700;}
+.ptvt{font-size:8px;font-weight:600;padding:2px 5px;border:1px solid;font-family:'IBM Plex Mono',monospace;}
+.pt-nn{font-size:10px;color:var(--muted);line-height:1.5;margin-top:4px;}
+.pt-prog{height:2px;background:var(--rule);margin-top:5px;}
+.pt-pf{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .5s ease;}
+.pt-tnote{font-size:9px;color:var(--accent);padding:8px 12px;background:var(--accent-dim);border:1px solid rgba(59,130,246,.2);border-left:3px solid var(--accent);margin-bottom:12px;line-height:1.7;}
+.pt-add{background:var(--surface);border:1px solid var(--glass);padding:14px;margin-bottom:14px;}
+.pt-add-t{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-family:'IBM Plex Mono',monospace;}
+.pt-add-row{display:flex;gap:5px;flex-wrap:wrap;align-items:flex-start;}
+.ptin{background:var(--surface2);border:1px solid var(--border-s);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:7px 8px;outline:none;transition:border-color .2s;}
+.ptin:focus{border-color:var(--accent);}
+.ptin.tf{width:70px;text-transform:uppercase;font-weight:500;font-size:11px;}
+.ptin.cf{flex:1;min-width:85px;color:var(--muted);}
+.ptin.pf{width:88px;}.ptin.qf{width:62px;}
+.pt-sel{background:var(--surface2);border:1px solid var(--border-s);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:7px 8px;outline:none;cursor:pointer;}
+.pt-add-btn{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:700;padding:7px 12px;cursor:pointer;white-space:nowrap;transition:all .3s;}
+.pt-add-btn:hover{box-shadow:0 4px 16px var(--accent-glow);}
+.pt-ac-wrap{position:relative;}
+.pt-acd{display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--glass);z-index:200;max-height:130px;overflow-y:auto;}
+.pt-acd.visible{display:block;}
+.pt-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-bottom:14px;background:var(--border);}
+.ps-card{background:var(--surface);padding:11px 14px;border-left:3px solid var(--rule);border:1px solid var(--border);}
+.ps-lbl{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;}
+.ps-vtl{font-family:'IBM Plex Sans',sans-serif;font-size:15px;font-weight:800;color:var(--warn);}
+.ps-vusd{font-family:'IBM Plex Sans',sans-serif;font-size:15px;font-weight:800;color:var(--success);}
+.ps-v{font-family:'IBM Plex Sans',sans-serif;font-size:15px;font-weight:800;color:var(--accent);}
+.ps-sub{font-size:8px;color:var(--muted);margin-top:2px;font-family:'IBM Plex Mono',monospace;}
+.pt-mix{background:var(--surface);border:1px solid var(--glass);padding:14px;margin-bottom:14px;}
+.mix-t{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;}
+.mix-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.mix-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--accent);width:52px;flex-shrink:0;}
+.mix-bw{flex:1;height:4px;background:var(--rule);overflow:hidden;}
+.mix-bf{height:100%;transition:width .8s ease;}
+.mix-pct{font-size:9px;color:var(--muted);width:34px;text-align:right;flex-shrink:0;font-family:'IBM Plex Mono',monospace;}
+.mix-cur{font-size:9px;color:var(--muted);width:90px;text-align:right;flex-shrink:0;font-family:'IBM Plex Mono',monospace;}
+.cbadge{display:inline-block;font-size:7px;font-weight:600;padding:1px 3px;border:1px solid;margin-left:2px;vertical-align:middle;font-family:'IBM Plex Mono',monospace;}
+.c-tl{color:var(--warn);border-color:rgba(245,158,11,.4);}
+.c-usd{color:var(--success);border-color:rgba(16,185,129,.4);}
+.pt-tw{background:var(--surface);border:1px solid var(--glass);margin-bottom:14px;overflow-x:auto;}
+.pt-table{width:100%;border-collapse:collapse;font-size:10px;min-width:650px;}
+.pt-table th{text-align:left;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:7px 12px;border-bottom:2px solid var(--rule);background:var(--surface2);font-family:'IBM Plex Mono',monospace;}
+.pt-table td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:middle;}
+.pt-table tr:hover td{background:var(--surface2);}
+.pt-tk{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--accent);}
+.pt-co{font-size:8px;color:var(--muted);}
+.pt-wbar{height:2px;margin-top:3px;transition:width .8s ease;}
+.ptscr{display:flex;flex-direction:column;gap:2px;}
+.psr{font-size:9px;display:flex;align-items:center;gap:3px;}
+.psrl{color:var(--muted);}.psrv{font-family:'IBM Plex Sans',sans-serif;font-weight:700;}
+.pt-act{background:none;border:1px solid var(--border-s);color:var(--muted);font-size:9px;padding:3px 7px;cursor:pointer;transition:all .2s;font-family:'IBM Plex Mono',monospace;}
+.pt-act.analyze{border-color:var(--accent);color:var(--accent);}.pt-act.analyze:hover{background:var(--accent-dim);}
+.pt-act.remove:hover{border-color:var(--danger);color:var(--danger);}
+.pt-charts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.pc-card{background:var(--surface);border:1px solid var(--glass);padding:14px;}
+.pc-t{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;}
+.pc-wrap{position:relative;height:145px;}
+.risk-card{background:var(--surface);border:1px solid var(--glass);padding:14px;margin-bottom:14px;}
+.risk-t{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;font-family:'IBM Plex Mono',monospace;}
+.rl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;padding:2px 7px;border:1px solid;}
+.rl.low{color:var(--success);border-color:rgba(16,185,129,.3);}.rl.mid{color:var(--warn);border-color:rgba(245,158,11,.3);}.rl.high{color:var(--danger);border-color:rgba(239,68,68,.3);}
+.risk-items{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ri{padding:8px 10px;background:var(--surface2);border:1px solid var(--glass);}
+.ri-l{font-size:8px;color:var(--muted);margin-bottom:3px;letter-spacing:1px;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;}
+.ri-v{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--text);}
+.empty-pt{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px;text-align:center;gap:8px;border:1px dashed var(--border-s);}
+.forum-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+.forum-title{font-family:'IBM Plex Serif',serif;font-size:18px;font-weight:700;color:var(--text);}
+.forum-title span{color:var(--accent);}
+.forum-new-btn{background:linear-gradient(135deg,rgba(16,185,129,.85),var(--success));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:700;padding:8px 14px;cursor:pointer;letter-spacing:.5px;display:flex;align-items:center;gap:5px;transition:all .3s;}
+.forum-new-btn:hover{box-shadow:0 4px 16px rgba(16,185,129,.3);}
+.post-form{background:var(--surface);border:1px solid var(--glass);border-top:3px solid var(--accent);padding:16px;margin-bottom:18px;display:none;}
+.post-form.visible{display:block;animation:fadeIn .3s ease;}
+.pf-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;font-family:'IBM Plex Mono',monospace;}
+.pf-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;}
+.pf-close:hover{color:var(--danger);}
+.pf-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.pf-in{background:var(--surface2);border:1px solid var(--border-s);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:8px 10px;outline:none;transition:border-color .2s;}
+.pf-in:focus{border-color:var(--accent);}
+.pf-sub{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:700;padding:8px 16px;cursor:pointer;letter-spacing:.5px;transition:all .3s;}
+.pf-sub:hover{box-shadow:0 4px 16px var(--accent-glow);}
+.post-card{background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:6px;transition:background .15s;}
+.post-card:hover{background:var(--surface2);border-color:var(--border-s);}
+.post-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.post-avatar{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;}
+.post-nick{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--text);}
+.post-meta{font-size:9px;color:var(--muted);}
+.post-badges{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;}
+.post-ticker-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--accent);border:1px solid rgba(59,130,246,.35);background:var(--accent-dim);padding:1px 6px;}
+.post-ex-badge{font-size:8px;color:var(--muted);border:1px solid var(--border-s);padding:1px 5px;font-family:'IBM Plex Mono',monospace;}
+.post-verdict-badge{font-size:8px;font-weight:600;padding:2px 6px;border:1px solid;font-family:'IBM Plex Mono',monospace;}
+.pv-AL{color:var(--success);border-color:rgba(16,185,129,.3);background:var(--success-dim);}
+.pv-BEKLE{color:var(--warn);border-color:rgba(245,158,11,.3);background:var(--warn-dim);}
+.pv-UZAK_DUR{color:var(--danger);border-color:rgba(239,68,68,.3);background:var(--danger-dim);}
+.post-content{font-size:11px;color:var(--text2);line-height:1.9;margin-bottom:10px;}
+.post-footer{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.post-analyze-btn,.post-x-btn,.post-like-btn{background:none;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:4px 9px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:4px;text-decoration:none;}
+.post-analyze-btn:hover{border-color:var(--accent);color:var(--accent);}
+.post-x-btn:hover{border-color:var(--text);color:var(--text);}
+.post-like-btn:hover{border-color:var(--danger);color:var(--danger);}
+.post-time{font-size:9px;color:var(--muted);margin-left:auto;font-family:'IBM Plex Mono',monospace;}
+.forum-loading{text-align:center;padding:24px;color:var(--muted);font-size:10px;font-family:'IBM Plex Mono',monospace;}
+.forum-empty{text-align:center;padding:32px;color:var(--muted);font-size:10px;border:1px dashed var(--border-s);font-family:'IBM Plex Mono',monospace;}
+.loading-ov{display:none;position:fixed;inset:0;background:rgba(7,13,26,.97);backdrop-filter:blur(12px);z-index:600;flex-direction:column;align-items:center;justify-content:center;gap:24px;}
+.loading-ov.visible{display:flex;}
+.loading-t{font-family:'IBM Plex Sans',sans-serif;font-size:42px;font-weight:800;color:var(--accent);letter-spacing:4px;animation:pulse 1.5s infinite;}
+.loading-fw{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:-14px;font-family:'IBM Plex Mono',monospace;}
+.loading-steps{display:flex;flex-direction:column;gap:8px;}
+.loading-step{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px;transition:color .3s;font-family:'IBM Plex Mono',monospace;}
+.loading-step.done{color:var(--success);}.loading-step.active{color:var(--accent);animation:pulse 1.5s infinite;}
+.lsdot{width:5px;height:5px;background:currentColor;flex-shrink:0;border-radius:50%;}
+.shr-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:650;align-items:center;justify-content:center;}
+.shr-modal.visible{display:flex;}
+.shr-box{background:var(--surface);border:1px solid var(--glass);padding:20px;max-width:660px;width:96%;box-shadow:0 24px 80px rgba(0,0,0,.6);}
+.shr-t{font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:800;margin-bottom:12px;color:var(--text);}
+.shr-cv{border:1px solid var(--glass);margin-bottom:10px;overflow:hidden;background:#0e1220;}
+.shr-cv canvas{display:block;width:100%;height:auto;image-rendering:crisp-edges;}
+.shr-hint{font-size:10px;color:var(--muted);margin-bottom:10px;line-height:1.7;padding:9px;background:var(--surface2);border:1px solid var(--border-s);}
+.shr-btns{display:flex;gap:6px;}
+.sdl{flex:1;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:700;padding:9px;cursor:pointer;transition:all .3s;}
+.sdl:hover{box-shadow:0 4px 16px var(--accent-glow);}
+.stw{flex:1;background:var(--surface2);border:1px solid var(--border-s);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:600;padding:9px;cursor:pointer;}
+.scls{width:100%;margin-top:6px;background:none;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:7px;cursor:pointer;}
+#priceStrip{background:var(--surface2);border-bottom:1px solid var(--border-s);}
+#livePriceBig{font-family:'IBM Plex Sans',sans-serif !important;font-weight:800 !important;}
+.wl-tab{background:var(--surface);border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:4px 10px;cursor:pointer;display:flex;align-items:center;gap:3px;transition:all .15s;}
+.wl-tab.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.wl-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;margin-bottom:20px;background:var(--border);border:1px solid var(--border);}
+@media(max-width:900px){.wl-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.wl-grid{grid-template-columns:repeat(2,1fr);}}
+.wl-card{background:var(--surface);padding:14px;cursor:pointer;transition:background .15s;border-left:3px solid transparent;}
+.wl-card:hover{background:var(--surface2);}
+.wl-card.bear{border-left-color:var(--danger);}
+.wl-card:not(.bear){border-left-color:var(--success);}
+.wl-rank{font-size:9px;color:var(--muted);margin-bottom:5px;font-family:'IBM Plex Mono',monospace;}
+.wl-ticker{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--accent);margin-bottom:1px;}
+.wl-name{font-size:9px;color:var(--muted);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wl-price{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.wl-chg{font-size:11px;font-weight:600;margin-bottom:7px;font-family:'IBM Plex Mono',monospace;}
+.wl-chg.up{color:var(--success);}.wl-chg.dn{color:var(--danger);}
+.wl-tags{display:flex;flex-wrap:wrap;gap:2px;}
+.wl-tag{font-size:7px;padding:2px 5px;font-family:'IBM Plex Mono',monospace;}
+.wl-tag.bull{background:var(--success-dim);color:var(--success);border:1px solid rgba(16,185,129,.2);}
+.wl-tag.bear{background:var(--danger-dim);color:var(--danger);border:1px solid rgba(239,68,68,.2);}
+.wl-tag.vol{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(59,130,246,.2);}
+.wl-tag.ath{background:var(--warn-dim);color:var(--gold);border:1px solid rgba(245,158,11,.2);}
+.wl-tag.low{background:rgba(167,139,250,.08);color:var(--dalio);border:1px solid rgba(167,139,250,.2);}
+.wl-tag.ma{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(59,130,246,.15);}
+.wl-bar-wrap{margin-top:7px;}
+.wl-bar-lbl{font-size:7px;color:var(--muted);margin-bottom:2px;display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;}
+.wl-bar{height:2px;background:var(--rule);}
+.wl-bar-fill{height:100%;background:linear-gradient(90deg,var(--danger),var(--warn),var(--success));transition:width .6s;}
+@media(max-width:768px){
+  .mobile-toggle{display:flex;z-index:1100;}
+  .app{display:block!important;}
+  .sidebar{display:none!important;position:fixed!important;left:0;top:0;width:100vw!important;max-width:100vw!important;height:100vh!important;z-index:1000!important;overflow-y:auto;}
+  .sidebar.open{display:flex!important;flex-direction:column;}
+  .main{width:100%!important;min-width:0;}
+  .s-close{display:flex;}
+  .main-content{padding:14px;padding-top:56px;padding-bottom:74px;}
+  .main-nav{flex-wrap:nowrap;overflow-x:auto;}
+  .mnav-tab{font-size:8px;padding:9px 5px;letter-spacing:0;white-space:nowrap;flex-shrink:0;}
+  .mkt-strip{grid-template-columns:repeat(3,1fr);}
+  .ov-grid,.rd-grid,.mult-grid,.pt-sum{grid-template-columns:1fr 1fr;}
+  .ana-grid,.risk-items{grid-template-columns:1fr;}
+  .pt-charts{grid-template-columns:1fr;}
+  .news-grid{grid-template-columns:1fr;}
+  .stock-hdr{flex-wrap:wrap;}
+  .x-shr-btn{margin-left:0;width:100%;justify-content:center;}
+  .crit-table th:last-child,.crit-table td:last-child{display:none;}
+  .hero-search-row{flex-direction:column;}
+  .hero-search-btn,.hero-fw-select{width:100%;}
+  .hero-ex-row{gap:4px;flex-wrap:wrap;}
+  .pt-add-row{flex-direction:column;}
+  .ptin.tf,.ptin.pf,.ptin.qf,.pt-sel{width:100%;}
+  .fw-opts{grid-template-columns:1fr;}
+  .fw-opt:first-child{border-right:none;border-bottom:1px solid var(--rule);}
+  .pf-row{flex-direction:column;}
+  .pf-in{width:100%!important;}
+  #priceStrip{flex-direction:column;align-items:flex-start;}
+  .hero{padding:22px 18px 20px;}
+  .hero-title{font-size:24px;}
+  .s-close{display:none;}
+}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border-s);}::-webkit-scrollbar-track{background:transparent;}
+.bottom-nav{display:none;}
+@media(max-width:768px){
+  .mobile-toggle{display:none!important;}
+  .sidebar{display:none!important;}
+  .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--sidebar);backdrop-filter:blur(12px);border-top:1px solid var(--border-s);z-index:500;height:58px;}
+  .bn-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);transition:color .2s;border:none;background:none;-webkit-tap-highlight-color:transparent;padding:6px 0;}
+  .bn-tab.active{color:var(--accent);}
+  .bn-tab svg{width:20px;height:20px;}
+  .bn-tab span{font-size:9px;letter-spacing:.5px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;}
+  .mkt-strip{grid-template-columns:repeat(3,1fr);}
+  .ov-grid,.rd-grid,.mult-grid,.pt-sum{grid-template-columns:1fr 1fr;}
+  .news-grid{grid-template-columns:1fr;}
+}
+.hero-inner{display:grid;grid-template-columns:1fr 280px;gap:0;align-items:stretch;min-height:220px;}
+.hero-left{padding:32px 36px 26px;}
+.hero-right{background:rgba(255,255,255,.025);border-left:1px solid var(--border-s);padding:20px 22px;display:flex;flex-direction:column;gap:0;}
+.home-two-col{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;}
+.home-col-news,.home-col-right{min-width:0;}
+.news-grid-v{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:0;}
+.news-grid-v .news-card{border-left:3px solid transparent;padding:12px 14px;}
+.mkt-strip-v{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:0;}
+.mkt-strip-v .mkt-card{display:flex;align-items:center;padding:10px 14px;gap:10px;border-left:none;border-bottom:1px solid var(--rule);}
+.mkt-strip-v .mkt-card .mkt-lbl{width:72px;flex-shrink:0;margin-bottom:0;font-size:9px;letter-spacing:1.5px;}
+.mkt-strip-v .mkt-card .mkt-price{flex:1;font-size:14px;font-weight:600;}
+.mkt-strip-v .mkt-card .mkt-chg{text-align:right;margin-top:0;font-size:11px;font-weight:700;min-width:54px;}
+.wl-grid-v{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);}
+.wl-grid-v .wl-card{display:flex;align-items:center;gap:10px;padding:10px 12px;}
+.wl-grid-v .wl-card .wl-ticker{font-size:13px;width:60px;flex-shrink:0;}
+.wl-grid-v .wl-card .wl-name{flex:1;margin-bottom:0;font-size:9px;}
+.wl-grid-v .wl-card .wl-price{margin-bottom:0;font-size:11px;}
+.wl-grid-v .wl-card .wl-chg{margin-bottom:0;font-size:10px;min-width:55px;text-align:right;}
+.wl-grid-v .wl-card .wl-tags,.wl-grid-v .wl-card .wl-bar-wrap{display:none;}
+.wl-grid-v .wl-rank{margin-bottom:0;width:18px;flex-shrink:0;}
+@media(max-width:1100px){.hero-inner{grid-template-columns:1fr;}.hero-right{display:none;}.home-two-col{grid-template-columns:1fr;}}
+@media(max-width:768px){.hero-left{padding:20px 16px 18px;}}
+.crit-nav-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px 0;}
+.crit-nav-btn{background:var(--surface);border:1px solid var(--border-s);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:7px 16px;cursor:pointer;transition:all .2s;white-space:nowrap;font-weight:500;}
+.crit-nav-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 4px 12px var(--accent-glow);}
+.crit-nav-btn:disabled{opacity:.25;cursor:default;background:var(--surface);}
+.crit-progress{display:flex;gap:5px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.crit-dot{width:9px;height:9px;border:1px solid var(--border2);transition:all .2s;cursor:pointer;flex-shrink:0;border-radius:50%;}
+.crit-dot.pass{background:var(--success);border-color:var(--success);}
+.crit-dot.fail{background:var(--danger);border-color:var(--danger);}
+.crit-dot.neutral{background:var(--warn);border-color:var(--warn);}
+.crit-dot.pending{background:var(--rule);}
+.crit-dot.active{transform:scale(1.5);outline:2px solid var(--accent);outline-offset:2px;}
+.main-content{padding:0 !important;}
+.page-body{padding:28px 36px;}
+@media(max-width:768px){.page-body{padding:14px;padding-bottom:74px;}
+  .crit-nav-bar{position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--rule);padding:8px 0 10px;margin-bottom:14px;}}
+.auth-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:800;align-items:center;justify-content:center;}
+.auth-modal.visible{display:flex;}
+.auth-box{background:var(--surface);border:1px solid var(--glass);max-width:420px;width:94%;box-shadow:0 24px 80px rgba(0,0,0,.6);overflow:hidden;}
+.auth-header{background:var(--sidebar);padding:28px 28px 22px;border-bottom:1px solid var(--border-s);}
+.auth-brand{font-family:'IBM Plex Sans',sans-serif;font-size:20px;font-weight:800;color:var(--text);margin-bottom:4px;}
+.auth-brand span{color:var(--accent);}
+.auth-tagline{font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;}
+.auth-body{padding:24px 28px;}
+.auth-title{font-family:'IBM Plex Sans',sans-serif;font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.auth-sub{font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.auth-benefits{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;padding:14px;background:var(--surface2);border:1px solid var(--border-s);}
+.auth-benefit{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text2);}
+.auth-benefit-icon{width:22px;height:22px;background:var(--accent-dim);border:1px solid rgba(59,130,246,.3);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+.auth-email-row{display:flex;gap:8px;margin-bottom:12px;}
+.auth-email-in{flex:1;background:var(--surface2);border:1px solid var(--border-s);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:11px 14px;outline:none;transition:border-color .2s;}
+.auth-email-in:focus{border-color:var(--accent);}
+.auth-submit{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:700;padding:11px 20px;cursor:pointer;white-space:nowrap;transition:all .3s;}
+.auth-submit:hover{box-shadow:0 4px 16px var(--accent-glow);}
+.auth-note{font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.6;}
+.auth-err{font-size:10px;color:var(--danger);margin-top:8px;display:none;font-family:'IBM Plex Mono',monospace;}
+.auth-skip{width:100%;padding:10px;background:none;border:none;border-top:1px solid var(--rule);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;margin-top:4px;}
+.auth-skip:hover{color:var(--text);}
+.admin-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:900;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;}
+.admin-modal.visible{display:flex;}
+.admin-box{background:var(--surface);border:1px solid var(--glass);width:100%;max-width:900px;box-shadow:0 24px 80px rgba(0,0,0,.6);}
+.admin-hdr{background:var(--sidebar);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-s);}
+.admin-title{font-family:'IBM Plex Sans',sans-serif;font-size:16px;font-weight:800;color:var(--text);}
+.admin-close{background:none;border:1px solid var(--border-s);color:var(--muted);font-size:14px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.admin-close:hover{color:var(--text);}
+.admin-body{padding:24px;}
+.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:20px;}
+.admin-stat{background:var(--surface2);padding:14px;text-align:center;}
+.admin-stat-n{font-family:'IBM Plex Sans',sans-serif;font-size:22px;font-weight:800;color:var(--accent);margin-bottom:3px;}
+.admin-stat-l{font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1px;}
+.admin-sec-title{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:10px;}
+.admin-user-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:20px;}
+.admin-user-table th{text-align:left;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:7px 10px;border-bottom:2px solid var(--rule);font-family:'IBM Plex Mono',monospace;background:var(--surface2);}
+.admin-user-table td{padding:9px 10px;border-bottom:1px solid var(--rule);vertical-align:middle;}
+.admin-user-table tr:hover td{background:var(--surface2);}
+.admin-email{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text);}
+.admin-credit-inp{width:50px;background:var(--surface2);border:1px solid var(--border-s);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:4px 6px;text-align:center;}
+.admin-add-btn{background:var(--success);color:#fff;border:none;font-size:9px;padding:4px 8px;cursor:pointer;font-family:'IBM Plex Mono',monospace;margin-left:4px;}
+.admin-del-btn{background:none;border:1px solid var(--danger);color:var(--danger);font-size:9px;padding:4px 7px;cursor:pointer;font-family:'IBM Plex Mono',monospace;}
+.admin-badge-admin{font-size:8px;padding:1px 5px;background:var(--accent-dim);border:1px solid rgba(59,130,246,.3);color:var(--accent);font-family:'IBM Plex Mono',monospace;}
+.admin-refresh{background:var(--surface2);border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:6px 12px;cursor:pointer;transition:all .15s;margin-bottom:10px;}
+.admin-refresh:hover{border-color:var(--accent);color:var(--accent);}
+.admin-link{display:none;}
+.admin-link.visible{display:block;font-size:10px;color:var(--muted);margin-top:4px;font-family:'IBM Plex Mono',monospace;}
+.main{flex:1;overflow-y:auto;min-width:0;background:var(--bg);}
+.main-content{padding:0 !important;max-width:none;}
+.page-body{padding:28px 40px;max-width:1400px;}
+@media(max-width:1100px){.page-body{padding:20px 24px;}}
+@media(max-width:768px){.page-body{padding:14px;padding-bottom:74px;}}
+.page{display:none;}.page.active{display:block;animation:fadeIn .25s ease;}
+.right-panel{width:300px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border-s);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow-y:auto;}
+.rp-section{padding:14px 16px;border-bottom:1px solid var(--rule);}
+.rp-title{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted-s);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--rule);}
+.recent-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--rule);cursor:pointer;transition:all .15s;}
+.recent-item:last-child{border-bottom:none;}
+.recent-item:hover .recent-ticker{color:var(--accent);}
+.recent-ticker{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--accent);width:48px;flex-shrink:0;}
+.recent-fw{font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+.recent-verdict{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:2px 7px;border:1px solid;}
+.recent-verdict.AL{color:var(--success);border-color:rgba(16,185,129,.3);}
+.recent-verdict.BEKLE{color:var(--warn);border-color:rgba(245,158,11,.3);}
+.recent-verdict.UZAK_DUR{color:var(--danger);border-color:rgba(239,68,68,.3);}
+.recent-score{font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+
+/* ── TABLO PROFESYONELLİK: Excel-grade satır çizgileri ── */
+.crit-table td,.crit-table th{border-bottom:1px solid var(--rule);}
+.crit-table{border-collapse:collapse;}
+.crit-table tbody tr:nth-child(even) td{background:rgba(255,255,255,0.025);}
+.crit-table tbody tr:hover td{background:var(--surface2) !important;}
+.pt-table td,.pt-table th{border-bottom:1px solid var(--rule);}
+.pt-table{border-collapse:collapse;}
+.pt-table tbody tr:nth-child(even) td{background:rgba(255,255,255,0.025);}
+.pt-table tbody tr:hover td{background:var(--surface2) !important;}
+.admin-user-table td,.admin-user-table th{border-bottom:1px solid var(--rule);}
+.admin-user-table tbody tr:nth-child(even) td{background:rgba(255,255,255,0.025);}
+.admin-user-table tbody tr:hover td{background:var(--surface2) !important;}
+/* Veri tablosu dikey ayraçlar */
+.rd-card{border-right:1px solid var(--rule);}
+.mult-card{border-right:1px solid var(--rule);}
+.mkt-card{border-right:1px solid var(--rule);}
+/* Piyasa şerit çizgisi */
+.mkt-strip{border:1px solid var(--border);}
+.news-grid{border:1px solid var(--border);}
+
+/* ── REFERANS CTA WIDGET ── */
+.ref-cta-widget{
+  display:flex;align-items:center;gap:0;
+  background:var(--sidebar);
+  border:1px solid var(--border-s);
+  overflow:hidden;
+  margin:12px 0;
+}
+.ref-cta-icon{
+  padding:12px 14px;
+  background:var(--accent2);
+  color:#fff;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.ref-cta-body{flex:1;padding:10px 14px;}
+.ref-cta-title{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;font-weight:600;letter-spacing:1.5px;
+  text-transform:uppercase;color:#a8b8d8;margin-bottom:2px;
+}
+.ref-cta-sub{font-size:9px;color:#6b7fa8;font-family:'IBM Plex Mono',monospace;}
+.ref-cta-actions{display:flex;align-items:center;gap:0;flex-shrink:0;}
+.ref-code-box{
+  font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
+  color:#e8e6e0;letter-spacing:2px;
+  padding:0 14px;
+  border-left:1px solid var(--border-s);
+  height:100%;display:flex;align-items:center;
+  min-height:52px;
+}
+.ref-copy-btn{
+  background:var(--accent2);color:#fff;border:none;
+  font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;
+  padding:0 14px;height:100%;min-height:52px;
+  cursor:pointer;letter-spacing:1px;text-transform:uppercase;
+  border-left:1px solid rgba(255,255,255,0.15);
+  transition:background .2s;white-space:nowrap;
+}
+.ref-copy-btn:hover{background:var(--accent);}
+
+/* ══ KONTRAST & OKUNABILIRLIK DÜZELTMELERİ ══ */
+
+/* Sağ panel Canlı Piyasa — daha net hiyerarşi */
+.right-panel .mkt-strip-v{background:transparent;border:none;}
+.right-panel .mkt-strip-v .mkt-card{
+  background:transparent;
+  padding:9px 0;
+  border-left:none !important;
+  border-bottom:1px solid var(--rule);
+}
+.right-panel .mkt-strip-v .mkt-card:last-child{border-bottom:none;}
+.right-panel .mkt-strip-v .mkt-card .mkt-lbl{
+  font-size:9px;letter-spacing:1px;color:var(--text2);
+  font-weight:500;width:76px;
+}
+.right-panel .mkt-strip-v .mkt-card .mkt-price{
+  font-size:14px;font-weight:600;color:var(--text);font-family:'IBM Plex Mono',monospace;
+}
+.right-panel .mkt-strip-v .mkt-card .mkt-chg{
+  font-size:11px;font-weight:700;min-width:58px;text-align:right;
 }
 
-// ── YAHOO CRUMB ──────────────────────────────────────────────────
-let _crumb = null, _cookie = null, _crumbTs = 0;
-const CRUMB_TTL = 55 * 60 * 1000;
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+/* Stat mini — sağ panel küçük istatistikler */
+.stat-mini-val{font-family:'IBM Plex Serif',serif;font-size:16px;font-weight:700;color:var(--text);}
+.stat-mini-lbl{color:var(--text2);}
 
-async function getYahooCrumb() {
-  if (_crumb && _cookie && Date.now() - _crumbTs < CRUMB_TTL) return { crumb: _crumb, cookie: _cookie };
-  try {
-    const r1 = await fetch('https://fc.yahoo.com', { headers: { 'User-Agent': UA }, redirect: 'follow' });
-    const setCookie = r1.headers.get('set-cookie') || '';
-    const cookieVal = setCookie.split(';')[0] || '';
-    if (!cookieVal) return { crumb: null, cookie: null };
-    const r2 = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', {
-      headers: { 'User-Agent': UA, 'Cookie': cookieVal, 'Accept': 'text/plain',
-                 'Referer': 'https://finance.yahoo.com/', 'Accept-Language': 'en-US,en;q=0.9' }
+/* Sec-title — bölüm başlıkları okunabilir */
+.sec-title{color:var(--text2);}
+.pg-title{color:var(--text2);}
+
+/* News card başlıkları — daha net */
+.news-t{color:var(--text);font-weight:500;}
+.news-pub{color:var(--muted-s);}
+.news-time{color:var(--muted);}
+
+/* Sidebar nav text — koyu tema uyumu */
+.nav-lbl{color:var(--muted2);}
+.s-footer-t{color:var(--muted2);}
+
+/* Wl-card içindeki yazılar */
+.wl-name{color:var(--text2);}
+.wl-price{color:var(--text);}
+.wl-rank{color:var(--muted-s);}
+
+/* Crit table içindeki yazılar */
+.cname{color:var(--text);}
+.cdesc{color:var(--text2);}
+.cn{color:var(--muted-s);}
+
+/* Ana sayfa hero sub text */
+.hero-sub{color:var(--text2);}
+.hero-tag{color:var(--muted-s);}
+
+/* Recent items */
+.recent-score{color:var(--text2);}
+.recent-fw{color:var(--muted-s);}
+
+/* Ana skor kartı — stat-val Serif büyük ve beyaz */
+.stat-val{color:var(--accent);}
+.stat-lbl{color:var(--text2);}
+.stat-sub{color:var(--text2);}
+
+/* RSI değeri */
+.rsi-v{color:var(--text);}
+.rsi-zones{color:var(--text2);}
+
+/* Mul değerler */
+.mult-val{color:var(--text);}
+.mult-lbl{color:var(--text2);}
+.mult-sub{color:var(--muted-s);}
+
+/* Card-t bölüm etiketleri */
+.card-t{color:var(--text2);}
+
+/* Ana metin — genel */
+.atext{color:var(--text2);line-height:2;}
+.ddesc{color:var(--text2);}
+
+/* Dnum (kriter numaraları) */
+.dnum{opacity:0.12;}
+
+/* PT ve forum içerik */
+.pt-nn{color:var(--text2);}
+.post-content{color:var(--text2);}
+.post-nick{color:var(--text);}
+
+/* Rd kart değerleri */
+.rd-val{color:var(--text);}
+.rd-lbl{color:var(--text2);}
+.rd-sub{color:var(--muted-s);}
+
+/* Hmp (hero mini piyasa sağ kolon) */
+.hmp-val{color:var(--text);}
+.hmp-lbl{color:var(--text2);}
+
+/* Mix (portföy dağılım) */
+.mix-pct{color:var(--text2);}
+.mix-cur{color:var(--muted-s);}
+
+/* Admin */
+.admin-email{color:var(--text);}
+.admin-stat-l{color:var(--text2);}
+
+/* Sticker (hisse başlığı) */
+.sticker{color:var(--text);}
+.sco{color:var(--text2);}
+
+/* Verdict box metin */
+.verdict-lbl{color:var(--muted-s);}
+
+/* Forum empty state */
+.forum-empty{color:var(--text2);}
+.forum-loading{color:var(--text2);}
+
+/* Crit dot ve nav num */
+.nav-num{color:var(--muted-s);}
+.nav-item{color:var(--text2);}
+.nav-item:hover{color:var(--text);}
+
+/* Ana buton — kontrast iyileştirme */
+.ana-btn,.hero-search-btn{font-weight:700;letter-spacing:0.8px;}
+
+/* mkt-strip (yatay) label ve değer */
+.mkt-strip .mkt-lbl{font-size:8px;letter-spacing:1.5px;}
+.mkt-strip .mkt-price{font-size:12px;font-weight:600;color:var(--text);}
+.mkt-strip .mkt-chg{font-size:10px;font-weight:700;}
+
+/* ══════════════════════════════════════════════════
+   YATIRIM TEZLERİ SAYFASI
+══════════════════════════════════════════════════ */
+
+/* Sidebar nav tab */
+.mnav-tab.tez { }
+
+/* Tez kartı grid */
+.tez-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* Tek tez kartı */
+.tez-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.tez-card:hover {
+  background: var(--surface2);
+  border-left-color: var(--accent);
+  box-shadow: 0 4px 20px rgba(77,142,240,0.12);
+  transform: translateY(-2px);
+}
+.tez-card.bull { border-left-color: var(--success); }
+.tez-card.bear { border-left-color: var(--danger); }
+.tez-card.neutral-tez { border-left-color: var(--warn); }
+
+.tez-card-header {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--rule);
+}
+.tez-ticker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.tez-ticker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 1px;
+}
+.tez-type-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid;
+}
+.tez-type-badge.bull { color: var(--success); border-color: rgba(34,197,94,0.4); background: var(--success-dim); }
+.tez-type-badge.bear { color: var(--danger); border-color: rgba(240,82,82,0.4); background: var(--danger-dim); }
+.tez-type-badge.neutral-tez { color: var(--warn); border-color: rgba(245,158,11,0.4); background: var(--warn-dim); }
+
+.tez-company {
+  font-size: 11px;
+  color: var(--text2);
+  margin-bottom: 4px;
+}
+.tez-sector {
+  font-size: 9px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+.tez-card-body {
+  padding: 12px 16px;
+  flex: 1;
+}
+.tez-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.tez-summary {
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.7;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tez-card-footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tez-date {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+}
+.tez-read-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Tez Okuma Modalı */
+.tez-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(6px);
+  z-index: 850;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 20px;
+  overflow-y: auto;
+}
+.tez-modal.visible { display: flex; }
+
+.tez-modal-box {
+  background: var(--surface);
+  border: 1px solid var(--glass);
+  width: 100%;
+  max-width: 820px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  animation: fadeIn 0.25s ease;
+}
+
+.tez-modal-header {
+  background: var(--sidebar);
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--border-s);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.tez-modal-meta { flex: 1; }
+.tez-modal-ticker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.tez-modal-company {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+.tez-modal-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+}
+.tez-modal-close {
+  background: none;
+  border: 1px solid var(--border-s);
+  color: var(--muted);
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.tez-modal-close:hover { color: var(--text); border-color: var(--text2); }
+
+.tez-modal-keypoints {
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--rule);
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 1px;
+  background: var(--border);
+}
+.tez-kp {
+  background: var(--surface2);
+  padding: 14px 16px;
+}
+.tez-kp-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.tez-kp-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+.tez-kp-val.pos { color: var(--success); }
+.tez-kp-val.neg { color: var(--danger); }
+
+.tez-modal-body {
+  padding: 24px 28px;
+}
+.tez-section-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+}
+.tez-text {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 2;
+  margin-bottom: 20px;
+  white-space: pre-line;
+}
+.tez-bullets {
+  margin-bottom: 20px;
+}
+.tez-bullet {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+.tez-bullet:last-child { border-bottom: none; }
+.tez-bullet-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+.tez-bullet-dot.risk { background: var(--danger); }
+
+.tez-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #fff;
+  border: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 10px 20px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.3s;
+  text-decoration: none;
+}
+.tez-pdf-btn:hover { box-shadow: 0 4px 16px var(--accent-glow); }
+
+/* Auth koruması overlay */
+.tez-auth-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 32px;
+  text-align: center;
+  gap: 16px;
+  border: 1px dashed var(--border-s);
+  margin: 24px 0;
+}
+.tez-auth-icon {
+  font-size: 36px;
+  opacity: 0.6;
+}
+.tez-auth-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+}
+.tez-auth-sub {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.7;
+  max-width: 400px;
+}
+.tez-auth-btn {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #fff;
+  border: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 12px 28px;
+  cursor: pointer;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: all 0.3s;
+}
+.tez-auth-btn:hover { box-shadow: 0 4px 16px var(--accent-glow); }
+
+/* Page header */
+.tez-page-header {
+  margin-bottom: 24px;
+}
+.tez-page-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.tez-page-sub {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+.tez-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text2);
+  font-size: 12px;
+  border: 1px dashed var(--border-s);
+}
+.tez-empty-icon { font-size: 32px; margin-bottom: 12px; }
+
+@media(max-width:768px) {
+  .tez-grid { grid-template-columns: 1fr; }
+  .tez-modal-keypoints { grid-template-columns: 1fr; }
+  .tez-modal-box { max-width: 100%; }
+}
+
+/* ══ YATIRIM TEZLERİ ══ */
+
+/* Sidebar nav özel */
+#nav-tezler { border-left-color: var(--gold) !important; }
+#nav-tezler.active { background: var(--gold-dim); color: var(--gold) !important; }
+#nav-tezler.active .nav-num { color: var(--gold) !important; }
+#nav-tezler:hover { color: var(--gold); }
+
+/* Kilitli ekran */
+.tez-lock-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 60px 20px; text-align: center;
+  max-width: 460px; margin: 0 auto;
+}
+.tez-lock-icon {
+  width: 72px; height: 72px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold); margin-bottom: 24px;
+}
+.tez-lock-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 28px; font-weight: 700;
+  color: var(--text); margin-bottom: 10px;
+}
+.tez-lock-sub {
+  font-size: 13px; color: var(--text2);
+  line-height: 1.8; margin-bottom: 28px;
+}
+.tez-lock-btn {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #fff; border: none;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px; font-weight: 700;
+  padding: 13px 28px; cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.3s;
+  margin-bottom: 12px; width: 100%; max-width: 320px;
+}
+.tez-lock-btn:hover { box-shadow: 0 6px 24px var(--accent-glow); }
+.tez-lock-hint {
+  font-size: 10px; color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Tez sayfası başlık */
+.tez-header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; flex-wrap: wrap;
+  gap: 12px; margin-bottom: 20px;
+}
+.tez-page-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 26px; font-weight: 700; color: var(--text);
+}
+.tez-page-title span { color: var(--gold); }
+.tez-page-sub {
+  font-size: 11px; color: var(--text2);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-top: 4px;
+}
+.tez-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold); border: 1px solid var(--gold);
+  background: var(--gold-dim);
+  padding: 4px 10px; align-self: flex-start;
+}
+
+/* Disclaimer */
+.tez-disclaimer {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warn);
+  margin-bottom: 24px; line-height: 1.6;
+}
+.tez-disclaimer svg { flex-shrink: 0; color: var(--warn); }
+
+/* Tez grid */
+.tez-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+@media(max-width: 768px) { .tez-grid { grid-template-columns: 1fr; } }
+
+/* Tez kartı */
+.tez-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--gold);
+  transition: all 0.2s; cursor: pointer;
+  position: relative; overflow: hidden;
+}
+.tez-card:hover {
+  background: var(--surface2);
+  border-color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(212,168,67,0.12);
+}
+.tez-card-header { padding: 16px 18px 12px; }
+.tez-card-meta {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px; flex-wrap: wrap;
+}
+.tez-ticker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px; font-weight: 700;
+  color: var(--accent); letter-spacing: 1px;
+}
+.tez-exchange {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px; color: var(--muted);
+  border: 1px solid var(--border); padding: 1px 5px;
+}
+.tez-date {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; color: var(--muted);
+  margin-left: auto;
+}
+.tez-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 16px; font-weight: 700;
+  color: var(--text); line-height: 1.35;
+  margin-bottom: 8px;
+}
+.tez-summary {
+  font-size: 11px; color: var(--text2);
+  line-height: 1.7; margin-bottom: 12px;
+}
+.tez-card-footer {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-top: 1px solid var(--rule);
+  background: var(--surface2); flex-wrap: wrap;
+}
+.tez-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px; font-weight: 600;
+  padding: 2px 7px; letter-spacing: 0.5px;
+  border: 1px solid;
+}
+.tez-tag.al { color: var(--success); border-color: rgba(34,197,94,0.3); background: var(--success-dim); }
+.tez-tag.izle { color: var(--warn); border-color: rgba(245,158,11,0.3); background: var(--warn-dim); }
+.tez-tag.uzak { color: var(--danger); border-color: rgba(240,82,82,0.3); background: var(--danger-dim); }
+.tez-read-btn {
+  margin-left: auto;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text2); font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; padding: 4px 10px; cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: center; gap: 4px;
+}
+.tez-read-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Tez detay modal */
+.tez-modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
+  z-index: 850; align-items: flex-start; justify-content: center;
+  padding: 32px 20px; overflow-y: auto;
+}
+.tez-modal.visible { display: flex; }
+.tez-modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--gold);
+  width: 100%; max-width: 760px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  animation: fadeIn 0.25s ease;
+}
+.tez-modal-hdr {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--rule);
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 12px;
+}
+.tez-modal-close {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); width: 30px; height: 30px;
+  cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.2s;
+}
+.tez-modal-close:hover { color: var(--text); border-color: var(--text); }
+.tez-modal-body { padding: 24px; }
+.tez-modal-section { margin-bottom: 20px; }
+.tez-modal-section-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 8px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+}
+.tez-modal-text {
+  font-size: 13px; color: var(--text2);
+  line-height: 2; white-space: pre-wrap;
+}
+.tez-modal-targets {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: var(--border); margin-top: 12px;
+}
+.tez-target-card {
+  background: var(--surface2); padding: 12px 14px;
+}
+.tez-target-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 4px;
+}
+.tez-target-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px; font-weight: 700; color: var(--text);
+}
+.tez-target-sub { font-size: 9px; color: var(--muted); margin-top: 2px; }
+.tez-modal-footer {
+  padding: 14px 24px; border-top: 1px solid var(--rule);
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface2); flex-wrap: wrap;
+}
+.tez-pdf-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--gold-dim); border: 1px solid var(--gold);
+  color: var(--gold); font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; font-weight: 700; padding: 7px 14px;
+  cursor: pointer; letter-spacing: 1px;
+  transition: all 0.2s; text-decoration: none;
+}
+.tez-pdf-btn:hover { background: rgba(212,168,67,0.25); }
+
+/* Boş durum */
+.tez-empty {
+  grid-column: 1 / -1;
+  display: flex; flex-direction: column;
+  align-items: center; padding: 60px 20px;
+  border: 1px dashed var(--border); text-align: center;
+}
+.tez-empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
+.tez-empty-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 16px; color: var(--text2); margin-bottom: 6px;
+}
+.tez-empty-sub { font-size: 11px; color: var(--muted); }
+
+/* ── TEZ METRİK SATIRI ── */
+.tez-metric-item{
+  background:var(--surface2);
+  padding:10px 12px;
+}
+.tez-metric-lbl{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:3px;
+}
+.tez-metric-val{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13px;font-weight:600;color:var(--text);
+}
+/* Modal max-height scroll */
+.tez-modal-box{max-height:92vh;display:flex;flex-direction:column;}
+.tez-modal-body{overflow-y:auto;flex:1;}
+</style>
+<body>
+<div id="globalToast"><span class="toast-dot"></span><span class="toast-msg"></span></div>
+
+
+<svg width="0" height="0" style="position:absolute;pointer-events:none">
+  <defs>
+    <symbol id="f-tr" viewBox="0 0 18 12"><rect width="18" height="12" fill="#E30A17"/><circle cx="7.2" cy="6" r="3.4" fill="white"/><circle cx="8.3" cy="6" r="2.7" fill="#E30A17"/><polygon points="10.8,6 12,4.3 12,7.7" fill="white"/><polygon points="11.3,5.4 13.1,6 11.3,6.6" fill="white"/></symbol>
+    <symbol id="f-us" viewBox="0 0 18 12"><rect width="18" height="12" fill="#B22234"/><rect y="0.92" width="18" height="0.92" fill="white"/><rect y="2.77" width="18" height="0.92" fill="white"/><rect y="4.61" width="18" height="0.92" fill="white"/><rect y="6.46" width="18" height="0.92" fill="white"/><rect y="8.31" width="18" height="0.92" fill="white"/><rect y="10.15" width="18" height="0.92" fill="white"/><rect width="7.2" height="6.46" fill="#3C3B6E"/></symbol>
+  </defs>
+</svg>
+
+<button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()">☰</button>
+
+<!-- ── AUTH MODAL ── -->
+<div class="auth-modal" id="authModal" style="display:none">
+  <div class="auth-box">
+    <div class="auth-header">
+      <div class="auth-brand">Barış <span>Investing</span></div>
+      <div class="auth-tagline">YATIRIM ANALİZ MERKEZİ</div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-title">Ücretsiz başla</div>
+      <div class="auth-sub">E-posta adresinle kayıt ol. Kredi kartı gerekmez. Verileriniz hesabınıza bağlı kalır.</div>
+      <div class="auth-benefits">
+        <div class="auth-benefit"><div class="auth-benefit-icon">5</div><span><strong>5 ücretsiz analiz hakkı</strong> — kayıt anında</span></div>
+        <div class="auth-benefit"><div class="auth-benefit-icon">☁</div><span><strong>Portföy bulutta saklanır</strong> — her cihazdan erişim</span></div>
+        <div class="auth-benefit"><div class="auth-benefit-icon">🔒</div><span><strong>Şifre yok</strong> — sadece e-posta ile giriş</span></div>
+      </div>
+      <div class="auth-email-row">
+        <input class="auth-email-in" id="authEmailIn" type="email" placeholder="ornek@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')doAuth()"/>
+        <button class="auth-submit" onclick="doAuth()">Giriş Yap</button>
+      </div>
+      <label class="auth-consent">
+        <input type="checkbox" id="marketingConsent"/>
+        <span>Yeni analizler ve piyasa yorumları hakkında bana e-posta gönderebilirsiniz</span>
+      </label>
+      <div class="auth-note">Giriş yaparak gizlilik politikasını kabul etmiş olursunuz. E-posta adresiniz üçüncü taraflarla paylaşılmaz.</div>
+      <div class="auth-err" id="authErr" style="display:none"></div>
+      <button class="auth-skip" onclick="skipAuth()">Şimdi değil — misafir olarak devam et (1 hak)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADMIN MODAL ── -->
+<div class="admin-modal" id="adminModal" style="display:none">
+  <div class="admin-box">
+    <div class="admin-hdr">
+      <div class="admin-title">⚙ Admin Paneli — Barış Investing</div>
+      <button class="admin-close" onclick="closeAdmin()">✕</button>
+    </div>
+    <div class="admin-body">
+      <div class="admin-stats" id="adminStats">
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatUsers">—</div><div class="admin-stat-l">Kullanıcı</div></div>
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatAnalyze">—</div><div class="admin-stat-l">Toplam Analiz</div></div>
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatToday">—</div><div class="admin-stat-l">Bugün Kayıt</div></div>
+        <div class="admin-stat"><div class="admin-stat-n" id="aStatCredits">—</div><div class="admin-stat-l">Kalan Haklar</div></div>
+      </div>
+      <div class="admin-sec-title">Kullanıcılar</div>
+      <button class="admin-refresh" onclick="loadAdminUsers()">↻ Yenile</button>
+      <div style="overflow-x:auto;">
+        <table class="admin-user-table">
+          <thead><tr><th>E-posta</th><th>Kayıt</th><th>Son Giriş</th><th>Toplam</th><th>Kalan Hak</th><th>Hak Ekle</th><th>İşlem</th></tr></thead>
+          <tbody id="adminUserBody"></tbody>
+        </table>
+      </div>
+      <div class="admin-link" id="adminNote"></div>
+    </div>
+  </div>
+</div>
+<div class="fw-modal" id="fwModal">
+  <div class="fw-modal-box">
+    <div class="fw-mhdr"><div class="fw-mtag">Barış Investing · Analiz Çerçevesi</div><div class="fw-mtitle">Hangi yatırımcı gözüyle bakmak istersin?</div><div class="fw-msub">Her iki çerçeve de 7 kritere göre hisseyi değerlendirir.</div></div>
+    <div class="fw-opts">
+      <button class="fw-opt buffett" onclick="selFWModal('buffett')"><div class="fw-opt-name">Warren Buffett</div><div class="fw-opt-desc">Değer yatırımı. Güçlü hendek, kaliteli yönetim, makul fiyat.</div><div class="fw-tags-wrap"><span class="fw-tag">ROE</span><span class="fw-tag">Hendek</span><span class="fw-tag">FCF</span><span class="fw-tag">Değerleme</span></div></button>
+      <button class="fw-opt lynch" onclick="selFWModal('lynch')"><div class="fw-opt-name">Peter Lynch</div><div class="fw-opt-desc">Büyüme ve hikaye. Günlük hayatta gözlemlenebilen şirketler, PEG odaklı.</div><div class="fw-tags-wrap"><span class="fw-tag">Saha Avantajı</span><span class="fw-tag">PEG</span><span class="fw-tag">Bilanço</span><span class="fw-tag">Insider</span></div></button>
+      <button class="fw-opt dalio" onclick="selFWModal('dalio')" style="border-color:rgba(168,85,247,0.4);"><div class="fw-opt-name" style="color:#a855f7">Ray Dalio</div><div class="fw-opt-desc">Makro perspektif. Borç döngüsü, para politikası ve sistemik riskler.</div><div class="fw-tags-wrap"><span class="fw-tag">Borç Döngüsü</span><span class="fw-tag">Makro</span><span class="fw-tag">Enflasyon</span><span class="fw-tag">Kur Riski</span></div></button>
+    </div>
+    <button class="fw-skip" onclick="closeFWModal()">Şimdi değil — devam et</button>
+  </div>
+</div>
+
+<div class="loading-ov" id="loadingOv">
+  <div class="loading-t" id="loadingT">—</div>
+  <div class="loading-fw" id="loadingFW">—</div>
+  <div class="loading-steps">
+    <div class="loading-step active" id="ls1"><div class="lsdot"></div>Yahoo Finance verisi çekiliyor</div>
+    <div class="loading-step" id="ls2"><div class="lsdot"></div>Finansal veriler işleniyor</div>
+    <div class="loading-step" id="ls3"><div class="lsdot"></div>Çerçeve uygulanıyor</div>
+    <div class="loading-step" id="ls4"><div class="lsdot"></div>Karar üretiliyor</div>
+  </div>
+</div>
+
+<div class="shr-modal" id="shrModal">
+  <div class="shr-box">
+    <div class="shr-t">📊 X Paylaşım Görseli</div>
+    <div class="shr-cv"><canvas id="shrCanvas" width="600" height="420"></canvas></div>
+    <div class="shr-hint">💡 "İndir & Paylaş" butonuna tıkla. Görsel indirilir, tweet penceresi açılır.</div>
+    <div class="shr-btns"><button class="sdl" onclick="dlAndTweet()">⬇ İndir & X'te Paylaş</button><button class="stw" onclick="dlShare()">💾 Sadece İndir</button></div>
+    <button class="scls" onclick="closeShr()">Kapat</button>
+  </div>
+</div>
+
+<!-- ══ TEZ DETAY MODAL ══ -->
+<div class="tez-modal" id="tezModal" onclick="if(event.target===this)closeTezModal()">
+  <div class="tez-modal-box">
+
+    <!-- Header -->
+    <div class="tez-modal-hdr">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+          <span class="tez-ticker" id="tezModalTicker">—</span>
+          <span class="tez-exchange" id="tezModalExchange">—</span>
+          <span id="tezModalTag" class="tez-tag izle">İZLE</span>
+          <span class="tez-date" id="tezModalDate" style="margin-left:auto">—</span>
+        </div>
+        <div class="tez-title" id="tezModalTitle" style="font-size:20px;line-height:1.3">—</div>
+      </div>
+      <button class="tez-modal-close" onclick="closeTezModal()" style="margin-left:12px">✕</button>
+    </div>
+
+    <div class="tez-modal-body">
+
+      <!-- Buffett / Lynch skorları -->
+      <div id="tezModalScores"></div>
+
+      <!-- Temel metrikler grid -->
+      <div id="tezModalMetrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-bottom:16px"></div>
+
+      <!-- Hedef fiyat / getiri kartları -->
+      <div class="tez-modal-targets" style="margin-bottom:16px">
+        <div class="tez-target-card">
+          <div class="tez-target-label">Baz Hedef</div>
+          <div class="tez-target-val" id="tezTargetPrice">—</div>
+          <div class="tez-target-sub" id="tezHorizon">—</div>
+        </div>
+        <div class="tez-target-card">
+          <div class="tez-target-label">Güncel Fiyat</div>
+          <div class="tez-target-val" id="tezCurrentPrice">—</div>
+          <div class="tez-target-sub">Tez tarihi</div>
+        </div>
+        <div class="tez-target-card">
+          <div class="tez-target-label">Potansiyel</div>
+          <div class="tez-target-val" style="color:var(--success);font-size:13px" id="tezUpside">—</div>
+          <div class="tez-target-sub">Senaryo bazlı</div>
+        </div>
+      </div>
+
+      <!-- Senaryo analizi -->
+      <div class="tez-modal-section">
+        <div class="tez-modal-section-title">Senaryo Analizi (2026 Yıl Sonu)</div>
+        <div id="tezModalScenarios" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      </div>
+
+      <!-- Yatırım tezi -->
+      <div class="tez-modal-section">
+        <div class="tez-modal-section-title">Yatırım Tezi</div>
+        <div class="tez-modal-text" id="tezModalThesis">—</div>
+      </div>
+
+      <!-- Katalizörler -->
+      <div class="tez-modal-section">
+        <div class="tez-modal-section-title">Katalizörler & Takvim</div>
+        <div class="tez-modal-text" id="tezModalCat">—</div>
+      </div>
+
+      <!-- Riskler -->
+      <div class="tez-modal-section">
+        <div class="tez-modal-section-title">Risk Matrisi</div>
+        <div class="tez-modal-text" id="tezModalRisk">—</div>
+      </div>
+
+      <!-- Sonuç / Genel Yargı -->
+      <div id="tezModalConclusion" style="display:none;background:var(--surface2);border:1px solid var(--border);border-left:4px solid var(--gold);padding:14px 16px;font-size:12px;color:var(--text2);line-height:1.8;font-family:'IBM Plex Sans',sans-serif;margin-top:4px"></div>
+
+    </div><!-- /body -->
+
+    <div class="tez-modal-footer">
+      <a class="tez-pdf-btn" id="tezPdfBtn" href="#" target="_blank" style="display:none">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        PDF İndir
+      </a>
+      <button onclick="openTezShare()" style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:7px 14px;cursor:pointer;letter-spacing:1px;transition:all .2s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        X'te Paylaş
+      </button>
+      <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.6">
+        Bu tez yatırım tavsiyesi değildir.<br>Tüm projeksiyonlar tahmin içermektedir.
+      </div>
+      <button onclick="closeTezModal()" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:6px 14px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Kapat</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ TEZ X PAYLAŞIM MODALI ══ -->
+<div id="tezShrModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);z-index:950;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeTezShrModal()" class="tez-modal">
+  <div style="background:var(--surface);border:1px solid var(--glass);border-top:3px solid #d4a843;max-width:660px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.6);animation:fadeIn .25s ease">
+    <!-- Header -->
+    <div style="padding:16px 20px;border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:8px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:#d4a843"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--text);letter-spacing:1px">NETAŞ — X Paylaşım Görseli</span>
+      </div>
+      <button onclick="closeTezShrModal()" style="background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Canvas preview -->
+    <div style="background:#0a0e1a;padding:12px;border-bottom:1px solid var(--rule)">
+      <canvas id="tezShrCanvas" style="display:block;width:100%;height:auto;image-rendering:crisp-edges"></canvas>
+    </div>
+    <!-- Hint -->
+    <div style="padding:10px 16px;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;border-bottom:1px solid var(--rule);line-height:1.7">
+      💡 "İndir & X'te Paylaş" butonuna tıkla — görsel indirilir, tweet penceresi açılır.
+    </div>
+    <!-- Buttons -->
+    <div style="padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="tweetTez()" style="flex:1;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:700;padding:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .3s;letter-spacing:.5px" onmouseover="this.style.boxShadow='0 4px 16px var(--accent-glow)'" onmouseout="this.style.boxShadow='none'">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        İndir & X'te Paylaş
+      </button>
+      <button onclick="dlTezShare()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:600;padding:11px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--text)'" onmouseout="this.style.borderColor='var(--border)'">
+        💾 Sadece İndir
+      </button>
+      <button onclick="closeTezShrModal()" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:11px 16px;cursor:pointer;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        Kapat
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+<div class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-top">
+      <div><div class="brand-tag">Barış Investing</div><div class="brand-name">Analiz <span>Merkezi</span></div><div class="brand-sub">Buffett · Lynch · Dalio</div></div>
+      <button class="s-close" onclick="closeSidebar()">✕</button>
+    </div>
+    <div class="brand-socials">
+      <a href="https://x.com/barisinvesting" target="_blank" class="soc-link"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+      <a href="https://youtube.com/@barisinvesting" target="_blank" class="soc-link"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+      <a href="https://linktr.ee/barisinvesting" target="_blank" class="soc-link">🔗</a>
+    </div>
+  </div>
+
+  <!-- 3 TABS -->
+  <div class="main-nav">
+    <div class="mnav-tab active" id="tab-analiz" onclick="switchTab('analiz')">Analiz</div>
+    <div class="mnav-tab" id="tab-portfoy" onclick="switchTab('portfoy')">Portföy</div>
+    <div class="mnav-tab" id="tab-tez" onclick="switchTab('tez')">Tezler</div>
+    <div class="mnav-tab" id="tab-forum" onclick="switchTab('forum')">Forum</div>
+  </div>
+
+  <!-- ANALIZ TAB -->
+  <div class="tab-content active" id="tab-analiz-content">
+    <div class="s-input">
+      <label class="s-lbl">Borsa</label>
+      <div class="ex-row">
+        <button class="ex-btn active" id="ex-bist" onclick="selEx('BIST')"><svg class="flag-s"><use href="#f-tr"/></svg>BIST</button>
+        <button class="ex-btn" id="ex-nyse" onclick="selEx('NYSE')"><svg class="flag-s"><use href="#f-us"/></svg>NYSE</button>
+        <button class="ex-btn" id="ex-nasdaq" onclick="selEx('NASDAQ')"><svg class="flag-s"><use href="#f-us"/></svg>NAS</button>
+      </div>
+      <label class="s-lbl">Ticker & Şirket</label>
+      <div class="ac-wrap">
+        <div class="ticker-row">
+          <input class="t-input" id="tickerIn" placeholder="THYAO" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
+          <input class="co-input" id="coIn" placeholder="Şirket (oto)" readonly/>
+        </div>
+        <div class="ac-drop" id="acDrop"></div>
+      </div>
+      <label class="s-lbl" style="margin-top:7px">Çerçeve</label>
+      <div class="fw-row">
+        <button class="fw-btn active" id="fw-b" onclick="selFW('buffett')">Buffett</button>
+        <button class="fw-btn" id="fw-l" onclick="selFW('lynch')">P. Lynch</button>
+        <button class="fw-btn" id="fw-d" onclick="selFW('dalio')" style="font-size:9px">Dalio</button>
+      </div>
+      <button class="ana-btn" id="anaBtn" onclick="doAnalyze()">ANALİZ ET →</button>
+      <div class="data-badge" id="dataBadge">✓ Yahoo Finance verisi yüklendi</div>
+      <div class="err-bar" id="errBar"></div>
+    </div>
+    <div class="pop-sec">
+      <div class="pop-lbl">Hızlı Erişim</div>
+      <div class="pop-grp"><div class="pop-grp-t">🇹🇷 BIST30</div><div class="pop-chips" id="bistChips"></div></div>
+      <div class="pop-grp"><div class="pop-grp-t">🇺🇸 MAG7</div><div class="pop-chips" id="usChips"></div></div>
+    </div>
+    <div class="nav-lbl">Menü</div>
+    <div class="nav-item active" id="nav-overview" onclick="showPage('overview');closeSidebar();">
+      <span class="nav-num">00</span>Dashboard<span class="nav-status">◎</span>
+    </div>
+    <div class="nav-item" id="nav-tezler" onclick="showPage('tezler');closeSidebar();">
+      <span class="nav-num">★</span>Yatırım Tezleri<span class="nav-status" style="font-size:9px;color:var(--gold)">ÜYE</span>
+    </div>
+    <div class="nav-lbl" id="navLabel">Kriterler</div>
+    <div id="navList"></div>
+    <div class="verdict-sec">
+      <div class="verdict-lbl">Son Karar</div>
+      <div class="verdict-box" id="verdictBox">— / —</div>
+    </div>
+  </div>
+
+  <!-- PORTFOY TAB -->
+  <div class="tab-content" id="tab-portfoy-content">
+    <div class="pt-sb">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:7px">Portföy Özeti</div>
+      <div id="ptSbSummary" style="font-size:10px;color:var(--muted2)">Henüz hisse eklenmedi.</div>
+      <button class="pt-sb-btn" onclick="showPage('portfolio');closeSidebar()">PORTFÖYÜ GÖR →</button>
+    </div>
+  </div>
+
+  <!-- TEZ TAB SIDEBAR -->
+  <div class="tab-content" id="tab-tez-content">
+    <div style="padding:14px 20px;">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-family:'IBM Plex Mono',monospace">Yatırım Tezleri</div>
+      <div style="font-size:10px;color:var(--text2);line-height:1.7;margin-bottom:12px">Barış'ın detaylı araştırma ve analiz tezleri. Sadece kayıtlı kullanıcılar için.</div>
+      <button class="pt-sb-btn" style="margin-top:0" onclick="showPage('tezler');closeSidebar()">TEZLERİ GÖR →</button>
+    </div>
+  </div>
+
+  <!-- FORUM TAB -->
+  <div class="tab-content" id="tab-forum-content">
+    <div class="forum-sb">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:7px">Forum</div>
+      <div style="font-size:10px;color:var(--muted2);line-height:1.6;margin-bottom:7px">Herkese açık. Analiz, görüş ve yorumlarını paylaş.</div>
+      <button class="forum-new-sb-btn" onclick="showPage('forum');openPostForm();closeSidebar()">+ Analiz / Yorum Yaz</button>
+      <button class="forum-new-sb-btn" style="border-color:var(--accent);color:var(--accent);margin-top:4px" onclick="showPage('forum');closeSidebar()">📋 Forum'u Gör</button>
+    </div>
+  </div>
+
+  <!-- USER SECTION -->
+  <div class="user-sec" id="sidebarUserSec" style="display:none">
+    <div class="user-top">
+      <div class="user-avatar" id="sidebarAvatar">?</div>
+      <div class="user-info">
+        <div class="user-email" id="sidebarUserEmail">—</div>
+        <div class="user-status-line">
+          <div class="credits-bar"><div class="credits-fill" id="sidebarCreditsFill" style="width:100%"></div></div>
+          <div class="user-credits-val" id="sidebarCreditsVal">3</div>
+          <span style="font-size:8px;color:var(--muted-s);font-family:'IBM Plex Mono',monospace">hak</span>
+        </div>
+      </div>
+    </div>
+    <div class="credits-warn" id="creditsWarn" style="display:none">⚠ Son hakkın! Daha fazlası için iletişime geç.</div>
+    <div class="user-actions">
+      <button class="admin-panel-btn" id="sidebarAdminBtn" style="display:none" onclick="openAdmin()">⚙ Admin</button>
+      <button class="logout-btn" onclick="logout()">Çıkış</button>
+    </div>
+  </div>
+  <button class="sidebar-login-btn" id="sidebarLoginBtn" onclick="showAuthModal()">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+    E-posta ile giriş yap
+  </button>
+
+  <div class="s-footer">
+    <div class="s-footer-t">© 2026 Barış Investing</div>
+    <div class="footer-links">
+      <a href="https://x.com/barisinvesting" target="_blank" class="f-link">X</a>
+      <a href="https://youtube.com/@barisinvesting" target="_blank" class="f-link">YouTube</a>
+      <a href="https://linktr.ee/barisinvesting" target="_blank" class="f-link">Linkler</a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+<div class="main-content">
+
+<!-- ANALYZE + HOME PAGE (combined) -->
+<div class="page active" id="page-overview">
+
+  <!-- HERO at top — 2 kolon: sol arama, sağ piyasa özeti -->
+  <div class="hero">
+    <div class="hero-inner">
+      <!-- Sol: arama -->
+      <div class="hero-left">
+        <div class="hero-tag">Barış Investing · Yatırım Analiz Merkezi</div>
+        <div class="hero-title">Hisseyi <span>Buffett, Lynch<br>veya Dalio</span> çerçevesinden geçir</div>
+        <div class="hero-sub">Yahoo Finance verileriyle 7 kriterde AI destekli hisse analizi.</div>
+        <div class="hero-search-row">
+          <input class="hero-ticker-in" id="heroIn" placeholder="THYAO, AAPL..." autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
+          <select class="hero-fw-select" id="heroFwSel">
+            <option value="buffett">Buffett</option>
+            <option value="lynch">Lynch</option>
+            <option value="dalio">Dalio</option>
+          </select>
+          <button class="hero-search-btn" onclick="heroSearch()">ANALİZ ET →</button>
+          <div class="hero-ac" id="heroAc"></div>
+        </div>
+        <div class="hero-ex-row">
+          <button class="hero-ex-btn active" id="hex-bist" onclick="selHeroEx('BIST')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-tr"/></svg>BIST</button>
+          <button class="hero-ex-btn" id="hex-nyse" onclick="selHeroEx('NYSE')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-us"/></svg>NYSE</button>
+          <button class="hero-ex-btn" id="hex-nasdaq" onclick="selHeroEx('NASDAQ')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-us"/></svg>NASDAQ</button>
+        </div>
+      </div>
+      <!-- Sağ: piyasa özeti -->
+      <div class="hero-right" id="heroMarketPanel">
+        <div class="hmp-title">CANLI PİYASA</div>
+        <div class="hmp-row" id="hmpSP500"><span class="hmp-lbl">S&P 500</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-row" id="hmpNAS"><span class="hmp-lbl">NASDAQ</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-row" id="hmpBIST"><span class="hmp-lbl">BİST 100</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-divider"></div>
+        <div class="hmp-row" id="hmpBTC"><span class="hmp-lbl">BTC</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-row" id="hmpGold"><span class="hmp-lbl">Altın</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-row" id="hmpOil"><span class="hmp-lbl">Petrol</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-time" id="hmpTime"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARKET STRIP (tam genişlik, hero altı) -->
+  <div class="page-body">
+  <div class="home-two-col">
+    <!-- SOL: Haberler -->
+    <div class="home-col-news">
+      <div class="sec-title">Son Dakika Piyasa Haberleri <span class="src-badge" id="srcBadge" style="margin-left:5px"></span></div>
+      <div class="news-grid-v" id="newsGrid"><div class="news-loading">Haberler yükleniyor...</div></div>
+    </div>
+    <!-- SAĞ: Dikkat çeken + piyasa şerit -->
+    <div class="home-col-right">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div class="sec-title" style="margin:0;flex:1">Piyasa Genel Görünümü</div>
+        <span style="font-size:8px;color:var(--muted2)" id="mktTime"></span>
+      </div>
+      <div class="mkt-strip-v" id="mktStrip"><div style="text-align:center;padding:12px;color:var(--muted2);font-size:10px">Yükleniyor...</div></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;margin-top:16px">
+        <div class="sec-title" style="margin:0;flex:1">Dikkat Çeken Hisseler</div>
+        <div style="display:flex;gap:4px">
+          <button class="wl-tab active" id="wl-bist" onclick="loadWatchlist('BIST')"><svg style="width:11px;height:7px"><use href="#f-tr"/></svg> BIST</button>
+          <button class="wl-tab" id="wl-us" onclick="loadWatchlist('US')"><svg style="width:11px;height:7px"><use href="#f-us"/></svg> ABD</button>
+        </div>
+        <span style="font-size:8px;color:var(--muted2)" id="wlTime"></span>
+      </div>
+      <div class="wl-grid-v" id="wlGrid"><div class="news-loading">Yükleniyor...</div></div>
+    </div>
+  </div>
+
+  <!-- ANALYSIS RESULTS (hidden until analyzed) -->
+  <div id="analysisSection" style="display:none">
+    <div class="stock-hdr" id="stockHdr">
+      <div class="stock-logo" id="stockLogo">—</div>
+      <svg class="hflag"><use id="hflagUse" href="#f-tr"/></svg>
+      <div><div class="sticker" id="stockTicker">—</div><div class="sco" id="stockCo">—</div></div>
+      <div class="sbadges"><span class="badge badge-ex" id="badgeEx">—</span><span class="badge badge-fw" id="badgeFw">—</span><span class="badge badge-live" id="badgeLive" style="display:none">● Canlı</span></div>
+      <button class="x-shr-btn" onclick="openShr()"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X'te Paylaş</button>
+    </div>
+    <div class="rd-grid" id="rdGrid" style="display:none">
+      <div class="rd-card"><div class="rd-lbl">Güncel Fiyat</div><div class="rd-val" id="rdPrice">—</div><div class="rd-live">● Yahoo Finance</div></div>
+      <div class="rd-card"><div class="rd-lbl">Piyasa Değeri</div><div class="rd-val" id="rdMcap">—</div><div class="rd-sub" id="rdMcapS">—</div></div>
+      <div class="rd-card"><div class="rd-lbl">Serbest Nakit</div><div class="rd-val" id="rdFCF">—</div><div class="rd-sub" id="rdFCFS">—</div></div>
+      <div class="rd-card"><div class="rd-lbl">Net Nakit</div><div class="rd-val" id="rdNC">—</div><div class="rd-sub" id="rdNCS">—</div></div>
+      <div class="rd-card"><div class="rd-lbl">ROE</div><div class="rd-val" id="rdROE">—</div><div class="rd-sub">Özsermaye Kârlılığı</div></div>
+      <div class="rd-card"><div class="rd-lbl">Borç/Özsermaye</div><div class="rd-val" id="rdDE">—</div><div class="rd-sub" id="rdDES">—</div></div>
+      <div class="rd-card"><div class="rd-lbl">Gelir Büyümesi</div><div class="rd-val" id="rdRevG">—</div><div class="rd-sub">YoY</div></div>
+      <div class="rd-card"><div class="rd-lbl">Kurumsal Sahiplik</div><div class="rd-val" id="rdInst">—</div><div class="rd-sub" id="rdInstS">—</div></div>
+    </div>
+    <div class="ov-grid">
+      <div class="stat-card"><div class="stat-lbl">Analiz Skoru</div><div class="stat-val" id="statScore">—</div><div class="stat-sub">kriter üzerinden</div></div>
+      <div class="stat-card"><div class="stat-lbl">Geçen Kriter</div><div class="stat-val" id="statPass" style="color:var(--success)">—</div><div class="stat-sub" id="statPassS">—</div></div>
+    </div>
+    <!-- Live price strip above multiples -->
+    <div id="priceStrip" style="display:none;background:#000;border:1px solid var(--border2);padding:11px 14px;margin-bottom:10px;display:none;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:3px">Anlık Fiyat</div>
+        <div id="livePriceBig" style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--accent)">—</div>
+        <div id="livePriceSub" style="font-size:9px;color:var(--muted2);margin-top:2px">— ● Yahoo Finance</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-left:auto">
+        <div style="text-align:center">
+          <div style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-bottom:2px">52H Düşük</div>
+          <div id="price52Low" style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--danger)">—</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-bottom:2px">52H Yüksek</div>
+          <div id="price52High" style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--success)">—</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-bottom:2px">Piyasa Değeri</div>
+          <div id="priceMcap" style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text)">—</div>
+        </div>
+        <a id="tvLink" href="#" target="_blank" style="display:flex;align-items:center;gap:5px;background:#000;border:1px solid var(--border2);color:var(--muted2);font-family:'DM Mono',monospace;font-size:9px;padding:7px 11px;text-decoration:none;transition:all 0.2s;align-self:center" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted2)'">
+          📈 TradingView'da Gör →
+        </a>
+      </div>
+    </div>
+    <div class="mult-grid" id="multGrid" style="display:none">
+      <div class="mult-card"><div class="mult-lbl">F/K (P/E)</div><div class="mult-val" id="mPE">—</div><div class="mult-sub" id="mPES">—</div><div class="mult-sig sn" id="mPESig">—</div></div>
+      <div class="mult-card"><div class="mult-lbl">F/DD (P/B)</div><div class="mult-val" id="mPB">—</div><div class="mult-sub" id="mPBS">—</div><div class="mult-sig sn" id="mPBSig">—</div></div>
+      <div class="mult-card"><div class="mult-lbl">EV/FAVÖK</div><div class="mult-val" id="mEV">—</div><div class="mult-sub" id="mEVS">—</div><div class="mult-sig sn" id="mEVSig">—</div></div>
+      <div class="mult-card"><div class="mult-lbl">PEG Oranı</div><div class="mult-val" id="mPEG">—</div><div class="mult-sub" id="mPEGS">—</div><div class="mult-sig sn" id="mPEGSig">—</div></div>
+    </div>
+    <div class="rsi-card" id="rsiCard" style="display:none">
+      <div class="card-t"><div class="cdot"></div>RSI Göstergesi</div>
+      <div class="rsi-wrap"><div class="rsi-gauge"><div class="rsi-bg"><div class="rsi-fill" id="rsiFill" style="width:0%"></div></div><div class="rsi-zones"><span>Satım(30)</span><span>Nötr(50)</span><span>Alım(70)</span></div></div><div class="rsi-vbox"><div class="rsi-v" id="rsiVal">—</div><div style="font-size:8px;color:var(--muted2)">RSI-14</div><div class="rsi-sig" id="rsiSig">—</div></div></div>
+    </div>
+    <div class="rng-card" id="rngCard" style="display:none">
+      <div class="card-t"><div class="cdot"></div>52 Haftalık Fiyat Aralığı <span id="rngLive" style="font-size:8px;color:var(--success);margin-left:4px"></span></div>
+      <div class="rng-labels"><span id="rngLow">—</span><span>Güncel</span><span id="rngHigh">—</span></div>
+      <div class="rng-bwrap"><div class="rng-bfill"></div><div class="rng-marker" id="rngM" style="left:50%"></div></div>
+      <div class="rng-meta"><span style="color:var(--accent);font-family:'Syne',sans-serif;font-weight:700" id="rngCur">—</span><span style="color:var(--muted2);font-size:9px" id="rngPct">—</span></div>
+    </div>
+    <div class="ana-card" id="anaCard" style="display:none">
+      <div class="card-t"><div class="cdot"></div>Analist Konsensüsü <span id="anaLive" style="font-size:8px;color:var(--success);margin-left:4px"></span></div>
+      <div class="ana-grid"><div class="ana-s"><div class="ana-sl">Konsensüs</div><div class="ana-sv" id="anaCons" style="color:var(--success)">—</div></div><div class="ana-s"><div class="ana-sl">Hedef Fiyat</div><div class="ana-sv" id="anaTarget" style="color:var(--accent)">—</div></div><div class="ana-s"><div class="ana-sl">Yukarı Potansiyel</div><div class="ana-sv" id="anaUp" style="color:var(--success)">—</div></div></div>
+      <div class="cons-bar"><div class="cb" id="cBuy" style="width:60%"></div><div class="ch" id="cHold" style="width:25%"></div><div class="cs" id="cSell" style="width:15%"></div></div>
+      <div class="cons-lbls"><span id="cBuyL" style="color:var(--success)">AL</span><span id="cHoldL" style="color:var(--warn)">TUT</span><span id="cSellL" style="color:var(--danger)">SAT</span></div>
+      <div class="ana-note" id="anaNote">—</div>
+    </div>
+
+    <div class="chart-card"><div class="card-t"><div class="cdot"></div>Radar Analizi</div><div class="radar-wrap"><canvas id="radarC"></canvas></div></div>
+    <div class="chart-card"><div class="card-t"><div class="cdot"></div>Kriter Skoru</div><div class="chart-wrap"><canvas id="barC"></canvas></div></div>
+    <table class="crit-table"><thead><tr><th>#</th><th>Kriter</th><th>Durum</th><th>Özet</th></tr></thead><tbody id="summaryBody"></tbody></table>
+  </div>
+  </div><!-- /page-body -->
+</div>
+
+<!-- CRIT DETAIL (still separate page) -->
+<div class="page" id="page-crit">
+  <div class="crit-nav-bar">
+    <button class="crit-nav-btn" id="critPrev" onclick="navigateCrit(-1)">← Önceki</button>
+    <div class="pg-title" id="critTitle" style="margin:0;flex:1;justify-content:center">Kriter</div>
+    <button class="crit-nav-btn" id="critNext" onclick="navigateCrit(1)">Sonraki →</button>
+  </div>
+  <div class="page-body" style="padding-top:0">
+  <div class="crit-progress" id="critProgress"></div>
+  <div class="dh"><div class="dnum" id="critNum">01</div><div><div class="dname" id="critName">—</div><div class="ddesc" id="critDesc">—</div></div><div id="critPill"></div></div>
+  <div class="ablock"><div class="ablock-t">Analiz</div><div class="atext" id="critAna">—</div></div>
+  <div class="ablock"><div class="ablock-t">Yatırımcının Yaklaşımı</div><div class="atext" id="critCtx">—</div></div>
+  <div class="chart-card"><div class="card-t"><div class="cdot"></div>Karşılaştırma</div><div id="critBars"></div></div>
+  </div>
+</div>
+
+<!-- PORTFOLIO PAGE -->
+<div class="page" id="page-portfolio">
+<div class="page-body">
+  <div class="pt-hdr"><div class="pt-title">Portföy<span>üm</span></div><span id="ptCloudSync" style="font-size:9px;color:var(--muted2);font-family:'IBM Plex Mono',monospace;margin-right:auto;margin-left:10px"></span><button class="pt-ana-btn" onclick="analyzeAllPt()" id="ptAnaBtn">▶ Buffett + Lynch + Dalio</button></div>
+  <div class="pt-notifs" id="ptNotifs"></div>
+  <div class="pt-add">
+    <div class="pt-add-t">Hisse Ekle</div>
+    <div class="pt-add-row">
+      <div class="pt-ac-wrap"><input class="ptin tf" id="ptTk" placeholder="TICKER" maxlength="10" autocapitalize="characters" autocomplete="off" spellcheck="false"/><div class="pt-acd" id="ptAcD"></div></div>
+      <input class="ptin cf" id="ptCo" placeholder="Şirket (otomatik)" readonly/>
+      <select class="pt-sel" id="ptEx"><option value="BIST">🇹🇷 BIST · ₺</option><option value="NASDAQ">🇺🇸 NASDAQ · $</option><option value="NYSE">🇺🇸 NYSE · $</option></select>
+      <input type="number" class="ptin pf" id="ptPr" placeholder="Alış fiyatı" step="0.01"/>
+      <input type="number" class="ptin qf" id="ptQty" placeholder="Adet" min="1"/>
+      <button class="pt-add-btn" onclick="addToPt()">+ Ekle</button>
+    </div>
+    <div id="ptErr" style="font-size:9px;color:var(--danger);margin-top:3px;display:none"></div>
+  </div>
+  <div class="empty-pt" id="emptyPt"><div style="font-size:28px;opacity:0.2">📊</div><div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted2)">Portföy Boş</div><div style="font-size:10px;color:var(--muted2);opacity:0.6;max-width:220px;line-height:1.7">Hisselerini ekle. Buffett + Lynch çift analizi yapılır.</div></div>
+  <div id="ptContent" style="display:none">
+    <div class="pt-sum">
+      <div class="ps-card"><div class="ps-lbl">Toplam Maliyet</div><div class="ps-vtl" id="psTL" style="display:none">—</div><div class="ps-vusd" id="psUSD" style="display:none">—</div><div class="ps-sub" id="psCurS">—</div></div>
+      <div class="ps-card"><div class="ps-lbl">Hisse Sayısı</div><div class="ps-v" id="psCount">—</div><div class="ps-sub">Farklı sembol</div></div>
+      <div class="ps-card"><div class="ps-lbl">En Büyük Pozisyon</div><div class="ps-v" id="psBig">—</div><div class="ps-sub" id="psBigT">—</div></div>
+      <div class="ps-card"><div class="ps-lbl">Ort. Buffett / Lynch</div><div class="ps-v" id="psAvgB">—</div><div class="ps-sub" id="psAvgL">Lynch: — · Dalio: <span id="psAvgD">—</span></div></div>
+    </div>
+    <div class="pt-mix"><div class="mix-t"><div class="cdot"></div>Portföy Dağılımı (Yüzdesel)</div><div id="mixBars"></div></div>
+    <div class="pt-tw"><table class="pt-table"><thead><tr><th>Hisse</th><th>Borsa</th><th>Alış</th><th>Adet</th><th>Toplam</th><th>Ağırlık</th><th>B / L / D</th><th>İşlem</th></tr></thead><tbody id="ptTBody"></tbody></table></div>
+    <div class="pt-charts"><div class="pc-card"><div class="pc-t"><div class="cdot"></div>Ağırlık</div><div class="pc-wrap"><canvas id="ptPie"></canvas></div></div><div class="pc-card"><div class="pc-t"><div class="cdot"></div>Buffett & Lynch Skorları</div><div class="pc-wrap"><canvas id="ptScore"></canvas></div></div></div>
+    <div class="risk-card"><div class="risk-t">Risk Analizi<span class="rl" id="riskLv">—</span></div><div class="risk-items"><div class="ri"><div class="ri-l">Konsantrasyon</div><div class="ri-v" id="riskConc">—</div></div><div class="ri"><div class="ri-l">En Büyük Pozisyon</div><div class="ri-v" id="riskBig">—</div></div><div class="ri"><div class="ri-l">Ort. Buffett Skoru</div><div class="ri-v" id="riskAvgB">—</div></div><div class="ri"><div class="ri-l">Analiz Edilmemiş</div><div class="ri-v" id="riskUn">—</div></div></div></div>
+  </div>
+</div><!-- /page-body -->
+</div>
+
+<!-- FORUM PAGE -->
+<div class="page" id="page-forum">
+<div class="page-body">
+  <div class="forum-hdr">
+    <div class="forum-title">Yatırımcı <span>Forumu</span></div>
+    <button class="forum-new-btn" onclick="openPostForm()">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"/></svg>
+      Analiz / Yorum Yaz
+    </button>
+  </div>
+  <div style="font-size:10px;color:var(--muted2);line-height:1.6;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent2);margin-bottom:14px">
+    👥 Herkese açık forum. Hisse analizi, yorum ve görüşlerini paylaş. Saygılı ol, manipülasyon yapma.
+  </div>
+
+  <!-- POST FORM -->
+  <div class="post-form" id="postForm">
+    <div class="pf-title">Yeni Gönderi <button class="pf-close" onclick="closePostForm()">✕</button></div>
+    <div class="pf-row">
+      <input class="pf-in nick" id="pfNick" placeholder="Kullanıcı adın (zorunlu değil)" maxlength="30"/>
+      <input class="pf-in ticker" id="pfTicker" placeholder="TICKER (opsiyonel)" maxlength="10"/>
+      <select class="pf-sel" id="pfEx"><option value="">Borsa seç</option><option value="BIST">BIST</option><option value="NASDAQ">NASDAQ</option><option value="NYSE">NYSE</option></select>
+      <select class="pf-sel" id="pfVerdict"><option value="">Karar (opsiyonel)</option><option value="AL">AL</option><option value="BEKLE">BEKLE</option><option value="UZAK_DUR">UZAK DUR</option></select>
+    </div>
+    <textarea class="pf-ta" id="pfContent" placeholder="Analizini veya yorumunu buraya yaz... (min 20 karakter, max 2000)" maxlength="2000"></textarea>
+    <div class="pf-footer">
+      <div class="pf-hint" id="pfCharCount">0 / 2000 karakter</div>
+      <button class="pf-submit" id="pfSubmit" onclick="submitPost()">📤 Gönder</button>
+    </div>
+    <div class="pf-msg" id="pfMsg"></div>
+  </div>
+
+  <div class="posts-grid" id="postsGrid"><div class="forum-loading">Gönderiler yükleniyor...</div></div>
+</div><!-- /page-body -->
+</div>
+
+<!-- ══ YATIRIM TEZLERİ SAYFASI ══ -->
+<div class="page" id="page-tezler">
+<div class="page-body">
+
+  <!-- Kilitli durum — kullanıcı giriş yapmamış -->
+  <div id="tezler-locked" style="display:none">
+    <div class="tez-lock-wrap">
+      <div class="tez-lock-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <div class="tez-lock-title">Yatırım Tezleri</div>
+      <div class="tez-lock-sub">Bu bölüm yalnızca kayıtlı üyelere açıktır.<br>E-posta ile kayıt ol, tüm tezlere anında eriş.</div>
+      <button class="tez-lock-btn" onclick="showAuthModal()">E-posta ile Kayıt Ol — Ücretsiz</button>
+      <div class="tez-lock-hint">Kredi kartı gerekmez · Şifre yok · 30 saniyede hazır</div>
+    </div>
+  </div>
+
+  <!-- Açık durum — kullanıcı giriş yapmış -->
+  <div id="tezler-content" style="display:none">
+    <div class="tez-header">
+      <div>
+        <div class="tez-page-title">Yatırım <span>Tezleri</span></div>
+        <div class="tez-page-sub">Barış'ın araştırma notları ve uzun vadeli pozisyon tezleri</div>
+      </div>
+      <div class="tez-badge">ÜYE ÖZEL</div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="tez-disclaimer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Bu tezler yatırım tavsiyesi değildir. Kişisel araştırma ve eğitim amaçlıdır. Kendi araştırmanızı yapın.
+    </div>
+
+    <!-- Tez kartları grid -->
+    <div class="tez-grid" id="tezGrid">
+      <!-- Tezler buraya JS ile eklenecek -->
+      <div class="tez-empty">
+        <div class="tez-empty-icon">📋</div>
+        <div class="tez-empty-title">İlk tez yakında</div>
+        <div class="tez-empty-sub">PDF tezleri entegre edildikçe burada görünecek.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-body -->
+</div><!-- /page-tezler -->
+
+</div><!-- main-content -->
+</div><!-- main -->
+</div><!-- app -->
+
+
+
+<!-- ══ YATİRİM TEZLERİ SAYFASI ══ -->
+<div class="page" id="page-tezler">
+  <div class="page-body">
+
+    <!-- AUTH GATE: Giriş yapmamış kullanıcı -->
+    <div id="tezler-locked" style="display:none">
+      <div class="tez-auth-gate">
+        <div class="tez-auth-icon">🔒</div>
+        <div class="tez-auth-title">Üye Girişi Gerekli</div>
+        <div class="tez-auth-sub">
+          Yatırım tezleri sadece kayıtlı üyelerimize özeldir.<br>
+          E-posta adresinle saniyeler içinde ücretsiz kaydol.
+        </div>
+        <button class="tez-auth-btn" onclick="showAuthModal()">
+          ✉ E-posta ile Giriş Yap
+        </button>
+        <div style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:4px">
+          Kayıt ücretsiz · Kredi kartı yok · Anında erişim
+        </div>
+      </div>
+    </div>
+
+    <!-- İÇERİK: Giriş yapmış kullanıcı -->
+    <div id="tezler-content" style="display:none">
+      <div class="tez-page-header">
+        <div class="tez-page-title">Yatırım Tezleri</div>
+        <div class="tez-page-sub">ARAŞTIRMA · ANALİZ · BARIŞ INVESTING</div>
+      </div>
+      <div class="tez-grid" id="tezGrid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ TEZ OKUMA MODALİ ══ -->
+<div class="tez-modal" id="tezModal" onclick="if(event.target===this)closeTezModal()">
+  <div class="tez-modal-box">
+    <div class="tez-modal-header">
+      <div class="tez-modal-meta">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+          <span class="tez-modal-ticker" id="tezModalTicker">—</span>
+          <span class="tez-tag" id="tezModalTag">—</span>
+          <span style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace" id="tezModalExchange">—</span>
+          <span style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace" id="tezModalDate">—</span>
+        </div>
+        <div class="tez-modal-title" id="tezModalTitle">—</div>
+      </div>
+      <button class="tez-modal-close" onclick="closeTezModal()">✕</button>
+    </div>
+
+    <!-- Özet Metrikler -->
+    <div class="tez-modal-keypoints">
+      <div class="tez-kp">
+        <div class="tez-kp-label">Güncel Fiyat</div>
+        <div class="tez-kp-val" id="tezCurrentPrice">—</div>
+      </div>
+      <div class="tez-kp">
+        <div class="tez-kp-label">Hedef Fiyat</div>
+        <div class="tez-kp-val pos" id="tezTargetPrice">—</div>
+      </div>
+      <div class="tez-kp">
+        <div class="tez-kp-label">Beklenen Getiri</div>
+        <div class="tez-kp-val pos" id="tezUpside">—</div>
+      </div>
+      <div class="tez-kp">
+        <div class="tez-kp-label">Zaman Ufku</div>
+        <div class="tez-kp-val" id="tezHorizon">—</div>
+      </div>
+    </div>
+
+    <!-- Tez İçeriği -->
+    <div class="tez-modal-body">
+      <div class="tez-section-title">Yatırım Tezi</div>
+      <div class="tez-text" id="tezModalThesis">—</div>
+
+      <div class="tez-section-title">Temel Katalizörler</div>
+      <div class="tez-text" id="tezModalCat">—</div>
+
+      <div class="tez-section-title">Başlıca Riskler</div>
+      <div class="tez-text" id="tezModalRisk">—</div>
+
+      <!-- PDF İndir -->
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--rule)">
+        <a class="tez-pdf-btn" id="tezPdfBtn" href="#" target="_blank" style="display:none">
+          📄 Tam Tezi PDF İndir
+        </a>
+      </div>
+
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--rule)">
+        <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.8">
+          ⚠ Bu tez yatırım tavsiyesi değildir. Araştırma ve bilgi amaçlıdır.
+        </div>
+      </div>
+    </div>
+  </div>
+</div><script>
+// ===== DATA =====
+const BIST={
+  // ── Bankacılık ──
+  'AKBNK':'Akbank','GARAN':'Garanti BBVA','ISCTR':'İş Bankası','YKBNK':'Yapı Kredi',
+  'HALKB':'Halkbank','VAKBN':'Vakıfbank','QNBTR':'QNB Finansbank','TSKB':'TSKB',
+  'ALBRK':'Albaraka Türk','BNTAS':'Bantas','KLNMA':'Kalkınma Bankası','SKBNK':'Şekerbank',
+  'ICBCT':'ICBC Turkey','ODEAB':'ODE Anadolu Bank','BURVA':'Burgan Varlık','FIBABANKA':'Fibabanka',
+  'ICBC':'ICBC Turkey Bank','NTHOL':'Net Holding',
+  // ── Havacılık & Ulaşım ──
+  'THYAO':'Türk Hava Yolları','PGSUS':'Pegasus','TAVHL':'TAV Havalimanları',
+  'SUNTK':'Sunexpress','CLEBI':'Çelebi Havacılık','AEFES':'Anadolu Efes',
+  'IZMKS':'İzmir Demir Çelik','DOAS':'Doğuş Otomotiv',
+  // ── Holding & Yatırım ──
+  'SAHOL':'Sabancı Holding','KCHOL':'Koç Holding','SISE':'Şişecam',
+  'ENKAI':'Enka İnşaat','IHLGM':'İHL Holding','DOHOL':'Doğan Holding',
+  'ALGYO':'Alarko GYO','ISDMR':'İskenderun Demir Çelik',
+  // ── Perakende & Gıda ──
+  'BIMAS':'BİM Mağazalar','MGROS':'Migros','SOKM':'Şok Marketler',
+  'ULKER':'Ülker','CCOLA':'Coca-Cola İçecek','MAVI':'Mavi Giyim',
+  'LOGO':'Logo Yazılım','HEPSI':'Hepsiburada','LCWGR':'LC Waikiki',
+  'TKFEN':'Tekfen Holding','ADESE':'Adese AVM','BRKVY':'Brisa',
+  // ── Enerji & Petrokimya ──
+  'TUPRS':'Tüpraş','PETKM':'Petkim','ENJSA':'Enerjisa',
+  'AKSEN':'Aksen Enerji','ZOREN':'Zorlu Enerji','AYEN':'Ayen Enerji',
+  'ODAS':'Odaş Elektrik','ASUZU':'Anadolu Isuzu','REEDR':'Reeder Teknoloji',
+  'KOZAL':'Koza Altın','KOZA1':'Koza Madencilik','IPEKE':'İpek Doğal Enerji',
+  // ── Sanayi & Metal ──
+  'EREGL':'Ereğli Demir Çelik','KRDMD':'Kardemir','ISDMR':'İskenderun Demir',
+  'ASELS':'Aselsan','VESTL':'Vestel','ARCLK':'Arçelik',
+  'BRISA':'Brisa Bridgestone','FROTO':'Ford Otosan','TOASO':'Tofaş Otomobil',
+  'OTKAR':'Otokar','TTRAK':'Türk Traktör','DURDO':'Duran Doğan',
+  'PARSN':'Parsan Makine','DESA':'Desa Deri',
+  // ── Teknoloji & Telekom ──
+  'TCELL':'Turkcell','TTKOM':'Türk Telekom','NETAS':'Netaş',
+  'INDES':'İndes Bilgisayar','ARENA':'Arena Bilgisayar','DGATE':'Datagate',
+  'KFEIN':'Karel Elektronik','OBASE':'Obase Bilgisayar','ESCOM':'Escom',
+  'LINK':'Link Bilgisayar','PKENT':'Petrokent','ANELE':'Anel Elektrik',
+  // ── Gayrimenkul & GYO ──
+  'EKGYO':'Emlak Konut GYO','ISGYO':'İş GYO','OZGYO':'Özak GYO',
+  'VKGYO':'Vakıf GYO','AGYO':'Atakule GYO','TKGYO':'Tekfen GYO',
+  'SNGYO':'Sinpaş GYO','HLGYO':'Halk GYO','KRGYO':'Kiler GYO',
+  // ── İnşaat & Çimento ──
+  'AKCNS':'Akçansa','BOLUC':'Bolu Çimento','ADANA':'Adana Çimento',
+  'CIMSA':'Çimsa','GOLTS':'Göltaş Çimento','MRDIN':'Mardin Çimento',
+  'UNYEC':'Ünye Çimento','KONYA':'Konya Çimento',
+  // ── Sigorta & Finans ──
+  'TURSG':'Türkiye Sigorta','RAYSG':'Ray Sigorta','ANSGR':'Anadolu Sigorta',
+  'GUSGF':'Güneş Sigorta','ANHYT':'Anadolu Hayat','AVHOL':'Avivasa',
+  'UFUK':'Ufuk Yatırım','TRGYO':'Türkiye GYO',
+  // ── Tarım & Kimya ──
+  'GUBRF':'Gübre Fabrikaları','BAGFS':'Bagfaş','AFYON':'Afyon Çimento',
+  'ALKIM':'Alkim Kimya','DENCM':'Denge Yatırım','SILVR':'Silver Kimya',
+  // ── Medya & Eğlence ──
+  'DOGI':'Doğan Yayın','TKNSA':'Teknosa','RYSAS':'Reysaş Lojistik',
+  'SASA':'Sasa Polyester','CELHA':'Çelik Halat',
+  // ── Lojistik & Nakliye ──
+  'CLEBI':'Çelebi Havacılık','RYSAS':'Reysaş Lojistik',
+  'AGHOL':'AG Anadolu Grubu','UTPYA':'Utopya Turizm',
+  // ── Diğer ──
+  'TKFEN':'Tekfen Holding','GLYHO':'Global Yatırım Holding',
+  'MERIT':'Merit Turizm','NTTUR':'Net Turizm',
+  'NUHCM':'Nuh Çimento','KILER':'Kiler Holding',
+};
+const BIST_P=['THYAO','EREGL','SAHOL','ASELS','BIMAS','KCHOL'];
+const US_P=[{t:'AAPL',c:'Apple',e:'NASDAQ'},{t:'MSFT',c:'Microsoft',e:'NASDAQ'},{t:'NVDA',c:'NVIDIA',e:'NASDAQ'},{t:'GOOGL',c:'Alphabet',e:'NASDAQ'},{t:'META',c:'Meta',e:'NASDAQ'},{t:'TSLA',c:'Tesla',e:'NASDAQ'}];
+const MKT_CFG=[{k:'sp500',l:'S&P 500'},{k:'nasdaq',l:'NASDAQ'},{k:'bist100',l:'BIST 100'},{k:'btc',l:'BTC'},{k:'eth',l:'ETH'},{k:'gold',l:'Altın'},{k:'oil',l:'Petrol'}];
+const EX_CFG={BIST:{l:'BIST',fh:'#f-tr',cur:'₺',tv:(t)=>`BIST:${t}`},NYSE:{l:'NYSE',fh:'#f-us',cur:'$',tv:(t)=>`NYSE:${t}`},NASDAQ:{l:'NASDAQ',fh:'#f-us',cur:'$',tv:(t)=>`NASDAQ:${t}`}};
+const FW={
+  buffett:{name:'Buffett',criteria:[{name:'ROE Sürdürülebilirliği',desc:'ROE %15+ ve son 5 yılda tutarlı mı?',ctx:'Buffett, ROE\'yi sermaye verimliliğinin en saf göstergesi olarak görür.'},{name:'Fiyatlama Gücü',desc:'Maliyet artışlarını müşteriye yansıtabiliyor mu?',ctx:'"Enflasyona karşı en iyi savunma, fiyat arttığında bile alınan ürünleri satmaktır."'},{name:'$1 → $1+ Testi',desc:'Her $1 alıkonulan sermaye $1+ piyasa değeri yarattı mı?',ctx:'Alıkonulan kazançların piyasa değerine katkısı.'},{name:'Ekonomik Hendek',desc:'Marka, ağ etkisi, maliyet avantajı var mı?',ctx:'ROIC\'in WACC\'tan sürekli yüksek olması hendek göstergesidir.'},{name:'Serbest Nakit Akışı',desc:'FCF tutarlı, büyüyor ve net gelirle uyumlu mu?',ctx:'Buffett muhasebe kârına değil gerçek nakde bakar.'},{name:'Yönetim Kalitesi',desc:'Sermaye tahsisi geçmişi ve hissedar dostu mu?',ctx:'Zor dönemlerdeki davranış kırmızı bayraktır.'},{name:'Değerleme Marjı',desc:'P/E, P/FCF, EV/EBITDA sektör ortalamasına göre?',ctx:'"Olağanüstü bir şirketi adil fiyatına almak çok daha iyidir."'}],keys:['ROE','PRICING','DOLLAR','MOAT','FCF','MGMT','VALUATION'],prompt:(t,c,ex)=>`Warren Buffett felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle]\nRISK: [en kritik risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nROE: PASS|FAIL|NEUTRAL | [açıklama]\nPRICING: PASS|FAIL|NEUTRAL | [açıklama]\nDOLLAR: PASS|FAIL|NEUTRAL | [açıklama]\nMOAT: PASS|FAIL|NEUTRAL | [açıklama]\nFCF: PASS|FAIL|NEUTRAL | [açıklama]\nMGMT: PASS|FAIL|NEUTRAL | [açıklama]\nVALUATION: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`},
+  lynch:{name:'Peter Lynch',criteria:[{name:'Saha & Hikaye (Amatör Avantajı)',desc:'Ürün/hizmet gözlemlenebilir mi? Script geçerli mi?',ctx:'"İnsanlar çalıştıkları yerde fark ettikleri şirketlere yatırım yapmalı."'},{name:'Büyüme Motoru & Diworseification',desc:'Kârı artıracak asıl hikaye nedir? Odak kaybı var mı?',ctx:'Diworseification: Ana işten uzaklaşıp kaynak israf etmek.'},{name:'Net Nakit & Bilanço Sağlığı',desc:'Net nakit pozisyonu nedir?',ctx:'"Güçlü bilanço bir güvenlik ağıdır."'},{name:'Stok (Envanter) Kontrolü',desc:'Stok büyüme hızı satış büyüme hızını geçiyor mu?',ctx:'"Satılamayan ürünlerin birikmesi en büyük kırmızı bayrak."'},{name:'PEG Oranı & Kazanç Çizgisi',desc:'PEG 1\'in altında mı?',ctx:'"PEG 1\'in altında değerli, 2\'nin üzerinde pahalı."'},{name:'Kurumsal Sahiplik & Gizli Mücevher',desc:'Kurumsal sahiplik %30\'un altında mı?',ctx:'"Wall Street bu şirketi çoktan keşfettiyse büyük fırsat kalmamıştır."'},{name:'Yönetim Hamleleri (Insider & Buyback)',desc:'Yöneticiler hisse alıyor mu?',ctx:'"Yöneticiler tek nedenden alır — fiyatın ucuz olduğunu düşünürler."'}],keys:['STORY','GROWTH','BALANCE','INVENTORY','PEGCRIT','INSTITUTION','INSIDER'],prompt:(t,c,ex)=>`Peter Lynch felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle Lynch perspektifinden]\nRISK: [en kritik risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nSTORY: PASS|FAIL|NEUTRAL | [açıklama]\nGROWTH: PASS|FAIL|NEUTRAL | [açıklama]\nBALANCE: PASS|FAIL|NEUTRAL | [açıklama]\nINVENTORY: PASS|FAIL|NEUTRAL | [açıklama]\nPEGCRIT: PASS|FAIL|NEUTRAL | [açıklama]\nINSTITUTION: PASS|FAIL|NEUTRAL | [açıklama]\nINSIDER: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`},
+  dalio:{name:'Ray Dalio',criteria:[{name:'Büyüme & Verimlilik Dengesi',desc:'Üretkenlik artışı ve reel büyüme sürdürülebilir mi?',ctx:'"Büyüme ikiden gelir: verimlilik artışı ve borç döngüsü."'},{name:'Borç Döngüsü Pozisyonu',desc:'Kısa döngüde nerede? Kaldıraç kontrollü mü?',ctx:'Dalio\'ya göre borç döngüsünün yeri en kritik makro değişkendir.'},{name:'Para Politikası Duyarlılığı',desc:'Faiz değişimlerine duyarlılık nedir?',ctx:'"Merkez bankası elindeki araçları tükettiğinde riskler en yüksek noktadadır."'},{name:'Döviz & Sermaye Akışı',desc:'Dolar bazlı gelir/borç dengesi sağlıklı mı?',ctx:'Güçlü dolar dönemlerinde gelişmekte olan piyasa şirketleri baskı altına girer.'},{name:'Emtia & Enflasyon Koruması',desc:'Stagflasyon senaryosunda korumalı mı?',ctx:'Altın, emtia ve reel varlıklara bağlılık bir Dalio portföy prensibidir.'},{name:'Sistemik Risk & Sektör Kırılganlığı',desc:'Makro şoklara karşı dirençli mi?',ctx:'"Bir şirketi sektörünün yapısal kırılganlıklarından bağımsız değerlendiremezsin."'},{name:'Uzun Vadeli Rekabet Gücü',desc:'20 yıllık öngörüde rekabet avantajı korunacak mı?',ctx:'"Uzun vadeli düşün. Çoğu insan gereğinden kısa vadeli odaklanır."'}],keys:['PRODGROWTH','DEBTCYCLE','MONETARY','CURRENCY','INFLATION','SYSTEMIC','LONGTERM'],prompt:(t,c,ex)=>`Ray Dalio makro perspektifiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et. Borç döngüsü, para politikası, enflasyon ve uzun vadeli makro faktörler çerçevesinde değerlendir.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle Dalio makro perspektifinden]\nRISK: [en kritik makro risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nPRODGROWTH: PASS|FAIL|NEUTRAL | [açıklama]\nDEBTCYCLE: PASS|FAIL|NEUTRAL | [açıklama]\nMONETARY: PASS|FAIL|NEUTRAL | [açıklama]\nCURRENCY: PASS|FAIL|NEUTRAL | [açıklama]\nINFLATION: PASS|FAIL|NEUTRAL | [açıklama]\nSYSTEMIC: PASS|FAIL|NEUTRAL | [açıklama]\nLONGTERM: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`}
+};
+
+// STATE
+let analysisData=null,radarChart=null,barChart=null,ptPie=null,ptScore=null;
+let curFW='buffett',curEX='BIST',curTicker='',curCo='';
+let heroEX='BIST';
+let hasAnalyzed=false,textGlobal='';
+let portfolio=[];
+let mktCache={};
+let acTimer=null;
+
+// UTILS
+const big=(v,c='$')=>{if(v==null)return'N/A';const a=Math.abs(v);if(a>=1e12)return`${c}${(v/1e12).toFixed(2)}T`;if(a>=1e9)return`${c}${(v/1e9).toFixed(2)}B`;if(a>=1e6)return`${c}${(v/1e6).toFixed(2)}M`;return`${c}${v.toFixed(0)}`;};
+const pct=(v)=>v!=null?`%${(v*100).toFixed(1)}`:'N/A';
+const num=(v,d=2)=>v!=null?v.toFixed(d):'N/A';
+const ago=(ts)=>{const d=Date.now()/1000-ts;if(d<60)return`${Math.floor(d)}s`;if(d<3600)return`${Math.floor(d/60)}dk`;if(d<86400)return`${Math.floor(d/3600)}sa`;return`${Math.floor(d/86400)}g`;};
+function pill(s){if(!s||s==='pending')return'<span class="sp pending">○</span>';if(s==='pass')return'<span class="sp pass">✓ GEÇTİ</span>';if(s==='fail')return'<span class="sp fail">✗ KALDI</span>';return'<span class="sp neutral">? BELİRSİZ</span>';}
+function icon(s){return s==='pass'?'✓':s==='fail'?'✗':s==='neutral'?'?':'○';}
+function pStat(str){if(!str)return'neutral';const u=str.toUpperCase();if(u.includes('PASS'))return'pass';if(u.includes('FAIL'))return'fail';return'neutral';}
+function avatarLetter(name){return(name||'?')[0].toUpperCase();}
+function avatarBg(name){const h=(name||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0);const cs=['#2d8fff','#00e5a0','#f97316','#ff4d6a','#00c8ff','#a855f7'];return cs[h%cs.length];}
+
+// SIDEBAR
+function toggleSidebar(){
+  const isOpen=document.getElementById('sidebar').classList.contains('open');
+  isOpen ? closeSidebar() : openSidebar();
+}
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  // Add backdrop
+  let bd=document.getElementById('sb-backdrop');
+  if(!bd){
+    bd=document.createElement('div');
+    bd.id='sb-backdrop';
+    bd.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;';
+    bd.onclick=closeSidebar;
+    document.body.appendChild(bd);
+  }
+  bd.style.display='block';
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  const bd=document.getElementById('sb-backdrop');
+  if(bd) bd.style.display='none';
+}
+
+// TABS
+function switchTab(t){
+  ['analiz','portfoy','forum'].forEach(x=>{
+    document.getElementById('tab-'+x).className='mnav-tab'+(x===t?' active':'');
+    const c=document.getElementById('tab-'+x+'-content');if(c)c.className='tab-content'+(x===t?' active':'');
+  });
+}
+
+// FW MODAL
+function showFWModal(){document.getElementById('fwModal').classList.add('visible');}
+function closeFWModal(){document.getElementById('fwModal').classList.remove('visible');}
+function selFWModal(fw){closeFWModal();selFW(fw);}
+
+// EXCHANGE
+function selEx(ex){
+  curEX=ex;
+  ['BIST','NYSE','NASDAQ'].forEach(k=>{const e=document.getElementById('ex-'+k.toLowerCase());if(e)e.className='ex-btn'+(k===ex?' active':'');});
+  document.getElementById('coIn').value='';
+}
+function selHeroEx(ex){
+  heroEX=ex;curEX=ex;
+  ['bist','nyse','nasdaq'].forEach(k=>{const e=document.getElementById('hex-'+k);if(e)e.className='hero-ex-btn'+(k===ex.toLowerCase()?' active':'');});
+  ['BIST','NYSE','NASDAQ'].forEach(k=>{const e=document.getElementById('ex-'+k.toLowerCase());if(e)e.className='ex-btn'+(k===ex?' active':'');});
+}
+
+// FRAMEWORK
+function selFW(fw){
+  curFW=fw;
+  document.getElementById('fw-b').className='fw-btn'+(fw==='buffett'?' active':'');
+  document.getElementById('fw-l').className='fw-btn'+(fw==='lynch'?' la':'');
+  document.getElementById('fw-d').className='fw-btn'+(fw==='dalio'?' active':'')+' fw-dalio';
+  if(fw==='dalio'){document.getElementById('fw-d').style.cssText='font-size:9px;background:rgba(168,85,247,0.15);border-color:#a855f7;color:#a855f7';}
+  else{document.getElementById('fw-d').style.cssText='font-size:9px';}
+  document.getElementById('heroFwSel').value=fw;
+  buildNav();
+  if(hasAnalyzed&&curTicker)doAnalyze();
+}
+
+// NAV
+function buildNav(){
+  const fw=FW[curFW];document.getElementById('navLabel').textContent=fw.criteria.length+' Kriter';
+  const list=document.getElementById('navList');list.innerHTML='';
+  fw.criteria.forEach((c,i)=>{
+    const div=document.createElement('div');div.className='nav-item';div.id='nav-'+i;
+    div.onclick=()=>{showPage('crit',i);closeSidebar();};
+    div.innerHTML=`<span class="nav-num">${String(i+1).padStart(2,'0')}</span>${c.name}<span class="nav-status" id="ns-${i}">○</span>`;
+    list.appendChild(div);
+  });
+}
+
+// CHIPS
+function buildChips(){
+  const bc=document.getElementById('bistChips');bc.innerHTML='';
+  BIST_P.forEach(t=>{const d=document.createElement('div');d.className='pop-chip';d.innerHTML=`<svg class="chip-f"><use href="#f-tr"/></svg>${t}`;d.onclick=()=>qFill(t,BIST[t]||'','BIST');bc.appendChild(d);});
+  const uc=document.getElementById('usChips');uc.innerHTML='';
+  US_P.forEach(s=>{const d=document.createElement('div');d.className='pop-chip';d.innerHTML=`<svg class="chip-f"><use href="#f-us"/></svg>${s.t}`;d.onclick=()=>qFill(s.t,s.c,s.e);uc.appendChild(d);});
+}
+
+// MARKET DATA
+async function loadMkt(){
+  try{
+    const r=await fetch('/api/market?type=market');
+    const data=await r.json();
+    if(!data.market)return;
+    mktCache=data.market;
+    renderMkt(data.market);
+    const e=document.getElementById('mktTime');if(e)e.textContent=`● ${new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})} güncel`;
+    const ht=document.getElementById('hmpTime');if(ht)ht.textContent=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})+' güncel';
+  }catch{
+    const s=document.getElementById('mktStrip');
+    if(s)s.innerHTML='<div style="text-align:center;color:var(--muted2);font-size:10px;padding:12px">Piyasa verisi yüklenemedi</div>';
+  }
+}
+
+function renderMkt(m){
+  const g=document.getElementById('mktStrip');g.innerHTML='';
+  MKT_CFG.forEach(cfg=>{
+    const d=m[cfg.k];const card=document.createElement('div');
+    if(!d){card.className='mkt-card';card.innerHTML=`<div class="mkt-lbl">${cfg.l}</div><div class="mkt-price">—</div><div class="mkt-chg">—</div>`;g.appendChild(card);return;}
+    const pos=d.change>=0;card.className=`mkt-card ${pos?'pos':'neg'}`;
+    const ps=d.price>10000?d.price.toLocaleString('tr-TR',{maximumFractionDigits:0}):d.price.toFixed(2);
+    card.innerHTML=`<div class="mkt-lbl">${cfg.l}</div><div class="mkt-price">${ps}</div><div class="mkt-chg ${pos?'pos':'neg'}">${pos?'▲':'▼'}%${Math.abs(d.change).toFixed(2)}</div>`;
+    g.appendChild(card);
+  });
+  // Hero sağ panel
+  const hmpMap={sp500:'hmpSP500',nasdaq:'hmpNAS',bist100:'hmpBIST',btc:'hmpBTC',gold:'hmpGold',oil:'hmpOil'};
+  Object.entries(hmpMap).forEach(([k,id])=>{
+    const el=document.getElementById(id);if(!el)return;
+    const d=m[k];if(!d)return;
+    const pos=d.change>=0;
+    const ps=d.price>10000?d.price.toLocaleString('tr-TR',{maximumFractionDigits:0}):d.price.toFixed(2);
+    el.querySelector('.hmp-val').textContent=ps;
+    const chgEl=el.querySelector('.hmp-chg');
+    chgEl.textContent=`${pos?'+':''}${d.change.toFixed(2)}%`;
+    chgEl.className=`hmp-chg ${pos?'pos':'neg'}`;
+  });
+}
+
+async function loadNews(){
+  const g=document.getElementById('newsGrid');
+  try{
+    const r=await fetch('/api/market?type=news');
+    const data=await r.json();
+    if(data.source){const b=document.getElementById('srcBadge');if(b)b.textContent=data.source;}
+    renderNews(data.news||[],g);
+  }catch{if(g)g.innerHTML='<div class="news-loading">Haberler yüklenemedi</div>';}
+}
+
+function renderNews(news,g){
+  if(!news||!news.length){g.innerHTML='<div class="news-loading">Haber bulunamadı</div>';return;}
+  g.innerHTML='';
+  news.forEach(n=>{
+    const a=document.createElement('a');a.className='news-card';a.href=n.link||'#';a.target='_blank';a.rel='noopener';
+    a.innerHTML=`<div class="news-pub">${n.publisher||'—'}</div><div class="news-t">${n.title||'—'}</div><div class="news-time">${n.providerPublishTime?ago(n.providerPublishTime):''}</div>`;
+    g.appendChild(a);
+  });
+}
+
+// AUTOCOMPLETE
+function setupAC(){
+  const ti=document.getElementById('tickerIn'),td=document.getElementById('acDrop');
+  ti.addEventListener('input',()=>{const q=ti.value.trim().toUpperCase();if(curEX==='BIST'){if(BIST[q]){document.getElementById('coIn').value=BIST[q];}else{document.getElementById('coIn').value='';}}clearTimeout(acTimer);if(q.length<1){td.classList.remove('visible');return;}acTimer=setTimeout(()=>fetchAC(q,td,'sidebar'),280);});
+  ti.addEventListener('keydown',e=>{if(e.key==='Escape')td.classList.remove('visible');if(e.key==='Enter')doAnalyze();});
+
+  const hi=document.getElementById('heroIn'),hd=document.getElementById('heroAc');
+  hi.addEventListener('input',()=>{const q=hi.value.trim().toUpperCase();clearTimeout(acTimer);if(q.length<1){hd.classList.remove('visible');return;}acTimer=setTimeout(()=>fetchAC(q,hd,'hero'),280);});
+  hi.addEventListener('keydown',e=>{if(e.key==='Enter'){hd.classList.remove('visible');heroSearch();}if(e.key==='Escape')hd.classList.remove('visible');});
+
+  const pi=document.getElementById('ptTk'),pd=document.getElementById('ptAcD');
+  pi.addEventListener('input',()=>{const q=pi.value.trim().toUpperCase();if(BIST[q])document.getElementById('ptCo').value=BIST[q];clearTimeout(acTimer);if(q.length<1){pd.classList.remove('visible');return;}acTimer=setTimeout(()=>fetchAC(q,pd,'portfolio'),280);});
+
+  document.addEventListener('click',e=>{if(!e.target.closest('.ac-wrap')&&!e.target.closest('.hero-search-row'))td.classList.remove('visible'),hd.classList.remove('visible');if(!e.target.closest('.pt-ac-wrap'))pd.classList.remove('visible');});
+}
+
+async function fetchAC(q,drop,src){
+  const ex4=src==='portfolio'?document.getElementById('ptEx').value:curEX;
+  if(ex4==='BIST'){
+    const bm=Object.entries(BIST).filter(([k,v])=>k.startsWith(q)||v.toUpperCase().includes(q)).slice(0,6);
+    if(bm.length>0){renderAC(drop,bm.map(([t,n])=>({ticker:t,name:n,exchange:'BIST'})),src);return;}
+  }
+  try{
+    const r=await fetch(`/api/market?type=search&ticker=${encodeURIComponent(q)}`);
+    const data=await r.json();
+    if(data.results&&data.results.length>0)renderAC(drop,data.results,src);
+    else drop.classList.remove('visible');
+  }catch{drop.classList.remove('visible');}
+}
+
+function renderAC(drop,items,src){
+  drop.innerHTML='';
+  items.forEach(item=>{
+    const d=document.createElement('div');d.className='ac-item';
+    d.innerHTML=`<span class="ac-t">${item.ticker}</span><span class="ac-n">${item.name}</span><span style="font-size:8px;color:var(--muted)">${item.exchange||''}</span>`;
+    d.onclick=()=>{
+      drop.classList.remove('visible');
+      if(src==='sidebar'){document.getElementById('tickerIn').value=item.ticker;document.getElementById('coIn').value=item.name;if(item.exchange==='BIST')selEx('BIST');else if(item.exchange==='NYSE')selEx('NYSE');else selEx('NASDAQ');}
+      else if(src==='hero'){document.getElementById('heroIn').value=item.ticker;document.getElementById('tickerIn').value=item.ticker;document.getElementById('coIn').value=item.name;selHeroEx(item.exchange==='BIST'?'BIST':item.exchange==='NYSE'?'NYSE':'NASDAQ');heroSearch(item.ticker,item.name);}
+      else if(src==='portfolio'){document.getElementById('ptTk').value=item.ticker;document.getElementById('ptCo').value=item.name;if(item.exchange)document.getElementById('ptEx').value=item.exchange;}
+    };
+    drop.appendChild(d);
+  });
+  drop.classList.add('visible');
+}
+
+// HERO SEARCH
+function heroSearch(tk,co){
+  const t=(tk||document.getElementById('heroIn').value).trim().toUpperCase();
+  const c=co||(BIST[t]||'');
+  if(!t)return;
+  // sync fw
+  const fwSel=document.getElementById('heroFwSel').value;
+  if(fwSel!==curFW){curFW=fwSel;buildNav();}
+  selHeroEx(heroEX);
+  document.getElementById('tickerIn').value=t;
+  document.getElementById('coIn').value=c;
+  switchTab('analiz');closeSidebar();
+  setTimeout(()=>doAnalyze(),100);
+}
+
+function qFill(t,c,ex){selEx(ex);document.getElementById('tickerIn').value=t;document.getElementById('coIn').value=c;switchTab('analiz');closeSidebar();setTimeout(()=>doAnalyze(),100);}
+
+// PAGES
+function showPage(type,idx){
+  ['overview','crit','portfolio','forum','tezler'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const e=document.getElementById('page-'+type);if(e)e.classList.add('active');
+  if(type==='overview'){const n=document.getElementById('nav-overview');if(n)n.classList.add('active');}
+  else if(type==='crit'){const n=document.getElementById('nav-'+idx);if(n)n.classList.add('active');renderCritDetail(idx);}
+  else if(type==='portfolio')renderPt();
+  else if(type==='forum')loadPosts();
+  else if(type==='tezler'){const n=document.getElementById('nav-tezler');if(n)n.classList.add('active');renderTezler();}
+}
+
+// TV CHART
+// loadTV removed
+
+// REAL DATA
+function renderRealData(fd){
+  if(!fd)return;
+  document.getElementById('rdGrid').style.display='grid';
+  document.getElementById('badgeLive').style.display='block';
+  document.getElementById('dataBadge').classList.add('visible');
+
+  // Price strip
+  const ps=document.getElementById('priceStrip');
+  if(ps){ps.style.display='flex';}
+  const bigFn=v=>{if(v==null)return'N/A';const a=Math.abs(v);if(a>=1e12)return`${(v/1e12).toFixed(2)}T`;if(a>=1e9)return`${(v/1e9).toFixed(2)}B`;if(a>=1e6)return`${(v/1e6).toFixed(2)}M`;return v.toFixed(0);};
+  const lpb=document.getElementById('livePriceBig');
+  const lps=document.getElementById('livePriceSub');
+  if(lpb&&fd.currentPrice){lpb.textContent=`${fd.currentPrice.toFixed(2)} ${fd.currency}`;lpb.style.color=fd.currency==='TRY'?'var(--warn)':'var(--success)';}
+  if(lps){lps.textContent=`${fd.currency==='TRY'?'BIST':'US'} · Yahoo Finance ●`;}
+  const pl=document.getElementById('price52Low');const ph=document.getElementById('price52High');const pm=document.getElementById('priceMcap');
+  if(pl&&fd.fiftyTwoWeekLow)pl.textContent=`${fd.fiftyTwoWeekLow.toFixed(2)} ${fd.currency}`;
+  if(ph&&fd.fiftyTwoWeekHigh)ph.textContent=`${fd.fiftyTwoWeekHigh.toFixed(2)} ${fd.currency}`;
+  if(pm)pm.textContent=bigFn(fd.marketCap);
+  const tvl=document.getElementById('tvLink');
+  if(tvl){const sym=curEX==='BIST'?`BIST:${curTicker}`:curTicker;tvl.href=`https://www.tradingview.com/chart/?symbol=${sym}`;} 
+  const cur=fd.currency==='TRY'?'₺':'$';
+  document.getElementById('rdPrice').textContent=fd.currentPrice?`${fd.currentPrice.toFixed(2)} ${fd.currency}`:'N/A';
+  document.getElementById('rdPrice').style.color=fd.currency==='TRY'?'var(--warn)':'var(--success)';
+  document.getElementById('rdMcap').textContent=big(fd.marketCap,cur);
+  document.getElementById('rdFCF').textContent=big(fd.freeCashflow,cur);
+  document.getElementById('rdFCFS').textContent=fd.freeCashflow&&fd.freeCashflow>0?'Pozitif FCF ✓':'Negatif FCF ✗';
+  const nc=fd.totalCash&&fd.totalDebt?fd.totalCash-fd.totalDebt:null;
+  document.getElementById('rdNC').textContent=big(nc,cur);
+  document.getElementById('rdNCS').textContent=nc===null?'Veri yok':nc>0?'Net nakit ✓':'Net borç ✗';
+  document.getElementById('rdROE').textContent=fd.roe!=null?pct(fd.roe):'N/A';
+  document.getElementById('rdDE').textContent=fd.debtToEquity!=null?num(fd.debtToEquity):'N/A';
+  document.getElementById('rdDES').textContent=fd.debtToEquity!=null?(fd.debtToEquity<50?'Düşük ✓':fd.debtToEquity<100?'Orta':'Yüksek ✗'):'—';
+  document.getElementById('rdRevG').textContent=fd.revenueGrowth!=null?pct(fd.revenueGrowth):'N/A';
+  document.getElementById('rdInst').textContent=fd.institutionOwnership!=null?pct(fd.institutionOwnership):'N/A';
+  document.getElementById('rdInstS').textContent=fd.institutionOwnership!=null?(fd.institutionOwnership<0.3?'Düşük — Fırsat ✓':'Yüksek'):'—';
+
+  if(fd.fiftyTwoWeekLow&&fd.fiftyTwoWeekHigh&&fd.currentPrice){
+    const lo=fd.fiftyTwoWeekLow,hi=fd.fiftyTwoWeekHigh,cu=fd.currentPrice;
+    const pp=Math.min(100,Math.max(0,((cu-lo)/(hi-lo))*100));
+    document.getElementById('rngCard').style.display='block';
+    document.getElementById('rngLive').textContent='● Yahoo Finance';
+    document.getElementById('rngLow').textContent=`${lo.toFixed(2)} ${fd.currency}`;
+    document.getElementById('rngHigh').textContent=`${hi.toFixed(2)} ${fd.currency}`;
+    document.getElementById('rngCur').textContent=`${cu.toFixed(2)} ${fd.currency}`;
+    document.getElementById('rngPct').textContent=`52H düşüğünden +%${((cu-lo)/lo*100).toFixed(1)}`;
+    setTimeout(()=>{document.getElementById('rngM').style.left=pp+'%';},200);
+  }
+  if(fd.targetMeanPrice&&fd.currentPrice){
+    const up=((fd.targetMeanPrice-fd.currentPrice)/fd.currentPrice*100).toFixed(1);
+    document.getElementById('anaCard').style.display='block';
+    document.getElementById('anaLive').textContent='● Yahoo Finance';
+    const cons=fd.recommendationKey||'hold';
+    const cm={'strongBuy':'GÜÇLÜ AL','buy':'AL','hold':'TUT','sell':'SAT','strongSell':'GÜÇLÜ SAT'};
+    const cc=cons.includes('buy')?'#00e5a0':cons.includes('sell')?'#ff4d6a':'#ffb830';
+    document.getElementById('anaCons').textContent=cm[cons]||cons.toUpperCase();document.getElementById('anaCons').style.color=cc;
+    document.getElementById('anaTarget').textContent=`${fd.targetMeanPrice.toFixed(2)} ${fd.currency}`;
+    document.getElementById('anaUp').textContent=`%${up}`;document.getElementById('anaUp').style.color=parseFloat(up)>0?'#00e5a0':'#ff4d6a';
+    const bp=cons.includes('buy')?65:cons==='hold'?30:10,hp=25,sp=100-bp-hp;
+    setTimeout(()=>{document.getElementById('cBuy').style.width=bp+'%';document.getElementById('cHold').style.width=hp+'%';document.getElementById('cSell').style.width=sp+'%';},300);
+    document.getElementById('cBuyL').textContent=`AL %${bp}`;document.getElementById('cHoldL').textContent=`TUT %${hp}`;document.getElementById('cSellL').textContent=`SAT %${sp}`;
+    const sm=textGlobal.match(/SUMMARY:\s*([^\n]+)/);if(sm)document.getElementById('anaNote').textContent='📊 '+sm[1].trim();
+  }
+}
+
+function parseMult(text){
+  const sec=text.match(/MULTIPLES_START([\s\S]*?)MULTIPLES_END/);if(!sec)return null;
+  const raw=sec[1];const get=k=>{const m=raw.match(new RegExp(k+':\\s*([^\\n]+)','i'));return m?m[1].trim():null;};
+  return{pe:get('PE'),pb:get('PB'),ev:get('EV_EBITDA'),peg:get('PEG'),rsi:get('RSI'),price52w:get('PRICE_52W'),analyst:get('ANALYST')};
+}
+
+function renderMult(m){
+  if(!m)return;
+  document.getElementById('multGrid').style.display='grid';
+  const fd = (analysisData && analysisData.fd) ? analysisData.fd : {};
+
+  // Gerçek finansal veriden değer varsa AI metnini override et
+  // PE
+  const realPE  = fd.peRatio  != null ? fd.peRatio.toFixed(2)  : null;
+  const realPB  = fd.pbRatio  != null ? fd.pbRatio.toFixed(2)  : null;
+  const realPEG = fd.pegRatio != null ? fd.pegRatio.toFixed(2) : null;
+  const realEV  = fd.evEbitda != null ? fd.evEbitda.toFixed(1) : null;
+
+  // Sinyal üret
+  function mkSig(valStr, type) {
+    const v = parseFloat(valStr);
+    if (isNaN(v)) return 'sn';
+    if (type === 'pe')  return v < 12 ? 'sg' : v < 22 ? 'sw' : v < 35 ? 'sn' : 'sb';
+    if (type === 'pb')  return v < 1.5 ? 'sg' : v < 3 ? 'sw' : v < 6 ? 'sn' : 'sb';
+    if (type === 'peg') return v < 1 ? 'sg' : v < 1.5 ? 'sw' : 'sb';
+    if (type === 'ev')  return v < 8 ? 'sg' : v < 15 ? 'sw' : v > 20 ? 'sb' : 'sn';
+    return 'sn';
+  }
+  function mkComment(valStr, type) {
+    const v = parseFloat(valStr);
+    if (isNaN(v)) return '—';
+    if (type === 'pe')  return v < 12 ? 'UCUZ' : v < 22 ? 'ADİL' : v < 35 ? 'DİKKAT' : 'PAHALI';
+    if (type === 'pb')  return v < 1.5 ? 'UCUZ' : v < 3 ? 'ADİL' : v < 6 ? 'DİKKAT' : 'PAHALI';
+    if (type === 'peg') return v < 1 ? 'UCUZ — Lynch fırsatı' : v < 1.5 ? 'ADİL' : v < 2 ? 'DİKKATLİ OL' : 'PAHALI';
+    if (type === 'ev')  return v < 8 ? 'UCUZ' : v < 15 ? 'ADİL' : v < 20 ? 'DİKKAT' : 'PAHALI';
+    return '—';
+  }
+
+  function setCard(id, realVal, aiRaw, type) {
+    const valEl  = document.getElementById(id);
+    const subEl  = document.getElementById(id + 'S');
+    const sigEl  = document.getElementById(id + 'Sig');
+    if (!valEl) return;
+
+    // Gerçek veri öncelikli
+    if (realVal != null && !isNaN(parseFloat(realVal))) {
+      const v = parseFloat(realVal);
+      valEl.textContent = v.toFixed(type === 'ev' ? 1 : 2);
+      const comment = mkComment(realVal, type);
+      if (subEl) subEl.textContent = comment;
+      if (sigEl) { sigEl.textContent = comment; sigEl.className = 'mult-sig ' + mkSig(realVal, type); }
+    } else if (aiRaw) {
+      // AI metninden parse et
+      const p = aiRaw.split('|').map(s => s.trim());
+      const lo = (p[1]||'').toLowerCase();
+      let sig = 'sn';
+      if (lo.includes('ucuz')||lo.includes('fırsat')) sig = 'sg';
+      else if (lo.includes('pahalı')||lo.includes('dikkatli')) sig = 'sb';
+      else if (lo.includes('adil')||lo.includes('makul')) sig = 'sw';
+      valEl.textContent = p[0] || 'N/A';
+      if (subEl) subEl.textContent = p[1] || '—';
+      if (sigEl) { sigEl.textContent = p[1] || '—'; sigEl.className = 'mult-sig ' + sig; }
+    } else {
+      valEl.textContent = 'N/A';
+      if (subEl) subEl.textContent = 'VERİ YOK';
+      if (sigEl) { sigEl.textContent = 'VERİ YOK'; sigEl.className = 'mult-sig sn'; }
+    }
+  }
+
+  setCard('mPE',  realPE,  m.pe,  'pe');
+  setCard('mPB',  realPB,  m.pb,  'pb');
+  setCard('mEV',  realEV,  m.ev,  'ev');
+  setCard('mPEG', realPEG, m.peg, 'peg');
+
+  // RSI
+  if(m.rsi){
+    const rp=m.rsi.split('|').map(s=>s.trim());const rn=parseFloat(rp[0])||50;
+    const rc=rn>70?'#f05252':rn<30?'#22c55e':'#4d8ef0';
+    document.getElementById('rsiCard').style.display='block';
+    document.getElementById('rsiVal').textContent=rn.toFixed(0);document.getElementById('rsiVal').style.color=rc;
+    const fill=document.getElementById('rsiFill');
+    fill.style.background=rn>70?'linear-gradient(90deg,#4d8ef0,#f59e0b,#f05252)':rn<30?'#22c55e':'#4d8ef0';
+    setTimeout(()=>{fill.style.width=Math.min(100,rn)+'%';},100);
+    const sig=document.getElementById('rsiSig');
+    if(rn>70){sig.textContent='AŞIRI ALIM';sig.style.cssText='color:#f05252;border-color:rgba(240,82,82,0.3);background:rgba(240,82,82,0.1);';}
+    else if(rn<30){sig.textContent='AŞIRI SATIM';sig.style.cssText='color:#22c55e;border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.1);';}
+    else{sig.textContent='NÖTR BÖLGE';sig.style.cssText='color:#4d8ef0;border-color:rgba(77,142,240,0.3);background:rgba(77,142,240,0.1);';}
+  }
+}
+
+function renderCharts(data){
+  const fw=FW[curFW];const sc=data.statuses.map(s=>s==='pass'?100:s==='fail'?15:50);
+  const cl=data.statuses.map(s=>s==='pass'?'rgba(26,107,58,0.7)':s==='fail'?'rgba(192,57,43,0.7)':'rgba(184,112,10,0.6)');
+  const ac=curFW==='lynch'?'#8b4513':curFW==='dalio'?'#5b2d8e':'#2451a3';
+  if(radarChart)radarChart.destroy();if(barChart)barChart.destroy();
+  radarChart=new Chart(document.getElementById('radarC').getContext('2d'),{type:'radar',data:{labels:fw.criteria.map(c=>c.name.split(' ')[0]),datasets:[{data:sc,backgroundColor:ac+'20',borderColor:ac,borderWidth:1.5,pointBackgroundColor:ac,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'#e8e4dc'},pointLabels:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9}},angleLines:{color:'#e8e4dc'}}},plugins:{legend:{display:false}}}});
+  barChart=new Chart(document.getElementById('barC').getContext('2d'),{type:'bar',data:{labels:fw.criteria.map((_,i)=>String(i+1).padStart(2,'0')),datasets:[{data:sc,backgroundColor:cl,borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100,ticks:{display:false},grid:{color:'#f4f1ec'},border:{color:'#d4cfc6'}},x:{ticks:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9}},grid:{display:false},border:{color:'#d4cfc6'}}},plugins:{legend:{display:false}}}});
+}
+
+function renderTable(data){
+  const fw=FW[curFW];const tb=document.getElementById('summaryBody');tb.innerHTML='';
+  fw.criteria.forEach((m,i)=>{const tr=document.createElement('tr');tr.onclick=()=>showPage('crit',i);tr.innerHTML=`<td><span class="cn">${String(i+1).padStart(2,'0')}</span></td><td><div class="cname">${m.name}</div><div class="cdesc">${m.desc}</div></td><td>${pill(data.statuses[i])}</td><td><div class="dtxt">${(data.details[i]||'—').substring(0,80)}${(data.details[i]||'').length>80?'...':''}</div></td>`;tb.appendChild(tr);});
+}
+
+let curCritIdx=0;
+
+function renderCritDetail(i){
+  const fw=FW[curFW];const meta=fw.criteria[i];
+  curCritIdx=i;
+  document.getElementById('critTitle').textContent=`${String(i+1).padStart(2,'0')} / ${fw.criteria.length}`;
+  document.getElementById('critNum').textContent=String(i+1).padStart(2,'0');
+  document.getElementById('critName').textContent=meta.name;document.getElementById('critDesc').textContent=meta.desc;document.getElementById('critCtx').textContent=meta.ctx;
+  if(analysisData&&analysisData.fw===curFW){document.getElementById('critPill').innerHTML=pill(analysisData.statuses[i]);document.getElementById('critAna').textContent=analysisData.details[i]||'—';}
+  else{document.getElementById('critPill').innerHTML=pill('pending');document.getElementById('critAna').textContent='Önce bir hisse analiz edin.';}
+  // Navigation buttons
+  const prev=document.getElementById('critPrev');const next=document.getElementById('critNext');
+  if(prev)prev.disabled=(i===0);
+  if(next)next.disabled=(i===fw.criteria.length-1);
+  // Progress dots
+  const prog=document.getElementById('critProgress');
+  if(prog){
+    prog.innerHTML='';
+    fw.criteria.forEach((_,idx)=>{
+      const s=(analysisData&&analysisData.fw===curFW)?analysisData.statuses[idx]:'pending';
+      const dot=document.createElement('div');
+      dot.className='crit-dot '+s+(idx===i?' active':'');
+      dot.title=fw.criteria[idx].name;
+      dot.onclick=()=>{renderCritDetail(idx);};
+      prog.appendChild(dot);
     });
-    if (r2.ok) {
-      const txt = await r2.text();
-      if (txt && txt.length > 0) { _crumb = txt.trim(); _cookie = cookieVal; _crumbTs = Date.now(); }
-    }
-  } catch(e) { console.log('Crumb failed:', e.message); }
-  return { crumb: _crumb, cookie: _cookie };
+  }
+  const bars=document.getElementById('critBars');bars.innerHTML='';
+  fw.criteria.forEach((m,idx)=>{
+    const s=(analysisData&&analysisData.fw===curFW)?analysisData.statuses[idx]:'pending';
+    const v=s==='pass'?100:s==='fail'?20:s==='neutral'?55:0;
+    const row=document.createElement('div');row.className='sr';
+    row.innerHTML=`<div class="sr-lbl">${String(idx+1).padStart(2,'0')} ${m.name}</div><div class="sr-bar"><div class="sr-fill ${s==='pass'?'pass':s==='fail'?'fail':'neutral'}" id="sf-${idx}" style="width:0%"></div></div><div class="sr-val">${s==='pending'?'—':icon(s)}</div>`;
+    bars.appendChild(row);setTimeout(()=>{const e=document.getElementById('sf-'+idx);if(e)e.style.width=v+'%';},50+idx*80);
+  });
 }
 
-// ── USD/TRY KUR TAHMİNİ ──────────────────────────────────────────
-// Yahoo BIST bilançolarını bazen USD bazında saklar (özellikle büyük şirketler).
-// marketCap her zaman TRY bazında doğru geldiğinden onu referans kullanıyoruz.
-// Güncel kuru API'den çekmek yerine: marketCap / (price * shares) ile tespit ediyoruz.
-// Fallback: 38 TRY/USD (konservatif tahmini, gerçek ~40-42 arası)
-const APPROX_USD_TRY = 38;
-
-// ── DEĞER BİRİMİ TESPİT MOTORU ───────────────────────────────────
-// val: test edilen değer
-// mktCap: TRY bazında piyasa değeri (referans)
-// minRatio / maxRatio: "makul" oran aralığı
-// label: log için
-function detectAndNormalize(val, mktCap, minRatio, maxRatio, label) {
-  if (val == null || mktCap == null || mktCap <= 0) return val;
-  const ratio = Math.abs(val) / mktCap;
-
-  console.log(`[Birim Tespit] ${label}: val=${val.toExponential(2)} mktCap=${mktCap.toExponential(2)} ratio=${ratio.toFixed(4)} (beklenen: ${minRatio}–${maxRatio})`);
-
-  if (ratio >= minRatio && ratio <= maxRatio) {
-    // Makul aralıkta — değiştirme
-    return val;
-  }
-
-  if (ratio < minRatio) {
-    // Çok küçük — USD olabilir, TRY'ye çevir
-    const asTRY = val * APPROX_USD_TRY;
-    const ratioTRY = Math.abs(asTRY) / mktCap;
-    if (ratioTRY >= minRatio && ratioTRY <= maxRatio) {
-      console.log(`[Birim] ${label}: USD→TRY ×${APPROX_USD_TRY}: ${val.toExponential(2)} → ${asTRY.toExponential(2)}`);
-      return asTRY;
-    }
-    // Belki binlik (bin TL → USD olarak yanlış yüklenmiş)
-    const asTRY_k = val * 1000;
-    const ratioK = Math.abs(asTRY_k) / mktCap;
-    if (ratioK >= minRatio && ratioK <= maxRatio) {
-      console.log(`[Birim] ${label}: ×1000: ${val.toExponential(2)} → ${asTRY_k.toExponential(2)}`);
-      return asTRY_k;
-    }
-    // Hem ×1000 hem USD
-    const asTRY_kU = val * 1000 * APPROX_USD_TRY;
-    const ratioKU = Math.abs(asTRY_kU) / mktCap;
-    if (ratioKU >= minRatio && ratioKU <= maxRatio) {
-      console.log(`[Birim] ${label}: ×1000×USD: ${val.toExponential(2)} → ${asTRY_kU.toExponential(2)}`);
-      return asTRY_kU;
-    }
-    console.log(`[Birim] ${label}: düzeltilemedi (ratio=${ratio.toFixed(6)} çok küçük)`);
-    return val; // en azından ham değeri döndür
-  }
-
-  if (ratio > maxRatio) {
-    // Çok büyük — 1000'e böl (bin TL bazında gelmiş)
-    const div1k = val / 1000;
-    const ratio1k = Math.abs(div1k) / mktCap;
-    if (ratio1k >= minRatio && ratio1k <= maxRatio) {
-      console.log(`[Birim] ${label}: ÷1000: ${val.toExponential(2)} → ${div1k.toExponential(2)}`);
-      return div1k;
-    }
-    const div1m = val / 1e6;
-    const ratio1m = Math.abs(div1m) / mktCap;
-    if (ratio1m >= minRatio && ratio1m <= maxRatio) {
-      console.log(`[Birim] ${label}: ÷1M: ${val.toExponential(2)} → ${div1m.toExponential(2)}`);
-      return div1m;
-    }
-    console.log(`[Birim] ${label}: düzeltilemedi (ratio=${ratio.toFixed(2)} çok büyük)`);
-    return val;
-  }
-
-  return val;
+function navigateCrit(dir){
+  const fw=FW[curFW];
+  const next=curCritIdx+dir;
+  if(next>=0&&next<fw.criteria.length){showPage('crit',next);}
 }
 
-// ── BİRİM NORMALİZASYON ─────────────────────────────────────────
-function normalizeBISTUnits(result) {
-  if (!result.marketCap || !result.currentPrice) return result;
-  const MC = result.marketCap; // TRY bazında referans
+// Touch swipe support for crit page
+(function(){
+  let tx=0;
+  document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',e=>{
+    const diff=tx-e.changedTouches[0].clientX;
+    if(Math.abs(diff)<50)return;
+    const page=document.getElementById('page-crit');
+    if(!page||!page.classList.contains('active'))return;
+    navigateCrit(diff>0?1:-1);
+  },{passive:true});
+})();
 
-  // Bilanço kalemleri: MC'nin 0.05x ile 200x arası normal
-  // (büyük holdinglerin varlıkları MC'nin 10-50 katı olabilir)
-  const BALANCE_MIN = 0.001, BALANCE_MAX = 500;
-  // Nakit akış kalemleri: MC'nin 0.001x ile 10x arası normal
-  const CASH_MIN = 0.0001, CASH_MAX = 20;
+// ANALYZE
+async function doAnalyze(){
+  const ticker=document.getElementById('tickerIn').value.trim().toUpperCase();
+  const company=document.getElementById('coIn').value.trim()||(BIST[ticker]||'');
+  if(!ticker)return;
 
-  // Bilanço
-  result.totalAssets      = detectAndNormalize(result.totalAssets,      MC, BALANCE_MIN, BALANCE_MAX, 'Assets');
-  result.totalLiabilities = detectAndNormalize(result.totalLiabilities, MC, BALANCE_MIN, BALANCE_MAX, 'Liabilities');
-  // computedEquity (totalStockholderEquity) ayrıca normalize et — bu kritik!
-  if (result.computedEquity != null) {
-    result.computedEquity = detectAndNormalize(result.computedEquity, MC, BALANCE_MIN, BALANCE_MAX, 'StockholderEquity');
-  }
-  // Nakit akış
-  result.freeCashflow      = detectAndNormalize(result.freeCashflow,      MC, CASH_MIN, CASH_MAX, 'FCF');
-  result.operatingCashflow = detectAndNormalize(result.operatingCashflow, MC, CASH_MIN, CASH_MAX, 'OpCF');
-  result.totalCash         = detectAndNormalize(result.totalCash,         MC, CASH_MIN, CASH_MAX, 'Cash');
-  result.totalDebt         = detectAndNormalize(result.totalDebt,         MC, CASH_MIN, CASH_MAX, 'Debt');
-  result.netIncome         = detectAndNormalize(result.netIncome,         MC, CASH_MIN, CASH_MAX, 'NetIncome');
-
-  return result;
-}
-
-// ── FORMÜL BAZLI PD/DD ve ROE ─────────────────────────────────────
-// Ham bilanço: Özsermaye = Varlıklar - Yükümlülükler
-// PD/DD = Piyasa Değeri / Özsermaye   ← BIST için her zaman formül
-// ROE   = Net Kâr / Özsermaye
-function computeFromRawData(result, isBIST = false) {
-  let equity = null;
-  let equitySource = '';
-
-  // 1. Doğrudan özsermaye (totalStockholderEquity) — NORMALIZE EDİLMİŞ olması şart
-  if (result.computedEquity != null && result.computedEquity > 0) {
-    equity = result.computedEquity;
-    equitySource = 'totalStockholderEquity';
-    console.log(`[Equity] Doğrudan özsermaye: ${equity.toExponential(3)}`);
-  }
-
-  // 2. Varlıklar - Yükümlülükler
-  if (!equity && result.totalAssets != null && result.totalLiabilities != null) {
-    const calc = result.totalAssets - result.totalLiabilities;
-    if (calc > 0) {
-      equity = calc;
-      result.computedEquity = equity;
-      equitySource = 'assets-liabilities';
-      console.log(`[Equity] Assets(${result.totalAssets.toExponential(3)}) - Liab(${result.totalLiabilities.toExponential(3)}) = ${equity.toExponential(3)}`);
+  // ── Hak kontrolü ──
+  const credits = curUser ? curUser.credits : guestCredits;
+  const isAdmin = curUser?.is_admin;
+  if (!isAdmin && credits <= 0) {
+    if (!getEmail()) {
+      showAuthModal();
+      showToast('Analiz hakkınız doldu. Giriş yaparak 5 ücretsiz hak kazanın.', 'warn');
     } else {
-      console.log(`[Equity] Negatif özsermaye: ${calc.toExponential(3)} — muhtemelen birim hatası`);
-      // Birim hatası ihtimali — assets normalizasyonu yanlış gitmişse tekrar dene
-      // totalAssets × 38 (USD gelmiş) ile
-      if (result.totalAssets && result.totalLiabilities) {
-        const calcUSD = (result.totalAssets * APPROX_USD_TRY) - (result.totalLiabilities * APPROX_USD_TRY);
-        if (calcUSD > 0 && result.marketCap) {
-          const pbTest = result.marketCap / calcUSD;
-          if (pbTest > 0.05 && pbTest < 50) {
-            equity = calcUSD;
-            result.computedEquity = equity;
-            equitySource = 'assets-liabilities-USD×kur';
-            console.log(`[Equity] USD düzeltme: ${equity.toExponential(3)}`);
-          }
-        }
-      }
+      showToast('Analiz hakkınız doldu. Bizimle iletişime geçin.', 'error');
     }
+    return;
   }
+  document.getElementById('coIn').value=company;
+  const btn=document.getElementById('anaBtn'),ov=document.getElementById('loadingOv'),eb=document.getElementById('errBar'),db=document.getElementById('dataBadge');
+  const ex=EX_CFG[curEX];const fw=FW[curFW];
+  eb.classList.remove('visible');db.classList.remove('visible');
+  // Yeni ticker — curCo'yu sıfırla, company boşsa map'ten doldur
+  if(!company) company = BIST[ticker] || '';
+  btn.disabled=true;curTicker=ticker;curCo=company;
+  document.getElementById('loadingT').textContent=ticker;
+  document.getElementById('loadingFW').textContent=`${ex.l} — ${fw.name}`;
+  ov.classList.add('visible');
+  ['rdGrid','multGrid','rsiCard','rngCard','anaCard','priceStrip'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  document.getElementById('badgeLive').style.display='none';
+  ['ls1','ls2','ls3','ls4'].forEach((s,i)=>{document.getElementById(s).className='loading-step';setTimeout(()=>{if(i>0)document.getElementById(['ls1','ls2','ls3','ls4'][i-1]).classList.add('done');document.getElementById(s).classList.add('active');},i*700);});
+  try{
+    // Analiz başlamadan hakkı düş
+    const creditResult = await consumeCredit();
+    if (!creditResult.ok) {
+      ov.classList.remove('visible');btn.disabled=false;
+      eb.textContent=creditResult.error;eb.classList.add('visible');
+      return;
+    }
+    const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,prompt:fw.prompt(ticker,company,ex.l),exchange:curEX})});
+    const data=await r.json();
+    if(data.error)throw new Error(data.error);
+    document.getElementById('ls4').classList.add('done');
+    setTimeout(()=>{ov.classList.remove('visible');btn.disabled=false;hasAnalyzed=true;parseAndRender(ticker,company,data.result,data.financialData,curFW);},400);
+  }catch(err){ov.classList.remove('visible');btn.disabled=false;eb.textContent='Hata: '+err.message;eb.classList.add('visible');}
+}
 
-  // ── DEBUG: kritik değerleri her zaman logla ──
-  console.log(`[DEBUG PD/DD] marketCap=${result.marketCap?.toExponential(3)} equity=${equity?.toExponential(3)} equitySrc=${equitySource} MC/EQ=${equity ? (result.marketCap/equity).toFixed(3) : 'N/A'}`);
-
-  if (!equity || equity <= 0 || !result.marketCap) {
-    console.log('[PD/DD] Özsermaye bulunamadı, hesaplama atlandı');
-    return result;
+function parseAndRender(ticker,company,text,fd,fwKey){
+  // Şirket adı boşsa Yahoo Finance veya AI cevabından al
+  if(!company || company===curCo && curTicker!==ticker){
+    // fd'den şirket adı geliyorsa kullan
+    if(fd && fd.shortName)         company=fd.shortName;
+    else if(fd && fd.longName)     company=fd.longName;
+    else {
+      // AI cevabından COMPANY: satırını ara
+      const cm=text.match(/COMPANY:\s*([^
+]+)/i);
+      if(cm) company=cm[1].trim();
+      // BIST map'ine son çare bak
+      if(!company && BIST[ticker]) company=BIST[ticker];
+    }
+    curCo=company;
+    // Sidebar şirket input'unu da güncelle
+    const coEl=document.getElementById('coIn');
+    if(coEl&&!coEl.value.trim()) coEl.value=company||'';
   }
-
-  // ── PD/DD ──
-  if (isBIST) {
-    const pbCalc = result.marketCap / equity;
-    console.log(`[PD/DD] Ham hesap: MC=${result.marketCap.toExponential(3)} / EQ=${equity.toExponential(3)} = ${pbCalc.toFixed(3)}`);
-
-    // BIST için makul aralık: 0.1 – 20
-    if (pbCalc > 0.1 && pbCalc < 20) {
-      result.pbRatio  = parseFloat(pbCalc.toFixed(2));
-      result.pbSource = `formül (${equitySource})`;
-      console.log(`[PD/DD] ✓ ${result.pbRatio} — makul aralıkta`);
-    } else if (pbCalc >= 20 && pbCalc < 1000) {
-      // Büyük ihtimalle özsermaye USD, MC TRY → özsermayeyi TRY'ye çevir
-      const equityTRY = equity * APPROX_USD_TRY;
-      const pbTRY = result.marketCap / equityTRY;
-      console.log(`[PD/DD] Kur düzeltme denemesi: EQ×${APPROX_USD_TRY}=${equityTRY.toExponential(3)} → PD/DD=${pbTRY.toFixed(3)}`);
-      if (pbTRY > 0.1 && pbTRY < 20) {
-        result.pbRatio  = parseFloat(pbTRY.toFixed(2));
-        result.computedEquity = equityTRY;
-        result.pbSource = `formül-kur (${equitySource}×${APPROX_USD_TRY})`;
-        console.log(`[PD/DD] ✓ ${result.pbRatio} — kur düzeltmesiyle makul`);
-      } else {
-        // Özsermaye 1000 ile çarpılmış mı dene (bin TL)
-        const equity1k = equity * 1000;
-        const pb1k = result.marketCap / equity1k;
-        console.log(`[PD/DD] ×1000 denemesi: EQ×1000=${equity1k.toExponential(3)} → PD/DD=${pb1k.toFixed(3)}`);
-        if (pb1k > 0.1 && pb1k < 20) {
-          result.pbRatio  = parseFloat(pb1k.toFixed(2));
-          result.computedEquity = equity1k;
-          result.pbSource = `formül-1k (${equitySource}×1000)`;
-          console.log(`[PD/DD] ✓ ${result.pbRatio} — ×1000 düzeltmesiyle makul`);
-        } else {
-          result.pbRatio  = null;
-          result.pbSource = 'hesaplanamadi';
-          console.log(`[PD/DD] ✗ Tüm denemeler başarısız. pbCalc=${pbCalc.toFixed(2)} pbTRY=${pbTRY.toFixed(2)} pb1k=${pb1k.toFixed(2)}`);
-        }
-      }
+  textGlobal=text;
+  const fw=FW[fwKey||curFW];const ex=EX_CFG[curEX];
+  const statuses=[],details=[];
+  const criteriaBlock=text.match(/CRITERIA_START([\s\S]*?)CRITERIA_END/i);
+  const searchText=criteriaBlock?criteriaBlock[1]:text;
+  fw.keys.forEach(key=>{const m=searchText.match(new RegExp('^'+key+':\\s*(PASS|FAIL|NEUTRAL)\\s*\\|\\s*([^\\n]+)','im'));statuses.push(m?pStat(m[1]):'neutral');details.push(m?m[2].trim():'—');});
+  const sm=text.match(/TOTAL_SCORE:\s*(\d+)/);const rawScore=sm?parseInt(sm[1]):statuses.filter(s=>s==='pass').length;const score=Math.min(fw.criteria.length,Math.max(0,rawScore));
+  // AKILLI VERDICT: BEKLE asla mecbur değil — pass/fail sayısına göre karar ver
+  const vm=text.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);
+  const passCount=statuses.filter(s=>s==='pass').length;
+  const failCount=statuses.filter(s=>s==='fail').length;
+  let verdict;
+  if(vm){
+    const aiV=vm[1];
+    // AI BEKLE diyorsa sisteme bırak
+    if(aiV==='BEKLE'){
+      if(passCount>failCount)verdict='AL';
+      else if(failCount>passCount)verdict='UZAK_DUR';
+      else verdict='BEKLE'; // gerçekten eşit
     } else {
-      result.pbRatio  = null;
-      result.pbSource = 'hesaplanamadi';
-      console.log(`[PD/DD] ✗ Aralık dışı: ${pbCalc.toFixed(3)}`);
+      verdict=aiV;
     }
   } else {
-    const pbBad = result.pbRatio == null || result.pbRatio <= 0 || result.pbRatio > 30;
-    if (pbBad) {
-      result.pbRatio  = parseFloat((result.marketCap / equity).toFixed(2));
-      result.pbSource = 'formül';
-    }
+    // AI vermemişse sayısal karar
+    if(passCount>=5)verdict='AL';
+    else if(failCount>=5)verdict='UZAK_DUR';
+    else if(passCount>failCount)verdict='AL';
+    else if(failCount>passCount)verdict='UZAK_DUR';
+    else verdict='BEKLE';
+  }
+  analysisData={ticker,company,statuses,details,score,verdict,fw:fwKey||curFW};
+  if(fd) analysisData.fd = fd; // finansal verileri canvas için sakla
+
+  const ptIdx=portfolio.findIndex(p=>p.ticker===ticker&&p.exchange===curEX);
+  if(ptIdx>=0){
+    if(fwKey==='buffett'){portfolio[ptIdx].bS=score;portfolio[ptIdx].bV=verdict;}
+    else if(fwKey==='lynch'){portfolio[ptIdx].lS=score;portfolio[ptIdx].lV=verdict;}
+    else if(fwKey==='dalio'){portfolio[ptIdx].dS=score;portfolio[ptIdx].dV=verdict;}
   }
 
-  // ── ROE ──
-  const roeBad = result.roe == null || result.roe === 0;
-  if (roeBad && result.netIncome != null) {
-    const roeCalc = result.netIncome / equity;
-    if (Math.abs(roeCalc) <= 3) { // sanity: max ±300%
-      result.roe       = parseFloat(roeCalc.toFixed(4));
-      result.roeSource = `formül (${equitySource})`;
-      console.log(`[ROE] %${(result.roe*100).toFixed(1)}`);
-    } else {
-      console.log(`[ROE] Aralık dışı: ${(roeCalc*100).toFixed(1)}% — atlandı`);
-    }
-  }
+  statuses.forEach((s,i)=>{const e=document.getElementById('ns-'+i);if(e)e.textContent=icon(s);});
+  const vbox=document.getElementById('verdictBox');
+  vbox.textContent=`${score}/${fw.criteria.length} — ${verdict}`;
+  vbox.className='verdict-box '+(verdict==='AL'?'buy':verdict==='UZAK_DUR'?'avoid':'watch');
 
-  // ── Borç/Özsermaye ──
-  if (!result.debtToEquity && result.totalDebt && equity > 0) {
-    result.debtToEquity = parseFloat(((result.totalDebt / equity) * 100).toFixed(1));
-  }
+  const LOGOS={AAPL:'apple.com',MSFT:'microsoft.com',GOOGL:'google.com',AMZN:'amazon.com',NVDA:'nvidia.com',META:'meta.com',TSLA:'tesla.com',ABBV:'abbvie.com',JPM:'jpmorganchase.com',V:'visa.com',AMD:'amd.com',NOW:'servicenow.com'};
+  const logoEl=document.getElementById('stockLogo');const ld=LOGOS[ticker];
+  if(ld){logoEl.innerHTML=`<img src="https://logo.clearbit.com/${ld}" alt="${ticker}" onerror="this.parentElement.innerHTML='${ticker.substring(0,2)}'">`;
+  }else logoEl.textContent=ticker.substring(0,2);
+  document.getElementById('hflagUse').setAttribute('href',ex.fh);
+  document.getElementById('stockTicker').textContent=ticker;
+  document.getElementById('stockCo').textContent=company||'';
+  document.getElementById('badgeEx').textContent=ex.l;
+  const bfw=document.getElementById('badgeFw');bfw.textContent=fw.name;bfw.className='badge badge-fw '+(fwKey||curFW);
+  document.getElementById('stockHdr').classList.add('visible');
+  document.getElementById('statScore').textContent=`${score}/${fw.criteria.length}`;
+  const pc=statuses.filter(s=>s==='pass').length,fc=statuses.filter(s=>s==='fail').length;
+  document.getElementById('statPass').textContent=pc;
+  document.getElementById('statPassS').textContent=`${fc} kaldı, ${statuses.filter(s=>s==='neutral').length} belirsiz`;
 
-  return result;
+  if(fd)renderRealData(fd);
+  const mults=parseMult(text);if(mults)renderMult(mults);
+  renderCharts(analysisData);renderTable(analysisData);
+  document.getElementById('analysisSection').style.display='block';
+  showPage('overview');switchTab('analiz');
+  setTimeout(()=>document.getElementById('analysisSection').scrollIntoView({behavior:'smooth',block:'start'}),300);
 }
 
-// ── BIST SITE SCRAPING (Son Çare) ────────────────────────────────
-async function scrapeBISTFallback(ticker) {
-  const out = { peRatio: null, pbRatio: null, roe: null, source: null };
-
-  // Deneme 1: İş Yatırım
-  try {
-    const url = `https://www.isyatirim.com.tr/analiz-ve-bulten/hisse/${ticker}`;
-    const r = await fetch(url, {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Accept-Language': 'tr-TR,tr;q=0.9' },
-      signal: AbortSignal.timeout(6000)
-    });
-    if (r.ok) {
-      const html = await r.text();
-      const fk  = html.match(/F\/K[^>]*>[\s]*([0-9]+[.,][0-9]+)/i);
-      const fdd = html.match(/F\/DD[^>]*>[\s]*([0-9]+[.,][0-9]+)/i);
-      const roe = html.match(/ROE[^>]*>[\s]*%?\s*([0-9]+[.,][0-9]+)/i);
-      if (fk)  out.peRatio = parseFloat(fk[1].replace(',','.'));
-      if (fdd) out.pbRatio = parseFloat(fdd[1].replace(',','.'));
-      if (roe) out.roe     = parseFloat(roe[1].replace(',','.')) / 100;
-      if (out.peRatio || out.pbRatio) { out.source = 'IsYatirim'; return out; }
-    }
-  } catch(e) { console.log('İş Yatırım scrape:', e.message); }
-
-  // Deneme 2: BigPara
-  try {
-    const url = `https://bigpara.hurriyet.com.tr/hisse/${ticker.toLowerCase()}/hisse-senedi/`;
-    const r = await fetch(url, {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Accept-Language': 'tr-TR,tr' },
-      signal: AbortSignal.timeout(6000)
-    });
-    if (r.ok) {
-      const html = await r.text();
-      const fk  = html.match(/(?:FD\/Kazanç|F\/K)[^<]*<[^>]+>([0-9]+[.,][0-9]+)/i);
-      const fdd = html.match(/(?:FD\/Defter|F\/DD)[^<]*<[^>]+>([0-9]+[.,][0-9]+)/i);
-      const roe = html.match(/ROE[^<]*<[^>]+>%?\s*([0-9]+[.,][0-9]+)/i);
-      if (fk)  out.peRatio = parseFloat(fk[1].replace(',','.'));
-      if (fdd) out.pbRatio = parseFloat(fdd[1].replace(',','.'));
-      if (roe) out.roe     = parseFloat(roe[1].replace(',','.')) / 100;
-      if (out.peRatio || out.pbRatio) { out.source = 'BigPara'; return out; }
-    }
-  } catch(e) { console.log('BigPara scrape:', e.message); }
-
-  console.log('Tüm BIST fallback başarısız');
-  return out;
+// PORTFOLIO
+function addToPt(){
+  const ticker=(document.getElementById('ptTk').value||'').trim().toUpperCase();
+  const company=(document.getElementById('ptCo').value||'').trim()||(BIST[ticker]||'');
+  const exchange=document.getElementById('ptEx').value;
+  const buyPrice=parseFloat(document.getElementById('ptPr').value)||0;
+  const qty=parseInt(document.getElementById('ptQty').value)||0;
+  const currency=exchange==='BIST'?'₺':'$';
+  const errEl=document.getElementById('ptErr');
+  if(!ticker){errEl.textContent='Ticker gerekli';errEl.style.display='block';return;}
+  if(!buyPrice||buyPrice<=0){errEl.textContent='Geçerli alış fiyatı gir';errEl.style.display='block';return;}
+  if(!qty||qty<=0){errEl.textContent='Geçerli adet gir';errEl.style.display='block';return;}
+  const ei=portfolio.findIndex(p=>p.ticker===ticker&&p.exchange===exchange);
+  if(ei>=0)portfolio[ei]={...portfolio[ei],buyPrice,qty,company:company||portfolio[ei].company};
+  else portfolio.push({ticker,company,exchange,currency,buyPrice,qty,bS:null,bV:null,lS:null,lV:null,dS:null,dV:null});
+  errEl.style.display='none';
+  ['ptTk','ptCo','ptPr','ptQty'].forEach(id=>document.getElementById(id).value='');
+  renderPt();updateSbSummary();triggerPortfolioSave();
 }
 
-// ── ANA VERİ ÇEKME ──────────────────────────────────────────────
-async function fetchYahooData(yahooTicker) {
-  const cacheKey = `yahoo:${yahooTicker}`;
-  const cached = getCached(cacheKey);
-  if (cached) { console.log(`Cache hit: ${yahooTicker}`); return cached; }
+function removeFromPt(tk,ex){portfolio=portfolio.filter(p=>!(p.ticker===tk&&p.exchange===ex));renderPt();updateSbSummary();triggerPortfolioSave();}
 
-  const { crumb, cookie } = await getYahooCrumb();
-  const cs = crumb ? `&crumb=${encodeURIComponent(crumb)}` : '';
-  const isBIST = yahooTicker.endsWith('.IS');
+async function analyzeAllPt(){
+  if(!portfolio.length)return;
+  const btn=document.getElementById('ptAnaBtn');btn.disabled=true;btn.textContent='⏳ Analiz ediliyor...';
+  const nc=document.getElementById('ptNotifs');
+  const estMin=Math.ceil(portfolio.length*2*0.4);
+  const tn=document.createElement('div');tn.className='pt-tnote';
+  tn.innerHTML=`⏱ <strong>${portfolio.length} hisse</strong> için Buffett + Lynch analizi. Tahmini süre: <strong>${estMin}–${estMin+1} dakika</strong>.`;
+  nc.appendChild(tn);
+  for(const p of portfolio){
+    const nid=`notif-${p.ticker}-${p.exchange}`;
+    let notif=document.getElementById(nid);
+    if(!notif){notif=document.createElement('div');notif.id=nid;notif.className='pt-notif analyzing';notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span class="pt-nt">${p.ticker}</span><span class="pt-nc">${p.company||'—'} · ${p.exchange}</span></div><div style="font-size:10px;color:var(--muted2)">⏳ Buffett analizi...</div><div class="pt-prog"><div class="pt-pf" id="pf-${p.ticker}" style="width:5%"></div></div>`;nc.appendChild(notif);}
+    notif.scrollIntoView({behavior:'smooth',block:'nearest'});
+    try{const bR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,prompt:FW.buffett.prompt(p.ticker,p.company,p.exchange),exchange:p.exchange})});const bD=await bR.json();if(!bD.error){const s=bD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=bD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.bS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.bV=v?v[1]:'BEKLE';}}catch{}
+    const pf=document.getElementById('pf-'+p.ticker);if(pf)pf.style.width='55%';
+    notif.querySelector('div:nth-child(2)').textContent='⏳ Lynch analizi...';
+    try{const lR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,prompt:FW.lynch.prompt(p.ticker,p.company,p.exchange),exchange:p.exchange})});const lD=await lR.json();if(!lD.error){const s=lD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=lD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.lS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.lV=v?v[1]:'BEKLE';}}catch{}
+    // Dalio analizi
+    notif.querySelector('div:nth-child(2)').textContent='⏳ Dalio analizi...';
+    try{const dR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,prompt:FW.dalio.prompt(p.ticker,p.company,p.exchange),exchange:p.exchange})});const dD=await dR.json();if(!dD.error){const s=dD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=dD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.dS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.dV=v?v[1]:'BEKLE';}}catch{}
+    if(pf)pf.style.width='100%';
+    const gc=v=>v==='AL'?'var(--success)':v==='UZAK_DUR'?'var(--danger)':'var(--warn)';
+    const sc2=s=>s>=5?'var(--success)':s>=3?'var(--warn)':'var(--danger)';
+    const avg=((p.bS||0)+(p.lS||0)+(p.dS||0))/([(p.bS),(p.lS),(p.dS)].filter(x=>x!=null).length||1);
+    notif.className='pt-notif '+(avg>=4.5?'done-good':avg<3?'done-bad':'done-mid');
+    notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span class="pt-nt">${p.ticker}</span><span class="pt-nc">${p.company||'—'} · ${p.exchange}</span></div><div class="pt-scrs"><div class="pt-sb2 b"><span class="ptsl">BUFFETT</span><span class="ptsv" style="color:${p.bS!=null?sc2(p.bS):'var(--muted2)'}">${p.bS!=null?p.bS+'/7':'—'}</span>${p.bV?`<span class="ptvt" style="color:${gc(p.bV)};border-color:${gc(p.bV)}40">${p.bV}</span>`:''}</div><div class="pt-sb2 l"><span class="ptsl">LYNCH</span><span class="ptsv" style="color:${p.lS!=null?sc2(p.lS):'var(--muted2)'}">${p.lS!=null?p.lS+'/7':'—'}</span>${p.lV?`<span class="ptvt" style="color:${gc(p.lV)};border-color:${gc(p.lV)}40">${p.lV}</span>`:''}</div><div class="pt-sb2" style="border-left:2px solid var(--dalio)"><span class="ptsl" style="color:var(--dalio)">DALIO</span><span class="ptsv" style="color:${p.dS!=null?sc2(p.dS):'var(--muted2)'}">${p.dS!=null?p.dS+'/7':'—'}</span>${p.dV?`<span class="ptvt" style="color:${gc(p.dV)};border-color:${gc(p.dV)}40">${p.dV}</span>`:''}</div></div>`;
+    renderPt();updateSbSummary();
+    if(portfolio.indexOf(p)<portfolio.length-1)await new Promise(r=>setTimeout(r,400));
+  }
+  btn.disabled=false;btn.textContent='▶ Buffett + Lynch + Dalio';
+  triggerPortfolioSave();
+}
 
-  const makeHeaders = () => ({
-    'User-Agent': UA,
-    'Accept': 'application/json, text/plain, */*',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Referer': 'https://finance.yahoo.com/',
-    'Origin': 'https://finance.yahoo.com',
-    ...(cookie ? { 'Cookie': cookie } : {}),
+function renderPt(){
+  const has=portfolio.length>0;
+  document.getElementById('emptyPt').style.display=has?'none':'flex';
+  document.getElementById('ptContent').style.display=has?'block':'none';
+  if(!has)return;
+  const total=portfolio.reduce((s,p)=>s+p.buyPrice*p.qty,0);
+  const tlT=portfolio.filter(p=>p.currency==='₺').reduce((s,p)=>s+p.buyPrice*p.qty,0);
+  const usdT=portfolio.filter(p=>p.currency==='$').reduce((s,p)=>s+p.buyPrice*p.qty,0);
+  const tl=document.getElementById('psTL'),ud=document.getElementById('psUSD');
+  if(tlT>0){tl.style.display='block';tl.textContent=`₺${tlT.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;}else tl.style.display='none';
+  if(usdT>0){ud.style.display='block';ud.textContent=`$${usdT.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;}else ud.style.display='none';
+  document.getElementById('psCurS').textContent=tlT>0&&usdT>0?'₺ + $ karışık':tlT>0?'TL bazlı':'USD bazlı';
+  document.getElementById('psCount').textContent=portfolio.length;
+  const big2=portfolio.reduce((a,b)=>(b.buyPrice*b.qty)>(a.buyPrice*a.qty)?b:a,portfolio[0]);
+  const bigPct=((big2.buyPrice*big2.qty/total)*100).toFixed(1);
+  document.getElementById('psBig').textContent=`%${bigPct}`;document.getElementById('psBigT').textContent=big2.ticker;
+  const bAn=portfolio.filter(p=>p.bS!=null);const lAn=portfolio.filter(p=>p.lS!=null);const dAn=portfolio.filter(p=>p.dS!=null);
+  const avgB=bAn.length>0?(bAn.reduce((s,p)=>s+p.bS,0)/bAn.length).toFixed(1):'—';
+  const avgL=lAn.length>0?(lAn.reduce((s,p)=>s+p.lS,0)/lAn.length).toFixed(1):'—';
+  const avgD=dAn.length>0?(dAn.reduce((s,p)=>s+p.dS,0)/dAn.length).toFixed(1):'—';
+  document.getElementById('psAvgB').textContent=avgB==='—'?'—':`${avgB}/7`;
+  document.getElementById('psAvgL').textContent=`Lynch: ${avgL==='—'?'—':`${avgL}/7`}`;
+  const dEl=document.getElementById('psAvgD');if(dEl)dEl.textContent=avgD==='—'?'—':`${avgD}/7`;
+  const cols=['#2451a3','#1a6b3a','#8b4513','#c0392b','#b8700a','#5b2d8e','#2c7a7b','#9a7d3a'];
+  const mix=document.getElementById('mixBars');mix.innerHTML='';
+  portfolio.forEach((p,i)=>{
+    const cost=p.buyPrice*p.qty;const wt=(cost/total*100).toFixed(1);const isTL=p.currency==='₺';
+    const row=document.createElement('div');row.className='mix-row';
+    row.innerHTML=`<div class="mix-lbl">${p.ticker}</div><div class="mix-bw"><div class="mix-bf" style="background:${cols[i%cols.length]};width:0%" id="mx-${i}"></div></div><div class="mix-pct">%${wt}</div><div class="mix-cur">${isTL?'₺':'$'}${cost.toLocaleString('tr-TR',{maximumFractionDigits:0})}<span class="cbadge ${isTL?'c-tl':'c-usd'}">${isTL?'TL':'USD'}</span></div>`;
+    mix.appendChild(row);setTimeout(()=>{const e=document.getElementById('mx-'+i);if(e)e.style.width=wt+'%';},50+i*100);
+  });
+  const tb=document.getElementById('ptTBody');tb.innerHTML='';
+  portfolio.forEach((p,i)=>{
+    const cost=p.buyPrice*p.qty;const wt=(cost/total*100).toFixed(1);
+    const bC=p.bS!=null?(p.bS>=5?'var(--success)':p.bS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';
+    const lC=p.lS!=null?(p.lS>=5?'var(--success)':p.lS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';
+    const dC=p.dS!=null?(p.dS>=5?'var(--success)':p.dS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><div class="pt-tk">${p.ticker}</div><div class="pt-co">${p.company||'—'}</div></td><td><span class="badge badge-ex">${p.exchange}</span></td><td style="font-family:'IBM Plex Mono',monospace">${p.buyPrice.toFixed(2)} <span style="font-size:8px;color:${p.currency==='₺'?'var(--warn)':'var(--success)'}">${p.currency}</span></td><td>${p.qty}</td><td style="font-family:'IBM Plex Mono',monospace;font-weight:500">${cost.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="font-size:8px;color:${p.currency==='₺'?'var(--warn)':'var(--success)'}">${p.currency}</span></td><td><div style="font-size:10px;color:${cols[i%cols.length]};font-weight:600;font-family:'IBM Plex Mono',monospace">%${wt}</div><div class="pt-wbar" style="background:${cols[i%cols.length]};width:${wt}%"></div></td><td><div class="ptscr"><div class="psr"><span class="psrl">B:</span><span class="psrv" style="color:${bC}">${p.bS!=null?p.bS+'/7':'—'}</span>${p.bV?`<span style="font-size:8px;color:${bC}">${p.bV}</span>`:''}</div><div class="psr"><span class="psrl" style="color:var(--lynch)">L:</span><span class="psrv" style="color:${lC}">${p.lS!=null?p.lS+'/7':'—'}</span>${p.lV?`<span style="font-size:8px;color:${lC}">${p.lV}</span>`:''}</div><div class="psr"><span class="psrl" style="color:var(--dalio)">D:</span><span class="psrv" style="color:${dC}">${p.dS!=null?p.dS+'/7':'—'}</span>${p.dV?`<span style="font-size:8px;color:${dC}">${p.dV}</span>`:''}</div></div></td><td style="display:flex;gap:3px;flex-wrap:wrap"><button class="pt-act analyze" onclick="anaFromPt('${p.ticker}','${p.company}','${p.exchange}')">Analiz</button><button class="pt-act remove" onclick="removeFromPt('${p.ticker}','${p.exchange}')">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+  if(ptPie)ptPie.destroy();if(ptScore)ptScore.destroy();
+  ptPie=new Chart(document.getElementById('ptPie').getContext('2d'),{type:'doughnut',data:{labels:portfolio.map(p=>`${p.ticker}(${p.currency})`),datasets:[{data:portfolio.map(p=>(p.buyPrice*p.qty/total*100)),backgroundColor:cols.slice(0,portfolio.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9},boxWidth:9}}}}});
+  const an=portfolio.filter(p=>p.bS!=null||p.lS!=null||p.dS!=null);
+  if(an.length>0){ptScore=new Chart(document.getElementById('ptScore').getContext('2d'),{type:'bar',data:{labels:an.map(p=>p.ticker),datasets:[{label:'Buffett',data:an.map(p=>p.bS||0),backgroundColor:'rgba(36,81,163,0.7)',borderWidth:0,borderRadius:2},{label:'Lynch',data:an.map(p=>p.lS||0),backgroundColor:'rgba(139,69,19,0.7)',borderWidth:0,borderRadius:2},{label:'Dalio',data:an.map(p=>p.dS||0),backgroundColor:'rgba(91,45,142,0.7)',borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:7,ticks:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9}},grid:{color:'#f4f1ec'}},x:{ticks:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9}},grid:{display:false}}},plugins:{legend:{labels:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9},boxWidth:8}}}}});}
+  const cr=parseFloat(bigPct);let rTxt,rCls;if(cr>50||portfolio.length<3){rTxt='YÜKSEK';rCls='high';}else if(cr>30||portfolio.length<5){rTxt='ORTA';rCls='mid';}else{rTxt='DÜŞÜK';rCls='low';}
+  const rl=document.getElementById('riskLv');rl.textContent=rTxt;rl.className='rl '+rCls;
+  document.getElementById('riskConc').textContent=cr>50?'Kritik ✗':cr>30?'Orta ⚠️':'İyi ✓';
+  document.getElementById('riskBig').textContent=`${big2.ticker} %${bigPct}`;
+  document.getElementById('riskAvgB').textContent=avgB==='—'?'Henüz analiz yok':`${avgB}/7`;
+  document.getElementById('riskUn').textContent=`${portfolio.filter(p=>p.bS===null).length} hisse`;
+}
+
+function anaFromPt(tk,co,ex){selEx(ex);document.getElementById('tickerIn').value=tk;document.getElementById('coIn').value=co||'';switchTab('analiz');showPage('overview');setTimeout(()=>doAnalyze(),200);}
+
+function updateSbSummary(){
+  const el=document.getElementById('ptSbSummary');
+  if(!portfolio.length){el.textContent='Henüz hisse eklenmedi.';return;}
+  const total=portfolio.reduce((s,p)=>s+p.buyPrice*p.qty,0);
+  const tlT=portfolio.filter(p=>p.currency==='₺').reduce((s,p)=>s+p.buyPrice*p.qty,0);
+  const usdT=portfolio.filter(p=>p.currency==='$').reduce((s,p)=>s+p.buyPrice*p.qty,0);
+  let h=`<div style="margin-bottom:4px;font-size:9px">`;
+  if(tlT>0)h+=`<span style="color:var(--warn)">₺${tlT.toLocaleString('tr-TR',{maximumFractionDigits:0})}</span>`;
+  if(tlT>0&&usdT>0)h+=' + ';
+  if(usdT>0)h+=`<span style="color:var(--success)">$${usdT.toLocaleString('tr-TR',{maximumFractionDigits:0})}</span>`;
+  h+=`</div>`;
+  h+=portfolio.slice(0,4).map(p=>{const w=((p.buyPrice*p.qty/total)*100).toFixed(0);const bC=p.bS!=null?(p.bS>=5?'var(--success)':p.bS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';return`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><span style="color:var(--accent);font-weight:700;font-family:Syne,sans-serif;font-size:10px">${p.ticker}</span><span style="color:var(--muted2);font-size:8px">%${w}·${p.currency}</span>${p.bS!=null?`<span style="color:${bC};font-size:8px">B:${p.bS}/7</span>`:''}</div>`;}).join('');
+  el.innerHTML=h;
+}
+
+// ===== FORUM =====
+function openPostForm(){document.getElementById('postForm').classList.add('visible');document.getElementById('pfContent').focus();}
+function closePostForm(){document.getElementById('postForm').classList.remove('visible');}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const ta=document.getElementById('pfContent');
+  if(ta)ta.addEventListener('input',()=>{document.getElementById('pfCharCount').textContent=`${ta.value.length} / 2000 karakter`;});
+});
+
+async function submitPost(){
+  const btn=document.getElementById('pfSubmit');const msg=document.getElementById('pfMsg');
+  const content=(document.getElementById('pfContent').value||'').trim();
+  const author=(document.getElementById('pfNick').value||'').trim()||'Anonim';
+  const ticker=(document.getElementById('pfTicker').value||'').trim().toUpperCase();
+  const framework=curFW||'buffett';
+  if(content.length<5){msg.className='pf-msg err';msg.textContent='Yazı çok kısa (minimum 5 karakter)';msg.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Gönderiliyor...';
+  try{
+    const r=await fetch('/api/forum?action=post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({author,ticker,framework,content})});
+    const data=await r.json();
+    if(data.error)throw new Error(data.error);
+    msg.className='pf-msg ok';msg.textContent='✓ Gönderin yayımlandı!';msg.style.display='block';
+    document.getElementById('pfContent').value='';document.getElementById('pfNick').value='';document.getElementById('pfTicker').value='';if(document.getElementById('pfCharCount'))document.getElementById('pfCharCount').textContent='0 / 1000 karakter';
+    if(data.post)prependPost(data.post);
+    setTimeout(()=>{msg.style.display='none';if(typeof closePostForm==='function')closePostForm();},1800);
+  }catch(e){msg.className='pf-msg err';msg.textContent='Hata: '+e.message;msg.style.display='block';}
+  btn.disabled=false;btn.textContent='📤 Gönder';
+}
+
+async function loadPosts(){
+  const g=document.getElementById('postsGrid');g.innerHTML='<div class="forum-loading">Gönderiler yükleniyor...</div>';
+  try{
+    const r=await fetch('/api/forum?action=list');const data=await r.json();
+    renderPosts(data.posts||[]);
+  }catch(e){g.innerHTML=`<div class="forum-empty">Yüklenemedi: ${e.message}</div>`;}
+}
+
+async function likePost(id, btn){
+  try{
+    const r=await fetch('/api/forum?action=like',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+    const data=await r.json();
+    if(data.likes!==undefined&&btn){btn.textContent=`♥ ${data.likes}`;btn.style.color='var(--danger)';}
+  }catch{}
+}
+
+function renderPosts(posts){
+  const g=document.getElementById('postsGrid');
+  if(!posts.length){g.innerHTML='<div class="forum-empty">Henüz gönderi yok. İlk analizi sen yaz! 👆</div>';return;}
+  g.innerHTML='';posts.forEach(p=>g.appendChild(createPostCard(p)));
+}
+
+function prependPost(post){
+  const g=document.getElementById('postsGrid');
+  const empty=g.querySelector('.forum-empty');if(empty)empty.remove();
+  const card=createPostCard(post);g.insertBefore(card,g.firstChild);
+}
+
+function createPostCard(p){
+  const card=document.createElement('div');
+  const nickname=p.author||p.nickname||'Anonim';
+  const vClass=p.verdict?`v-${p.verdict}`:'v-none';
+  card.className=`post-card ${vClass}`;
+  const ltr=avatarLetter(nickname);const bg=avatarBg(nickname);
+  const tweetText=`${p.ticker?'$'+p.ticker+' ':''} — ${nickname}\n\n${p.content.substring(0,200)}${p.content.length>200?'...':''}\n\n#BarışInvesting\nbarisinvesting.vercel.app`;
+  const postId=p.id||'';
+  const likes=p.likes||0;
+  const timeAgo=p.ts?ago(p.ts/1000):p.createdAt?ago(p.createdAt/1000):'az önce';
+  card.innerHTML=`
+    <div class="post-hdr">
+      <div class="post-avatar" style="background:${bg}">${ltr}</div>
+      <div>
+        <div class="post-nick">${nickname}</div>
+        <div class="post-meta">${timeAgo}</div>
+      </div>
+      <div class="post-badges">
+        ${p.ticker?`<span class="post-ticker-badge">$${p.ticker}</span>`:''}
+        ${p.framework?`<span class="post-ex-badge">${p.framework}</span>`:''}
+        ${p.exchange?`<span class="post-ex-badge">${p.exchange}</span>`:''}
+        ${p.verdict?`<span class="post-verdict-badge pv-${p.verdict}">${p.verdict}</span>`:''}
+      </div>
+    </div>
+    <div class="post-content">${p.content.replace(/\n/g,'<br>')}</div>
+    <div class="post-footer">
+      ${p.ticker?`<button class="post-analyze-btn" onclick="qFill('${p.ticker}','','${p.exchange||'BIST'}')"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Analiz Et</button>`:''}
+      ${postId?`<button class="post-like-btn" id="like-${postId}" onclick="likePost('${postId}',this)">♥ ${likes}</button>`:''}
+      <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}" target="_blank" class="post-x-btn"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X'te Paylaş</a>
+      <span class="post-time">${timeAgo}</span>
+    </div>
+  `;
+  return card;
+}
+
+// SHARE
+function openShr(){
+  if(!analysisData){ showToast('⚠ Önce bir hisse analiz edin'); return; }
+  drawCanvas();
+  const m=document.getElementById('shrModal');
+  if(m){ m.classList.add('visible'); m.scrollTop=0; }
+}
+function closeShr(){
+  const m=document.getElementById('shrModal');
+  if(m) m.classList.remove('visible');
+}
+function drawCanvas(){
+  const canvas=document.getElementById('shrCanvas');
+  if(!canvas){ console.error('shrCanvas bulunamadı'); return; }
+  const ctx=canvas.getContext('2d');
+  // ── 2× retina çözünürlük ──
+  const W=1200, H=800;
+  canvas.width=W; canvas.height=H;
+  canvas.style.width='600px'; canvas.style.height='400px';
+
+  const fw=FW[curFW]; const d=analysisData; const fd=d.fd||{};
+  const PASS='#22c55e', FAIL='#f05252', NEUT='#f59e0b';
+  const vc  = d.verdict==='AL'?PASS : d.verdict==='UZAK_DUR'?FAIL : NEUT;
+  const fwC = curFW==='lynch'?'#e07b39' : curFW==='dalio'?'#9b77cc' : '#4d8ef0';
+
+  // ─── ARKA PLAN ───
+  ctx.fillStyle='#0e1220'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,255,255,0.025)'; ctx.lineWidth=1;
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  for(let x=0;x<W;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+
+  // Sol kenar gradient
+  const sg=ctx.createLinearGradient(0,0,0,H);
+  sg.addColorStop(0,fwC); sg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sg; ctx.fillRect(0,0,5,H);
+
+  // ─── HEADER ───
+  ctx.fillStyle='#151929'; ctx.fillRect(0,0,W,108);
+  ctx.fillStyle=fwC; ctx.fillRect(0,108,W,3);
+  ctx.fillStyle='rgba(255,255,255,0.32)';
+  ctx.font=`500 22px "IBM Plex Mono",monospace`;
+  ctx.fillText('BARIŞ INVESTING  ·  YATIRIM ANALİZ MERKEZİ',48,38);
+  ctx.fillStyle='#e8edf8'; ctx.font=`700 66px "IBM Plex Serif","Georgia",serif`;
+  ctx.fillText(d.ticker,48,96);
+  const tkW=ctx.measureText(d.ticker).width;
+  if(d.company){ ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font=`400 22px "IBM Plex Mono",monospace`; ctx.fillText((d.company||'').substring(0,28),48+tkW+16,86); }
+
+  // Framework badge
+  ctx.fillStyle=fwC+'33'; ctx.fillRect(48,116,170,30);
+  ctx.strokeStyle=fwC+'88'; ctx.lineWidth=1; ctx.strokeRect(48,116,170,30);
+  ctx.fillStyle=fwC; ctx.font=`600 18px "IBM Plex Mono",monospace`;
+  ctx.fillText(fw.name.toUpperCase(),58,136);
+
+  // Verdict kutusu
+  const vbW=240,vbH=74,vbX=W-vbW-48,vbY=14;
+  ctx.fillStyle=vc+'22'; ctx.fillRect(vbX,vbY,vbW,vbH);
+  ctx.strokeStyle=vc; ctx.lineWidth=2; ctx.strokeRect(vbX,vbY,vbW,vbH);
+  ctx.fillStyle=vc; ctx.fillRect(vbX,vbY,5,vbH);
+  ctx.font=`800 36px "IBM Plex Serif","Georgia",serif`; ctx.textAlign='center';
+  ctx.fillStyle=vc; ctx.fillText(d.verdict==='AL'?'AL':d.verdict==='UZAK_DUR'?'UZAK DUR':'BEKLE',vbX+vbW/2+4,vbY+44);
+  ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.font=`500 18px "IBM Plex Mono",monospace`;
+  ctx.fillText(`${d.score}/${fw.criteria.length} KRİTER`,vbX+vbW/2+4,vbY+66);
+  ctx.textAlign='left';
+
+  const divX=W/2, sY=158;
+
+  // ─── SOL KOLON: Kriter bar chart ───
+  ctx.fillStyle='rgba(255,255,255,0.28)'; ctx.font=`600 17px "IBM Plex Mono",monospace`;
+  ctx.fillText('KRİTER ANALİZİ',48,sY-8);
+
+  const colW=divX-68, rowH=Math.min(52, (H-sY-80)/Math.max(fw.criteria.length,1));
+  fw.criteria.forEach((cr,i)=>{
+    const y=sY+i*rowH;
+    const s=d.statuses[i];
+    const clr=s==='pass'?PASS:s==='fail'?FAIL:NEUT;
+    const bg =s==='pass'?PASS+'14':s==='fail'?FAIL+'14':NEUT+'0e';
+    ctx.fillStyle='#1c2235'; ctx.fillRect(48,y+2,colW,rowH-4);
+    ctx.fillStyle=bg; ctx.fillRect(48,y+2,colW,rowH-4);
+    ctx.fillStyle=clr; ctx.fillRect(48,y+2,4,rowH-4);
+    // Bar (sağda)
+    const bx=48+colW-150, bW=138, bH=10, by=y+rowH/2-5;
+    ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(bx,by,bW,bH);
+    const fp=s==='pass'?1:s==='fail'?0.12:0.5;
+    const bg2=ctx.createLinearGradient(bx,0,bx+bW,0);
+    bg2.addColorStop(0,clr+'cc'); bg2.addColorStop(1,clr+'44');
+    ctx.fillStyle=bg2; ctx.fillRect(bx,by,bW*fp,bH);
+    // Metin
+    ctx.fillStyle='#d8e4f8'; ctx.font=`500 18px "IBM Plex Mono",monospace`;
+    const nm=cr.name.length>22?cr.name.substring(0,21)+'…':cr.name;
+    ctx.fillText(nm,60,y+rowH/2+4);
+    const lbl=s==='pass'?'✓ GEÇTİ':s==='fail'?'✗ KALDI':'◑ BELİRSİZ';
+    ctx.fillStyle=clr; ctx.font=`600 15px "IBM Plex Mono",monospace`;
+    ctx.fillText(lbl,60,y+rowH/2+20);
   });
 
-  let result = {
-    currentPrice: null, currency: isBIST ? 'TRY' : 'USD',
-    marketCap: null, fiftyTwoWeekLow: null, fiftyTwoWeekHigh: null,
-    peRatio: null, forwardPE: null, pbRatio: null, pegRatio: null, evEbitda: null,
-    grossMargin: null, operatingMargin: null, profitMargin: null,
-    roe: null, roa: null, freeCashflow: null, operatingCashflow: null,
-    totalCash: null, totalDebt: null, debtToEquity: null, currentRatio: null,
-    revenueGrowth: null, earningsGrowth: null,
-    institutionOwnership: null, recommendationKey: null,
-    targetMeanPrice: null, numberOfAnalystOpinions: null,
-    website: null, sector: null, industry: null,
-    // Ham bilanço (BIST formül hesabı için)
-    totalAssets: null, totalLiabilities: null, netIncome: null,
-    computedEquity: null, pbSource: null, roeSource: null,
-    peers: [], dataSource: 'Yahoo',
-  };
+  // ─── SAĞ KOLON: Finansal veri tablosu (PDF tarzı) ───
+  const rX=divX+20, rW=W-rX-48;
+  ctx.fillStyle='rgba(255,255,255,0.28)'; ctx.font=`600 17px "IBM Plex Mono",monospace`;
+  ctx.fillText('FİNANSAL VERİLER',rX,sY-8);
 
-  // ── 1. v7 quote ──
-  for (const base of ['query2', 'query1']) {
-    try {
-      const fields = [
-        'regularMarketPrice','currency','marketCap',
-        'fiftyTwoWeekLow','fiftyTwoWeekHigh',
-        'trailingPE','forwardPE','priceToBook','pegRatio','enterpriseToEbitda',
-        'profitMargins','grossMargins','operatingMargins',
-        'returnOnEquity','returnOnAssets',
-        'freeCashflow','operatingCashflow','totalCash','totalDebt',
-        'debtToEquity','currentRatio','revenueGrowth','earningsGrowth',
-        'heldPercentInstitutions','targetMeanPrice',
-        'recommendationKey','numberOfAnalystOpinions'
-      ].join(',');
-      const url = `https://${base}.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(yahooTicker)}&fields=${fields}${cs}`;
-      const r = await fetch(url, { headers: makeHeaders(), signal: AbortSignal.timeout(8000) });
-      if (!r.ok) continue;
-      const j = await r.json();
-      const q = j?.quoteResponse?.result?.[0];
-      if (!q?.regularMarketPrice) continue;
+  const pct=v=>v!=null?`%${(v*100).toFixed(1)}`:'—';
+  const n2 =v=>v!=null?Number(v).toFixed(2):'—';
+  const big=v=>{if(v==null)return'—';const a=Math.abs(v);if(a>=1e12)return`${(v/1e12).toFixed(1)}T`;if(a>=1e9)return`${(v/1e9).toFixed(1)}B`;if(a>=1e6)return`${(v/1e6).toFixed(1)}M`;return Number(v).toFixed(0);};
 
-      result.currentPrice      = q.regularMarketPrice ?? null;
-      result.currency          = q.currency ?? result.currency;
-      result.marketCap         = q.marketCap ?? null;
-      result.fiftyTwoWeekLow   = q.fiftyTwoWeekLow ?? null;
-      result.fiftyTwoWeekHigh  = q.fiftyTwoWeekHigh ?? null;
-      result.peRatio           = q.trailingPE ?? null;
-      result.forwardPE         = q.forwardPE ?? null;
-      result.pbRatio           = q.priceToBook ?? null;
-      result.pegRatio          = q.pegRatio ?? null;
-      result.evEbitda          = q.enterpriseToEbitda ?? null;
-      result.grossMargin       = q.grossMargins ?? null;
-      result.operatingMargin   = q.operatingMargins ?? null;
-      result.profitMargin      = q.profitMargins ?? null;
-      result.roe               = q.returnOnEquity ?? null;
-      result.roa               = q.returnOnAssets ?? null;
-      result.freeCashflow      = q.freeCashflow ?? null;
-      result.operatingCashflow = q.operatingCashflow ?? null;
-      result.totalCash         = q.totalCash ?? null;
-      result.totalDebt         = q.totalDebt ?? null;
-      result.debtToEquity      = q.debtToEquity ?? null;
-      result.currentRatio      = q.currentRatio ?? null;
-      result.revenueGrowth     = q.revenueGrowth ?? null;
-      result.earningsGrowth    = q.earningsGrowth ?? null;
-      result.institutionOwnership = q.heldPercentInstitutions ?? null;
-      result.targetMeanPrice   = q.targetMeanPrice ?? null;
-      result.recommendationKey = q.recommendationKey ?? null;
-      result.numberOfAnalystOpinions = q.numberOfAnalystOpinions ?? null;
-      console.log(`v7 OK: price=${result.currentPrice} pe=${result.peRatio} pb=${result.pbRatio} roe=${result.roe}`);
-      break;
-    } catch(e) { console.log(`v7 error: ${e.message}`); }
+  const rows=[
+    ['F/K (P/E)',    n2(fd.peRatio),       fd.peRatio!=null&&fd.peRatio<20?PASS:fd.peRatio>40?FAIL:NEUT],
+    ['F/DD (P/B)',   n2(fd.pbRatio),       fd.pbRatio!=null&&fd.pbRatio<2?PASS:fd.pbRatio>6?FAIL:NEUT],
+    ['ROE',          pct(fd.roe),          fd.roe!=null&&fd.roe>0.15?PASS:fd.roe!=null&&fd.roe<0.05?FAIL:NEUT],
+    ['Brüt Marj',   pct(fd.grossMargin),  fd.grossMargin!=null&&fd.grossMargin>0.3?PASS:NEUT],
+    ['Net Marj',    pct(fd.profitMargin), fd.profitMargin!=null&&fd.profitMargin>0.1?PASS:NEUT],
+    ['FCF',         big(fd.freeCashflow), fd.freeCashflow!=null&&fd.freeCashflow>0?PASS:fd.freeCashflow!=null?FAIL:NEUT],
+    ['Piy. Değeri', big(fd.marketCap),    '#8ba3cc'],
+  ];
+
+  const rRowH=Math.min(52,(H-sY-80)/rows.length);
+  rows.forEach(([lbl,val,clr],i)=>{
+    const y=sY+i*rRowH;
+    ctx.fillStyle=i%2===0?'rgba(255,255,255,0.025)':'rgba(255,255,255,0.01)';
+    ctx.fillRect(rX,y+2,rW,rRowH-4);
+    ctx.fillStyle='rgba(255,255,255,0.38)'; ctx.font=`400 17px "IBM Plex Mono",monospace`;
+    ctx.fillText(lbl,rX+10,y+rRowH/2-2);
+    ctx.fillStyle=val==='—'?'rgba(255,255,255,0.2)':clr;
+    ctx.font=`700 20px "IBM Plex Mono",monospace`; ctx.textAlign='right';
+    ctx.fillText(val,rX+rW-10,y+rRowH/2+10); ctx.textAlign='left';
+    ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(rX,y+rRowH); ctx.lineTo(rX+rW,y+rRowH); ctx.stroke();
+  });
+
+  // Orta ayraç
+  ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(divX,sY-20); ctx.lineTo(divX,H-56); ctx.stroke();
+
+  // ─── FOOTER ───
+  ctx.fillStyle='#0a0e1a'; ctx.fillRect(0,H-56,W,56);
+  ctx.fillStyle=fwC; ctx.fillRect(0,H-56,W,2);
+  ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.font=`500 20px "IBM Plex Mono",monospace`;
+  ctx.fillText('@barisinvesting',48,H-20);
+  if(fd.currentPrice){
+    ctx.fillStyle='#e8edf8'; ctx.font=`700 24px "IBM Plex Mono",monospace`; ctx.textAlign='center';
+    ctx.fillText(`${Number(fd.currentPrice).toFixed(2)} ${fd.currency||'TRY'}`,W/2,H-20); ctx.textAlign='left';
   }
-
-  // ── 2. v10 quoteSummary + ham bilanço ──
-  // BIST için her zaman balanceSheetHistory + incomeStatementHistory çekiyoruz
-  const needsMore = !result.roe || !result.grossMargin || !result.pbRatio || !result.totalDebt || isBIST;
-  if (needsMore) {
-    const modules = isBIST
-      ? 'financialData,defaultKeyStatistics,summaryDetail,assetProfile,balanceSheetHistory,incomeStatementHistory'
-      : 'financialData,defaultKeyStatistics,summaryDetail,assetProfile';
-
-    for (const base of ['query2', 'query1']) {
-      try {
-        const url = `https://${base}.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(yahooTicker)}?modules=${modules}${cs}`;
-        const r = await fetch(url, { headers: makeHeaders(), signal: AbortSignal.timeout(10000) });
-        if (!r.ok) continue;
-        const j = await r.json();
-        const raw = j?.quoteSummary?.result?.[0];
-        if (!raw) continue;
-
-        const fd = raw.financialData       || {};
-        const ks = raw.defaultKeyStatistics || {};
-        const sd = raw.summaryDetail        || {};
-        const ap = raw.assetProfile         || {};
-        const f  = v => v?.raw ?? null;
-
-        if (!result.peRatio)            result.peRatio    = f(sd.trailingPE) ?? f(ks.trailingPE);
-        if (!result.forwardPE)          result.forwardPE  = f(sd.forwardPE)  ?? f(ks.forwardPE);
-        // BIST: Yahoo'nun hazır priceToBook değerini çekme — formülle hesaplayacağız
-        if (!isBIST && !result.pbRatio) result.pbRatio    = f(ks.priceToBook);
-
-        // BIST için Yahoo trailingPE güvenilmez (USD/TRY karışıklığı)
-        // Anormal PE → null yap, sonradan MarketCap/NetIncome ile hesaplanacak
-        if (isBIST && result.peRatio != null) {
-          if (result.peRatio <= 0 || result.peRatio > 200) {
-            console.log(`[BIST] Yahoo PE=${result.peRatio} anormal → null, formülle hesaplanacak`);
-            result.peRatio = null;
-          }
-        }
-
-        // trailingEps — BIST için PE hesaplamak üzere sakla
-        const trailingEps = f(ks.trailingEps);
-        if (trailingEps && isBIST) result._trailingEps = trailingEps;
-        if (!result.pegRatio)           result.pegRatio   = f(ks.pegRatio);
-        if (!result.evEbitda)           result.evEbitda   = f(ks.enterpriseToEbitda);
-        if (!result.grossMargin)        result.grossMargin       = f(fd.grossMargins);
-        if (!result.operatingMargin)    result.operatingMargin   = f(fd.operatingMargins);
-        if (!result.profitMargin)       result.profitMargin      = f(fd.profitMargins);
-        if (!result.roe)                result.roe               = f(fd.returnOnEquity);
-        if (!result.roa)                result.roa               = f(fd.returnOnAssets);
-        if (!result.freeCashflow)       result.freeCashflow      = f(fd.freeCashflow);
-        if (!result.operatingCashflow)  result.operatingCashflow = f(fd.operatingCashflow);
-        if (!result.totalCash)          result.totalCash         = f(fd.totalCash);
-        if (!result.totalDebt)          result.totalDebt         = f(fd.totalDebt);
-        if (!result.debtToEquity)       result.debtToEquity      = f(fd.debtToEquity);
-        if (!result.currentRatio)       result.currentRatio      = f(fd.currentRatio);
-        if (!result.revenueGrowth)      result.revenueGrowth     = f(fd.revenueGrowth);
-        if (!result.earningsGrowth)     result.earningsGrowth    = f(fd.earningsGrowth);
-        if (!result.institutionOwnership) result.institutionOwnership = f(ks.heldPercentInstitutions);
-        if (!result.targetMeanPrice)    result.targetMeanPrice   = f(fd.targetMeanPrice);
-        if (!result.recommendationKey)  result.recommendationKey = fd.recommendationKey ?? null;
-        if (!result.numberOfAnalystOpinions) result.numberOfAnalystOpinions = f(ks.numberOfAnalystOpinions);
-        result.sector   = ap.sector   ?? result.sector;
-        result.industry = ap.industry ?? result.industry;
-        result.website  = ap.website  ?? result.website;
-
-        // ── HAM BİLANÇO (BIST için kritik) ──
-        if (raw.balanceSheetHistory) {
-          const sheets = raw.balanceSheetHistory.balanceSheetStatements || [];
-          if (sheets.length > 0) {
-            const lat = sheets[0]; // en güncel dönem
-            const fb  = v => v?.raw ?? null;
-            const ta = fb(lat.totalAssets);
-            const tl = fb(lat.totalLiab);
-            const se = fb(lat.totalStockholderEquity);
-            if (ta != null) result.totalAssets      = ta;
-            if (tl != null) result.totalLiabilities = tl;
-            if (se != null) {
-              result.computedEquity = se; // normalize edilmemiş ham değer — BIST pipeline'da normalize edilecek
-              console.log(`[Bilanço Ham] Assets=${ta?.toExponential(3)} Liab=${tl?.toExponential(3)} StockholderEquity=${se?.toExponential(3)}`);
-            }
-            // Ham oranı logla — debug için kritik
-            if (result.marketCap && se) {
-              console.log(`[Ham PD/DD] MC/SE = ${result.marketCap.toExponential(3)} / ${se.toExponential(3)} = ${(result.marketCap/se).toFixed(2)} (normalize öncesi)`);
-            }
-          }
-        }
-
-        // ── GELİR TABLOSU HAM ──
-        if (raw.incomeStatementHistory) {
-          const stmts = raw.incomeStatementHistory.incomeStatementHistory || [];
-          if (stmts.length > 0) {
-            const ni = stmts[0].netIncome?.raw ?? null;
-            if (ni != null) result.netIncome = ni;
-            console.log(`[Gelir] NetIncome=${ni}`);
-          }
-        }
-
-        console.log(`v10 OK: roe=${result.roe} pb=${result.pbRatio} assets=${result.totalAssets} ni=${result.netIncome}`);
-        break;
-      } catch(e) { console.log(`v10 error: ${e.message}`); }
-    }
-  }
-
-  // ── 3. v8 chart — son çare fiyat ──
-  if (!result.currentPrice) {
-    try {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooTicker)}?interval=1d&range=5d${cs}`;
-      const r = await fetch(url, { headers: makeHeaders(), signal: AbortSignal.timeout(5000) });
-      if (r.ok) {
-        const j = await r.json();
-        const meta = j?.chart?.result?.[0]?.meta;
-        if (meta?.regularMarketPrice) {
-          result.currentPrice     = meta.regularMarketPrice;
-          result.currency         = meta.currency || result.currency;
-          result.fiftyTwoWeekLow  = result.fiftyTwoWeekLow  ?? meta.fiftyTwoWeekLow;
-          result.fiftyTwoWeekHigh = result.fiftyTwoWeekHigh ?? meta.fiftyTwoWeekHigh;
-        }
-      }
-    } catch {}
-  }
-
-  if (!result.currentPrice) throw new Error(`Yahoo veri yok: ${yahooTicker}`);
-
-  // ── BIST DÜZELTME PIPELINE ────────────────────────────────────
-  if (isBIST) {
-
-    // ADIM 0: TradingView Scanner API'sinden çarpanları çek
-    let bistRatios = null;
-    try {
-      // VERCEL_URL deployment URL verir (xxx.vercel.app), production domain değil
-      // NEXT_PUBLIC_SITE_URL = barisinvesting.com olarak Vercel env'e ekle
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
-        ? 'https://' + process.env.NEXT_PUBLIC_SITE_URL.replace(/^https?:\/\//, '')
-        : process.env.VERCEL_URL
-          ? 'https://' + process.env.VERCEL_URL
-          : 'http://localhost:3000';
-      const bistUrl = `${baseUrl}/api/bist-ratios?ticker=${yahooTicker.replace('.IS', '')}`;
-
-      const bistRes = await fetch(bistUrl, {
-        signal: AbortSignal.timeout(12000),
-        headers: { 'Accept': 'application/json' }
-      });
-      if (bistRes.ok) {
-        bistRatios = await bistRes.json();
-        // TradingView v3: alan adları FK, PDDD, FD_FAVOK, ROE
-        console.log(`[BIST API] TradingView sonuçları: FK=${bistRatios.FK} PDDD=${bistRatios.PDDD} FD_FAVOK=${bistRatios.FD_FAVOK} ROE=%${bistRatios.ROE}`);
-      }
-    } catch(e) {
-      console.log(`[BIST API] Çağrı başarısız: ${e.message} — fallback pipeline devam ediyor`);
-    }
-
-    // TradingView verilerini result'a uygula
-    if (bistRatios) {
-      // PE (F/K) — TradingView price_earnings_ttm → result.peRatio
-      if (bistRatios.FK != null && bistRatios.FK > 0.3 && bistRatios.FK < 500) {
-        result.peRatio  = bistRatios.FK;
-        result.peSource = 'TradingView';
-        console.log(`[BIST TV] F/K override: ${result.peRatio}`);
-      }
-      // PB (PD/DD) — TradingView price_book_ratio → result.pbRatio
-      if (bistRatios.PDDD != null && bistRatios.PDDD > 0.03 && bistRatios.PDDD < 30) {
-        result.pbRatio  = bistRatios.PDDD;
-        result.pbSource = 'TradingView';
-        console.log(`[BIST TV] PD/DD override: ${result.pbRatio}`);
-      }
-      // EV/EBITDA (FD/FAVÖK) — TradingView enterprise_value_ebitda_ttm → result.evEbitda
-      if (bistRatios.FD_FAVOK != null && bistRatios.FD_FAVOK > 0 && bistRatios.FD_FAVOK < 200) {
-        result.evEbitda  = bistRatios.FD_FAVOK;
-        result.evSource  = 'TradingView';
-        console.log(`[BIST TV] FD/FAVÖK override: ${result.evEbitda}`);
-      } else {
-        // TV'den EV/FAVÖK gelmediyse Yahoo'nun anormal değerini temizle
-        // (Yahoo BIST için EV/EBITDA'yı çoğunlukla yanlış hesaplıyor)
-        if (result.evEbitda != null && (result.evEbitda > 50 || result.evEbitda < 0)) {
-          console.log(`[BIST TV] EV/FAVÖK anormal Yahoo değeri temizlendi: ${result.evEbitda}`);
-          result.evEbitda = null;
-        }
-      }
-      // ROE — TradingView % cinsinden verir (ör: 14.3 = %14.3), result.roe 0-1 arası bekler
-      if (bistRatios.ROE != null) {
-        const roeDecimal = bistRatios.ROE / 100; // %14.3 → 0.143
-        if (Math.abs(roeDecimal) < 5 && !result.roe) {
-          result.roe       = roeDecimal;
-          result.roeSource = 'TradingView';
-          console.log(`[BIST TV] ROE override: %${bistRatios.ROE} → ${roeDecimal}`);
-        }
-      }
-      // PiyasaDegeri (MarketCap) — fallback için
-      if (bistRatios.PiyasaDegeri && !result.marketCap) {
-        result.marketCap = bistRatios.PiyasaDegeri;
-      }
-
-      // PEG HESABI — F/K ÷ Kazanç Büyümesi (%)
-      // Öncelik: TradingView EarningsGrowth → Yahoo earningsGrowth → revenueGrowth
-      if (!result.pegRatio && result.peRatio) {
-        // TV'den gelen büyüme (0-1 arası, ör: 0.12 = %12)
-        const tvGrowth    = bistRatios?.EarningsGrowth ?? null;
-        // Yahoo'dan gelen büyüme (0-1 arası)
-        const yahooGrowth = result.earningsGrowth ?? result.revenueGrowth ?? null;
-        // TV öncelikli
-        const growthRaw   = (tvGrowth != null && tvGrowth > 0) ? tvGrowth : yahooGrowth;
-
-        if (growthRaw != null && growthRaw > 0) {
-          const growthPct = Math.abs(growthRaw) > 5
-            ? growthRaw          // TV zaten % cinsinden gönderiyor olabilir
-            : growthRaw * 100;   // 0.12 → %12
-          if (growthPct > 0.5 && growthPct < 200) {
-            const peg = result.peRatio / growthPct;
-            if (peg > 0.01 && peg < 20) {
-              result.pegRatio  = parseFloat(peg.toFixed(2));
-              result.pegSource = tvGrowth ? 'formül(FK/TV-Büyüme)' : 'formül(FK/Yahoo-Büyüme)';
-              console.log(`[BIST PEG] FK=${result.peRatio} / Büyüme=%${growthPct.toFixed(1)} = PEG ${result.pegRatio} (${result.pegSource})`);
-            }
-          }
-        }
-      }
-
-      // Debug
-      result.bistRatiosDebug = bistRatios._raw ?? null;
-    }
-
-    // ADIM 1: PD/DD kaynağı belirleme
-    // TV'den PDDD geldiyse result.pbRatio zaten set edildi (ADIM 0) — dokunma
-    // TV'den gelmediyse Yahoo değerini sıfırla, formülden hesaplanacak
-    const yahooPB = result.pbRatio;
-    if (!bistRatios?.PDDD && !result.pbRatio) {
-      // İkisi de yok — formül hesabına bırak, zaten null
-      console.log('[BIST] PD/DD: TV yok, Yahoo yok — formül hesaplanacak');
-    } else if (!bistRatios?.PDDD && result.pbRatio) {
-      // Sadece Yahoo var — Yahoo BIST için güvenilmez, sıfırla
-      result.pbRatio = null;
-      if (yahooPB) console.log(`[BIST] Yahoo pb=${yahooPB?.toFixed(2)} yoksayıldı — formül hesaplanacak`);
-    }
-    // bistRatios.PDDD varsa result.pbRatio zaten TV değerini taşıyor — dokunma
-
-    // ADIM 2: Birim normalizasyonu
-    result = normalizeBISTUnits(result);
-
-    // ADIM 3: Anormal PE temizle
-    if (result.peRatio && (result.peRatio > 200 || result.peRatio < 0)) {
-      console.log(`[BIST] PE anormal: ${result.peRatio} → null`); result.peRatio = null;
-    }
-    if (result.roe && Math.abs(result.roe) > 5) {
-      console.log(`[BIST] ROE anormal: ${result.roe} → ${result.roe/100}`);
-      result.roe = result.roe / 100;
-    }
-
-    // ADIM 4: Ham bilanço verisiyle PD/DD ve ROE formül hesabı (isBIST=true)
-    // BIST API'den pb geldiyse formül override etmesin
-    if (!result.pbRatio) {
-      result = computeFromRawData(result, true);
-    } else {
-      // Sadece ROE ve D/E için formülü çalıştır
-      result = computeFromRawData(result, false);
-    }
-
-    // ADIM 5: Hâlâ kritik eksik varsa eski scraping dene
-    if (result.pbRatio == null || result.peRatio == null) {
-      console.log('[BIST] Kritik veri eksik → legacy scraping...');
-      const t = yahooTicker.replace('.IS', '');
-      const sc = await scrapeBISTFallback(t);
-      if (sc.source) {
-        if (result.peRatio == null && sc.peRatio) result.peRatio = sc.peRatio;
-        if (result.pbRatio == null && sc.pbRatio) { result.pbRatio = sc.pbRatio; result.pbSource = sc.source; }
-        if (result.roe     == null && sc.roe)     { result.roe     = sc.roe;     result.roeSource = sc.source; }
-        result.dataSource = sc.source;
-      }
-    }
-
-    // ADIM 6: PE hâlâ null → MarketCap / NetIncome formülü (son çare ama güvenilir)
-    // THYAO örneği: MC=408.48B TRY, NetIncome=~3.4B USD × 38 = 129.2B TRY → PE=3.15 ✓
-    if (result.peRatio == null && result.marketCap && result.netIncome) {
-      const niNorm = detectAndNormalize(result.netIncome, result.marketCap, 0.0001, 10, 'NetIncome_PE');
-      if (niNorm > 0) {
-        const peCalc = result.marketCap / niNorm;
-        if (peCalc > 0.5 && peCalc < 200) {
-          result.peRatio  = parseFloat(peCalc.toFixed(2));
-          result.peSource = 'formül(MC/NI)';
-          console.log(`[BIST PE Formül] MC=${result.marketCap.toExponential(3)} / NI=${niNorm.toExponential(3)} = ${result.peRatio}`);
-        }
-      }
-    }
-
-    // ADIM 7: EPS üzerinden PE — Yahoo trailingEps bazen doğru gelir
-    if (result.peRatio == null && result.currentPrice && result._trailingEps) {
-      const eps = result._trailingEps;
-      // EPS TRY bazında mı USD bazında mı kontrol et
-      const epsNorm = Math.abs(eps) < 10 ? eps * APPROX_USD_TRY : eps; // küçükse USD
-      if (epsNorm > 0 && result.currentPrice > 0) {
-        const peEps = result.currentPrice / epsNorm;
-        if (peEps > 0.5 && peEps < 200) {
-          result.peRatio  = parseFloat(peEps.toFixed(2));
-          result.peSource = 'formül(Fiyat/EPS)';
-          console.log(`[BIST PE EPS] Fiyat=${result.currentPrice} / EPS=${epsNorm.toFixed(2)} = ${result.peRatio}`);
-        }
-      }
-    }
-
-    console.log(`[BIST Final] PE=${result.peRatio?.toFixed(2)}(${result.peSource||'?'}) PD/DD=${result.pbRatio?.toFixed(2)}(${result.pbSource}) ROE=${result.roe ? (result.roe*100).toFixed(1)+'%' : 'N/A'}`);
-  }
-
-  // Logo
-  if (result.website) {
-    try {
-      const domain = new URL(result.website.startsWith('http') ? result.website : 'https://' + result.website).hostname;
-      result.logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-    } catch {}
-  }
-
-  setCache(cacheKey, result);
-  return result;
+  ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font=`500 20px "IBM Plex Mono",monospace`;
+  ctx.textAlign='right'; ctx.fillText('barisinvesting.com',W-48,H-20); ctx.textAlign='left';
 }
 
-// ── SIGNAL HELPERS ───────────────────────────────────────────────
-function sigPE(v)  { if(v==null)return'N/A'; if(v<12)return'ucuz'; if(v<22)return'adil'; return'pahalı'; }
-function sigPB(v)  { if(v==null)return'N/A'; if(v<1.5)return'ucuz'; if(v<3)return'adil'; return'pahalı'; }
-function sigPEG(v) { if(v==null)return'N/A'; if(v<1)return'ucuz — Lynch fırsatı'; if(v<1.5)return'adil'; if(v<2)return'dikkatli ol'; return'pahalı'; }
-function sigEV(v)  { if(v==null)return'N/A'; if(v<8)return'ucuz'; if(v<15)return'adil'; return'pahalı'; }
+  function dlShare(){const c=document.getElementById('shrCanvas');const l=document.createElement('a');l.download=`${curTicker}_${curFW}_analiz.png`;l.href=c.toDataURL('image/png');l.click();}
+function dlAndTweet(){
+  dlShare();
+  setTimeout(()=>{
+    const fw=FW[curFW];const d=analysisData;
+    const pass=fw.criteria.filter((_,i)=>d.statuses[i]==='pass').map(c=>`✅ ${c.name.split(' ')[0]}`);
+    const fail=fw.criteria.filter((_,i)=>d.statuses[i]==='fail').map(c=>`❌ ${c.name.split(' ')[0]}`);
+    const em=d.verdict==='AL'?'🟢':d.verdict==='UZAK_DUR'?'🔴':'🟡';
+    const text=`📊 ${curEX}: $${d.ticker}${curCo?' — '+curCo:''}
+${fw.name} Skoru: ${d.score}/${fw.criteria.length} ${em} ${d.verdict}
 
-// ── ANA HANDLER ──────────────────────────────────────────────────
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+${pass.slice(0,3).join(' ')}
+${fail.slice(0,2).join(' ')}
 
-  const { ticker, prompt, exchange } = req.body || {};
-  if (!ticker) return res.status(400).json({ error: 'Ticker gerekli' });
+@barisinvesting ile analiz et 👇
+barisinvesting.com
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'API key eksik' });
+#Borsa #Yatırım #${d.ticker}`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,'_blank');
+    closeShr();
+  },800);
+}
 
-  const yahooTicker = exchange === 'BIST' ? `${ticker}.IS` : ticker;
-  let financialData = null;
-  try { financialData = await fetchYahooData(yahooTicker); }
-  catch(e) { console.log('Fetch failed:', e.message); }
 
-  const fd     = financialData;
-  const isBIST = exchange === 'BIST';
+// ═══════════════════════════════════════════════════════════
+// YATIRIM TEZLERİ
+// ═══════════════════════════════════════════════════════════
 
-  const systemPrompt = `Sen "Barış Investing" platformunun analiz motorusun. Warren Buffett, Peter Lynch ve Ray Dalio felsefesiyle profesyonel Türkçe analiz raporu yazıyorsun.
+// Tez veritabanı — PDF entegrasyonu sonrası buraya eklenir
+const TEZLER = [
+  {
+    id: 'netas-2026-04',
+    ticker: 'NETAS',
+    exchange: 'BIST',
+    title: 'NETAŞ: 5G Fırsatı mı, Yoksa Tuzak mı?',
+    subtitle: 'Netaş Telekomünikasyon A.Ş. — Derinlemesine Yatırım Tezi',
+    date: 'Nisan 2026',
+    verdict: 'izle',
+    tags: ['Telekomünikasyon', '5G', 'Altyapı', 'BIST'],
+    currentPrice: '~60 TL',
+    priceRange: '43 – 99 TL',
+    marketCap: '~3,76 Milyar TL',
+    revenue2025: '12 Milyar TL (+%31 YoY)',
+    ebitda2025: '307 Milyon TL (+%143 YoY)',
+    netProfit: 'Negatif (-89M son çeyrek)',
+    buffettScore: 4,
+    lynchScore: 4,
+    maxScore: 7,
+    generalVerdict: 'BEKLE',
+    targetBear: '43–52 TL',
+    targetBase: '70–85 TL',
+    targetBull: '88–105 TL',
+    upside: 'Baz: %+25 | Boğa: %+57',
+    horizon: '12–18 ay',
+    summary: 'Turkcell Superbox anlaşması somut ve KAP\'a bildirilmiş. FAVÖK büyümesi gelir büyümesinin 4,5 katı — ölçek kaldıracı devrede. Ancak faiz yükü FAVÖK\'ü eritiyor, net kâr hâlâ negatif. Baz senaryo teyitlenene kadar izleme listesinde tutulmalı.',
+    thesis: `Netaş 2025 yılını güçlü bir operasyonel dönüşümle kapattı. Gelirlerin TL bazında %31 artması, dolar bazında ise %9 ilerlemesi, enflasyona rağmen reel büyümenin başladığına işaret ediyor. En kritik sinyal ise FAVÖK'ün %143 artarak 307 milyon TL'ye ulaşmasıdır — bu oran, gelir büyümesinin 4,5 katıdır ve ölçek kaldıracının devreye girdiğinin göstergesidir.
 
-ÜSLUP: Profesyonel analist. Chatbot değil. Sade ama ikna edici.
-FORMAT: Markdown yok. # yok. * yok. Düz metin. TOTAL_SCORE 0-7 arası tam sayı. 7 geçemez.
-HER KRİTER: Minimum 2-3 cümle. Somut rakam. Sektör karşılaştırması.
+Turkcell 2026 yatırım harcamalarını gelirlerine oranla yaklaşık %25 olarak hedeflediğini açıkladı. 241 milyar TL 2025 geliri üzerinden bu rakam yaklaşık 60 milyar TL CapEx anlamına geliyor. Netaş, FWA/Superbox cihaz tedariki, baz istasyonu entegrasyon hizmetleri ve kendi üretimi olan DC güç sistemleri aracılığıyla bu CapEx havuzundan %5–10 pay alabilir. Üç operatör toplamında 2026–2028 arası 5G altyapı harcaması 3–4 milyar dolar.
 
-BUFFETT KURALLARI:
-- Fiyatlama Gücü = Brüt marj stabilitesi. F/K DEĞİL.
-- Hissedar Kazancı = FCF proxy
-- $1 Testi = Alıkonulan her $1 kâr → $1+ piyasa değeri?
-- Hendek = Marka/ağ etkisi/maliyet avantajı kanıtı.
+Segment Bazında Brüt Marj Profili:
+• Yönetilen Hizmet/Yazılım: %30–40 (yüksek marjlı)
+• Kendi Üretimi (akü/DC): %25–35
+• Sistem Entegrasyonu: %15–25
+• Ekipman (ZTE dist.): %8–12 (düşük marjlı)
 
-LYNCH KURALLARI:
-- Kategori: Yavaş/Orta/Hızlı Büyüyen / Döngüsel / Varlık Zengini / Dönüşümdeki
-- PEG < 1.0 = fırsat, > 2.0 = pahalı/FAIL
-- Kurumsal sahiplik < %30 = "Gizli Mücevher"
+Karışık ortalama brüt marj ~%15–18 seviyesinde. FAVÖK marji genel gider sonrası ~%2,5–4 bandında. Yönetilen hizmetler ve özel 5G ağ kurulumu yüksek marjlı segmentler — buraya doğru kayan miksleme tezin en kritik unsurudur.`,
+    catalysts: `• Turkcell Superbox anlaşması somut — KAP'a bildirildi, spekülatif değil
+• FAVÖK büyümesi gelir büyümesinin 4,5 katı — ölçek kaldıracı devrede
+• ZTE + yerlilik yükümlülüğü çift avantaj — yabancı rakipler engelde
+• PD/Gelir = 0,31x — ekipman/entegrasyon sektörü için düşük çarpan
+• Savunma + kamu + telecom üçlüsü — gelir çeşitlendirmesi sağlam
+• Turkcell CapEx 2026'da ~60 milyar TL — büyük potansiyel havuz
 
-DALIO KURALLARI:
-- Borç döngüsü, para politikası, döviz riski, enflasyon koruması, makro şok direnci.
+Katalizör Takvimi:
+→ Nisan 2026: Türkiye 5G ticari başlangıcı — Turkcell Superbox aktif, Netaş cihazları sahada
+→ Mayıs 2026: Q1 2026 bilançosu — 5G gelirinin ilk izi, net zarar trendi kritik izlenecek
+→ H1 2026: Türk Telekom / Vodafone olası ek FWA anlaşması KAP duyurusu beklentisi
+→ Q3 2026: Net kâra yaklaşım — eşik aşılırsa kurumsal para akışı başlar
+→ 2027 başı: 5G-A / özel ağ ihaleleri — yüksek marjlı segment, asıl kârlılık burada`,
+    risks: `• Net kâr hâlâ negatif — faiz gideri FAVÖK'ü eritiyor, kurumsal para giremiyor [YÜKSEK]
+• FAVÖK marji %2,6 — ekipman dağıtımcısı marji, yazılım şirketi değil [YÜKSEK]
+• ZTE bağımlılık riski — ABD yaptırımı ihtimali, jeopolitik kırılganlık [ORTA]
+• 3 müşteriye konsantrasyon — Turkcell, Türk Telekom, Vodafone [ORTA]
+• Yönetimden rakamsal guidance yok — "hazır" retoriği, hedef yok [ORTA]
+• 2013'ten bu yana temettü yok — serbest nakit yatırımcıya dönmüyor [DÜŞÜK]
+• 5G CapEx beklentinin altında kalırsa büyüme hızı düşer [ORTA]
+• Yerlilik şartının kalkması durumunda yabancı rakip girişi kolaylaşır [DÜŞÜK]`,
+    scenarios: [
+      { label: 'Ayı', color: 'danger',  revenue: '~13,5 Milyar TL', ebitda: '~400M TL', price: '43–52 TL', desc: '5G CapEx yavaş geliyor, ek anlaşma yok. Net zarar devam eder.' },
+      { label: 'Baz', color: 'warn',    revenue: '~15 Milyar TL',   ebitda: '~525M TL', price: '70–85 TL', desc: 'Turkcell + 1 ek operatör anlaşması. Net zarar daralır ama pozitife geçemez.' },
+      { label: 'Boğa', color: 'success', revenue: '~17 Milyar TL', ebitda: '~680M TL', price: '88–105 TL', desc: '3 operatör de anlaşma + özel 5G ağ projeleri. Net kâr eşiği aşılır.' },
+    ],
+    valuation: {
+      pdGelir: '0,31x',
+      evFavok: '16–20x',
+      fairValue: 'Baz: 70–85 TL | Boğa: 88–105 TL',
+    },
+    conclusion: 'KOŞULLU FIRSAT — NET KÂR GÖRMEDEN GÜÇLÜ ALIM YOK. Netaş\'ın 5G hikayesi yapısal olarak sağlam: doğru müşteri, doğru teknoloji, doğru zamanlama. Ancak Buffett perspektifinden bakıldığında kritik engel ortada duruyor: serbest nakit üretilemiyor, faiz yükü kârı siliyor. Q1 2026 bilançosunda net zarar daralıyorsa ve telekom segmenti sipariş büyümesi %49 üzerinde kalıyorsa baz senaryoya geçiş teyitlenmiş sayılır. O an pozisyon zamanıdır.',
+    pdfUrl: null,
+  },
+];
 
-TÜRK HİSSELERİ: Nominal büyüme TÜFE altındaysa "REEL KÜÇÜLME" uyarısı ekle.
-BIST F/K VE F/DD: Eğer hesaplanan veya güvenilmez ise tek başına PASS/FAIL YAPMA. ROE, FCF ve özsermaye üzerinden değerlendir.`;
+let activeTez = null;
 
-  let enrichedPrompt = '';
-  if (fd) {
-    const n   = (v,d=1) => v!=null ? Number(v).toFixed(d) : 'N/A';
-    const p   = v => v!=null ? `%${(v*100).toFixed(1)}` : 'N/A';
-    const big = v => {
-      if(v==null) return 'N/A';
-      const a = Math.abs(v);
-      if(a>=1e12) return `${(v/1e12).toFixed(2)}T`;
-      if(a>=1e9)  return `${(v/1e9).toFixed(2)}B`;
-      if(a>=1e6)  return `${(v/1e6).toFixed(2)}M`;
-      return Number(v).toFixed(0);
+function renderTezler() {
+  const locked   = document.getElementById('tezler-locked');
+  const unlocked = document.getElementById('tezler-content');
+  const isLoggedIn = !!(curUser && curUser.email && !curUser.offline_guest);
+
+  if (!isLoggedIn) {
+    locked.style.display   = 'block';
+    unlocked.style.display = 'none';
+    return;
+  }
+  locked.style.display   = 'none';
+  unlocked.style.display = 'block';
+
+  const grid = document.getElementById('tezGrid');
+  if (!TEZLER || TEZLER.length === 0) {
+    grid.innerHTML = `<div class="tez-empty"><div class="tez-empty-icon">📋</div><div class="tez-empty-title">İlk tez yakında geliyor</div><div class="tez-empty-sub">PDF tezleri entegre edildikçe burada görünecek.</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = TEZLER.map(tez => {
+    const verdictLabel = tez.verdict === 'al' ? 'AL' : tez.verdict === 'izle' ? 'İZLE' : 'UZAK DUR';
+    const scoreBarB = Array.from({length: tez.maxScore}, (_,i) =>
+      `<div style="width:${100/tez.maxScore - 2}%;height:100%;background:${i < tez.buffettScore ? '#4d8ef0' : 'var(--rule)'};"></div>`
+    ).join('');
+    const scoreBarL = Array.from({length: tez.maxScore}, (_,i) =>
+      `<div style="width:${100/tez.maxScore - 2}%;height:100%;background:${i < tez.lynchScore ? '#e07b39' : 'var(--rule)'};"></div>`
+    ).join('');
+    return `
+    <div class="tez-card" onclick="openTez('${tez.id}')">
+      <div class="tez-card-header">
+        <div class="tez-card-meta">
+          <span class="tez-ticker">${tez.ticker}</span>
+          <span class="tez-exchange">${tez.exchange}</span>
+          <span class="tez-tag ${tez.verdict}" style="font-size:8px">${verdictLabel}</span>
+          <span class="tez-date">${tez.date}</span>
+        </div>
+        <div class="tez-title">${tez.title}</div>
+        <div class="tez-summary">${tez.summary}</div>
+        <!-- Skor barları -->
+        <div style="display:flex;gap:12px;margin-top:10px;margin-bottom:2px">
+          <div style="flex:1">
+            <div style="font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:3px">BUFFETT ${tez.buffettScore}/${tez.maxScore}</div>
+            <div style="display:flex;gap:2px;height:5px">${scoreBarB}</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:3px">LYNCH ${tez.lynchScore}/${tez.maxScore}</div>
+            <div style="display:flex;gap:2px;height:5px">${scoreBarL}</div>
+          </div>
+        </div>
+      </div>
+      <div class="tez-card-footer">
+        ${tez.tags.map(t => `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted);border:1px solid var(--border);padding:1px 6px">${t}</span>`).join('')}
+        <button class="tez-read-btn" style="margin-left:auto">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Tezi Oku
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openTez(id) {
+  const tez = TEZLER.find(t => t.id === id);
+  if (!tez) return;
+  activeTez = tez;
+
+  const modal = document.getElementById('tezModal');
+  const verdictLabel = tez.verdict === 'al' ? 'AL' : tez.verdict === 'izle' ? 'İZLE' : 'UZAK DUR';
+
+  // Header
+  document.getElementById('tezModalTicker').textContent   = tez.ticker;
+  document.getElementById('tezModalExchange').textContent = tez.exchange;
+  document.getElementById('tezModalDate').textContent     = tez.date;
+  document.getElementById('tezModalTitle').textContent    = tez.title;
+  const tagEl = document.getElementById('tezModalTag');
+  tagEl.textContent = verdictLabel;
+  tagEl.className   = `tez-tag ${tez.verdict}`;
+
+  // Hedef fiyat kartları
+  document.getElementById('tezTargetPrice').textContent  = tez.targetBase || '—';
+  document.getElementById('tezCurrentPrice').textContent = tez.currentPrice || '—';
+  document.getElementById('tezUpside').textContent       = tez.upside || '—';
+  document.getElementById('tezHorizon').textContent      = tez.horizon || '—';
+
+  // Temel metrikler satırı
+  const metricsEl = document.getElementById('tezModalMetrics');
+  if (metricsEl) {
+    metricsEl.innerHTML = `
+      <div class="tez-metric-item"><div class="tez-metric-lbl">52H Aralık</div><div class="tez-metric-val">${tez.priceRange||'—'}</div></div>
+      <div class="tez-metric-item"><div class="tez-metric-lbl">Piy. Değeri</div><div class="tez-metric-val">${tez.marketCap||'—'}</div></div>
+      <div class="tez-metric-item"><div class="tez-metric-lbl">2025 Gelir</div><div class="tez-metric-val">${tez.revenue2025||'—'}</div></div>
+      <div class="tez-metric-item"><div class="tez-metric-lbl">2025 FAVÖK</div><div class="tez-metric-val">${tez.ebitda2025||'—'}</div></div>
+      <div class="tez-metric-item"><div class="tez-metric-lbl">PD/Gelir</div><div class="tez-metric-val" style="color:var(--success)">${tez.valuation?.pdGelir||'—'}</div></div>
+      <div class="tez-metric-item"><div class="tez-metric-lbl">EV/FAVÖK</div><div class="tez-metric-val">${tez.valuation?.evFavok||'—'}</div></div>
+    `;
+  }
+
+  // Skor barları
+  const scoresEl = document.getElementById('tezModalScores');
+  if (scoresEl) {
+    const makeBar = (score, max, color, label) => {
+      const bars = Array.from({length: max}, (_,i) =>
+        `<div style="flex:1;height:8px;background:${i < score ? color : 'var(--rule)'};margin-right:2px;"></div>`
+      ).join('');
+      return `<div style="flex:1">
+        <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:4px">${label} <span style="color:${color};font-weight:700">${score}/${max}</span></div>
+        <div style="display:flex;gap:2px">${bars}</div>
+      </div>`;
     };
-    const nc     = (fd.totalCash!=null && fd.totalDebt!=null) ? fd.totalCash - fd.totalDebt : null;
-    const upside = fd.currentPrice && fd.targetMeanPrice
-      ? ((fd.targetMeanPrice - fd.currentPrice) / fd.currentPrice * 100).toFixed(1) : null;
-
-    const pbNote  = fd.pbSource  && fd.pbSource  !== 'Yahoo' ? ` [${fd.pbSource}: MC/Özsermaye formülü]` : '';
-    const roeNote = fd.roeSource && fd.roeSource !== 'Yahoo' ? ` [${fd.roeSource}: NetKar/Özsermaye formülü]` : '';
-
-    let warnings = '';
-    if (isBIST && fd.computedEquity!=null) warnings += `BİLGİ: Özsermaye hesaplandı = ${big(fd.computedEquity)} TRY (Varlıklar - Borçlar)\n`;
-    if (isBIST && fd.peRatio==null)  warnings += 'NOT: F/K güvenilmez — sektör ortalaması kullan.\n';
-    if (isBIST && fd.pbRatio==null)  warnings += 'NOT: F/DD hesaplanamadı — ROE ve piyasa değeri üzerinden değerlendir.\n';
-    if (fd.dataSource !== 'Yahoo')   warnings += `VERİ KAYNAĞI: ${fd.dataSource} (Yahoo yedeği)\n`;
-
-    enrichedPrompt = `GERÇEK FİNANSAL VERİLER [${fd.dataSource}] — BU RAKAMLARI KULLAN:
-Fiyat: ${fd.currentPrice ? `${Number(fd.currentPrice).toFixed(2)} ${fd.currency}` : 'N/A'}
-52H Aralık: ${n(fd.fiftyTwoWeekLow,2)} - ${n(fd.fiftyTwoWeekHigh,2)} ${fd.currency||''}
-Piyasa Değeri: ${big(fd.marketCap)}
-F/K (TTM): ${n(fd.peRatio)} | F/K Forward: ${n(fd.forwardPE)} | F/DD: ${n(fd.pbRatio)}${pbNote}
-PEG: ${n(fd.pegRatio)} | EV/FAVÖK: ${n(fd.evEbitda)}
-ROE: ${p(fd.roe)}${roeNote} | ROA: ${p(fd.roa)}
-Brüt Marj: ${p(fd.grossMargin)} | Faaliyet Marjı: ${p(fd.operatingMargin)} | Net Marj: ${p(fd.profitMargin)}
-FCF: ${big(fd.freeCashflow)} | Op.CF: ${big(fd.operatingCashflow)}
-Nakit: ${big(fd.totalCash)} | Borç: ${big(fd.totalDebt)} | Net Nakit: ${big(nc)}
-Borç/Özsermaye: ${n(fd.debtToEquity)} | Cari Oran: ${n(fd.currentRatio)}
-Gelir Büyümesi: ${p(fd.revenueGrowth)} | Kazanç Büyümesi: ${p(fd.earningsGrowth)}
-Kurumsal Sahiplik: ${p(fd.institutionOwnership)}
-Analist: ${fd.recommendationKey||'N/A'} | Hedef: ${n(fd.targetMeanPrice,2)} | Potansiyel: ${upside ? `%${upside}` : 'N/A'}
-${fd.sector ? `Sektör: ${fd.sector}${fd.industry ? ' / '+fd.industry : ''}` : ''}
-${fd.totalAssets ? `Ham Bilanço: Varlıklar=${big(fd.totalAssets)} | Borçlar=${big(fd.totalLiabilities)} | NetKar=${big(fd.netIncome)}` : ''}
-${warnings ? '\nUYARILAR:\n'+warnings : ''}
-MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBITDA=${n(fd.evEbitda)}
----
-`;
+    scoresEl.innerHTML = `
+      <div style="display:flex;gap:16px;padding:14px 0">
+        ${makeBar(tez.buffettScore, tez.maxScore, '#4d8ef0', 'BUFFETT')}
+        ${makeBar(tez.lynchScore,   tez.maxScore, '#e07b39', 'LYNCH')}
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--surface2);padding:8px;border:1px solid var(--border)">
+          <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:4px">GENEL</div>
+          <div style="font-family:'IBM Plex Serif',serif;font-size:16px;font-weight:700;color:var(--warn)">${tez.generalVerdict}</div>
+        </div>
+      </div>`;
   }
 
-  enrichedPrompt += prompt;
-  enrichedPrompt += '\n\nKRİTİK KURAL: Her PASS/FAIL/NEUTRAL pipe (|) ile açıklama içermeli. CRITERIA_START/CRITERIA_END olmalı. Her kriter 2-3 cümle somut analiz.';
-  if (!fd) enrichedPrompt += '\n\nVERİ NOTU: Finansal veri alınamadı. Sektör bilgine göre tahmin yap. "Veri sınırlı" uyarısı ekle ama analizi tamamla.';
+  // Senaryo analizi
+  const scenEl = document.getElementById('tezModalScenarios');
+  if (scenEl && tez.scenarios) {
+    const colorMap = { danger: 'var(--danger)', warn: 'var(--warn)', success: 'var(--success)' };
+    scenEl.innerHTML = tez.scenarios.map(s => `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-top:3px solid ${colorMap[s.color]};padding:14px;flex:1;min-width:180px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:${colorMap[s.color]};font-family:'IBM Plex Mono',monospace;margin-bottom:6px">${s.label.toUpperCase()} SENARYO</div>
+        <div style="font-family:'IBM Plex Serif',serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:2px">${s.price}</div>
+        <div style="font-size:10px;color:${colorMap[s.color]};font-family:'IBM Plex Mono',monospace;margin-bottom:6px">FAVÖK: ${s.ebitda}</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.6">${s.desc}</div>
+      </div>`).join('');
+  }
 
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 3000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: enrichedPrompt }]
-      })
-    });
-    const data = await response.json();
-    if (data.error) return res.status(500).json({ error: `${data.error.type}: ${data.error.message}` });
+  // Tez metni bölümleri
+  document.getElementById('tezModalThesis').textContent   = tez.thesis    || '—';
+  document.getElementById('tezModalCat').textContent      = tez.catalysts || '—';
+  document.getElementById('tezModalRisk').textContent     = tez.risks     || '—';
 
-    let aiResult = data.content?.[0]?.text || '';
-    aiResult = aiResult.replace(/TOTAL_SCORE:\s*(\d+)/i, (m, sc) =>
-      `TOTAL_SCORE: ${Math.min(7, Math.max(0, parseInt(sc)))}`
-    );
+  // Sonuç kutusu
+  const concEl = document.getElementById('tezModalConclusion');
+  if (concEl) {
+    concEl.textContent = tez.conclusion || '';
+    concEl.style.display = tez.conclusion ? 'block' : 'none';
+  }
 
-    if (fd) {
-      const n2 = (v,d=1) => v!=null ? Number(v).toFixed(d) : 'N/A';
-      if (fd.peRatio  != null) aiResult = aiResult.replace(/PE:\s*[\d.N\/A]+\s*\|/, `PE: ${n2(fd.peRatio)} |`);
-      if (fd.pbRatio  != null) aiResult = aiResult.replace(/PB:\s*[\d.N\/A]+\s*\|/, `PB: ${n2(fd.pbRatio)} |`);
-      if (fd.pegRatio != null) aiResult = aiResult.replace(/PEG:\s*[\d.N\/A]+\s*\|/, `PEG: ${n2(fd.pegRatio)} |`);
-      if (fd.evEbitda != null) aiResult = aiResult.replace(/EV_EBITDA:\s*[\d.N\/A]+\s*\|/, `EV_EBITDA: ${n2(fd.evEbitda)} |`);
+  // PDF butonu
+  const pdfBtn = document.getElementById('tezPdfBtn');
+  if (tez.pdfUrl) { pdfBtn.href = tez.pdfUrl; pdfBtn.style.display = 'flex'; }
+  else            { pdfBtn.style.display = 'none'; }
+
+  modal.classList.add('visible');
+  modal.scrollTop = 0;
+}
+
+function closeTezModal() {
+  document.getElementById('tezModal').classList.remove('visible');
+  activeTez = null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// NETAŞ / TEZ X PAYLAŞIM CANVAS
+// ═══════════════════════════════════════════════════════════
+function openTezShare() {
+  if (!activeTez) return;
+  drawTezCanvas(activeTez);
+  document.getElementById('tezShrModal').classList.add('visible');
+}
+
+function closeTezShrModal() {
+  document.getElementById('tezShrModal').classList.remove('visible');
+}
+
+function drawTezCanvas(tez) {
+  const canvas = document.getElementById('tezShrCanvas');
+  const ctx    = canvas.getContext('2d');
+
+  // 2× çözünürlük — X'te keskin görünsün
+  const W = 1200, H = 675; // 16:9 Twitter card oranı
+  canvas.width = W; canvas.height = H;
+  canvas.style.width  = '600px';
+  canvas.style.height = '337px';
+
+  // ── ARKA PLAN ──
+  ctx.fillStyle = '#0e1220';
+  ctx.fillRect(0, 0, W, H);
+
+  // Hafif ızgara dokusu
+  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  for (let x = 0; x < W; x += 80) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+
+  // Sol şerit — altın rengi (tez ayırt edici renk)
+  const sGrad = ctx.createLinearGradient(0, 0, 0, H);
+  sGrad.addColorStop(0, '#d4a843');
+  sGrad.addColorStop(1, 'rgba(212,168,67,0)');
+  ctx.fillStyle = sGrad;
+  ctx.fillRect(0, 0, 5, H);
+
+  // ── HEADER BAR ──
+  ctx.fillStyle = '#12192e';
+  ctx.fillRect(0, 0, W, 110);
+  ctx.fillStyle = '#d4a843';
+  ctx.fillRect(0, 110, W, 2);
+
+  // Brand etiket
+  ctx.fillStyle = 'rgba(255,255,255,0.32)';
+  ctx.font = `500 ${22}px "IBM Plex Mono",monospace`;
+  ctx.fillText('BARIŞ INVESTING  ·  YATIRIM TEZİ', 48, 40);
+
+  // TICKER büyük
+  ctx.fillStyle = '#e8edf8';
+  ctx.font = `700 ${72}px "IBM Plex Serif","Georgia",serif`;
+  ctx.fillText(tez.ticker, 48, 96);
+  const tkW = ctx.measureText(tez.ticker).width;
+
+  // Şirket adı
+  ctx.fillStyle = 'rgba(255,255,255,0.42)';
+  ctx.font = `400 ${22}px "IBM Plex Mono",monospace`;
+  ctx.fillText('Netaş Telekomünikasyon A.Ş.', 48 + tkW + 18, 88);
+
+  // ── İZLE / KARAR KUTUSU ──
+  const WARN = '#f59e0b';
+  ctx.fillStyle = 'rgba(245,158,11,0.12)';
+  ctx.fillRect(W - 280, 16, 232, 76);
+  ctx.strokeStyle = WARN;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(W - 280, 16, 232, 76);
+  ctx.fillStyle = WARN;
+  ctx.fillRect(W - 280, 16, 6, 76);
+  ctx.fillStyle = WARN;
+  ctx.font = `700 ${36}px "IBM Plex Serif","Georgia",serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('İZLE', W - 164, 60);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font = `500 ${18}px "IBM Plex Mono",monospace`;
+  ctx.fillText('BEKLE — KOŞ. FIRSAT', W - 164, 82);
+  ctx.textAlign = 'left';
+
+  // ── BAŞLIK METNİ ──
+  ctx.fillStyle = '#d4a843';
+  ctx.font = `700 ${32}px "IBM Plex Serif","Georgia",serif`;
+  ctx.fillText('5G Fırsatı mı, Yoksa Tuzak mı?', 48, 150);
+
+  // ── SOL KOLON: Temel Metrikler Tablosu ──
+  const leftX = 48, rightCol = W / 2 + 16;
+  const tY = 176, rowH = 54;
+
+  const metrics = [
+    ['Güncel Fiyat',  '~60 TL',      'rgba(255,255,255,0.9)'],
+    ['Piy. Değeri',   '~3,76 Milyar TL', 'rgba(255,255,255,0.9)'],
+    ['2025 Gelir',    '12B TL  (+%31 YoY)', '#22c55e'],
+    ['2025 FAVÖK',    '307M TL (+%143 YoY)', '#22c55e'],
+    ['Net Kâr',       'Negatif  (-89M TL)', '#f05252'],
+    ['PD/Gelir',      '0.31x  (düşük çarpan)', '#22c55e'],
+  ];
+
+  // Sol başlık
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  ctx.font = `600 ${17}px "IBM Plex Mono",monospace`;
+  ctx.fillText('TEMEL FİNANSALLAR', leftX, tY - 10);
+
+  metrics.forEach(([lbl, val, clr], i) => {
+    const y = tY + i * rowH;
+    // Satır arka plan
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.01)';
+    ctx.fillRect(leftX, y, rightCol - leftX - 20, rowH - 2);
+    // Label
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.font = `400 ${17}px "IBM Plex Mono",monospace`;
+    ctx.fillText(lbl, leftX + 10, y + rowH / 2 - 2);
+    // Value
+    ctx.fillStyle = clr;
+    ctx.font = `600 ${20}px "IBM Plex Mono",monospace`;
+    ctx.textAlign = 'right';
+    ctx.fillText(val, rightCol - 30, y + rowH / 2 + 10);
+    ctx.textAlign = 'left';
+    // Ayraç
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(leftX, y + rowH); ctx.lineTo(rightCol - 20, y + rowH); ctx.stroke();
+  });
+
+  // ── ORTA AYRAÇ ──
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(W / 2, 165); ctx.lineTo(W / 2, H - 56); ctx.stroke();
+
+  // ── SAĞ KOLON: Senaryo Analizi ──
+  const scenX = rightCol, scenTitleY = tY - 10;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  ctx.font = `600 ${17}px "IBM Plex Mono",monospace`;
+  ctx.fillText('SENARYO ANALİZİ (2026)', scenX, scenTitleY);
+
+  const scenarios = [
+    { label: 'AYI',   price: '43–52 TL',  ebitda: 'FAVÖK: ~400M TL',  clr: '#f05252', bg: 'rgba(240,82,82,0.10)' },
+    { label: 'BAZ',   price: '70–85 TL',  ebitda: 'FAVÖK: ~525M TL',  clr: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
+    { label: 'BOĞA',  price: '88–105 TL', ebitda: 'FAVÖK: ~680M TL',  clr: '#22c55e', bg: 'rgba(34,197,94,0.10)' },
+  ];
+
+  const scenW = (W - scenX - 48) / 3 - 6;
+  scenarios.forEach((s, i) => {
+    const bx = scenX + i * (scenW + 8);
+    const by = tY;
+    const bh = rowH * 3 + 2;
+
+    ctx.fillStyle = s.bg; ctx.fillRect(bx, by, scenW, bh);
+    ctx.strokeStyle = s.clr + '55'; ctx.lineWidth = 1; ctx.strokeRect(bx, by, scenW, bh);
+    // Top accent
+    ctx.fillStyle = s.clr; ctx.fillRect(bx, by, scenW, 4);
+
+    ctx.fillStyle = s.clr;
+    ctx.font = `700 ${16}px "IBM Plex Mono",monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText(s.label, bx + scenW / 2, by + 26);
+
+    ctx.fillStyle = '#e8edf8';
+    ctx.font = `700 ${22}px "IBM Plex Serif","Georgia",serif`;
+    ctx.fillText(s.price, bx + scenW / 2, by + 60);
+
+    ctx.fillStyle = s.clr;
+    ctx.font = `500 ${15}px "IBM Plex Mono",monospace`;
+    ctx.fillText(s.ebitda, bx + scenW / 2, by + 84);
+    ctx.textAlign = 'left';
+  });
+
+  // ── SKOR BARLARI ──
+  const scoreY = tY + rowH * 3 + 18;
+
+  // Buffett bar
+  const barW = (W - scenX - 48 - 8) / 2 - 10;
+  const drawScoreBar = (x, y, score, max, clr, label) => {
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.font = `500 ${16}px "IBM Plex Mono",monospace`;
+    ctx.fillText(`${label}  ${score}/${max}`, x, y - 4);
+    const cellW = barW / max - 2;
+    for (let i = 0; i < max; i++) {
+      ctx.fillStyle = i < score ? clr : 'rgba(255,255,255,0.06)';
+      ctx.fillRect(x + i * (cellW + 2), y, cellW, 10);
     }
+  };
+  drawScoreBar(scenX,          scoreY, 4, 7, '#4d8ef0', 'BUFFETT');
+  drawScoreBar(scenX + barW + 16, scoreY, 4, 7, '#e07b39', 'LYNCH');
 
-    console.log(`✓ ${yahooTicker} | src:${fd?.dataSource} | roe:${fd?.roe} | pb:${fd?.pbRatio}(${fd?.pbSource||'yahoo'}) | len:${aiResult.length}`);
-    return res.status(200).json({ result: aiResult, financialData: fd, peers: fd?.peers || [] });
+  // ── KATALIZÖR NOTLARI ──
+  const catY = scoreY + 32;
+  const cats = [
+    '✓ Turkcell Superbox — KAP\'a bildirildi',
+    '✓ 5G CapEx havuzu: 3–4 Milyar USD (2026–28)',
+    '⚠ Net kâr negatif — faiz yükü kritik engel',
+    '⚠ ZTE bağımlılığı — jeopolitik risk var',
+  ];
+  cats.forEach((c, i) => {
+    const isWarn = c.startsWith('⚠');
+    ctx.fillStyle = isWarn ? 'rgba(245,158,11,0.75)' : 'rgba(34,197,94,0.75)';
+    ctx.font = `400 ${16}px "IBM Plex Mono",monospace`;
+    ctx.fillText(c, scenX, catY + i * 26);
+  });
 
-  } catch(err) {
-    console.error('Analyze error:', err.message);
-    return res.status(500).json({ error: err.message });
+  // ── FOOTER ──
+  ctx.fillStyle = '#0a0e1a';
+  ctx.fillRect(0, H - 56, W, 56);
+  ctx.fillStyle = '#d4a843';
+  ctx.fillRect(0, H - 56, W, 2);
+
+  // Sol: handle
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font = `500 ${20}px "IBM Plex Mono",monospace`;
+  ctx.fillText('@barisinvesting', 48, H - 20);
+
+  // Orta: tarih
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.textAlign = 'center';
+  ctx.font = `400 ${18}px "IBM Plex Mono",monospace`;
+  ctx.fillText('Nisan 2026  ·  Yatırım tavsiyesi değildir', W / 2, H - 20);
+
+  // Sağ: site
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.textAlign = 'right';
+  ctx.fillText('barisinvesting.com', W - 48, H - 20);
+  ctx.textAlign = 'left';
+}
+
+function dlTezShare() {
+  if (!activeTez) return;
+  const c = document.getElementById('tezShrCanvas');
+  const l = document.createElement('a');
+  l.download = `NETAS_yatirim_tezi_${activeTez.date?.replace(/\s/g,'_') || '2026'}.png`;
+  l.href = c.toDataURL('image/png');
+  l.click();
+  if (typeof showToast === 'function') showToast('✓ Görsel indirildi!');
+}
+
+function tweetTez() {
+  if (!activeTez) return;
+  dlTezShare();
+  const t = activeTez;
+  const text =
+`📊 BIST: $${t.ticker} — Yatırım Tezi
+
+5G Fırsatı mı, Yoksa Tuzak mı?
+
+📈 2025 Gelir: 12B TL (+%31 YoY)
+💥 FAVÖK: 307M TL (+%143 YoY)
+⚠️ Net Kâr: Hâlâ negatif
+
+Karar: İZLE (Koşullu Fırsat)
+Baz Hedef: 70–85 TL
+
+Detaylı tez 👇
+barisinvesting.com
+
+#NETAS #BIST #5G #Yatırım`;
+  setTimeout(() => {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+    closeTezShrModal();
+  }, 800);
+}
+
+// ESC ile kapat
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeTezModal();
+  }
+});
+function mobileNav(tab) {
+  // Update active tab
+  ['analiz','portfoy','forum'].forEach(t => {
+    const el = document.getElementById('bn-' + t);
+    if(el) el.className = 'bn-tab' + (t === tab ? ' active' : '');
+  });
+  // Navigate
+  if(tab === 'analiz') {
+    showPage('overview');
+    // Also scroll to top
+    window.scrollTo(0,0);
+  } else if(tab === 'portfoy') {
+    showPage('portfolio');
+    window.scrollTo(0,0);
+  } else if(tab === 'forum') {
+    showPage('forum');
+    loadPosts();
+    window.scrollTo(0,0);
   }
 }
+
+// ===== MOBILE HESAP =====
+function openMobileAccount() {
+  const sheet = document.getElementById('mobileAccountSheet');
+  if (!sheet) return;
+  updateMobileAccountUI();
+  sheet.style.display = 'block';
+}
+
+function closeMobileAccount() {
+  const sheet = document.getElementById('mobileAccountSheet');
+  if (sheet) sheet.style.display = 'none';
+}
+
+function updateMobileAccountUI() {
+  const email = curUser?.email || localStorage.getItem('bi_email');
+  const guestDiv = document.getElementById('mobileAccountGuest');
+  const userDiv = document.getElementById('mobileAccountUser');
+  const avatar = document.getElementById('mobileAvatar');
+  const emailEl = document.getElementById('mobileUserEmail');
+  const creditVal = document.getElementById('mobileCreditVal');
+  const creditBar = document.getElementById('mobileCreditBar');
+  const bnIcon = document.getElementById('bnAccountIcon');
+  const bnLabel = document.getElementById('bnAccountLabel');
+
+  if (email) {
+    if (guestDiv) guestDiv.style.display = 'none';
+    if (userDiv) userDiv.style.display = 'block';
+    const letter = email[0].toUpperCase();
+    if (avatar) { avatar.textContent = letter; }
+    if (emailEl) emailEl.textContent = email;
+    const credits = curUser ? (curUser.is_admin ? '∞' : curUser.credits) : guestCredits;
+    if (creditVal) creditVal.textContent = credits + (curUser?.is_admin ? '' : '/3');
+    const pct = curUser?.is_admin ? 100 : Math.max(0, ((parseInt(credits)||0) / 3) * 100);
+    if (creditBar) creditBar.style.width = pct + '%';
+    // Bottom nav icon güncelle
+    if (bnIcon) { bnIcon.textContent = letter; bnIcon.style.background = 'var(--accent2)'; bnIcon.style.color = '#fff'; }
+    if (bnLabel) bnLabel.textContent = 'Hesap';
+  } else {
+    if (guestDiv) guestDiv.style.display = 'block';
+    if (userDiv) userDiv.style.display = 'none';
+    if (bnIcon) { bnIcon.textContent = '?'; bnIcon.style.background = 'var(--border-s)'; bnIcon.style.color = '#8892b0'; }
+    if (bnLabel) bnLabel.textContent = 'Giriş';
+  }
+}
+
+async function doMobileAuth() {
+  const emailIn = document.getElementById('mobileEmailIn');
+  const errEl = document.getElementById('mobileAuthErr');
+  const marketing = document.getElementById('mobileMarketingConsent');
+  const email = (emailIn?.value || '').trim();
+  if (!email || !email.includes('@')) {
+    if (errEl) { errEl.textContent = 'Geçerli bir e-posta girin.'; errEl.style.display = 'block'; }
+    return;
+  }
+  if (errEl) errEl.style.display = 'none';
+  const btn = document.querySelector('#mobileAccountSheet button');
+
+  const fallbackUser = { email, credits: 5, is_admin: false, total_used: 0, offline: true };
+  try {
+    const r = await fetch('/api/auth?action=login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, marketingConsent: marketing?.checked ?? false })
+    });
+    const data = await r.json();
+    curUser = data.user || fallbackUser;
+  } catch {
+    curUser = fallbackUser;
+  }
+  localStorage.setItem('bi_email', email);
+  closeMobileAccount();
+  updateMobileAccountUI();
+  updateSidebarUserUI();
+  updateCreditsUI();
+  loadPortfolioFromCloud();
+  showToast(curUser.offline ? '✓ Mail kaydedildi. 5 hakkın var.' : `✓ Hoş geldin! ${curUser.credits} hakkın var.`, 'success');
+}
+
+function mobileLogout() {
+  curUser = null;
+  localStorage.removeItem('bi_email');
+  guestCredits = 1;
+  localStorage.setItem('guest_credits', '1');
+  updateMobileAccountUI();
+  updateSidebarUserUI();
+  updateCreditsUI();
+  closeMobileAccount();
+  showToast('Çıkış yapıldı.', 'warn');
+}
+
+// WATCHLIST — Top 5 Dikkat Çeken Hisseler
+let wlMarket = 'BIST';
+async function loadWatchlist(market) {
+  wlMarket = market || wlMarket;
+  ['bist','us'].forEach(m => {
+    const e = document.getElementById('wl-' + m);
+    if(e) e.className = 'wl-tab' + (m.toUpperCase() === wlMarket || (m === 'us' && wlMarket === 'US') ? ' active' : '');
+  });
+  const grid = document.getElementById('wlGrid');
+  if(!grid) return;
+  grid.innerHTML = '<div class="news-loading">Taranıyor...</div>';
+  try {
+    const r = await fetch(`/api/watchlist?market=${wlMarket}`);
+    const data = await r.json();
+    if(data.error) { grid.innerHTML = `<div class="news-loading" style="color:var(--danger)">${data.error}</div>`; return; }
+    const wt = document.getElementById('wlTime');
+    if(wt) wt.textContent = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit',minute:'2-digit'});
+    renderWatchlist(data.stocks || []);
+  } catch(e) {
+    grid.innerHTML = '<div class="news-loading" style="color:var(--danger)">Bağlantı hatası</div>';
+  }
+}
+
+function renderWatchlist(stocks) {
+  const grid = document.getElementById('wlGrid');
+  if(!grid) return;
+  if(!stocks.length) { grid.innerHTML = '<div class="news-loading">Veri bulunamadı</div>'; return; }
+  grid.innerHTML = '';
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  stocks.forEach((s, i) => {
+    const isUp = s.chg >= 0;
+    const card = document.createElement('div');
+    card.className = 'wl-card' + (isUp ? '' : ' bear');
+    const ex = wlMarket === 'BIST' ? 'BIST' : 'NYSE';
+    card.onclick = () => {
+      selEx(ex); selHeroEx(ex);
+      document.getElementById('tickerIn').value = s.ticker;
+      document.getElementById('coIn').value = s.name;
+      switchTab('analiz'); closeSidebar();
+      setTimeout(() => doAnalyze(), 100);
+    };
+    const priceStr = s.price ? s.price.toFixed(2) + ' ' + (s.currency === 'TRY' ? '₺' : '$') : '—';
+    const chgStr = `${isUp ? '+' : ''}${s.chg ? s.chg.toFixed(2) : '0.00'}%`;
+    card.innerHTML = `
+      <div class="wl-rank">${medals[i]}</div>
+      <div class="wl-ticker">${s.ticker}</div>
+      <div class="wl-name">${s.name}</div>
+      <div class="wl-price">${priceStr}</div>
+      <div class="wl-chg ${isUp ? 'up' : 'dn'}">${chgStr}</div>
+      <div class="wl-tags">${(s.tags||[]).map(t=>`<span class="wl-tag ${t.c}">${t.t}</span>`).join('')}</div>
+      <div class="wl-bar-wrap">
+        <div class="wl-bar-lbl"><span>52H</span><span>%${s.pos52||0}</span></div>
+        <div class="wl-bar"><div class="wl-bar-fill" style="width:${s.pos52||0}%"></div></div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════════
+// AUTH STATE
+// ══════════════════════════════════════════════
+buildNav(); buildChips(); setupAC(); loadMkt(); loadNews();
+loadWatchlist('BIST');
+
+// Auth init — saved email varsa otomatik yükle
+if (!localStorage.getItem('baris_fw_seen')) {
+  setTimeout(() => { showFWModal(); localStorage.setItem('baris_fw_seen', '1'); }, 3500);
+}
+</script>
+<script src="/auth-logic.js"></script>
+<script src="/admin-panel.js"></script>
+<script src="/analyze-features.js"></script>
+
+<!-- MOBILE HESAP SHEET -->
+<div id="mobileAccountSheet" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.5)" onclick="closeMobileAccount()">
+  <div onclick="event.stopPropagation()" style="position:absolute;bottom:58px;left:0;right:0;background:var(--sidebar);border-top:1px solid var(--border-s);padding:20px;max-height:70vh;overflow-y:auto;">
+    <!-- Giriş yapılmamış -->
+    <div id="mobileAccountGuest">
+      <div style="font-family:'Playfair Display',serif;font-size:18px;color:#e8e6e0;margin-bottom:6px">Hesabın yok mu?</div>
+      <div style="font-size:11px;color:#8892b0;margin-bottom:16px;line-height:1.7">E-posta ile kayıt ol, 5 ücretsiz analiz hakkı kazan. Portföyün bulutta saklanır.</div>
+      <input id="mobileEmailIn" type="email" placeholder="e-posta adresin" autocomplete="email"
+        style="width:100%;background:#111827;border:1px solid var(--border-s);color:#e8e6e0;font-family:'IBM Plex Mono',monospace;font-size:13px;padding:12px 14px;outline:none;margin-bottom:8px;box-sizing:border-box;"
+        onkeydown="if(event.key==='Enter')doMobileAuth()"/>
+      <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;cursor:pointer">
+        <input type="checkbox" id="mobileMarketingConsent" style="margin-top:3px;flex-shrink:0"/>
+        <span style="font-size:10px;color:#8892b0;line-height:1.6">Yeni analizler ve piyasa yorumları hakkında bana e-posta gönderebilirsiniz</span>
+      </label>
+      <button onclick="doMobileAuth()" style="width:100%;background:var(--accent2);color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;padding:13px;cursor:pointer;margin-bottom:8px">Giriş Yap</button>
+      <div id="mobileAuthErr" style="display:none;font-size:10px;color:var(--danger);padding:6px;font-family:'IBM Plex Mono',monospace"></div>
+      <button onclick="closeMobileAccount()" style="width:100%;background:transparent;border:1px solid var(--border-s);color:#8892b0;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:10px;cursor:pointer">Şimdi değil</button>
+    </div>
+    <!-- Giriş yapılmış -->
+    <div id="mobileAccountUser" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div id="mobileAvatar" style="width:44px;height:44px;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">?</div>
+        <div>
+          <div id="mobileUserEmail" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a8b8d8;word-break:break-all"></div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+            <div style="font-size:9px;color:#8892b0;font-family:'IBM Plex Mono',monospace">ANALİZ HAKKI</div>
+            <div id="mobileCreditVal" style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#a8b8d8"></div>
+            <div style="height:2px;flex:1;background:var(--border-s);position:relative"><div id="mobileCreditBar" style="position:absolute;left:0;top:0;height:100%;background:#a8b8d8;transition:width 0.5s"></div></div>
+          </div>
+        </div>
+      </div>
+      <button onclick="mobileLogout()" style="width:100%;background:transparent;border:1px solid var(--danger);color:var(--danger);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:10px;cursor:pointer">Çıkış Yap</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAVIGATION - MOBILE ONLY -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bn-tab active" id="bn-analiz" onclick="mobileNav('analiz')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <span>Analiz</span>
+  </button>
+  <button class="bn-tab" id="bn-portfoy" onclick="mobileNav('portfoy')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+    <span>Portföy</span>
+  </button>
+  <button class="bn-tab" id="bn-forum" onclick="mobileNav('forum')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span>Forum</span>
+  </button>
+  <button class="bn-tab" id="bn-hesap" onclick="openMobileAccount()">
+    <div id="bnAccountIcon" style="width:22px;height:22px;border-radius:50%;background:var(--border-s);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:11px;font-weight:700;color:#8892b0">?</div>
+    <span id="bnAccountLabel">Hesap</span>
+  </button>
+</nav>
+<script>
+function showToast(msg,dur){
+  dur=dur||2500;
+  var t=document.getElementById('globalToast');
+  if(!t)return;
+  t.querySelector('.toast-msg').textContent=msg;
+  t.classList.add('visible');
+  clearTimeout(t._tid);
+  t._tid=setTimeout(function(){t.classList.remove('visible');},dur);
+}
+function copyToClipboard(text,msg){
+  msg=msg||'✓ Kopyalandı!';
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){showToast(msg);}).catch(function(){fallbackCopy(text,msg);});
+  }else{fallbackCopy(text,msg);}
+}
+function fallbackCopy(text,msg){
+  var el=document.createElement('textarea');
+  el.value=text;document.body.appendChild(el);el.select();
+  document.execCommand('copy');document.body.removeChild(el);
+  showToast(msg);
+}
+</script>
+</body>
+</html>
