@@ -2317,68 +2317,7 @@ body{
   </div>
 </div><script>
 // ===== DATA =====
-const BIST={
-  // ── Bankacılık ──
-  'AKBNK':'Akbank','GARAN':'Garanti BBVA','ISCTR':'İş Bankası','YKBNK':'Yapı Kredi',
-  'HALKB':'Halkbank','VAKBN':'Vakıfbank','QNBTR':'QNB Finansbank','TSKB':'TSKB',
-  'ALBRK':'Albaraka Türk','BNTAS':'Bantas','KLNMA':'Kalkınma Bankası','SKBNK':'Şekerbank',
-  'ICBCT':'ICBC Turkey','ODEAB':'ODE Anadolu Bank','BURVA':'Burgan Varlık','FIBABANKA':'Fibabanka',
-  'ICBC':'ICBC Turkey Bank','NTHOL':'Net Holding',
-  // ── Havacılık & Ulaşım ──
-  'THYAO':'Türk Hava Yolları','PGSUS':'Pegasus','TAVHL':'TAV Havalimanları',
-  'SUNTK':'Sunexpress','CLEBI':'Çelebi Havacılık','AEFES':'Anadolu Efes',
-  'IZMKS':'İzmir Demir Çelik','DOAS':'Doğuş Otomotiv',
-  // ── Holding & Yatırım ──
-  'SAHOL':'Sabancı Holding','KCHOL':'Koç Holding','SISE':'Şişecam',
-  'ENKAI':'Enka İnşaat','IHLGM':'İHL Holding','DOHOL':'Doğan Holding',
-  'ALGYO':'Alarko GYO','ISDMR':'İskenderun Demir Çelik',
-  // ── Perakende & Gıda ──
-  'BIMAS':'BİM Mağazalar','MGROS':'Migros','SOKM':'Şok Marketler',
-  'ULKER':'Ülker','CCOLA':'Coca-Cola İçecek','MAVI':'Mavi Giyim',
-  'LOGO':'Logo Yazılım','HEPSI':'Hepsiburada','LCWGR':'LC Waikiki',
-  'TKFEN':'Tekfen Holding','ADESE':'Adese AVM','BRKVY':'Brisa',
-  // ── Enerji & Petrokimya ──
-  'TUPRS':'Tüpraş','PETKM':'Petkim','ENJSA':'Enerjisa',
-  'AKSEN':'Aksen Enerji','ZOREN':'Zorlu Enerji','AYEN':'Ayen Enerji',
-  'ODAS':'Odaş Elektrik','ASUZU':'Anadolu Isuzu','REEDR':'Reeder Teknoloji',
-  'KOZAL':'Koza Altın','KOZA1':'Koza Madencilik','IPEKE':'İpek Doğal Enerji',
-  // ── Sanayi & Metal ──
-  'EREGL':'Ereğli Demir Çelik','KRDMD':'Kardemir','ISDMR':'İskenderun Demir',
-  'ASELS':'Aselsan','VESTL':'Vestel','ARCLK':'Arçelik',
-  'BRISA':'Brisa Bridgestone','FROTO':'Ford Otosan','TOASO':'Tofaş Otomobil',
-  'OTKAR':'Otokar','TTRAK':'Türk Traktör','DURDO':'Duran Doğan',
-  'PARSN':'Parsan Makine','DESA':'Desa Deri',
-  // ── Teknoloji & Telekom ──
-  'TCELL':'Turkcell','TTKOM':'Türk Telekom','NETAS':'Netaş',
-  'INDES':'İndes Bilgisayar','ARENA':'Arena Bilgisayar','DGATE':'Datagate',
-  'KFEIN':'Karel Elektronik','OBASE':'Obase Bilgisayar','ESCOM':'Escom',
-  'LINK':'Link Bilgisayar','PKENT':'Petrokent','ANELE':'Anel Elektrik',
-  // ── Gayrimenkul & GYO ──
-  'EKGYO':'Emlak Konut GYO','ISGYO':'İş GYO','OZGYO':'Özak GYO',
-  'VKGYO':'Vakıf GYO','AGYO':'Atakule GYO','TKGYO':'Tekfen GYO',
-  'SNGYO':'Sinpaş GYO','HLGYO':'Halk GYO','KRGYO':'Kiler GYO',
-  // ── İnşaat & Çimento ──
-  'AKCNS':'Akçansa','BOLUC':'Bolu Çimento','ADANA':'Adana Çimento',
-  'CIMSA':'Çimsa','GOLTS':'Göltaş Çimento','MRDIN':'Mardin Çimento',
-  'UNYEC':'Ünye Çimento','KONYA':'Konya Çimento',
-  // ── Sigorta & Finans ──
-  'TURSG':'Türkiye Sigorta','RAYSG':'Ray Sigorta','ANSGR':'Anadolu Sigorta',
-  'GUSGF':'Güneş Sigorta','ANHYT':'Anadolu Hayat','AVHOL':'Avivasa',
-  'UFUK':'Ufuk Yatırım','TRGYO':'Türkiye GYO',
-  // ── Tarım & Kimya ──
-  'GUBRF':'Gübre Fabrikaları','BAGFS':'Bagfaş','AFYON':'Afyon Çimento',
-  'ALKIM':'Alkim Kimya','DENCM':'Denge Yatırım','SILVR':'Silver Kimya',
-  // ── Medya & Eğlence ──
-  'DOGI':'Doğan Yayın','TKNSA':'Teknosa','RYSAS':'Reysaş Lojistik',
-  'SASA':'Sasa Polyester','CELHA':'Çelik Halat',
-  // ── Lojistik & Nakliye ──
-  'CLEBI':'Çelebi Havacılık','RYSAS':'Reysaş Lojistik',
-  'AGHOL':'AG Anadolu Grubu','UTPYA':'Utopya Turizm',
-  // ── Diğer ──
-  'TKFEN':'Tekfen Holding','GLYHO':'Global Yatırım Holding',
-  'MERIT':'Merit Turizm','NTTUR':'Net Turizm',
-  'NUHCM':'Nuh Çimento','KILER':'Kiler Holding',
-};
+const BIST={'THYAO':'Türk Hava Yolları','EREGL':'Ereğli Demir Çelik','SAHOL':'Sabancı Holding','KCHOL':'Koç Holding','ASELS':'Aselsan','BIMAS':'BİM Mağazalar','TUPRS':'Tüpraş','AKBNK':'Akbank','ISCTR':'İş Bankası','FROTO':'Ford Otosan','TOASO':'Tofaş Otomobil','VAKBN':'Vakıfbank','PGSUS':'Pegasus','TAVHL':'TAV Havalimanları','SISE':'Şişecam','TURSG':'Türkiye Sigorta','GARAN':'Garanti BBVA','YKBNK':'Yapı Kredi','HALKB':'Halkbank','TCELL':'Turkcell','TTKOM':'Türk Telekom','ARCLK':'Arçelik','VESTL':'Vestel','ENKAI':'Enka İnşaat','PETKM':'Petkim','KOZAL':'Koza Altın','KRDMD':'Kardemir','SOKM':'Şok Marketler','MGROS':'Migros','ULKER':'Ülker','CCOLA':'Coca-Cola İçecek','MAVI':'Mavi Giyim','LOGO':'Logo Yazılım','EKGYO':'Emlak Konut','ENJSA':'Enerjisa','QNBTR':'QNB Finansbank','TSKB':'TSKB','ALBRK':'Albaraka Türk','SKBNK':'Şekerbank','DOAS':'Doğuş Otomotiv','OTKAR':'Otokar','TTRAK':'Türk Traktör','NETAS':'Netaş','AYEN':'Ayen Enerji','AKSEN':'Aksen Enerji','ZOREN':'Zorlu Enerji','ODAS':'Odaş Elektrik','KOZAA':'Koza Madencilik','IPEKE':'İpek Doğal Enerji','GUBRF':'Gübre Fabrikaları','ALKIM':'Alkim Kimya','SASA':'Sasa Polyester','BRISA':'Brisa Bridgestone','TKFEN':'Tekfen Holding','DOHOL':'Doğan Holding','GLYHO':'Global Yatırım Holding','IHLGM':'İHL Holding','AKCNS':'Akçansa','BOLUC':'Bolu Çimento','ADANA':'Adana Çimento','CIMSA':'Çimsa','GOLTS':'Göltaş Çimento','MRDIN':'Mardin Çimento','UNYEC':'Ünye Çimento','KONYA':'Konya Çimento','ISGYO':'İş GYO','VKGYO':'Vakıf GYO','RAYSG':'Ray Sigorta','ANSGR':'Anadolu Sigorta','ANHYT':'Anadolu Hayat','AVHOL':'Avivasa','HEPSI':'Hepsiburada','LCWGR':'LC Waikiki','ARENA':'Arena Bilgisayar','INDES':'İndes Bilgisayar','LINK':'Link Bilgisayar','RYSAS':'Reysaş Lojistik','CLEBI':'Çelebi Havacılık','NUHCM':'Nuh Çimento','CELHA':'Çelik Halat','PARSN':'Parsan Makine','AGHOL':'AG Anadolu Grubu','MERIT':'Merit Turizm'};
 const BIST_P=['THYAO','EREGL','SAHOL','ASELS','BIMAS','KCHOL'];
 const US_P=[{t:'AAPL',c:'Apple',e:'NASDAQ'},{t:'MSFT',c:'Microsoft',e:'NASDAQ'},{t:'NVDA',c:'NVIDIA',e:'NASDAQ'},{t:'GOOGL',c:'Alphabet',e:'NASDAQ'},{t:'META',c:'Meta',e:'NASDAQ'},{t:'TSLA',c:'Tesla',e:'NASDAQ'}];
 const MKT_CFG=[{k:'sp500',l:'S&P 500'},{k:'nasdaq',l:'NASDAQ'},{k:'bist100',l:'BIST 100'},{k:'btc',l:'BTC'},{k:'eth',l:'ETH'},{k:'gold',l:'Altın'},{k:'oil',l:'Petrol'}];
@@ -2554,7 +2493,7 @@ function renderNews(news,g){
 // AUTOCOMPLETE
 function setupAC(){
   const ti=document.getElementById('tickerIn'),td=document.getElementById('acDrop');
-  ti.addEventListener('input',()=>{const q=ti.value.trim().toUpperCase();if(curEX==='BIST'){if(BIST[q]){document.getElementById('coIn').value=BIST[q];}else{document.getElementById('coIn').value='';}}clearTimeout(acTimer);if(q.length<1){td.classList.remove('visible');return;}acTimer=setTimeout(()=>fetchAC(q,td,'sidebar'),280);});
+  ti.addEventListener('input',()=>{const q=ti.value.trim().toUpperCase();if(curEX==='BIST'){if(BIST[q])document.getElementById('coIn').value=BIST[q];else document.getElementById('coIn').value='';}if(false){clearTimeout(acTimer);if(q.length<1){td.classList.remove('visible');return;}acTimer=setTimeout(()=>fetchAC(q,td,'sidebar'),280);});
   ti.addEventListener('keydown',e=>{if(e.key==='Escape')td.classList.remove('visible');if(e.key==='Enter')doAnalyze();});
 
   const hi=document.getElementById('heroIn'),hd=document.getElementById('heroAc');
@@ -2876,9 +2815,7 @@ async function doAnalyze(){
   const btn=document.getElementById('anaBtn'),ov=document.getElementById('loadingOv'),eb=document.getElementById('errBar'),db=document.getElementById('dataBadge');
   const ex=EX_CFG[curEX];const fw=FW[curFW];
   eb.classList.remove('visible');db.classList.remove('visible');
-  // Yeni ticker — curCo'yu sıfırla, company boşsa map'ten doldur
-  if(!company) company = BIST[ticker] || '';
-  btn.disabled=true;curTicker=ticker;curCo=company;
+  if(!company)company=BIST[ticker]||'';btn.disabled=true;curTicker=ticker;curCo=company;
   document.getElementById('loadingT').textContent=ticker;
   document.getElementById('loadingFW').textContent=`${ex.l} — ${fw.name}`;
   ov.classList.add('visible');
@@ -2902,24 +2839,9 @@ async function doAnalyze(){
 }
 
 function parseAndRender(ticker,company,text,fd,fwKey){
-  // Şirket adı boşsa Yahoo Finance veya AI cevabından al
-  if(!company || company===curCo && curTicker!==ticker){
-    // fd'den şirket adı geliyorsa kullan
-    if(fd && fd.shortName)         company=fd.shortName;
-    else if(fd && fd.longName)     company=fd.longName;
-    else {
-      // AI cevabından COMPANY: satırını ara
-      const cm=text.match(/COMPANY:\s*([^
-]+)/i);
-      if(cm) company=cm[1].trim();
-      // BIST map'ine son çare bak
-      if(!company && BIST[ticker]) company=BIST[ticker];
-    }
-    curCo=company;
-    // Sidebar şirket input'unu da güncelle
-    const coEl=document.getElementById('coIn');
-    if(coEl&&!coEl.value.trim()) coEl.value=company||'';
-  }
+  if(!company&&fd&&fd.shortName)company=fd.shortName;
+  if(!company)company=BIST[ticker]||'';
+  if(company)curCo=company;
   textGlobal=text;
   const fw=FW[fwKey||curFW];const ex=EX_CFG[curEX];
   const statuses=[],details=[];
