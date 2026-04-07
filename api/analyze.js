@@ -685,12 +685,11 @@ function checkRateLimit(ip) {
 export default async function handler(req, res) {
   // CORS — sadece kendi domain
   const origin = req.headers.origin || '';
-  const allowed = ['https://www.barisinvesting.com','https://barisinvesting.com'];
-  if (allowed.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (process.env.NODE_ENV !== 'production') {
-    res.setHeader('Access-Control-Allow-Origin', '*'); // local dev
-  }
+  const isAllowed = !origin // same-origin (boş origin) — her zaman izin ver
+    || origin.includes('barisinvesting.com')
+    || origin.includes('vercel.app') // preview deployments
+    || origin.includes('localhost');  // local dev
+  res.setHeader('Access-Control-Allow-Origin', isAllowed ? (origin || '*') : 'https://www.barisinvesting.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
