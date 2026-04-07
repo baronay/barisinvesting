@@ -1569,6 +1569,18 @@ body{
 /* Modal max-height scroll */
 .tez-modal-box{max-height:92vh;display:flex;flex-direction:column;}
 .tez-modal-body{overflow-y:auto;flex:1;}
+
+.hist-section{padding:10px 20px 6px;border-top:1px solid var(--border-s);margin-top:4px;}
+.hist-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:space-between;}
+.hist-item{display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;border-radius:4px;transition:background .15s;}
+.hist-item:hover{background:var(--surface2);margin:0 -4px;padding:5px 4px;}
+.hist-ticker{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--text);min-width:46px;}
+.hist-fw{font-size:9px;color:var(--muted);min-width:44px;}
+.hist-verdict{font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;margin-left:auto;}
+.hist-verdict.buy{background:var(--success-dim);color:var(--success);}
+.hist-verdict.avoid{background:var(--danger-dim);color:var(--danger);}
+.hist-verdict.watch{background:var(--warn-dim);color:var(--warn);}
+.hist-score{font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
 </style>
 <body>
 <div id="globalToast"><span class="toast-dot"></span><span class="toast-msg"></span></div>
@@ -1862,6 +1874,10 @@ body{
     </div>
     <div class="nav-lbl" id="navLabel">Kriterler</div>
     <div id="navList"></div>
+    <div class="hist-section" id="histSection" style="display:none">
+      <div class="hist-lbl"><span>Son Analizler</span><span onclick="clearHistory()" style="font-size:9px;color:var(--muted2);cursor:pointer;font-weight:400" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted2)'">temizle</span></div>
+      <div id="histList"></div>
+    </div>
     <div class="verdict-sec">
       <div class="verdict-lbl">Son Karar</div>
       <div class="verdict-box" id="verdictBox">— / —</div>
@@ -2328,6 +2344,59 @@ const FW={
   lynch:{name:'Peter Lynch',criteria:[{name:'Saha & Hikaye (Amatör Avantajı)',desc:'Ürün/hizmet gözlemlenebilir mi? Script geçerli mi?',ctx:'"İnsanlar çalıştıkları yerde fark ettikleri şirketlere yatırım yapmalı."'},{name:'Büyüme Motoru & Diworseification',desc:'Kârı artıracak asıl hikaye nedir? Odak kaybı var mı?',ctx:'Diworseification: Ana işten uzaklaşıp kaynak israf etmek.'},{name:'Net Nakit & Bilanço Sağlığı',desc:'Net nakit pozisyonu nedir?',ctx:'"Güçlü bilanço bir güvenlik ağıdır."'},{name:'Stok (Envanter) Kontrolü',desc:'Stok büyüme hızı satış büyüme hızını geçiyor mu?',ctx:'"Satılamayan ürünlerin birikmesi en büyük kırmızı bayrak."'},{name:'PEG Oranı & Kazanç Çizgisi',desc:'PEG 1\'in altında mı?',ctx:'"PEG 1\'in altında değerli, 2\'nin üzerinde pahalı."'},{name:'Kurumsal Sahiplik & Gizli Mücevher',desc:'Kurumsal sahiplik %30\'un altında mı?',ctx:'"Wall Street bu şirketi çoktan keşfettiyse büyük fırsat kalmamıştır."'},{name:'Yönetim Hamleleri (Insider & Buyback)',desc:'Yöneticiler hisse alıyor mu?',ctx:'"Yöneticiler tek nedenden alır — fiyatın ucuz olduğunu düşünürler."'}],keys:['STORY','GROWTH','BALANCE','INVENTORY','PEGCRIT','INSTITUTION','INSIDER'],prompt:(t,c,ex)=>`Peter Lynch felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle Lynch perspektifinden]\nRISK: [en kritik risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nSTORY: PASS|FAIL|NEUTRAL | [açıklama]\nGROWTH: PASS|FAIL|NEUTRAL | [açıklama]\nBALANCE: PASS|FAIL|NEUTRAL | [açıklama]\nINVENTORY: PASS|FAIL|NEUTRAL | [açıklama]\nPEGCRIT: PASS|FAIL|NEUTRAL | [açıklama]\nINSTITUTION: PASS|FAIL|NEUTRAL | [açıklama]\nINSIDER: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`},
   dalio:{name:'Ray Dalio',criteria:[{name:'Büyüme & Verimlilik Dengesi',desc:'Üretkenlik artışı ve reel büyüme sürdürülebilir mi?',ctx:'"Büyüme ikiden gelir: verimlilik artışı ve borç döngüsü."'},{name:'Borç Döngüsü Pozisyonu',desc:'Kısa döngüde nerede? Kaldıraç kontrollü mü?',ctx:'Dalio\'ya göre borç döngüsünün yeri en kritik makro değişkendir.'},{name:'Para Politikası Duyarlılığı',desc:'Faiz değişimlerine duyarlılık nedir?',ctx:'"Merkez bankası elindeki araçları tükettiğinde riskler en yüksek noktadadır."'},{name:'Döviz & Sermaye Akışı',desc:'Dolar bazlı gelir/borç dengesi sağlıklı mı?',ctx:'Güçlü dolar dönemlerinde gelişmekte olan piyasa şirketleri baskı altına girer.'},{name:'Emtia & Enflasyon Koruması',desc:'Stagflasyon senaryosunda korumalı mı?',ctx:'Altın, emtia ve reel varlıklara bağlılık bir Dalio portföy prensibidir.'},{name:'Sistemik Risk & Sektör Kırılganlığı',desc:'Makro şoklara karşı dirençli mi?',ctx:'"Bir şirketi sektörünün yapısal kırılganlıklarından bağımsız değerlendiremezsin."'},{name:'Uzun Vadeli Rekabet Gücü',desc:'20 yıllık öngörüde rekabet avantajı korunacak mı?',ctx:'"Uzun vadeli düşün. Çoğu insan gereğinden kısa vadeli odaklanır."'}],keys:['PRODGROWTH','DEBTCYCLE','MONETARY','CURRENCY','INFLATION','SYSTEMIC','LONGTERM'],prompt:(t,c,ex)=>`Ray Dalio makro perspektifiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et. Borç döngüsü, para politikası, enflasyon ve uzun vadeli makro faktörler çerçevesinde değerlendir.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle Dalio makro perspektifinden]\nRISK: [en kritik makro risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nPRODGROWTH: PASS|FAIL|NEUTRAL | [açıklama]\nDEBTCYCLE: PASS|FAIL|NEUTRAL | [açıklama]\nMONETARY: PASS|FAIL|NEUTRAL | [açıklama]\nCURRENCY: PASS|FAIL|NEUTRAL | [açıklama]\nINFLATION: PASS|FAIL|NEUTRAL | [açıklama]\nSYSTEMIC: PASS|FAIL|NEUTRAL | [açıklama]\nLONGTERM: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`}
 };
+
+
+// ── ANALİZ GEÇMİŞİ ──────────────────────────────────────────────
+const HIST_KEY='bi_history';
+const HIST_MAX=10;
+function loadHistory(){try{return JSON.parse(localStorage.getItem(HIST_KEY)||'[]');}catch{return[];}}
+function saveToHistory(ticker,company,exchange,fw,score,maxScore,verdict){
+  const hist=loadHistory();
+  const idx=hist.findIndex(h=>h.ticker===ticker&&h.fw===fw&&h.exchange===exchange);
+  const entry={ticker,company:company||ticker,exchange,fw,score,maxScore,verdict,ts:Date.now()};
+  if(idx>=0)hist.splice(idx,1);
+  hist.unshift(entry);
+  if(hist.length>HIST_MAX)hist.pop();
+  try{localStorage.setItem(HIST_KEY,JSON.stringify(hist));}catch{}
+  renderHistory();
+}
+function clearHistory(){
+  try{localStorage.removeItem(HIST_KEY);}catch{}
+  renderHistory();
+}
+function renderHistory(){
+  const hist=loadHistory();
+  const section=document.getElementById('histSection');
+  const list=document.getElementById('histList');
+  if(!section||!list)return;
+  if(!hist.length){section.style.display='none';return;}
+  section.style.display='block';
+  list.innerHTML='';
+  const fwL={buffett:'Buffett',lynch:'Lynch',dalio:'Dalio'};
+  hist.forEach(h=>{
+    const d=document.createElement('div');
+    d.className='hist-item';
+    d.title=(h.company||h.ticker)+' — '+(h.exchange||'')+' — '+new Date(h.ts).toLocaleDateString('tr-TR');
+    const vc=h.verdict==='AL'?'buy':h.verdict==='UZAK_DUR'?'avoid':'watch';
+    const tk=document.createElement('span');tk.className='hist-ticker';tk.textContent=h.ticker;
+    const fw=document.createElement('span');fw.className='hist-fw';fw.textContent=fwL[h.fw]||h.fw;
+    const sc=document.createElement('span');sc.className='hist-score';sc.textContent=h.score+'/'+h.maxScore;
+    const vd=document.createElement('span');vd.className='hist-verdict '+vc;vd.textContent=h.verdict;
+    d.appendChild(tk);d.appendChild(fw);d.appendChild(sc);d.appendChild(vd);
+    d.onclick=()=>{
+      const ti=document.getElementById('tickerIn');
+      const ci=document.getElementById('coIn');
+      if(ti)ti.value=h.ticker;
+      if(ci)ci.value=h.company||'';
+      if(h.exchange)selEx(h.exchange);
+      if(h.fw)selFW(h.fw);
+      switchTab('analiz');
+      closeSidebar();
+      setTimeout(()=>doAnalyze(),100);
+    };
+    list.appendChild(d);
+  });
+}
 
 // STATE
 let analysisData=null,radarChart=null,barChart=null,ptPie=null,ptScore=null;
@@ -2882,6 +2951,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
     else verdict='BEKLE';
   }
   analysisData={ticker,company,statuses,details,score,verdict,fw:fwKey||curFW};
+  saveToHistory(ticker,company,curEX,fwKey||curFW,score,fw.criteria.length,verdict);
   if(fd) analysisData.fd = fd; // finansal verileri canvas için sakla
 
   const ptIdx=portfolio.findIndex(p=>p.ticker===ticker&&p.exchange===curEX);
@@ -3986,7 +4056,7 @@ function renderWatchlist(stocks) {
 // ══════════════════════════════════════════════
 // AUTH STATE
 // ══════════════════════════════════════════════
-buildNav(); buildChips(); setupAC(); loadMkt(); loadNews();
+buildNav(); buildChips(); setupAC(); loadMkt(); loadNews(); renderHistory();
 loadWatchlist('BIST');
 
 // Auth init — saved email varsa otomatik yükle
