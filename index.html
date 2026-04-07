@@ -343,8 +343,9 @@ body{
 .news-t{font-size:12px;color:var(--text);line-height:1.55;font-family:'IBM Plex Sans',sans-serif;font-weight:500;margin-bottom:4px;}
 .news-time{font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
 .news-loading{text-align:center;padding:20px;color:var(--muted);font-size:10px;grid-column:1/-1;font-family:'IBM Plex Mono',monospace;}
-.stock-hdr{display:none;background:var(--sidebar);padding:14px 18px;margin-bottom:1px;align-items:center;gap:12px;flex-wrap:wrap;position:relative;border-bottom:3px solid var(--accent2);}
-.stock-hdr.visible{display:flex;}
+/* stock-hdr artık snapshotCard tarafından yerini aldı — gizli */
+.stock-hdr{display:none !important;}
+.stock-hdr.visible{display:none !important;}
 .stock-logo{width:34px;height:34px;background:var(--surface2);border:1px solid var(--border-s);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;color:var(--text2);overflow:hidden;flex-shrink:0;}
 .stock-logo img{width:100%;height:100%;object-fit:contain;}
 .hflag{width:22px;height:15px;flex-shrink:0;}
