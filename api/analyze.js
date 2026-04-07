@@ -666,20 +666,85 @@ function sigPEG(v) { if(v==null)return'N/A'; if(v<1)return'ucuz — Lynch fırsa
 function sigEV(v)  { if(v==null)return'N/A'; if(v<8)return'ucuz'; if(v<15)return'adil'; return'pahalı'; }
 
 // ── ANA HANDLER ──────────────────────────────────────────────────
+// ── IP bazlı rate limit (in-memory, Vercel serverless için yeterli) ──
+const _ipHits = new Map();
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const window = 60 * 1000; // 1 dakika
+  const max = 10;           // dakikada max 10 istek
+  const hits = (_ipHits.get(ip) || []).filter(t => now - t < window);
+  hits.push(now);
+  _ipHits.set(ip, hits);
+  if (_ipHits.size > 5000) { // bellek temizle
+    const old = [..._ipHits.keys()].slice(0, 1000);
+    old.forEach(k => _ipHits.delete(k));
+  }
+  return hits.length <= max;
+}
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  // CORS — sadece kendi domain
+  const origin = req.headers.origin || '';
+  const allowed = ['https://www.barisinvesting.com','https://barisinvesting.com'];
+  if (allowed.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (process.env.NODE_ENV !== 'production') {
+    res.setHeader('Access-Control-Allow-Origin', '*'); // local dev
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { ticker, prompt, exchange } = req.body || {};
+  // IP rate limit
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+  if (!checkRateLimit(ip)) {
+    return res.status(429).json({ error: 'Çok fazla istek. Lütfen bekleyin.' });
+  }
+
+  const { ticker, exchange, email } = req.body || {};
+
+  // Ticker sanitize — sadece harf/rakam/nokta, max 12 karakter
   if (!ticker) return res.status(400).json({ error: 'Ticker gerekli' });
+  const cleanTicker = String(ticker).toUpperCase().replace(/[^A-Z0-9.]/g, '').slice(0, 12);
+  if (!cleanTicker) return res.status(400).json({ error: 'Geçersiz ticker' });
+
+  // Framework doğrula — client'tan gelen raw prompt'u KULLANMA
+  const validFrameworks = ['buffett', 'lynch', 'dalio'];
+  const fw = validFrameworks.includes(framework) ? framework : 'buffett';
+  const fwNames = { buffett: 'Warren Buffett', lynch: 'Peter Lynch', dalio: 'Ray Dalio' };
+  const fwName = fwNames[fw];
+  const exLabel = exchange === 'BIST' ? 'BIST' : exchange === 'NYSE' ? 'NYSE' : 'NASDAQ';
+  // Prompt server-side üretiliyor — client prompt'u yoksayılıyor
+  const prompt = `${fwName} felsefesiyle ${exLabel} borsasındaki ${cleanTicker} hissesini analiz et.`;
+
+
+  // Server-side kredi kontrolü
+  const SB_URL = process.env.SUPABASE_URL;
+  const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
+  const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim();
+  const em = email ? String(email).toLowerCase().trim() : null;
+  const isAdmin = em && ADMIN_EMAIL && em === ADMIN_EMAIL;
+
+  if (SB_URL && SB_KEY && em && !isAdmin) {
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/users?email=eq.${encodeURIComponent(em)}&select=credits,is_admin`, {
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+      });
+      if (r.ok) {
+        const rows = await r.json();
+        const user = rows?.[0];
+        if (user && !user.is_admin && (user.credits || 0) <= 0) {
+          return res.status(403).json({ error: 'Analiz hakkınız doldu.' });
+        }
+      }
+    } catch(e) { console.log('[Kredi kontrol] hata:', e.message); }
+  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'API key eksik' });
 
-  const yahooTicker = exchange === 'BIST' ? `${ticker}.IS` : ticker;
+  const yahooTicker = exchange === 'BIST' ? `${cleanTicker}.IS` : cleanTicker;
   let financialData = null;
   try { financialData = await fetchYahooData(yahooTicker); }
   catch(e) { console.log('Fetch failed:', e.message); }
