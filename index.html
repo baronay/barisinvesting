@@ -2340,6 +2340,8 @@ let acTimer=null;
 // curUser, guestCredits, getEmail, showAuthModal, consumeCredit → auth-logic.js'den gelir
 
 // UTILS
+
+function esc(s){const d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML;}
 const big=(v,c='$')=>{if(v==null)return'N/A';const a=Math.abs(v);if(a>=1e12)return`${c}${(v/1e12).toFixed(2)}T`;if(a>=1e9)return`${c}${(v/1e9).toFixed(2)}B`;if(a>=1e6)return`${c}${(v/1e6).toFixed(2)}M`;return`${c}${v.toFixed(0)}`;};
 const pct=(v)=>v!=null?`%${(v*100).toFixed(1)}`:'N/A';
 const num=(v,d=2)=>v!=null?v.toFixed(d):'N/A';
@@ -2487,7 +2489,7 @@ function renderNews(news,g){
   g.innerHTML='';
   news.forEach(n=>{
     const a=document.createElement('a');a.className='news-card';a.href=n.link||'#';a.target='_blank';a.rel='noopener';
-    a.innerHTML=`<div class="news-pub">${n.publisher||'—'}</div><div class="news-t">${n.title||'—'}</div><div class="news-time">${n.providerPublishTime?ago(n.providerPublishTime):''}</div>`;
+    a.innerHTML=`<div class="news-pub">${esc(n.publisher||'—')}</div><div class="news-t">${esc(n.title||'—')}</div><div class="news-time">${n.providerPublishTime?ago(n.providerPublishTime):''}</div>`;
     g.appendChild(a);
   });
 }
@@ -2526,7 +2528,7 @@ function renderAC(drop,items,src){
   drop.innerHTML='';
   items.forEach(item=>{
     const d=document.createElement('div');d.className='ac-item';
-    d.innerHTML=`<span class="ac-t">${item.ticker}</span><span class="ac-n">${item.name}</span><span style="font-size:8px;color:var(--muted)">${item.exchange||''}</span>`;
+    d.innerHTML=`<span class="ac-t">${esc(item.ticker)}</span><span class="ac-n">${esc(item.name)}</span><span style="font-size:8px;color:var(--muted)">${esc(item.exchange||'')}</span>`;
     d.onclick=()=>{
       drop.classList.remove('visible');
       if(src==='sidebar'){document.getElementById('tickerIn').value=item.ticker;document.getElementById('coIn').value=item.name;if(item.exchange==='BIST')selEx('BIST');else if(item.exchange==='NYSE')selEx('NYSE');else selEx('NASDAQ');}
@@ -2836,7 +2838,7 @@ async function doAnalyze(){
         try { localStorage.setItem('guest_credits', guestCredits); } catch{}
       }
     }
-    const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,prompt:fw.prompt(ticker,company,ex.l),exchange:curEX})});
+    const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,exchange:curEX,framework:curFW,email:getEmail?.()||null})});
     const data=await r.json();
     if(data.error)throw new Error(data.error);
     document.getElementById('ls4').classList.add('done');
@@ -2952,13 +2954,13 @@ async function analyzeAllPt(){
     let notif=document.getElementById(nid);
     if(!notif){notif=document.createElement('div');notif.id=nid;notif.className='pt-notif analyzing';notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span class="pt-nt">${p.ticker}</span><span class="pt-nc">${p.company||'—'} · ${p.exchange}</span></div><div style="font-size:10px;color:var(--muted2)">⏳ Buffett analizi...</div><div class="pt-prog"><div class="pt-pf" id="pf-${p.ticker}" style="width:5%"></div></div>`;nc.appendChild(notif);}
     notif.scrollIntoView({behavior:'smooth',block:'nearest'});
-    try{const bR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,prompt:FW.buffett.prompt(p.ticker,p.company,p.exchange),exchange:p.exchange})});const bD=await bR.json();if(!bD.error){const s=bD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=bD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.bS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.bV=v?v[1]:'BEKLE';}}catch{}
+    try{const bR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,exchange:p.exchange,framework:'buffett',email:getEmail?.()||null})});const bD=await bR.json();if(!bD.error){const s=bD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=bD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.bS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.bV=v?v[1]:'BEKLE';}}catch{}
     const pf=document.getElementById('pf-'+p.ticker);if(pf)pf.style.width='55%';
     notif.querySelector('div:nth-child(2)').textContent='⏳ Lynch analizi...';
-    try{const lR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,prompt:FW.lynch.prompt(p.ticker,p.company,p.exchange),exchange:p.exchange})});const lD=await lR.json();if(!lD.error){const s=lD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=lD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.lS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.lV=v?v[1]:'BEKLE';}}catch{}
+    try{const lR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,exchange:p.exchange,framework:'lynch',email:getEmail?.()||null})});const lD=await lR.json();if(!lD.error){const s=lD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=lD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.lS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.lV=v?v[1]:'BEKLE';}}catch{}
     // Dalio analizi
     notif.querySelector('div:nth-child(2)').textContent='⏳ Dalio analizi...';
-    try{const dR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,prompt:FW.dalio.prompt(p.ticker,p.company,p.exchange),exchange:p.exchange})});const dD=await dR.json();if(!dD.error){const s=dD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=dD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.dS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.dV=v?v[1]:'BEKLE';}}catch{}
+    try{const dR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,exchange:p.exchange,framework:'dalio',email:getEmail?.()||null})});const dD=await dR.json();if(!dD.error){const s=dD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=dD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.dS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.dV=v?v[1]:'BEKLE';}}catch{}
     if(pf)pf.style.width='100%';
     const gc=v=>v==='AL'?'var(--success)':v==='UZAK_DUR'?'var(--danger)':'var(--warn)';
     const sc2=s=>s>=5?'var(--success)':s>=3?'var(--warn)':'var(--danger)';
