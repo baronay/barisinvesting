@@ -640,9 +640,9 @@ body{
   .sidebar{display:none!important;}
   .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--sidebar);backdrop-filter:blur(12px);border-top:1px solid var(--border-s);z-index:500;height:58px;}
   .bn-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);transition:color .2s;border:none;background:none;-webkit-tap-highlight-color:transparent;padding:6px 0;}
-  .bn-tab.active{color:var(--accent);}
-  .bn-tab svg{width:20px;height:20px;}
-  .bn-tab span{font-size:9px;letter-spacing:.5px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;}
+  .bn-tab.active{color:var(--accent);} #bn-tezler{color:var(--gold);opacity:.7;} #bn-tezler.active{color:var(--gold);opacity:1;}
+  .bn-tab svg{width:18px;height:18px;}
+  .bn-tab span{font-size:8px;letter-spacing:.3px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;}
   .mkt-strip{grid-template-columns:repeat(3,1fr);}
   .ov-grid,.rd-grid,.mult-grid,.pt-sum{grid-template-columns:1fr 1fr;}
   .news-grid{grid-template-columns:1fr;}
@@ -3810,7 +3810,7 @@ document.addEventListener('keydown', e => {
 });
 function mobileNav(tab) {
   // Update active tab
-  ['analiz','portfoy','forum'].forEach(t => {
+  ['analiz','portfoy','tezler','forum'].forEach(t => {
     const el = document.getElementById('bn-' + t);
     if(el) el.className = 'bn-tab' + (t === tab ? ' active' : '');
   });
@@ -3821,6 +3821,9 @@ function mobileNav(tab) {
     window.scrollTo(0,0);
   } else if(tab === 'portfoy') {
     showPage('portfolio');
+    window.scrollTo(0,0);
+  } else if(tab === 'tezler') {
+    showPage('tezler');
     window.scrollTo(0,0);
   } else if(tab === 'forum') {
     showPage('forum');
@@ -4037,6 +4040,10 @@ if (!localStorage.getItem('baris_fw_seen')) {
   <button class="bn-tab" id="bn-portfoy" onclick="mobileNav('portfoy')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
     <span>Portföy</span>
+  </button>
+  <button class="bn-tab" id="bn-tezler" onclick="mobileNav('tezler')" style="color:var(--gold)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    <span>Tezler</span>
   </button>
   <button class="bn-tab" id="bn-forum" onclick="mobileNav('forum')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
