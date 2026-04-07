@@ -701,21 +701,105 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Çok fazla istek. Lütfen bekleyin.' });
   }
 
-  const { ticker, exchange, email } = req.body || {};
+  const { ticker, exchange, email, framework } = req.body || {};
 
   // Ticker sanitize — sadece harf/rakam/nokta, max 12 karakter
   if (!ticker) return res.status(400).json({ error: 'Ticker gerekli' });
   const cleanTicker = String(ticker).toUpperCase().replace(/[^A-Z0-9.]/g, '').slice(0, 12);
   if (!cleanTicker) return res.status(400).json({ error: 'Geçersiz ticker' });
 
-  // Framework doğrula — client'tan gelen raw prompt'u KULLANMA
+  // Framework doğrula
   const validFrameworks = ['buffett', 'lynch', 'dalio'];
   const fw = validFrameworks.includes(framework) ? framework : 'buffett';
-  const fwNames = { buffett: 'Warren Buffett', lynch: 'Peter Lynch', dalio: 'Ray Dalio' };
-  const fwName = fwNames[fw];
   const exLabel = exchange === 'BIST' ? 'BIST' : exchange === 'NYSE' ? 'NYSE' : 'NASDAQ';
-  // Prompt server-side üretiliyor — client prompt'u yoksayılıyor
-  const prompt = `${fwName} felsefesiyle ${exLabel} borsasındaki ${cleanTicker} hissesini analiz et.`;
+
+  // Tam format prompt server-side üretiliyor
+  const PROMPTS = {
+    buffett: (t, ex) => `Warren Buffett felsefesiyle ${ex} borsasındaki "${t}" hissesini analiz et.
+
+TICKER: ${t}
+TOTAL_SCORE: X
+VERDICT: AL|BEKLE|UZAK_DUR
+SUMMARY: [2-3 cümle]
+RISK: [en kritik risk]
+
+MULTIPLES_START
+PE: [sayı] | [ucuz/adil/pahalı]
+PB: [sayı] | [ucuz/adil/pahalı]
+EV_EBITDA: [sayı] | [ucuz/adil/pahalı]
+PEG: [sayı] | [ucuz/adil/pahalı]
+RSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]
+PRICE_52W: [düşük]-[yüksek] | [mevcut]
+ANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]
+MULTIPLES_END
+
+CRITERIA_START
+ROE: PASS|FAIL|NEUTRAL | [açıklama]
+PRICING: PASS|FAIL|NEUTRAL | [açıklama]
+DOLLAR: PASS|FAIL|NEUTRAL | [açıklama]
+MOAT: PASS|FAIL|NEUTRAL | [açıklama]
+FCF: PASS|FAIL|NEUTRAL | [açıklama]
+MGMT: PASS|FAIL|NEUTRAL | [açıklama]
+VALUATION: PASS|FAIL|NEUTRAL | [açıklama]
+CRITERIA_END`,
+
+    lynch: (t, ex) => `Peter Lynch felsefesiyle ${ex} borsasındaki "${t}" hissesini analiz et.
+
+TICKER: ${t}
+TOTAL_SCORE: X
+VERDICT: AL|BEKLE|UZAK_DUR
+SUMMARY: [2-3 cümle Lynch perspektifinden]
+RISK: [en kritik risk]
+
+MULTIPLES_START
+PE: [sayı] | [ucuz/adil/pahalı]
+PB: [sayı] | [ucuz/adil/pahalı]
+EV_EBITDA: [sayı] | [ucuz/adil/pahalı]
+PEG: [sayı] | [ucuz/adil/pahalı]
+RSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]
+PRICE_52W: [düşük]-[yüksek] | [mevcut]
+ANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]
+MULTIPLES_END
+
+CRITERIA_START
+STORY: PASS|FAIL|NEUTRAL | [açıklama]
+GROWTH: PASS|FAIL|NEUTRAL | [açıklama]
+BALANCE: PASS|FAIL|NEUTRAL | [açıklama]
+INVENTORY: PASS|FAIL|NEUTRAL | [açıklama]
+PEGCRIT: PASS|FAIL|NEUTRAL | [açıklama]
+INSTITUTION: PASS|FAIL|NEUTRAL | [açıklama]
+INSIDER: PASS|FAIL|NEUTRAL | [açıklama]
+CRITERIA_END`,
+
+    dalio: (t, ex) => `Ray Dalio makro perspektifiyle ${ex} borsasındaki "${t}" hissesini analiz et. Borç döngüsü, para politikası, enflasyon ve uzun vadeli makro faktörler çerçevesinde değerlendir.
+
+TICKER: ${t}
+TOTAL_SCORE: X
+VERDICT: AL|BEKLE|UZAK_DUR
+SUMMARY: [2-3 cümle Dalio makro perspektifinden]
+RISK: [en kritik makro risk]
+
+MULTIPLES_START
+PE: [sayı] | [ucuz/adil/pahalı]
+PB: [sayı] | [ucuz/adil/pahalı]
+EV_EBITDA: [sayı] | [ucuz/adil/pahalı]
+PEG: [sayı] | [ucuz/adil/pahalı]
+RSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]
+PRICE_52W: [düşük]-[yüksek] | [mevcut]
+ANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]
+MULTIPLES_END
+
+CRITERIA_START
+PRODGROWTH: PASS|FAIL|NEUTRAL | [açıklama]
+DEBTCYCLE: PASS|FAIL|NEUTRAL | [açıklama]
+MONETARY: PASS|FAIL|NEUTRAL | [açıklama]
+CURRENCY: PASS|FAIL|NEUTRAL | [açıklama]
+INFLATION: PASS|FAIL|NEUTRAL | [açıklama]
+SYSTEMIC: PASS|FAIL|NEUTRAL | [açıklama]
+LONGTERM: PASS|FAIL|NEUTRAL | [açıklama]
+CRITERIA_END`
+  };
+  const prompt = PROMPTS[fw](cleanTicker, exLabel);
 
 
   // Server-side kredi kontrolü
