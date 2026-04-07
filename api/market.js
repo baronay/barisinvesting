@@ -1,8 +1,7 @@
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
-  const allowed = ['https://www.barisinvesting.com','https://barisinvesting.com'];
-  if (allowed.includes(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
-  else if (process.env.NODE_ENV !== 'production') res.setHeader('Access-Control-Allow-Origin', '*');
+  const isAllowed = !origin || origin.includes('barisinvesting.com') || origin.includes('vercel.app') || origin.includes('localhost');
+  res.setHeader('Access-Control-Allow-Origin', isAllowed ? (origin || '*') : 'https://www.barisinvesting.com');
   const { type, ticker } = req.query;
   if (type === 'market') return getMarketOverview(res);
   if (type === 'news') return getNews(res);
