@@ -3015,31 +3015,61 @@ async function analyzeAllPt(){
   if(!portfolio.length)return;
   const btn=document.getElementById('ptAnaBtn');btn.disabled=true;btn.textContent='⏳ Analiz ediliyor...';
   const nc=document.getElementById('ptNotifs');
-  const estMin=Math.ceil(portfolio.length*2*0.4);
+  const estMin=Math.ceil(portfolio.length*0.4); // 3x hızlı — paralel
   const tn=document.createElement('div');tn.className='pt-tnote';
-  tn.innerHTML=`⏱ <strong>${portfolio.length} hisse</strong> için Buffett + Lynch analizi. Tahmini süre: <strong>${estMin}–${estMin+1} dakika</strong>.`;
+  tn.innerHTML=`⏱ <strong>${portfolio.length} hisse</strong> için Buffett + Lynch + Dalio analizi. Tahmini süre: <strong>~${estMin+1} dakika</strong> (paralel).`;
   nc.appendChild(tn);
-  for(const p of portfolio){
+
+  // Her hisse için 3 framework'ü paralel çalıştıran helper
+  async function analyzeOne(p){
     const nid=`notif-${p.ticker}-${p.exchange}`;
     let notif=document.getElementById(nid);
-    if(!notif){notif=document.createElement('div');notif.id=nid;notif.className='pt-notif analyzing';notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span class="pt-nt">${p.ticker}</span><span class="pt-nc">${p.company||'—'} · ${p.exchange}</span></div><div style="font-size:10px;color:var(--muted2)">⏳ Buffett analizi...</div><div class="pt-prog"><div class="pt-pf" id="pf-${p.ticker}" style="width:5%"></div></div>`;nc.appendChild(notif);}
+    if(!notif){
+      notif=document.createElement('div');notif.id=nid;notif.className='pt-notif analyzing';
+      notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span class="pt-nt">${esc(p.ticker)}</span><span class="pt-nc">${esc(p.company||'—')} · ${esc(p.exchange)}</span></div><div style="font-size:10px;color:var(--muted2)" id="pstat-${p.ticker}">⏳ Buffett · Lynch · Dalio paralel...</div><div class="pt-prog"><div class="pt-pf" id="pf-${p.ticker}" style="width:5%"></div></div>`;
+      nc.appendChild(notif);
+    }
     notif.scrollIntoView({behavior:'smooth',block:'nearest'});
-    try{const bR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,exchange:p.exchange,framework:'buffett',email:getEmail?.()||null})});const bD=await bR.json();if(!bD.error){const s=bD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=bD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.bS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.bV=v?v[1]:'BEKLE';}}catch{}
-    const pf=document.getElementById('pf-'+p.ticker);if(pf)pf.style.width='55%';
-    notif.querySelector('div:nth-child(2)').textContent='⏳ Lynch analizi...';
-    try{const lR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,exchange:p.exchange,framework:'lynch',email:getEmail?.()||null})});const lD=await lR.json();if(!lD.error){const s=lD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=lD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.lS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.lV=v?v[1]:'BEKLE';}}catch{}
-    // Dalio analizi
-    notif.querySelector('div:nth-child(2)').textContent='⏳ Dalio analizi...';
-    try{const dR=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,exchange:p.exchange,framework:'dalio',email:getEmail?.()||null})});const dD=await dR.json();if(!dD.error){const s=dD.result.match(/TOTAL_SCORE:\s*(\d+)/);const v=dD.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);p.dS=s?Math.min(7,Math.max(0,parseInt(s[1]))):null;p.dV=v?v[1]:'BEKLE';}}catch{}
+
+    const doFetch = async (fw) => {
+      try{
+        const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,exchange:p.exchange,framework:fw,email:getEmail?.()||null})});
+        const d=await r.json();
+        if(!d.error){
+          const s=d.result.match(/TOTAL_SCORE:\s*(\d+)/);
+          const v=d.result.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);
+          return {score:s?Math.min(7,Math.max(0,parseInt(s[1]))):null, verdict:v?v[1]:'BEKLE'};
+        }
+      }catch{}
+      return {score:null,verdict:null};
+    };
+
+    // 3 çağrı PARALEL
+    const pf=document.getElementById('pf-'+p.ticker);
+    if(pf)pf.style.width='30%';
+    const [bRes,lRes,dRes] = await Promise.all([doFetch('buffett'),doFetch('lynch'),doFetch('dalio')]);
+    p.bS=bRes.score; p.bV=bRes.verdict;
+    p.lS=lRes.score; p.lV=lRes.verdict;
+    p.dS=dRes.score; p.dV=dRes.verdict;
     if(pf)pf.style.width='100%';
+
     const gc=v=>v==='AL'?'var(--success)':v==='UZAK_DUR'?'var(--danger)':'var(--warn)';
     const sc2=s=>s>=5?'var(--success)':s>=3?'var(--warn)':'var(--danger)';
-    const avg=((p.bS||0)+(p.lS||0)+(p.dS||0))/([(p.bS),(p.lS),(p.dS)].filter(x=>x!=null).length||1);
+    const scores=[p.bS,p.lS,p.dS].filter(x=>x!=null);
+    const avg=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;
     notif.className='pt-notif '+(avg>=4.5?'done-good':avg<3?'done-bad':'done-mid');
-    notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span class="pt-nt">${p.ticker}</span><span class="pt-nc">${p.company||'—'} · ${p.exchange}</span></div><div class="pt-scrs"><div class="pt-sb2 b"><span class="ptsl">BUFFETT</span><span class="ptsv" style="color:${p.bS!=null?sc2(p.bS):'var(--muted2)'}">${p.bS!=null?p.bS+'/7':'—'}</span>${p.bV?`<span class="ptvt" style="color:${gc(p.bV)};border-color:${gc(p.bV)}40">${p.bV}</span>`:''}</div><div class="pt-sb2 l"><span class="ptsl">LYNCH</span><span class="ptsv" style="color:${p.lS!=null?sc2(p.lS):'var(--muted2)'}">${p.lS!=null?p.lS+'/7':'—'}</span>${p.lV?`<span class="ptvt" style="color:${gc(p.lV)};border-color:${gc(p.lV)}40">${p.lV}</span>`:''}</div><div class="pt-sb2" style="border-left:2px solid var(--dalio)"><span class="ptsl" style="color:var(--dalio)">DALIO</span><span class="ptsv" style="color:${p.dS!=null?sc2(p.dS):'var(--muted2)'}">${p.dS!=null?p.dS+'/7':'—'}</span>${p.dV?`<span class="ptvt" style="color:${gc(p.dV)};border-color:${gc(p.dV)}40">${p.dV}</span>`:''}</div></div>`;
+    notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span class="pt-nt">${esc(p.ticker)}</span><span class="pt-nc">${esc(p.company||'—')} · ${esc(p.exchange)}</span></div><div class="pt-scrs"><div class="pt-sb2 b"><span class="ptsl">BUFFETT</span><span class="ptsv" style="color:${p.bS!=null?sc2(p.bS):'var(--muted2)'}">${p.bS!=null?p.bS+'/7':'—'}</span>${p.bV?`<span class="ptvt" style="color:${gc(p.bV)};border-color:${gc(p.bV)}40">${p.bV}</span>`:''}</div><div class="pt-sb2 l"><span class="ptsl">LYNCH</span><span class="ptsv" style="color:${p.lS!=null?sc2(p.lS):'var(--muted2)'}">${p.lS!=null?p.lS+'/7':'—'}</span>${p.lV?`<span class="ptvt" style="color:${gc(p.lV)};border-color:${gc(p.lV)}40">${p.lV}</span>`:''}</div><div class="pt-sb2" style="border-left:2px solid var(--dalio)"><span class="ptsl" style="color:var(--dalio)">DALIO</span><span class="ptsv" style="color:${p.dS!=null?sc2(p.dS):'var(--muted2)'}">${p.dS!=null?p.dS+'/7':'—'}</span>${p.dV?`<span class="ptvt" style="color:${gc(p.dV)};border-color:${gc(p.dV)}40">${p.dV}</span>`:''}</div></div>`;
     renderPt();updateSbSummary();
-    if(portfolio.indexOf(p)<portfolio.length-1)await new Promise(r=>setTimeout(r,400));
   }
+
+  // Hisseleri 2'li gruplar halinde çalıştır — API'yi patlatmamak için
+  const BATCH=2;
+  for(let i=0;i<portfolio.length;i+=BATCH){
+    const batch=portfolio.slice(i,i+BATCH);
+    await Promise.all(batch.map(p=>analyzeOne(p)));
+    if(i+BATCH<portfolio.length)await new Promise(r=>setTimeout(r,300));
+  }
+
   btn.disabled=false;btn.textContent='▶ Buffett + Lynch + Dalio';
   triggerPortfolioSave();
 }
