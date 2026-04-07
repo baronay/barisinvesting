@@ -2336,9 +2336,7 @@ let hasAnalyzed=false,textGlobal='';
 let portfolio=[];
 let mktCache={};
 let acTimer=null;
-let curUser=null;
-let guestCredits=3;
-function getEmail(){return localStorage.getItem('bi_email')||null;}
+// curUser, guestCredits, getEmail, showAuthModal, consumeCredit → auth-logic.js'den gelir
 
 // UTILS
 const big=(v,c='$')=>{if(v==null)return'N/A';const a=Math.abs(v);if(a>=1e12)return`${c}${(v/1e12).toFixed(2)}T`;if(a>=1e9)return`${c}${(v/1e9).toFixed(2)}B`;if(a>=1e6)return`${c}${(v/1e6).toFixed(2)}M`;return`${c}${v.toFixed(0)}`;};
@@ -2803,15 +2801,13 @@ async function doAnalyze(){
   if(!ticker)return;
 
   // ── Hak kontrolü ──
-  const credits = curUser ? curUser.credits : guestCredits;
-  const isAdmin = curUser?.is_admin;
+  const _cu = (typeof curUser !== 'undefined') ? curUser : null;
+  const _gc = (typeof guestCredits !== 'undefined') ? guestCredits : 3;
+  const credits = _cu ? _cu.credits : _gc;
+  const isAdmin = _cu?.is_admin;
   if (!isAdmin && credits <= 0) {
-    if (!getEmail()) {
-      showAuthModal();
-      showToast('Analiz hakkınız doldu. Giriş yaparak 5 ücretsiz hak kazanın.', 'warn');
-    } else {
-      showToast('Analiz hakkınız doldu. Bizimle iletişime geçin.', 'error');
-    }
+    if (typeof showAuthModal === 'function') showAuthModal();
+    showToast('Analiz hakkınız doldu. Giriş yaparak 5 ücretsiz hak kazanın.', 'warn');
     return;
   }
   document.getElementById('coIn').value=company;
@@ -2826,12 +2822,18 @@ async function doAnalyze(){
   document.getElementById('badgeLive').style.display='none';
   ['ls1','ls2','ls3','ls4'].forEach((s,i)=>{document.getElementById(s).className='loading-step';setTimeout(()=>{if(i>0)document.getElementById(['ls1','ls2','ls3','ls4'][i-1]).classList.add('done');document.getElementById(s).classList.add('active');},i*700);});
   try{
-    // Analiz başlamadan hakkı düş
-    const creditResult = await consumeCredit();
-    if (!creditResult.ok) {
-      ov.classList.remove('visible');btn.disabled=false;
-      eb.textContent=creditResult.error;eb.classList.add('visible');
-      return;
+    if (typeof consumeCredit === 'function') {
+      const creditResult = await consumeCredit();
+      if (!creditResult.ok) {
+        ov.classList.remove('visible');btn.disabled=false;
+        eb.textContent=creditResult.error;eb.classList.add('visible');
+        return;
+      }
+    } else {
+      if (typeof guestCredits !== 'undefined' && guestCredits > 0) {
+        guestCredits--;
+        try { localStorage.setItem('guest_credits', guestCredits); } catch{}
+      }
     }
     const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,prompt:fw.prompt(ticker,company,ex.l),exchange:curEX})});
     const data=await r.json();
@@ -2840,6 +2842,7 @@ async function doAnalyze(){
     setTimeout(()=>{ov.classList.remove('visible');btn.disabled=false;hasAnalyzed=true;parseAndRender(ticker,company,data.result,data.financialData,curFW);},400);
   }catch(err){ov.classList.remove('visible');btn.disabled=false;eb.textContent='Hata: '+err.message;eb.classList.add('visible');}
 }
+
 
 function parseAndRender(ticker,company,text,fd,fwKey){
   if(!company&&fd&&fd.shortName)company=fd.shortName;
