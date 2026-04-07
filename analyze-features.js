@@ -175,55 +175,106 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
   const old = document.getElementById('snapshotCard');
   if (old) old.remove();
 
-  // Kart iskeleti — hemen göster
+  // stock-hdr'ı tamamen gizle — tüm içerik snapshotCard içinde
+  const stockHdr = document.getElementById('stockHdr');
+  if (stockHdr) stockHdr.style.display = 'none';
+
+  // Framework config
+  const fwColors = { buffett: '#4d8ef0', lynch: '#e07b39', dalio: '#9b77cc' };
+  const fwNames  = { buffett: 'BUFFETT', lynch: 'LYNCH',   dalio: 'DALIO'   };
+  const fwC = fwColors[fwKey] || '#4d8ef0';
+  const fwN = fwNames[fwKey]  || 'BUFFETT';
+
+  // Exchange flag emoji
+  const flagMap = { BIST: '🇹🇷', NYSE: '🇺🇸', NASDAQ: '🇺🇸', NAS: '🇺🇸' };
+  const flag = flagMap[exchange] || '🌐';
+
+  // Kart iskeleti
   const card = document.createElement('div');
   card.id = 'snapshotCard';
   card.style.cssText = `
-    background:var(--sidebar,#1a1f2e);
-    border:1px solid var(--border-s,#3a4260);
-    border-top:3px solid var(--accent2,#2451a3);
+    background:var(--sidebar,#0e1220);
+    border-bottom:2px solid var(--gold,#d4a843);
     margin-bottom:1px;
+    padding:16px 20px 0;
   `;
 
-  // Header
-  const hdr = document.createElement('div');
-  hdr.style.cssText = `
-    display:flex;align-items:center;gap:12px;
-    padding:14px 18px 12px;
-    border-bottom:1px solid var(--border-s,#3a4260);
+  // ── Üst satır: Logo + Ticker + Badges + X Butonu ──
+  const topRow = document.createElement('div');
+  topRow.style.cssText = 'display:flex;align-items:center;gap:14px;margin-bottom:12px;';
+
+  // Logo (proxy)
+  const logoWrap = document.createElement('div');
+  logoWrap.style.cssText = `
+    width:42px;height:42px;flex-shrink:0;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(212,168,67,0.25);
+    border-radius:6px;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);
+  `;
+  const logoSrc = `/api/logo?ticker=${encodeURIComponent(ticker)}&sz=128`;
+  const logoImg = document.createElement('img');
+  logoImg.src = logoSrc;
+  logoImg.crossOrigin = 'anonymous';
+  logoImg.style.cssText = 'width:100%;height:100%;object-fit:contain;';
+  logoImg.onerror = () => { logoWrap.innerHTML = `<span>${ticker.slice(0,2)}</span>`; };
+  logoWrap.appendChild(logoImg);
+  // Canvas paylaşım için
+  window._shareLogoImg = null;
+  const _sli = new Image(); _sli.crossOrigin = 'anonymous'; _sli.src = logoSrc;
+  _sli.onload = () => { window._shareLogoImg = _sli; };
+
+  // Ticker + şirket adı + bayrak pill
+  const titleCol = document.createElement('div');
+  titleCol.innerHTML = `
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:#e8edf8;letter-spacing:2px;line-height:1">${ticker}</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;font-family:'IBM Plex Sans',sans-serif;">${company || ''}</div>
+    <div style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;background:rgba(212,168,67,0.10);border:1px solid rgba(212,168,67,0.25);border-radius:3px;padding:2px 7px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--gold,#d4a843);letter-spacing:1px;">
+      ${flag} ${exchange}
+    </div>
   `;
 
-  const logoEl = makeLogoEl(ticker, company, website, logoUrl);
-  const titleWrap = document.createElement('div');
-  titleWrap.innerHTML = `
-    <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted-s,#8892b0);font-family:'IBM Plex Mono',monospace;margin-bottom:3px">Şirket Profili</div>
-    <div style="font-size:14px;font-weight:700;color:#e8e6e0;font-family:'Playfair Display',serif">${company || ticker}</div>
-    <div style="font-size:9px;color:#8892b0;font-family:'IBM Plex Mono',monospace;margin-top:2px">${exchange} · ${ticker}</div>
+  // Badges (FW + CANLI)
+  const badgeCol = document.createElement('div');
+  badgeCol.style.cssText = 'display:flex;flex-direction:column;gap:4px;margin-left:4px;';
+  badgeCol.innerHTML = `
+    <span id="badgeFw" class="badge badge-fw ${fwKey}">${fwN}</span>
+    <span id="badgeLive" class="badge badge-live" style="display:none">● Canlı</span>
   `;
 
-  hdr.appendChild(logoEl);
-  hdr.appendChild(titleWrap);
-  card.appendChild(hdr);
+  // X Paylaş butonu (sağda)
+  const xBtn = document.createElement('button');
+  xBtn.className = 'x-shr-btn';
+  xBtn.style.marginLeft = 'auto';
+  xBtn.onclick = () => openShr();
+  xBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>𝕏 Paylaş`;
+
+  topRow.appendChild(logoWrap);
+  topRow.appendChild(titleCol);
+  topRow.appendChild(badgeCol);
+  topRow.appendChild(xBtn);
+  card.appendChild(topRow);
+
+  // Ince gold çizgi ayraç
+  const divider = document.createElement('div');
+  divider.style.cssText = 'height:1px;background:rgba(212,168,67,0.15);margin:0 -20px 14px;';
+  card.appendChild(divider);
 
   // Body — loading state
   const body = document.createElement('div');
   body.id = 'snapshotBody';
-  body.style.cssText = 'padding:14px 18px;';
+  body.style.cssText = 'padding:0 0 14px;';
   body.innerHTML = `
-    <div style="font-size:10px;color:var(--muted-s,#8892b0);font-family:'IBM Plex Mono',monospace;letter-spacing:1px">
+    <div style="font-size:10px;color:var(--muted-s,#8892b0);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;">
       Profil yükleniyor<span id="snapDots">.</span>
     </div>
   `;
   card.appendChild(body);
 
-  // stock-hdr'ın hemen ardına ekle (en üste)
-  const stockHdr = document.getElementById('stockHdr');
-  if (stockHdr) {
-    stockHdr.after(card);
-  } else {
-    const aSection = document.getElementById('analysisSection');
-    if (aSection) aSection.prepend(card);
-  }
+  // analysisSection'ın en başına ekle
+  const aSection = document.getElementById('analysisSection');
+  if (aSection) aSection.prepend(card);
 
   // Loading animasyonu
   let dotCount = 1;
@@ -366,4 +417,13 @@ window.parseAndRender = function(ticker, company, text, fd, fwKey) {
   const website  = fd?.website  || null;
   const logoUrl  = fd?.logoUrl  || null;
   injectCompanySnapshot(ticker, company, ex, fw, fmpPeers, website, logoUrl);
+
+  // snapshotCard'daki badgeFw'yi güncelle (fwKey değişirse)
+  setTimeout(() => {
+    const bfw = document.getElementById('badgeFw');
+    if (bfw) { bfw.textContent = { buffett:'BUFFETT', lynch:'LYNCH', dalio:'DALIO' }[fw] || fw.toUpperCase(); bfw.className = 'badge badge-fw ' + fw; }
+    // Canlı badge — rdGrid görünürse göster
+    const live = document.getElementById('badgeLive');
+    if (live && fd) live.style.display = 'block';
+  }, 300);
 };
