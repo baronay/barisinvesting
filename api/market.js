@@ -1,5 +1,8 @@
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  const allowed = ['https://www.barisinvesting.com','https://barisinvesting.com'];
+  if (allowed.includes(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
+  else if (process.env.NODE_ENV !== 'production') res.setHeader('Access-Control-Allow-Origin', '*');
   const { type, ticker } = req.query;
   if (type === 'market') return getMarketOverview(res);
   if (type === 'news') return getNews(res);
@@ -119,6 +122,9 @@ function parseRSS(xml, source) {
 }
 
 async function searchTicker(query, res) {
+  // Sanitize: max 20 karakter, sadece harf/rakam/boşluk
+  query = String(query).replace(/[^a-zA-Z0-9\s]/g, '').slice(0, 20).trim();
+  if (!query) return res.status(400).json({ results: [] });
   const BIST = {
     'THYAO':'Türk Hava Yolları','EREGL':'Ereğli Demir Çelik','SAHOL':'Sabancı Holding',
     'KCHOL':'Koç Holding','ASELS':'Aselsan','BIMAS':'BİM Mağazalar','TUPRS':'Tüpraş',
