@@ -42,7 +42,7 @@ function updateCreditsUI() {
 }
 
 // ── Auth Modal ──
-function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
+function showAuthModal() { if (localStorage.getItem('bi_email')) return; document.getElementById('authModal').style.display = 'flex'; }
 function hideAuthModal() { document.getElementById('authModal').style.display = 'none'; }
 
 // ── Giriş ──
@@ -330,23 +330,38 @@ function copyRefLink() {
 (async () => {
   const savedEmail = localStorage.getItem('bi_email');
   if (savedEmail) {
+    // Önce offline fallback ile hemen UI'ı güncelle — gecikme olmasın
+    curUser = { email: savedEmail, credits: guestCredits, is_admin: false, offline: true };
+    updateSidebarUserUI();
+    updateCreditsUI();
+    if (typeof updateMobileAccountUI === 'function') updateMobileAccountUI();
+
+    // Sonra sunucudan gerçek veriyi al
     try {
       const r = await fetch('/api/auth?action=me', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: savedEmail })
       });
       const data = await r.json();
-      curUser = data.user || { email: savedEmail, credits: guestCredits, is_admin: false, offline: true };
+      if (data.user) {
+        curUser = data.user;
+        updateSidebarUserUI();
+        updateCreditsUI();
+        if (typeof updateMobileAccountUI === 'function') updateMobileAccountUI();
+      }
     } catch {
-      curUser = { email: savedEmail, credits: guestCredits, is_admin: false, offline: true };
+      // Offline modda devam — zaten set edildi
     }
-    updateSidebarUserUI();
     loadPortfolioFromCloud();
     showRefSection();
   } else {
+    // Kayıtlı email yok — misafir
     updateSidebarUserUI();
+    updateCreditsUI();
+    if (typeof updateMobileAccountUI === 'function') updateMobileAccountUI();
     loadPortfolioFromCloud();
-    if (!sessionStorage.getItem('auth_skipped')) {
+    // Modal: sadece daha önce skip etmediyse VE email yoksa göster
+    if (!sessionStorage.getItem('auth_skipped') && !localStorage.getItem('bi_email')) {
       setTimeout(() => showAuthModal(), 1200);
     }
   }
