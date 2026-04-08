@@ -3087,7 +3087,8 @@ function renderPt(){
   document.getElementById('emptyPt').style.display=has?'none':'flex';
   document.getElementById('ptContent').style.display=has?'block':'none';
   if(!has)return;
-  const total=portfolio.reduce((s,p)=>s+p.buyPrice*p.qty,0);
+  const USD_TRY=38;
+  const total=portfolio.reduce((s,p)=>s+(p.buyPrice*p.qty*(p.currency==='$'?USD_TRY:1)),0)||1;
   const tlT=portfolio.filter(p=>p.currency==='₺').reduce((s,p)=>s+p.buyPrice*p.qty,0);
   const usdT=portfolio.filter(p=>p.currency==='$').reduce((s,p)=>s+p.buyPrice*p.qty,0);
   const tl=document.getElementById('psTL'),ud=document.getElementById('psUSD');
@@ -3096,7 +3097,7 @@ function renderPt(){
   document.getElementById('psCurS').textContent=tlT>0&&usdT>0?'₺ + $ karışık':tlT>0?'TL bazlı':'USD bazlı';
   document.getElementById('psCount').textContent=portfolio.length;
   const big2=portfolio.reduce((a,b)=>(b.buyPrice*b.qty)>(a.buyPrice*a.qty)?b:a,portfolio[0]);
-  const bigPct=((big2.buyPrice*big2.qty/total)*100).toFixed(1);
+  const bigPct=((big2.buyPrice*big2.qty*(big2.currency==='$'?USD_TRY:1)/total)*100).toFixed(1);
   document.getElementById('psBig').textContent=`%${bigPct}`;document.getElementById('psBigT').textContent=big2.ticker;
   const bAn=portfolio.filter(p=>p.bS!=null);const lAn=portfolio.filter(p=>p.lS!=null);const dAn=portfolio.filter(p=>p.dS!=null);
   const avgB=bAn.length>0?(bAn.reduce((s,p)=>s+p.bS,0)/bAn.length).toFixed(1):'—';
@@ -3108,14 +3109,14 @@ function renderPt(){
   const cols=['#2451a3','#1a6b3a','#8b4513','#c0392b','#b8700a','#5b2d8e','#2c7a7b','#9a7d3a'];
   const mix=document.getElementById('mixBars');mix.innerHTML='';
   portfolio.forEach((p,i)=>{
-    const cost=p.buyPrice*p.qty;const wt=(cost/total*100).toFixed(1);const isTL=p.currency==='₺';
+    const cost=p.buyPrice*p.qty;const costN=cost*(p.currency==='$'?USD_TRY:1);const wt=(costN/total*100).toFixed(1);const isTL=p.currency==='₺';
     const row=document.createElement('div');row.className='mix-row';
     row.innerHTML=`<div class="mix-lbl">${p.ticker}</div><div class="mix-bw"><div class="mix-bf" style="background:${cols[i%cols.length]};width:0%" id="mx-${i}"></div></div><div class="mix-pct">%${wt}</div><div class="mix-cur">${isTL?'₺':'$'}${cost.toLocaleString('tr-TR',{maximumFractionDigits:0})}<span class="cbadge ${isTL?'c-tl':'c-usd'}">${isTL?'TL':'USD'}</span></div>`;
     mix.appendChild(row);setTimeout(()=>{const e=document.getElementById('mx-'+i);if(e)e.style.width=wt+'%';},50+i*100);
   });
   const tb=document.getElementById('ptTBody');tb.innerHTML='';
   portfolio.forEach((p,i)=>{
-    const cost=p.buyPrice*p.qty;const wt=(cost/total*100).toFixed(1);
+    const cost=p.buyPrice*p.qty;const costN2=cost*(p.currency==='$'?USD_TRY:1);const wt=(costN2/total*100).toFixed(1);
     const bC=p.bS!=null?(p.bS>=5?'var(--success)':p.bS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';
     const lC=p.lS!=null?(p.lS>=5?'var(--success)':p.lS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';
     const dC=p.dS!=null?(p.dS>=5?'var(--success)':p.dS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';
@@ -3124,7 +3125,7 @@ function renderPt(){
     tb.appendChild(tr);
   });
   if(ptPie)ptPie.destroy();if(ptScore)ptScore.destroy();
-  ptPie=new Chart(document.getElementById('ptPie').getContext('2d'),{type:'doughnut',data:{labels:portfolio.map(p=>`${p.ticker}(${p.currency})`),datasets:[{data:portfolio.map(p=>(p.buyPrice*p.qty/total*100)),backgroundColor:cols.slice(0,portfolio.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9},boxWidth:9}}}}});
+  ptPie=new Chart(document.getElementById('ptPie').getContext('2d'),{type:'doughnut',data:{labels:portfolio.map(p=>`${p.ticker}(${p.currency})`),datasets:[{data:portfolio.map(p=>(p.buyPrice*p.qty*(p.currency==='$'?USD_TRY:1)/total*100)),backgroundColor:cols.slice(0,portfolio.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9},boxWidth:9}}}}});
   const an=portfolio.filter(p=>p.bS!=null||p.lS!=null||p.dS!=null);
   if(an.length>0){ptScore=new Chart(document.getElementById('ptScore').getContext('2d'),{type:'bar',data:{labels:an.map(p=>p.ticker),datasets:[{label:'Buffett',data:an.map(p=>p.bS||0),backgroundColor:'rgba(36,81,163,0.7)',borderWidth:0,borderRadius:2},{label:'Lynch',data:an.map(p=>p.lS||0),backgroundColor:'rgba(139,69,19,0.7)',borderWidth:0,borderRadius:2},{label:'Dalio',data:an.map(p=>p.dS||0),backgroundColor:'rgba(91,45,142,0.7)',borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:7,ticks:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9}},grid:{color:'#f4f1ec'}},x:{ticks:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9}},grid:{display:false}}},plugins:{legend:{labels:{color:'#6b6560',font:{family:'IBM Plex Mono',size:9},boxWidth:8}}}}});}
   const cr=parseFloat(bigPct);let rTxt,rCls;if(cr>50||portfolio.length<3){rTxt='YÜKSEK';rCls='high';}else if(cr>30||portfolio.length<5){rTxt='ORTA';rCls='mid';}else{rTxt='DÜŞÜK';rCls='low';}
@@ -3140,7 +3141,8 @@ function anaFromPt(tk,co,ex){selEx(ex);document.getElementById('tickerIn').value
 function updateSbSummary(){
   const el=document.getElementById('ptSbSummary');
   if(!portfolio.length){el.textContent='Henüz hisse eklenmedi.';return;}
-  const total=portfolio.reduce((s,p)=>s+p.buyPrice*p.qty,0);
+  const USD_TRY=38;
+  const total=portfolio.reduce((s,p)=>s+(p.buyPrice*p.qty*(p.currency==='$'?USD_TRY:1)),0)||1;
   const tlT=portfolio.filter(p=>p.currency==='₺').reduce((s,p)=>s+p.buyPrice*p.qty,0);
   const usdT=portfolio.filter(p=>p.currency==='$').reduce((s,p)=>s+p.buyPrice*p.qty,0);
   let h=`<div style="margin-bottom:4px;font-size:9px">`;
@@ -3148,7 +3150,7 @@ function updateSbSummary(){
   if(tlT>0&&usdT>0)h+=' + ';
   if(usdT>0)h+=`<span style="color:var(--success)">$${usdT.toLocaleString('tr-TR',{maximumFractionDigits:0})}</span>`;
   h+=`</div>`;
-  h+=portfolio.slice(0,4).map(p=>{const w=((p.buyPrice*p.qty/total)*100).toFixed(0);const bC=p.bS!=null?(p.bS>=5?'var(--success)':p.bS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';return`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><span style="color:var(--accent);font-weight:700;font-family:Syne,sans-serif;font-size:10px">${p.ticker}</span><span style="color:var(--muted2);font-size:8px">%${w}·${p.currency}</span>${p.bS!=null?`<span style="color:${bC};font-size:8px">B:${p.bS}/7</span>`:''}</div>`;}).join('');
+  h+=portfolio.slice(0,4).map(p=>{const w=((p.buyPrice*p.qty*(p.currency==='$'?USD_TRY:1)/total)*100).toFixed(0);const bC=p.bS!=null?(p.bS>=5?'var(--success)':p.bS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';return`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><span style="color:var(--accent);font-weight:700;font-family:Syne,sans-serif;font-size:10px">${p.ticker}</span><span style="color:var(--muted2);font-size:8px">%${w}·${p.currency}</span>${p.bS!=null?`<span style="color:${bC};font-size:8px">B:${p.bS}/7</span>`:''}</div>`;}).join('');
   el.innerHTML=h;
 }
 
