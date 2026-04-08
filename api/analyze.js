@@ -797,9 +797,9 @@ EARNINGS: PASS|FAIL|NEUTRAL | [açıklama]
 DIVIDEND: PASS|FAIL|NEUTRAL | [açıklama]
 PE_G: PASS|FAIL|NEUTRAL | [açıklama]
 PB_G: PASS|FAIL|NEUTRAL | [açıklama]
-CRITERIA_END\`,
+CRITERIA_END`,
 
-    dalio: (t, ex) => \`Ray Dalio makro perspektifiyle ${ex} borsasındaki "${t}" hissesini analiz et. Borç döngüsü, para politikası, enflasyon ve uzun vadeli makro faktörler çerçevesinde değerlendir.
+    dalio: (t, ex) => `Ray Dalio makro perspektifiyle ${ex} borsasındaki "${t}" hissesini analiz et. Borç döngüsü, para politikası, enflasyon ve uzun vadeli makro faktörler çerçevesinde değerlendir.
 
 TICKER: ${t}
 TOTAL_SCORE: X
