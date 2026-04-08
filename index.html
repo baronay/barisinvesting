@@ -2373,6 +2373,33 @@ const FW={
 
 // ── ANALİZ GEÇMİŞİ ──────────────────────────────────────────────
 const HIST_KEY='bi_history';
+
+// ── ANALİZ ONBELLEGİ (3 gun) ────────────────────────────────────
+const CACHE_KEY = 'bi_analysis_cache';
+const CACHE_TTL = 3 * 24 * 60 * 60 * 1000;
+
+function getCacheKey(ticker, exchange, fw) { return ticker+':'+exchange+':'+fw; }
+
+function getAnalysisCache(ticker, exchange, fw) {
+  try {
+    const store = JSON.parse(localStorage.getItem(CACHE_KEY)||'{}');
+    const entry = store[getCacheKey(ticker, exchange, fw)];
+    if (!entry) return null;
+    if (Date.now() - entry.ts > CACHE_TTL) { delete store[getCacheKey(ticker,exchange,fw)]; localStorage.setItem(CACHE_KEY, JSON.stringify(store)); return null; }
+    return entry;
+  } catch { return null; }
+}
+
+function setAnalysisCache(ticker, exchange, fw, result, fd) {
+  try {
+    const store = JSON.parse(localStorage.getItem(CACHE_KEY)||'{}');
+    const keys = Object.keys(store);
+    if (keys.length >= 30) keys.sort((a,b)=>store[a].ts-store[b].ts).slice(0,5).forEach(k=>delete store[k]);
+    store[getCacheKey(ticker,exchange,fw)] = { result, financialData:fd, ts:Date.now() };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(store));
+  } catch(e) { console.log('Cache err:', e.message); }
+}
+
 const HIST_MAX=10;
 function loadHistory(){try{return JSON.parse(localStorage.getItem(HIST_KEY)||'[]');}catch{return[];}}
 function saveToHistory(ticker,company,exchange,fw,score,maxScore,verdict){
@@ -2962,6 +2989,14 @@ async function doAnalyze(){
   document.getElementById('badgeLive').style.display='none';
   ['ls1','ls2','ls3','ls4'].forEach((s,i)=>{document.getElementById(s).className='loading-step';setTimeout(()=>{if(i>0)document.getElementById(['ls1','ls2','ls3','ls4'][i-1]).classList.add('done');document.getElementById(s).classList.add('active');},i*700);});
   try{
+    // Cache hit: hak kullanmadan direkt sonucu göster
+    const _ca = getAnalysisCache(ticker, curEX, curFW);
+    if (_ca) {
+      document.getElementById('ls4').classList.add('done');
+      showToast('⚡ Önbellekten yüklendi (3 gün geçerli)');
+      setTimeout(()=>{ov.classList.remove('visible');btn.disabled=false;hasAnalyzed=true;parseAndRender(ticker,company,_ca.result,_ca.financialData,curFW);},300);
+      return;
+    }
     if (typeof consumeCredit === 'function') {
       const creditResult = await consumeCredit();
       if (!creditResult.ok) {
@@ -3020,6 +3055,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   }
   analysisData={ticker,company,statuses,details,score,verdict,fw:fwKey||curFW};
   saveToHistory(ticker,company,curEX,fwKey||curFW,score,fw.criteria.length,verdict);
+  setAnalysisCache(ticker,curEX,fwKey||curFW,textGlobal,fd||null);
   renderFWTeaser(fwKey||curFW, ticker, company);
   // Paylaşılabilir URL güncelle
   if (window.history && window.history.replaceState) {
