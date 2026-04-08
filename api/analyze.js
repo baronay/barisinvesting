@@ -709,7 +709,7 @@ export default async function handler(req, res) {
   if (!cleanTicker) return res.status(400).json({ error: 'Geçersiz ticker' });
 
   // Framework doğrula
-  const validFrameworks = ['buffett', 'lynch', 'dalio'];
+  const validFrameworks = ['buffett', 'lynch', 'dalio', 'graham'];
   const fw = validFrameworks.includes(framework) ? framework : 'buffett';
   const exLabel = exchange === 'BIST' ? 'BIST' : exchange === 'NYSE' ? 'NYSE' : 'NASDAQ';
 
@@ -771,7 +771,35 @@ INSTITUTION: PASS|FAIL|NEUTRAL | [açıklama]
 INSIDER: PASS|FAIL|NEUTRAL | [açıklama]
 CRITERIA_END`,
 
-    dalio: (t, ex) => `Ray Dalio makro perspektifiyle ${ex} borsasındaki "${t}" hissesini analiz et. Borç döngüsü, para politikası, enflasyon ve uzun vadeli makro faktörler çerçevesinde değerlendir.
+    graham: (t, ex) => `Benjamin Graham değer yatırımı felsefesiyle ${ex} borsasındaki "${t}" hissesini analiz et.
+
+TICKER: ${t}
+TOTAL_SCORE: X
+VERDICT: AL|BEKLE|UZAK_DUR
+SUMMARY: [2-3 cümle Graham perspektifinden]
+RISK: [en kritik risk]
+
+MULTIPLES_START
+PE: [sayı] | [ucuz/adil/pahalı]
+PB: [sayı] | [ucuz/adil/pahalı]
+EV_EBITDA: [sayı] | [ucuz/adil/pahalı]
+PEG: [sayı] | [ucuz/adil/pahalı]
+RSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]
+PRICE_52W: [düşük]-[yüksek] | [mevcut]
+ANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]
+MULTIPLES_END
+
+CRITERIA_START
+MARGIN: PASS|FAIL|NEUTRAL | [açıklama]
+DEBT: PASS|FAIL|NEUTRAL | [açıklama]
+CURRENT: PASS|FAIL|NEUTRAL | [açıklama]
+EARNINGS: PASS|FAIL|NEUTRAL | [açıklama]
+DIVIDEND: PASS|FAIL|NEUTRAL | [açıklama]
+PE_G: PASS|FAIL|NEUTRAL | [açıklama]
+PB_G: PASS|FAIL|NEUTRAL | [açıklama]
+CRITERIA_END\`,
+
+    dalio: (t, ex) => \`Ray Dalio makro perspektifiyle ${ex} borsasındaki "${t}" hissesini analiz et. Borç döngüsü, para politikası, enflasyon ve uzun vadeli makro faktörler çerçevesinde değerlendir.
 
 TICKER: ${t}
 TOTAL_SCORE: X
@@ -851,6 +879,13 @@ LYNCH KURALLARI:
 - Kategori: Yavaş/Orta/Hızlı Büyüyen / Döngüsel / Varlık Zengini / Dönüşümdeki
 - PEG < 1.0 = fırsat, > 2.0 = pahalı/FAIL
 - Kurumsal sahiplik < %30 = "Gizli Mücevher"
+
+GRAHAM KURALLARI:
+- Güvenlik Marjı = İçsel değer hesapla, %30 altında al.
+- Borç/Özsermaye < 0.5, Cari Oran > 2 olmalı.
+- F/K < 15, F/DD < 1.5 Graham sınırları.
+- Net-net: Net dönen varlıklar > Piyasa değeri ise cazip.
+- Son 5 yıl kesintisiz kazanç ve temettü şartı.
 
 DALIO KURALLARI:
 - Borç döngüsü, para politikası, döviz riski, enflasyon koruması, makro şok direnci.
