@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="description" content="Hisse senetlerini Warren Buffett, Peter Lynch ve Ray Dalio yatırım çerçeveleriyle analiz et. BIST, NYSE ve NASDAQ hisseleri için AI destekli 7 kriterli değerlendirme.">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Yatırım Analiz Merkezi — Barış Investing</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230e1220'/%3E%3Crect x='0' y='0' width='4' height='32' fill='%234d8ef0'/%3E%3Ctext x='18' y='24' font-family='Georgia,serif' font-weight='700' font-size='22' fill='%23e8edf8' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
 <link rel="shortcut icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230e1220'/%3E%3Crect x='0' y='0' width='4' height='32' fill='%234d8ef0'/%3E%3Ctext x='18' y='24' font-family='Georgia,serif' font-weight='700' font-size='22' fill='%23e8edf8' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
@@ -137,7 +137,7 @@ body{
 .fw-btn{flex:1;background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px 4px;cursor:pointer;transition:all .2s;}
 .fw-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
 .fw-btn.la{background:rgba(249,115,22,.10);border-color:rgba(249,115,22,.35);color:var(--lynch);}
-.ana-btn{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:700;padding:12px;cursor:pointer;letter-spacing:1px;position:relative;overflow:hidden;transition:transform .25s cubic-bezier(0.34,1.56,0.64,1),box-shadow .25s;}
+.ana-btn{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));-webkit-tap-highlight-color:transparent;color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:700;padding:12px;cursor:pointer;letter-spacing:1px;position:relative;overflow:hidden;transition:transform .25s cubic-bezier(0.34,1.56,0.64,1),box-shadow .25s;}
 .ana-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.18),transparent);opacity:0;transition:opacity .25s;}
 .ana-btn:hover{background:var(--accent);box-shadow:0 4px 14px rgba(36,81,163,0.25);}
 .ana-btn:hover::after{opacity:1;}
@@ -573,7 +573,7 @@ body{
 .sdl:hover{box-shadow:0 4px 16px var(--accent-glow);}
 .stw{flex:1;background:var(--surface2);border:1px solid var(--border-s);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:600;padding:9px;cursor:pointer;}
 .scls{width:100%;margin-top:6px;background:none;border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:7px;cursor:pointer;}
-#priceStrip{background:var(--surface2);border-bottom:1px solid var(--border-s);}
+#priceStrip{background:var(--surface2);border-bottom:1px solid var(--border-s);overflow-x:auto;-webkit-overflow-scrolling:touch;}
 #livePriceBig{font-family:'IBM Plex Sans',sans-serif !important;font-weight:800 !important;}
 .wl-tab{background:var(--surface);border:1px solid var(--border-s);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:4px 10px;cursor:pointer;display:flex;align-items:center;gap:3px;transition:all .15s;}
 .wl-tab.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
@@ -1395,6 +1395,22 @@ body{
   gap: 16px;
 }
 @media(max-width: 768px) { .tez-grid { grid-template-columns: 1fr; } }
+
+@media(max-width:768px){
+  /* Master badge */
+  .master-badge{margin:8px 0;padding:10px 12px;}
+  .mb-title{font-size:9px;}
+  .mb-sub{font-size:10px;}
+  /* Şirket profili */
+  .cp-peers{grid-template-columns:repeat(2,1fr);}
+  .cp-summary{font-size:11px;}
+  /* Graham butonu — sidebar */
+  .fw-btn{font-size:8px;padding:5px 8px;}
+  /* FW teaser butonlar */
+  .fw-teaser-btn{min-width:100%;}
+  .fw-teaser-row{flex-direction:column;}
+}
+
 
 /* Tez kartı */
 .tez-card {
