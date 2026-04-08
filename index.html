@@ -3070,7 +3070,7 @@ function navigateCrit(dir){
 // ANALYZE
 async function doAnalyze(){
   const ticker=document.getElementById('tickerIn').value.trim().toUpperCase();
-  const company=document.getElementById('coIn').value.trim()||(BIST[ticker]||'');
+  let company=document.getElementById('coIn').value.trim()||(BIST[ticker]||'');
   if(!ticker)return;
 
   // ── Hak kontrolü ──
