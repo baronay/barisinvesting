@@ -8,7 +8,7 @@
 
 // ── State ──
 let curUser = null;
-let guestCredits = parseInt(localStorage.getItem('guest_credits') ?? '1');
+let guestCredits = Math.max(1, parseInt(localStorage.getItem('guest_credits') || '3') || 3);
 
 function getEmail() { return curUser?.email || localStorage.getItem('bi_email') || null; }
 
@@ -38,11 +38,16 @@ function updateCreditsUI() {
   const badge = document.getElementById('userCreditsBadge');
   if (badge) badge.textContent = isAdmin ? '∞' : credits + ' hak';
   const anaBtn = document.getElementById('anaBtn');
-  if (anaBtn) anaBtn.disabled = (!isAdmin && credits <= 0);
+  // Butonu sadece kesinlikle hak kalmamışsa ve giriş yapılmamışsa kapat
+  if (anaBtn) {
+    const shouldDisable = !isAdmin && !curUser && guestCredits <= 0;
+    anaBtn.disabled = shouldDisable;
+    anaBtn.style.opacity = shouldDisable ? '0.5' : '';
+  }
 }
 
 // ── Auth Modal ──
-function showAuthModal() { if (localStorage.getItem('bi_email')) return; document.getElementById('authModal').style.display = 'flex'; }
+function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
 function hideAuthModal() { document.getElementById('authModal').style.display = 'none'; }
 
 // ── Giriş ──
@@ -330,38 +335,23 @@ function copyRefLink() {
 (async () => {
   const savedEmail = localStorage.getItem('bi_email');
   if (savedEmail) {
-    // Önce offline fallback ile hemen UI'ı güncelle — gecikme olmasın
-    curUser = { email: savedEmail, credits: guestCredits, is_admin: false, offline: true };
-    updateSidebarUserUI();
-    updateCreditsUI();
-    if (typeof updateMobileAccountUI === 'function') updateMobileAccountUI();
-
-    // Sonra sunucudan gerçek veriyi al
     try {
       const r = await fetch('/api/auth?action=me', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: savedEmail })
       });
       const data = await r.json();
-      if (data.user) {
-        curUser = data.user;
-        updateSidebarUserUI();
-        updateCreditsUI();
-        if (typeof updateMobileAccountUI === 'function') updateMobileAccountUI();
-      }
+      curUser = data.user || { email: savedEmail, credits: guestCredits, is_admin: false, offline: true };
     } catch {
-      // Offline modda devam — zaten set edildi
+      curUser = { email: savedEmail, credits: guestCredits, is_admin: false, offline: true };
     }
+    updateSidebarUserUI();
     loadPortfolioFromCloud();
     showRefSection();
   } else {
-    // Kayıtlı email yok — misafir
     updateSidebarUserUI();
-    updateCreditsUI();
-    if (typeof updateMobileAccountUI === 'function') updateMobileAccountUI();
     loadPortfolioFromCloud();
-    // Modal: sadece daha önce skip etmediyse VE email yoksa göster
-    if (!sessionStorage.getItem('auth_skipped') && !localStorage.getItem('bi_email')) {
+    if (!sessionStorage.getItem('auth_skipped')) {
       setTimeout(() => showAuthModal(), 1200);
     }
   }
