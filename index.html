@@ -1873,7 +1873,7 @@ body{
       <div class="fw-row">
         <button class="fw-btn active" id="fw-b" onclick="selFW('buffett')">Buffett</button>
         <button class="fw-btn" id="fw-l" onclick="selFW('lynch')">P. Lynch</button>
-        <button class="fw-btn" id="fw-d" onclick="selFW('dalio')" style="font-size:9px">Dalio</button>
+        <button class="fw-btn" id="fw-d" onclick="selFW('dalio')" style="font-size:9px">Dalio</button><button class="fw-btn fw-graham" id="fw-g" onclick="selFW('graham')" style="font-size:9px">Graham</button>
       </div>
       <button class="ana-btn" id="anaBtn" onclick="doAnalyze()">ANALİZ ET →</button>
       <div class="data-badge" id="dataBadge">✓ Yahoo Finance verisi yüklendi</div>
@@ -1896,6 +1896,10 @@ body{
     <div class="hist-section" id="histSection" style="display:none">
       <div class="hist-lbl"><span>Son Analizler</span><span onclick="clearHistory()" style="font-size:9px;color:var(--muted2);cursor:pointer;font-weight:400" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted2)'">temizle</span></div>
       <div id="histList"></div>
+    </div>
+    <div class="master-badge" id="masterBadge">
+      <div class="mb-icon">⭐</div>
+      <div><div class="mb-title" id="masterTitle">MASTER SELECTION</div><div class="mb-sub" id="masterText">—</div></div>
     </div>
     <div class="verdict-sec">
       <div class="verdict-lbl">Son Karar</div>
@@ -1986,6 +1990,7 @@ body{
             <option value="buffett">Buffett</option>
             <option value="lynch">Lynch</option>
             <option value="dalio">Dalio</option>
+<option value="graham">Graham</option>
           </select>
           <button class="hero-search-btn" onclick="heroSearch()">ANALİZ ET →</button>
           <div class="hero-ac" id="heroAc"></div>
@@ -2113,6 +2118,16 @@ body{
     <div class="chart-card"><div class="card-t"><div class="cdot"></div>Radar Analizi</div><div class="radar-wrap"><canvas id="radarC"></canvas></div></div>
     <div class="chart-card"><div class="card-t"><div class="cdot"></div>Kriter Skoru</div><div class="chart-wrap"><canvas id="barC"></canvas></div></div>
 
+    <!-- ŞİRKET PROFİLİ -->
+    <div class="company-profile" id="companyProfile">
+      <div class="cp-header"><div class="cp-dot"></div><div class="cp-label">Şirket Profili</div></div>
+      <div class="cp-summary" id="cpSummary">—</div>
+      <div class="cp-tags" id="cpTags"></div>
+      <div id="cpPeersWrap" style="display:none">
+        <div class="cp-peers-title">Rakip Karşılaştırma</div>
+        <div class="cp-peers" id="cpPeers"></div>
+      </div>
+    </div>
     <!-- ÇERÇEVe TEŞVİK KARTI -->
     <div class="fw-teaser" id="fwTeaser">
       <div class="fw-teaser-title">Bu hisseyi diğer yatırımcı gözüyle de değerlendir</div>
@@ -2367,7 +2382,7 @@ const EX_CFG={BIST:{l:'BIST',fh:'#f-tr',cur:'₺',tv:(t)=>`BIST:${t}`},NYSE:{l:'
 const FW={
   buffett:{name:'Buffett',criteria:[{name:'ROE Sürdürülebilirliği',desc:'ROE %15+ ve son 5 yılda tutarlı mı?',ctx:'Buffett, ROE\'yi sermaye verimliliğinin en saf göstergesi olarak görür.'},{name:'Fiyatlama Gücü',desc:'Maliyet artışlarını müşteriye yansıtabiliyor mu?',ctx:'"Enflasyona karşı en iyi savunma, fiyat arttığında bile alınan ürünleri satmaktır."'},{name:'$1 → $1+ Testi',desc:'Her $1 alıkonulan sermaye $1+ piyasa değeri yarattı mı?',ctx:'Alıkonulan kazançların piyasa değerine katkısı.'},{name:'Ekonomik Hendek',desc:'Marka, ağ etkisi, maliyet avantajı var mı?',ctx:'ROIC\'in WACC\'tan sürekli yüksek olması hendek göstergesidir.'},{name:'Serbest Nakit Akışı',desc:'FCF tutarlı, büyüyor ve net gelirle uyumlu mu?',ctx:'Buffett muhasebe kârına değil gerçek nakde bakar.'},{name:'Yönetim Kalitesi',desc:'Sermaye tahsisi geçmişi ve hissedar dostu mu?',ctx:'Zor dönemlerdeki davranış kırmızı bayraktır.'},{name:'Değerleme Marjı',desc:'P/E, P/FCF, EV/EBITDA sektör ortalamasına göre?',ctx:'"Olağanüstü bir şirketi adil fiyatına almak çok daha iyidir."'}],keys:['ROE','PRICING','DOLLAR','MOAT','FCF','MGMT','VALUATION'],prompt:(t,c,ex)=>`Warren Buffett felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle]\nRISK: [en kritik risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nROE: PASS|FAIL|NEUTRAL | [açıklama]\nPRICING: PASS|FAIL|NEUTRAL | [açıklama]\nDOLLAR: PASS|FAIL|NEUTRAL | [açıklama]\nMOAT: PASS|FAIL|NEUTRAL | [açıklama]\nFCF: PASS|FAIL|NEUTRAL | [açıklama]\nMGMT: PASS|FAIL|NEUTRAL | [açıklama]\nVALUATION: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`},
   lynch:{name:'Peter Lynch',criteria:[{name:'Saha & Hikaye (Amatör Avantajı)',desc:'Ürün/hizmet gözlemlenebilir mi? Script geçerli mi?',ctx:'"İnsanlar çalıştıkları yerde fark ettikleri şirketlere yatırım yapmalı."'},{name:'Büyüme Motoru & Diworseification',desc:'Kârı artıracak asıl hikaye nedir? Odak kaybı var mı?',ctx:'Diworseification: Ana işten uzaklaşıp kaynak israf etmek.'},{name:'Net Nakit & Bilanço Sağlığı',desc:'Net nakit pozisyonu nedir?',ctx:'"Güçlü bilanço bir güvenlik ağıdır."'},{name:'Stok (Envanter) Kontrolü',desc:'Stok büyüme hızı satış büyüme hızını geçiyor mu?',ctx:'"Satılamayan ürünlerin birikmesi en büyük kırmızı bayrak."'},{name:'PEG Oranı & Kazanç Çizgisi',desc:'PEG 1\'in altında mı?',ctx:'"PEG 1\'in altında değerli, 2\'nin üzerinde pahalı."'},{name:'Kurumsal Sahiplik & Gizli Mücevher',desc:'Kurumsal sahiplik %30\'un altında mı?',ctx:'"Wall Street bu şirketi çoktan keşfettiyse büyük fırsat kalmamıştır."'},{name:'Yönetim Hamleleri (Insider & Buyback)',desc:'Yöneticiler hisse alıyor mu?',ctx:'"Yöneticiler tek nedenden alır — fiyatın ucuz olduğunu düşünürler."'}],keys:['STORY','GROWTH','BALANCE','INVENTORY','PEGCRIT','INSTITUTION','INSIDER'],prompt:(t,c,ex)=>`Peter Lynch felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle Lynch perspektifinden]\nRISK: [en kritik risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nSTORY: PASS|FAIL|NEUTRAL | [açıklama]\nGROWTH: PASS|FAIL|NEUTRAL | [açıklama]\nBALANCE: PASS|FAIL|NEUTRAL | [açıklama]\nINVENTORY: PASS|FAIL|NEUTRAL | [açıklama]\nPEGCRIT: PASS|FAIL|NEUTRAL | [açıklama]\nINSTITUTION: PASS|FAIL|NEUTRAL | [açıklama]\nINSIDER: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`},
-  dalio:{name:'Ray Dalio',criteria:[{name:'Büyüme & Verimlilik Dengesi',desc:'Üretkenlik artışı ve reel büyüme sürdürülebilir mi?',ctx:'"Büyüme ikiden gelir: verimlilik artışı ve borç döngüsü."'},{name:'Borç Döngüsü Pozisyonu',desc:'Kısa döngüde nerede? Kaldıraç kontrollü mü?',ctx:'Dalio\'ya göre borç döngüsünün yeri en kritik makro değişkendir.'},{name:'Para Politikası Duyarlılığı',desc:'Faiz değişimlerine duyarlılık nedir?',ctx:'"Merkez bankası elindeki araçları tükettiğinde riskler en yüksek noktadadır."'},{name:'Döviz & Sermaye Akışı',desc:'Dolar bazlı gelir/borç dengesi sağlıklı mı?',ctx:'Güçlü dolar dönemlerinde gelişmekte olan piyasa şirketleri baskı altına girer.'},{name:'Emtia & Enflasyon Koruması',desc:'Stagflasyon senaryosunda korumalı mı?',ctx:'Altın, emtia ve reel varlıklara bağlılık bir Dalio portföy prensibidir.'},{name:'Sistemik Risk & Sektör Kırılganlığı',desc:'Makro şoklara karşı dirençli mi?',ctx:'"Bir şirketi sektörünün yapısal kırılganlıklarından bağımsız değerlendiremezsin."'},{name:'Uzun Vadeli Rekabet Gücü',desc:'20 yıllık öngörüde rekabet avantajı korunacak mı?',ctx:'"Uzun vadeli düşün. Çoğu insan gereğinden kısa vadeli odaklanır."'}],keys:['PRODGROWTH','DEBTCYCLE','MONETARY','CURRENCY','INFLATION','SYSTEMIC','LONGTERM'],prompt:(t,c,ex)=>`Ray Dalio makro perspektifiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et. Borç döngüsü, para politikası, enflasyon ve uzun vadeli makro faktörler çerçevesinde değerlendir.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle Dalio makro perspektifinden]\nRISK: [en kritik makro risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nPRODGROWTH: PASS|FAIL|NEUTRAL | [açıklama]\nDEBTCYCLE: PASS|FAIL|NEUTRAL | [açıklama]\nMONETARY: PASS|FAIL|NEUTRAL | [açıklama]\nCURRENCY: PASS|FAIL|NEUTRAL | [açıklama]\nINFLATION: PASS|FAIL|NEUTRAL | [açıklama]\nSYSTEMIC: PASS|FAIL|NEUTRAL | [açıklama]\nLONGTERM: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`}
+  dalio:{name:'Ray Dalio',criteria:[{name:'Büyüme & Verimlilik Dengesi',desc:'Üretkenlik artışı ve reel büyüme sürdürülebilir mi?',ctx:'"Büyüme ikiden gelir: verimlilik artışı ve borç döngüsü."'},{name:'Borç Döngüsü Pozisyonu',desc:'Kısa döngüde nerede? Kaldıraç kontrollü mü?',ctx:'Dalio\'ya göre borç döngüsünün yeri en kritik makro değişkendir.'},{name:'Para Politikası Duyarlılığı',desc:'Faiz değişimlerine duyarlılık nedir?',ctx:'"Merkez bankası elindeki araçları tükettiğinde riskler en yüksek noktadadır."'},{name:'Döviz & Sermaye Akışı',desc:'Dolar bazlı gelir/borç dengesi sağlıklı mı?',ctx:'Güçlü dolar dönemlerinde gelişmekte olan piyasa şirketleri baskı altına girer.'},{name:'Emtia & Enflasyon Koruması',desc:'Stagflasyon senaryosunda korumalı mı?',ctx:'Altın, emtia ve reel varlıklara bağlılık bir Dalio portföy prensibidir.'},{name:'Sistemik Risk & Sektör Kırılganlığı',desc:'Makro şoklara karşı dirençli mi?',ctx:'"Bir şirketi sektörünün yapısal kırılganlıklarından bağımsız değerlendiremezsin."'},{name:'Uzun Vadeli Rekabet Gücü',desc:'20 yıllık öngörüde rekabet avantajı korunacak mı?',ctx:'"Uzun vadeli düşün. Çoğu insan gereğinden kısa vadeli odaklanır."'}],keys:['PRODGROWTH','DEBTCYCLE','MONETARY','CURRENCY','INFLATION','SYSTEMIC','LONGTERM'],prompt:(t,c,ex)=>`Ray Dalio makro perspektifiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et. Borç döngüsü, para politikası, enflasyon ve uzun vadeli makro faktörler çerçevesinde değerlendir.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle Dalio makro perspektifinden]\nRISK: [en kritik makro risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nPRODGROWTH: PASS|FAIL|NEUTRAL | [açıklama]\nDEBTCYCLE: PASS|FAIL|NEUTRAL | [açıklama]\nMONETARY: PASS|FAIL|NEUTRAL | [açıklama]\nCURRENCY: PASS|FAIL|NEUTRAL | [açıklama]\nINFLATION: PASS|FAIL|NEUTRAL | [açıklama]\nSYSTEMIC: PASS|FAIL|NEUTRAL | [açıklama]\nLONGTERM: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`},graham:{name:'Graham',criteria:[{name:'Guvenlik Marji',desc:'Icsel degerin %30 altinda mi?',ctx:'Guvenlik marji yatirimin en temel prensibidir.'},{name:'Borc/Ozsermaye',desc:'Borc/Ozsermaye < 0.5 mi?',ctx:'Graham konservatif bilancoyu her seyin onunde tutar.'},{name:'Cari Oran',desc:'Cari oran > 2 mi?',ctx:'Kisa vadeli yukumlulukler karsilanabiliyor mu?'},{name:'Kazanc Istikrari',desc:'Son 5 yilda surekli kazanc var mi?',ctx:'Graham spekulatif sirketlerden kacinar.'},{name:'Temettü Gecmisi',desc:'Kesintisiz temettü var mi?',ctx:'Uzun temettü gecmisi finansal guc gostergesidir.'},{name:'F/K Orani',desc:'F/K < 15 mi?',ctx:'15 kattan fazla odememek gerekir.'},{name:'F/DD Orani',desc:'F/DD < 1.5 mi?',ctx:'Varlik degeri altinda fiyatli mi?'}],keys:['MARGIN','DEBT','CURRENT','EARNINGS','DIVIDEND','PE_G','PB_G'],prompt:(t,c,ex)=>`Benjamin Graham deger yatirim felsefesiyle ${ex} borsasindaki "${t}"${c?` (${c})`:''} hissesini analiz et.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cumle Graham perspektifinden]\nRISK: [en kritik risk]\n\nMULTIPLES_START\nPE: [sayi] | [ucuz/adil/pahali]\nPB: [sayi] | [ucuz/adil/pahali]\nEV_EBITDA: [sayi] | [ucuz/adil/pahali]\nPEG: [sayi] | [ucuz/adil/pahali]\nRSI: [30-70] | [ASIRI_SATIM|NOTR|ASIRI_ALIM]\nPRICE_52W: [dusuk]-[yuksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensus] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nMARGIN: PASS|FAIL|NEUTRAL | [aciklama]\nDEBT: PASS|FAIL|NEUTRAL | [aciklama]\nCURRENT: PASS|FAIL|NEUTRAL | [aciklama]\nEARNINGS: PASS|FAIL|NEUTRAL | [aciklama]\nDIVIDEND: PASS|FAIL|NEUTRAL | [aciklama]\nPE_G: PASS|FAIL|NEUTRAL | [aciklama]\nPB_G: PASS|FAIL|NEUTRAL | [aciklama]\nCRITERIA_END`}
 };
 
 
@@ -2493,6 +2508,123 @@ function renderFWTeaser(currentFW, ticker, company) {
   teaser.classList.add('visible');
 }
 
+
+// ── ANLAMLI HATA MESAJLARI ──────────────────────────────────────
+function friendlyError(err) {
+  const msg = (err && err.message ? err.message : String(err)).toLowerCase();
+  if (msg.includes('429') || msg.includes('rate limit')) return 'Cok fazla istek. 1 dakika bekleyip tekrar deneyin.';
+  if (msg.includes('403') || msg.includes('hakkınız')) return 'Analiz hakkiniz doldu. Giris yaparak 5 ucretsiz hak kazanin.';
+  if (msg.includes('500')) return 'Sunucu hatasi. Birkas saniye bekleyip tekrar deneyin.';
+  if (msg.includes('failed to fetch') || msg.includes('network')) return 'Baglanti hatasi. Internet baglantisinizi kontrol edin.';
+  if (msg.includes('timeout') || msg.includes('abort')) return 'Zaman asimi. Tekrar deneyin.';
+  if (msg.includes('not valid json') || msg.includes('json')) return 'Sunucudan beklenmedik yanit. Tekrar deneyin.';
+  if (msg.includes('ticker') || msg.includes('gecersiz')) return 'Gecersiz hisse kodu. Ornek: THYAO, AAPL';
+  if (msg.includes('api key')) return 'Yapilandirma hatasi. Bizimle iletisime gecin.';
+  return 'Beklenmedik hata olustu. Tekrar deneyin.';
+}
+
+// ── MASTER SELECTION ROZETİ ──────────────────────────────────────
+function checkMasterBadge(ticker, score, maxScore, fwKey) {
+  const badge = document.getElementById('masterBadge');
+  const title = document.getElementById('masterTitle');
+  const text  = document.getElementById('masterText');
+  if (!badge) return;
+  badge.classList.remove('visible');
+  badge.style.borderColor = '';
+  if (!title || !text) return;
+
+  const fwNames = {buffett:'Buffett', lynch:'Lynch', dalio:'Dalio', graham:'Graham'};
+  const fwScores = {};
+  fwScores[fwKey] = score;
+
+  try {
+    const store = JSON.parse(localStorage.getItem('bi_analysis_cache') || '{}');
+    ['buffett','lynch','dalio','graham'].forEach(function(fw) {
+      if (fw === fwKey) return;
+      const k = ticker + ':' + curEX + ':' + fw;
+      if (store[k]) {
+        const m2 = (store[k].result || '').match(/TOTAL_SCORE:\s*(\d+)/);
+        if (m2) fwScores[fw] = Math.min(7, parseInt(m2[1]));
+      }
+    });
+  } catch(e) {}
+
+  const highScores = Object.entries(fwScores).filter(function(kv){ return kv[1] >= 5; });
+
+  if (highScores.length >= 2) {
+    const names = highScores.map(function(kv){ return fwNames[kv[0]] || kv[0]; }).join(' + ');
+    const scores = highScores.map(function(kv){ return kv[1]+'/7'; }).join(' ve ');
+    title.textContent = 'MASTER SELECTION';
+    text.textContent = names + ' cercevelerinden ' + scores + ' skor — guclu konsensus.';
+    badge.classList.add('visible');
+  } else if (score >= 6) {
+    title.textContent = 'STRONG CONVICTION';
+    title.style.color = 'var(--accent)';
+    text.textContent = (fwNames[fwKey] || fwKey) + ' cercevesinden ' + score + '/7 ile olaganustu skor!';
+    badge.style.borderColor = 'var(--accent)';
+    badge.classList.add('visible');
+  }
+}
+
+// ── ŞİRKET PROFİLİ ──────────────────────────────────────────────
+function renderCompanyProfile(fd, ticker, exchange) {
+  var el = document.getElementById('companyProfile');
+  var sumEl = document.getElementById('cpSummary');
+  var tagsEl = document.getElementById('cpTags');
+  var peersWrap = document.getElementById('cpPeersWrap');
+  var peersEl = document.getElementById('cpPeers');
+  if (!el) return;
+
+  if (fd && (fd.sector || fd.industry)) {
+    var parts = [];
+    if (fd.sector) parts.push(fd.sector);
+    if (fd.industry && fd.industry !== fd.sector) parts.push(fd.industry);
+    if (fd.website) parts.push(fd.website.replace(/https?:\/\//, '').replace(/\/$/, ''));
+    sumEl.textContent = parts.join(' · ');
+  } else {
+    sumEl.textContent = (BIST && BIST[ticker] ? BIST[ticker] : ticker) + ' · ' + exchange;
+  }
+
+  tagsEl.innerHTML = '';
+  var tags = [];
+  if (fd && fd.sector) tags.push(fd.sector);
+  if (exchange) tags.push(exchange);
+  if (fd && fd.currency) tags.push(fd.currency === 'TRY' ? 'TL' : 'USD');
+  if (fd && fd.marketCap) {
+    tags.push(fd.marketCap > 1e12 ? 'Büyük Ölçek' : fd.marketCap > 1e10 ? 'Orta Ölçek' : 'Küçük Ölçek');
+  }
+  tags.forEach(function(t) {
+    var s = document.createElement('span');
+    s.className = 'cp-tag';
+    s.textContent = t;
+    tagsEl.appendChild(s);
+  });
+
+  var peers = (fd && fd.peers) ? fd.peers : [];
+  if (peers.length > 0) {
+    peersEl.innerHTML = '';
+    peers.slice(0,6).forEach(function(p) {
+      var d = document.createElement('div');
+      d.className = 'cp-peer';
+      var pe = p.peRatio != null ? 'F/K: ' + p.peRatio.toFixed(1) : '';
+      var pb = p.pbRatio != null ? 'F/DD: ' + p.pbRatio.toFixed(1) : '';
+      d.innerHTML = '<div class="cp-peer-tk">' + (p.ticker||'') + '</div><div class="cp-peer-val">' + [pe,pb].filter(Boolean).join(' · ') + '</div>';
+      d.onclick = function() {
+        selEx(exchange);
+        document.getElementById('tickerIn').value = p.ticker;
+        document.getElementById('coIn').value = p.name || '';
+        setTimeout(function(){ doAnalyze(); }, 100);
+      };
+      peersEl.appendChild(d);
+    });
+    peersWrap.style.display = 'block';
+  } else {
+    peersWrap.style.display = 'none';
+  }
+
+  el.classList.add('visible');
+}
+
 // STATE
 let analysisData=null,radarChart=null,barChart=null,ptPie=null,ptScore=null;
 let curFW='buffett',curEX='BIST',curTicker='',curCo='';
@@ -2570,7 +2702,7 @@ function selFW(fw){
   curFW=fw;
   document.getElementById('fw-b').className='fw-btn'+(fw==='buffett'?' active':'');
   document.getElementById('fw-l').className='fw-btn'+(fw==='lynch'?' la':'');
-  document.getElementById('fw-d').className='fw-btn'+(fw==='dalio'?' active':'')+' fw-dalio';
+  document.getElementById('fw-d').className='fw-btn'+(fw==='dalio'?' active':'')+' fw-dalio';const _fwg=document.getElementById('fw-g');if(_fwg)_fwg.className='fw-btn fw-graham'+(fw==='graham'?' active':'');
   if(fw==='dalio'){document.getElementById('fw-d').style.cssText='font-size:9px;background:rgba(168,85,247,0.15);border-color:#a855f7;color:#a855f7';}
   else{document.getElementById('fw-d').style.cssText='font-size:9px';}
   document.getElementById('heroFwSel').value=fw;
@@ -2985,7 +3117,7 @@ async function doAnalyze(){
   document.getElementById('loadingT').textContent=ticker;
   document.getElementById('loadingFW').textContent=`${ex.l} — ${fw.name}`;
   ov.classList.add('visible');
-  ['rdGrid','multGrid','rsiCard','rngCard','anaCard','priceStrip'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});const _ft=document.getElementById('fwTeaser');if(_ft)_ft.classList.remove('visible');
+  ['rdGrid','multGrid','rsiCard','rngCard','anaCard','priceStrip'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});const _mb=document.getElementById('masterBadge');if(_mb)_mb.classList.remove('visible');const _cp=document.getElementById('companyProfile');if(_cp)_cp.classList.remove('visible');const _ft=document.getElementById('fwTeaser');if(_ft)_ft.classList.remove('visible');
   document.getElementById('badgeLive').style.display='none';
   ['ls1','ls2','ls3','ls4'].forEach((s,i)=>{document.getElementById(s).className='loading-step';setTimeout(()=>{if(i>0)document.getElementById(['ls1','ls2','ls3','ls4'][i-1]).classList.add('done');document.getElementById(s).classList.add('active');},i*700);});
   try{
@@ -3015,7 +3147,7 @@ async function doAnalyze(){
     if(data.error)throw new Error(data.error);
     document.getElementById('ls4').classList.add('done');
     setTimeout(()=>{ov.classList.remove('visible');btn.disabled=false;hasAnalyzed=true;parseAndRender(ticker,company,data.result,data.financialData,curFW);},400);
-  }catch(err){ov.classList.remove('visible');btn.disabled=false;eb.textContent='Hata: '+err.message;eb.classList.add('visible');}
+  }catch(err){ov.classList.remove('visible');btn.disabled=false;eb.textContent=friendlyError(err);eb.classList.add('visible');console.error('Analyze:',err);}
 }
 
 
@@ -3055,6 +3187,8 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   }
   analysisData={ticker,company,statuses,details,score,verdict,fw:fwKey||curFW};
   saveToHistory(ticker,company,curEX,fwKey||curFW,score,fw.criteria.length,verdict);
+  checkMasterBadge(ticker,score,fw.criteria.length,fwKey||curFW);
+  renderCompanyProfile(fd||null,ticker,curEX);
   setAnalysisCache(ticker,curEX,fwKey||curFW,textGlobal,fd||null);
   renderFWTeaser(fwKey||curFW, ticker, company);
   // Paylaşılabilir URL güncelle
