@@ -2238,61 +2238,6 @@ body{
 </div><!-- /page-body -->
 </div>
 
-<!-- ══ YATIRIM TEZLERİ SAYFASI ══ -->
-<div class="page" id="page-tezler">
-<div class="page-body">
-
-  <!-- Kilitli durum — kullanıcı giriş yapmamış -->
-  <div id="tezler-locked" style="display:none">
-    <div class="tez-lock-wrap">
-      <div class="tez-lock-icon">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-      </div>
-      <div class="tez-lock-title">Yatırım Tezleri</div>
-      <div class="tez-lock-sub">Bu bölüm yalnızca kayıtlı üyelere açıktır.<br>E-posta ile kayıt ol, tüm tezlere anında eriş.</div>
-      <button class="tez-lock-btn" onclick="showAuthModal()">E-posta ile Kayıt Ol — Ücretsiz</button>
-      <div class="tez-lock-hint">Kredi kartı gerekmez · Şifre yok · 30 saniyede hazır</div>
-    </div>
-  </div>
-
-  <!-- Açık durum — kullanıcı giriş yapmış -->
-  <div id="tezler-content" style="display:none">
-    <div class="tez-header">
-      <div>
-        <div class="tez-page-title">Yatırım <span>Tezleri</span></div>
-        <div class="tez-page-sub">Barış'ın araştırma notları ve uzun vadeli pozisyon tezleri</div>
-      </div>
-      <div class="tez-badge">ÜYE ÖZEL</div>
-    </div>
-
-    <!-- Disclaimer -->
-    <div class="tez-disclaimer">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      Bu tezler yatırım tavsiyesi değildir. Kişisel araştırma ve eğitim amaçlıdır. Kendi araştırmanızı yapın.
-    </div>
-
-    <!-- Tez kartları grid -->
-    <div class="tez-grid" id="tezGrid">
-      <!-- Tezler buraya JS ile eklenecek -->
-      <div class="tez-empty">
-        <div class="tez-empty-icon">📋</div>
-        <div class="tez-empty-title">İlk tez yakında</div>
-        <div class="tez-empty-sub">PDF tezleri entegre edildikçe burada görünecek.</div>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /page-body -->
-</div><!-- /page-tezler -->
-
-</div><!-- main-content -->
-</div><!-- main -->
-</div><!-- app -->
-
-
-
 <!-- ══ YATİRİM TEZLERİ SAYFASI ══ -->
 <div class="page" id="page-tezler">
   <div class="page-body">
@@ -3828,7 +3773,7 @@ let activeTez = null;
 function renderTezler() {
   const locked   = document.getElementById('tezler-locked');
   const unlocked = document.getElementById('tezler-content');
-  const isLoggedIn = !!(curUser && curUser.email && !curUser.offline_guest);
+  const isLoggedIn = !!(curUser && curUser.email) || !!(localStorage.getItem('bi_email'));
 
   if (!isLoggedIn) {
     locked.style.display   = 'block';
