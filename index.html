@@ -3043,10 +3043,67 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   vbox.textContent=`${score}/${fw.criteria.length} — ${verdict}`;
   vbox.className='verdict-box '+(verdict==='AL'?'buy':verdict==='UZAK_DUR'?'avoid':'watch');
 
-  const LOGOS={AAPL:'apple.com',MSFT:'microsoft.com',GOOGL:'google.com',AMZN:'amazon.com',NVDA:'nvidia.com',META:'meta.com',TSLA:'tesla.com',ABBV:'abbvie.com',JPM:'jpmorganchase.com',V:'visa.com',AMD:'amd.com',NOW:'servicenow.com'};
-  const logoEl=document.getElementById('stockLogo');const ld=LOGOS[ticker];
-  if(ld){logoEl.innerHTML=`<img src="https://logo.clearbit.com/${ld}" alt="${ticker}" onerror="this.parentElement.innerHTML='${ticker.substring(0,2)}'">`;
-  }else logoEl.textContent=ticker.substring(0,2);
+  // Logo sistemi: US=Clearbit+favicon fallback, BIST=renkli avatar
+  const LOGOS={
+    AAPL:'apple.com',MSFT:'microsoft.com',GOOGL:'google.com',AMZN:'amazon.com',
+    NVDA:'nvidia.com',META:'meta.com',TSLA:'tesla.com',ABBV:'abbvie.com',
+    JPM:'jpmorganchase.com',V:'visa.com',AMD:'amd.com',NOW:'servicenow.com',
+    AMZN:'amazon.com',NFLX:'netflix.com',DIS:'disney.com',PYPL:'paypal.com',
+    INTC:'intel.com',CSCO:'cisco.com',ORCL:'oracle.com',IBM:'ibm.com',
+    GS:'goldmansachs.com',MS:'morganstanley.com',BAC:'bankofamerica.com',
+    WMT:'walmart.com',KO:'coca-cola.com',PEP:'pepsico.com',MCD:'mcdonalds.com',
+    NKE:'nike.com',SBUX:'starbucks.com',ADBE:'adobe.com',CRM:'salesforce.com',
+  };
+  // BIST şirketleri için domain eşleştirmesi
+  const BIST_LOGOS={
+    THYAO:'thy.com',TUPRS:'tupras.com.tr',TCELL:'turkcell.com.tr',
+    TTKOM:'turktelekom.com.tr',ARCLK:'arcelik.com',FROTO:'ford.com.tr',
+    TOASO:'tofas.com.tr',VESTL:'vestel.com.tr',PGSUS:'flypgs.com',
+    BIMAS:'bim.com.tr',MGROS:'migros.com.tr',ULKER:'ulker.com.tr',
+    CCOLA:'coca-colaturkey.com',LOGO:'logo.com.tr',HEPSI:'hepsiburada.com',
+    LCWGR:'lcwaikiki.com',MAVI:'mavi.com',TAVHL:'tav.aero',
+    EKGYO:'emlakkonut.com.tr',SISE:'sisecam.com',ENKAI:'enka.com',
+  };
+  const logoEl=document.getElementById('stockLogo');
+  const isBISTticker=(curEX==='BIST');
+
+  function makeAvatar(tk){
+    const colors=['#2451a3','#1a6b3a','#8b4513','#5b2d8e','#0f6e56','#7d2c2c','#1e5799','#4a3728','#2c5f6e','#6b4c11'];
+    let h=0;for(let i=0;i<tk.length;i++){h=((h<<5)-h)+tk.charCodeAt(i);h|=0;}
+    const col=colors[Math.abs(h)%colors.length];
+    const lbl=tk.length>=2?tk.substring(0,2):tk;
+    logoEl.style.background=col;
+    logoEl.style.border='1px solid '+col+'88';
+    logoEl.innerHTML=`<span style="color:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0">${lbl}</span>`;
+  }
+
+  function tryImg(url, fallbackFn){
+    const img=new Image();
+    img.onload=()=>{logoEl.style.background='var(--surface2)';logoEl.style.border='1px solid var(--border-s)';logoEl.innerHTML='';logoEl.appendChild(img);img.style.cssText='width:100%;height:100%;object-fit:contain;padding:3px;';};
+    img.onerror=()=>fallbackFn();
+    img.src=url;img.alt=ticker;
+  }
+
+  const bistDomain=BIST_LOGOS[ticker];
+  if(isBISTticker){
+    // BIST: önce bilinen domain dene, yoksa avatar
+    makeAvatar(ticker); // önce avatarı göster
+    if(bistDomain){
+      tryImg('https://logo.clearbit.com/'+bistDomain, ()=>makeAvatar(ticker));
+    }
+  } else {
+    const usDomain=LOGOS[ticker];
+    makeAvatar(ticker); // önce avatar
+    if(usDomain){
+      tryImg('https://logo.clearbit.com/'+usDomain, ()=>{
+        // Clearbit başarısız — Google favicon dene
+        tryImg('https://www.google.com/s2/favicons?domain='+usDomain+'&sz=64', ()=>makeAvatar(ticker));
+      });
+    } else {
+      // Bilinmeyen US şirketi — Google favicon dene
+      tryImg('https://www.google.com/s2/favicons?domain='+ticker.toLowerCase()+'.com&sz=64', ()=>makeAvatar(ticker));
+    }
+  }
   document.getElementById('hflagUse').setAttribute('href',ex.fh);
   document.getElementById('stockTicker').textContent=ticker;
   document.getElementById('stockCo').textContent=company||'';
