@@ -1581,6 +1581,25 @@ body{
 .hist-verdict.avoid{background:var(--danger-dim);color:var(--danger);}
 .hist-verdict.watch{background:var(--warn-dim);color:var(--warn);}
 .hist-score{font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+
+.fw-teaser{display:none;margin-top:16px;background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid var(--border-s);border-top:3px solid var(--accent);padding:18px 20px;}
+.fw-teaser.visible{display:block;}
+.fw-teaser-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.fw-teaser-row{display:flex;gap:10px;flex-wrap:wrap;}
+.fw-teaser-btn{flex:1;min-width:140px;display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border-s);background:var(--surface);cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.fw-teaser-btn:hover{border-color:var(--accent);background:var(--accent-dim);transform:translateY(-1px);}
+.fw-teaser-btn.lynch-btn:hover{border-color:var(--lynch);background:rgba(224,123,57,0.1);}
+.fw-teaser-btn.dalio-btn:hover{border-color:var(--dalio);background:rgba(155,119,204,0.1);}
+.fw-teaser-btn.buffett-btn:hover{border-color:var(--accent);background:var(--accent-dim);}
+.fw-tb-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.fw-tb-name{font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.fw-tb-desc{font-size:10px;color:var(--muted-s);line-height:1.4;}
+.fw-tb-arrow{margin-left:auto;font-size:16px;color:var(--muted2);transition:transform .2s;}
+.fw-teaser-btn:hover .fw-tb-arrow{transform:translateX(3px);}
+.fw-pulse{position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;animation:pulse 1.5s infinite;}
+.fw-pulse.b{background:var(--accent);}
+.fw-pulse.l{background:var(--lynch);}
+.fw-pulse.d{background:var(--dalio);}
 </style>
 <body>
 <div id="globalToast"><span class="toast-dot"></span><span class="toast-msg"></span></div>
@@ -2093,6 +2112,12 @@ body{
 
     <div class="chart-card"><div class="card-t"><div class="cdot"></div>Radar Analizi</div><div class="radar-wrap"><canvas id="radarC"></canvas></div></div>
     <div class="chart-card"><div class="card-t"><div class="cdot"></div>Kriter Skoru</div><div class="chart-wrap"><canvas id="barC"></canvas></div></div>
+
+    <!-- ÇERÇEVe TEŞVİK KARTI -->
+    <div class="fw-teaser" id="fwTeaser">
+      <div class="fw-teaser-title">Bu hisseyi diğer yatırımcı gözüyle de değerlendir</div>
+      <div class="fw-teaser-row" id="fwTeaserRow"></div>
+    </div>
     <table class="crit-table"><thead><tr><th>#</th><th>Kriter</th><th>Durum</th><th>Özet</th></tr></thead><tbody id="summaryBody"></tbody></table>
   </div>
   </div><!-- /page-body -->
@@ -2396,6 +2421,49 @@ function renderHistory(){
     };
     list.appendChild(d);
   });
+}
+
+
+// ── ÇERÇEVE TEŞVİK KARTI ────────────────────────────────────────
+function renderFWTeaser(currentFW, ticker, company) {
+  const teaser = document.getElementById('fwTeaser');
+  const row    = document.getElementById('fwTeaserRow');
+  if (!teaser || !row) return;
+
+  const frameworks = {
+    buffett: { name:'Warren Buffett', desc:'Hendek · FCF · Değerleme', color:'var(--accent)',    bg:'rgba(77,142,240,0.12)',  icon:'📊', cls:'buffett-btn', pulse:'b' },
+    lynch:   { name:'Peter Lynch',   desc:'PEG · Büyüme Hikayesi',    color:'var(--lynch)',     bg:'rgba(224,123,57,0.12)', icon:'📈', cls:'lynch-btn',   pulse:'l' },
+    dalio:   { name:'Ray Dalio',     desc:'Makro · Borç Döngüsü',     color:'var(--dalio)',     bg:'rgba(155,119,204,0.12)',icon:'🌐', cls:'dalio-btn',   pulse:'d' },
+  };
+
+  const others = Object.entries(frameworks).filter(([k]) => k !== currentFW);
+  row.innerHTML = '';
+
+  others.forEach(([fwKey, fw]) => {
+    const btn = document.createElement('button');
+    btn.className = `fw-teaser-btn ${fw.cls}`;
+    btn.innerHTML = `
+      <div class="fw-pulse ${fw.pulse}"></div>
+      <div class="fw-tb-icon" style="background:${fw.bg};border:1px solid ${fw.color}33">
+        <span style="font-size:16px">${fw.icon}</span>
+      </div>
+      <div>
+        <div class="fw-tb-name">${fw.name}</div>
+        <div class="fw-tb-desc">${fw.desc}</div>
+      </div>
+      <div class="fw-tb-arrow">→</div>
+    `;
+    btn.onclick = () => {
+      selFW(fwKey);
+      // Scroll up to analyze button
+      const btn2 = document.getElementById('anaBtn');
+      if (btn2) btn2.scrollIntoView({behavior:'smooth', block:'center'});
+      setTimeout(() => doAnalyze(), 300);
+    };
+    row.appendChild(btn);
+  });
+
+  teaser.classList.add('visible');
 }
 
 // STATE
@@ -2890,7 +2958,7 @@ async function doAnalyze(){
   document.getElementById('loadingT').textContent=ticker;
   document.getElementById('loadingFW').textContent=`${ex.l} — ${fw.name}`;
   ov.classList.add('visible');
-  ['rdGrid','multGrid','rsiCard','rngCard','anaCard','priceStrip'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  ['rdGrid','multGrid','rsiCard','rngCard','anaCard','priceStrip'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});const _ft=document.getElementById('fwTeaser');if(_ft)_ft.classList.remove('visible');
   document.getElementById('badgeLive').style.display='none';
   ['ls1','ls2','ls3','ls4'].forEach((s,i)=>{document.getElementById(s).className='loading-step';setTimeout(()=>{if(i>0)document.getElementById(['ls1','ls2','ls3','ls4'][i-1]).classList.add('done');document.getElementById(s).classList.add('active');},i*700);});
   try{
@@ -2952,6 +3020,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   }
   analysisData={ticker,company,statuses,details,score,verdict,fw:fwKey||curFW};
   saveToHistory(ticker,company,curEX,fwKey||curFW,score,fw.criteria.length,verdict);
+  renderFWTeaser(fwKey||curFW, ticker, company);
   // Paylaşılabilir URL güncelle
   if (window.history && window.history.replaceState) {
     const p = new URLSearchParams();
