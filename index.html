@@ -2758,7 +2758,16 @@ function renderNews(news,g){
 // AUTOCOMPLETE
 function setupAC(){
   const ti=document.getElementById('tickerIn'),td=document.getElementById('acDrop');
-  ti.addEventListener('input',()=>{const q=ti.value.trim().toUpperCase();if(curEX==='BIST'){if(BIST[q])document.getElementById('coIn').value=BIST[q];else document.getElementById('coIn').value='';}if(false){clearTimeout(acTimer);if(q.length<1){td.classList.remove('visible');return;}acTimer=setTimeout(()=>fetchAC(q,td,'sidebar'),280);}});
+  ti.addEventListener('input',()=>{
+    const q=ti.value.trim().toUpperCase();
+    if(curEX==='BIST'){
+      if(BIST[q]){document.getElementById('coIn').value=BIST[q];td.classList.remove('visible');}
+      else{document.getElementById('coIn').value='';}
+    }
+    clearTimeout(acTimer);
+    if(q.length<2){td.classList.remove('visible');return;}
+    acTimer=setTimeout(()=>fetchAC(q,td,'sidebar'),300);
+  });
   ti.addEventListener('keydown',e=>{if(e.key==='Escape')td.classList.remove('visible');if(e.key==='Enter')doAnalyze();});
 
   const hi=document.getElementById('heroIn'),hd=document.getElementById('heroAc');
@@ -3076,7 +3085,7 @@ async function doAnalyze(){
   }
   document.getElementById('coIn').value=company;
   const btn=document.getElementById('anaBtn'),ov=document.getElementById('loadingOv'),eb=document.getElementById('errBar'),db=document.getElementById('dataBadge');
-  const ex=EX_CFG[curEX];const fw=FW[curFW];
+  const ex=EX_CFG[curEX]||EX_CFG['BIST'];const fw=FW[curFW]||FW['buffett'];if(!fw){eb.textContent='Geçersiz çerçeve. Sayfayı yenileyin.';eb.classList.add('visible');btn.disabled=false;ov.classList.remove('visible');return;}
   eb.classList.remove('visible');db.classList.remove('visible');
   if(!company)company=BIST[ticker]||'';btn.disabled=true;curTicker=ticker;curCo=company;
   document.getElementById('loadingT').textContent=ticker;
