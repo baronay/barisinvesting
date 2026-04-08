@@ -1401,9 +1401,6 @@ body{
   .master-badge{padding:10px 12px;}
   .mb-title{font-size:9px;}
   .mb-sub{font-size:10px;}
-  /* Şirket profili */
-  .cp-peers{grid-template-columns:repeat(2,1fr);}
-  .cp-summary{font-size:11px;}
   /* Graham butonu — sidebar */
   .fw-btn{font-size:8px;padding:5px 8px;}
   /* FW teaser butonlar */
@@ -2131,15 +2128,6 @@ body{
     <div class="chart-card"><div class="card-t"><div class="cdot"></div>Kriter Skoru</div><div class="chart-wrap"><canvas id="barC"></canvas></div></div>
 
     <!-- ŞİRKET PROFİLİ -->
-    <div class="company-profile" id="companyProfile">
-      <div class="cp-header"><div class="cp-dot"></div><div class="cp-label">Şirket Profili</div></div>
-      <div class="cp-summary" id="cpSummary">—</div>
-      <div class="cp-tags" id="cpTags"></div>
-      <div id="cpPeersWrap" style="display:none">
-        <div class="cp-peers-title">Rakip Karşılaştırma</div>
-        <div class="cp-peers" id="cpPeers"></div>
-      </div>
-    </div>
     <!-- ÇERÇEVe TEŞVİK KARTI -->
     <div class="fw-teaser" id="fwTeaser">
       <div class="fw-teaser-title">Bu hisseyi diğer yatırımcı gözüyle de değerlendir</div>
@@ -2528,63 +2516,7 @@ function checkMasterBadge(ticker, score, maxScore, fwKey) {
 }
 
 // ── ŞİRKET PROFİLİ ──────────────────────────────────────────────
-function renderCompanyProfile(fd, ticker, exchange) {
-  var el = document.getElementById('companyProfile');
-  var sumEl = document.getElementById('cpSummary');
-  var tagsEl = document.getElementById('cpTags');
-  var peersWrap = document.getElementById('cpPeersWrap');
-  var peersEl = document.getElementById('cpPeers');
-  if (!el) return;
-
-  if (fd && (fd.sector || fd.industry)) {
-    var parts = [];
-    if (fd.sector) parts.push(fd.sector);
-    if (fd.industry && fd.industry !== fd.sector) parts.push(fd.industry);
-    if (fd.website) parts.push(fd.website.replace(/https?:\/\//, '').replace(/\/$/, ''));
-    sumEl.textContent = parts.join(' · ');
-  } else {
-    sumEl.textContent = (BIST && BIST[ticker] ? BIST[ticker] : ticker) + ' · ' + exchange;
-  }
-
-  tagsEl.innerHTML = '';
-  var tags = [];
-  if (fd && fd.sector) tags.push(fd.sector);
-  if (exchange) tags.push(exchange);
-  if (fd && fd.currency) tags.push(fd.currency === 'TRY' ? 'TL' : 'USD');
-  if (fd && fd.marketCap) {
-    tags.push(fd.marketCap > 1e12 ? 'Büyük Ölçek' : fd.marketCap > 1e10 ? 'Orta Ölçek' : 'Küçük Ölçek');
-  }
-  tags.forEach(function(t) {
-    var s = document.createElement('span');
-    s.className = 'cp-tag';
-    s.textContent = t;
-    tagsEl.appendChild(s);
-  });
-
-  var peers = (fd && fd.peers) ? fd.peers : [];
-  if (peers.length > 0) {
-    peersEl.innerHTML = '';
-    peers.slice(0,6).forEach(function(p) {
-      var d = document.createElement('div');
-      d.className = 'cp-peer';
-      var pe = p.peRatio != null ? 'F/K: ' + p.peRatio.toFixed(1) : '';
-      var pb = p.pbRatio != null ? 'F/DD: ' + p.pbRatio.toFixed(1) : '';
-      d.innerHTML = '<div class="cp-peer-tk">' + (p.ticker||'') + '</div><div class="cp-peer-val">' + [pe,pb].filter(Boolean).join(' · ') + '</div>';
-      d.onclick = function() {
-        selEx(exchange);
-        document.getElementById('tickerIn').value = p.ticker;
-        document.getElementById('coIn').value = p.name || '';
-        setTimeout(function(){ doAnalyze(); }, 100);
-      };
-      peersEl.appendChild(d);
-    });
-    peersWrap.style.display = 'block';
-  } else {
-    peersWrap.style.display = 'none';
-  }
-
-  el.classList.add('visible');
-}
+function renderCompanyProfile(fd, ticker, exchange) { /* kaldırıldı */ }
 
 // STATE
 let analysisData=null,radarChart=null,barChart=null,ptPie=null,ptScore=null;
@@ -3070,7 +3002,7 @@ function navigateCrit(dir){
 // ANALYZE
 async function doAnalyze(){
   const ticker=document.getElementById('tickerIn').value.trim().toUpperCase();
-  let company=document.getElementById('coIn').value.trim()||(BIST[ticker]||'');
+  const company=document.getElementById('coIn').value.trim()||(BIST[ticker]||'');
   if(!ticker)return;
 
   // ── Hak kontrolü ──
@@ -3091,7 +3023,7 @@ async function doAnalyze(){
   document.getElementById('loadingT').textContent=ticker;
   document.getElementById('loadingFW').textContent=`${ex.l} — ${fw.name}`;
   ov.classList.add('visible');
-  ['rdGrid','multGrid','rsiCard','rngCard','anaCard','priceStrip'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});const _mb=document.getElementById('masterBadge');if(_mb)_mb.classList.remove('visible');const _cp=document.getElementById('companyProfile');if(_cp)_cp.classList.remove('visible');const _ft=document.getElementById('fwTeaser');if(_ft)_ft.classList.remove('visible');
+  ['rdGrid','multGrid','rsiCard','rngCard','anaCard','priceStrip'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});const _mb=document.getElementById('masterBadge');if(_mb)_mb.classList.remove('visible');const _ft=document.getElementById('fwTeaser');if(_ft)_ft.classList.remove('visible');
   document.getElementById('badgeLive').style.display='none';
   ['ls1','ls2','ls3','ls4'].forEach((s,i)=>{document.getElementById(s).className='loading-step';setTimeout(()=>{if(i>0)document.getElementById(['ls1','ls2','ls3','ls4'][i-1]).classList.add('done');document.getElementById(s).classList.add('active');},i*700);});
   try{
