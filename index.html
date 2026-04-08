@@ -2660,13 +2660,17 @@ function selHeroEx(ex){
 
 // FRAMEWORK
 function selFW(fw){
+  if(!FW[fw])fw='buffett'; // bilinmeyen framework fallback
   curFW=fw;
   document.getElementById('fw-b').className='fw-btn'+(fw==='buffett'?' active':'');
-  document.getElementById('fw-l').className='fw-btn'+(fw==='lynch'?' la':'');
-  document.getElementById('fw-d').className='fw-btn'+(fw==='dalio'?' active':'')+' fw-dalio';const _fwg=document.getElementById('fw-g');if(_fwg)_fwg.className='fw-btn fw-graham'+(fw==='graham'?' active':'');
+  document.getElementById('fw-l').className='fw-btn'+(fw==='lynch'?' active':'');
+  document.getElementById('fw-d').className='fw-btn'+(fw==='dalio'?' active':'')+' fw-dalio';
+  const _fwg=document.getElementById('fw-g');if(_fwg)_fwg.className='fw-btn fw-graham'+(fw==='graham'?' active':'');
   if(fw==='dalio'){document.getElementById('fw-d').style.cssText='font-size:9px;background:rgba(168,85,247,0.15);border-color:#a855f7;color:#a855f7';}
   else{document.getElementById('fw-d').style.cssText='font-size:9px';}
-  document.getElementById('heroFwSel').value=fw;
+  if(fw==='graham'){const _fwgEl=document.getElementById('fw-g');if(_fwgEl)_fwgEl.style.cssText='font-size:9px;background:rgba(139,115,85,0.15);border-color:#8b7355;color:#8b7355';}
+  else{const _fwgEl=document.getElementById('fw-g');if(_fwgEl)_fwgEl.style.cssText='font-size:9px';}
+  const heroSel=document.getElementById('heroFwSel');if(heroSel)heroSel.value=fw;
   buildNav();
   if(hasAnalyzed&&curTicker)doAnalyze();
 }
