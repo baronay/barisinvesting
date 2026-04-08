@@ -2026,7 +2026,7 @@ body{
       <svg class="hflag"><use id="hflagUse" href="#f-tr"/></svg>
       <div><div class="sticker" id="stockTicker">—</div><div class="sco" id="stockCo">—</div></div>
       <div class="sbadges"><span class="badge badge-ex" id="badgeEx">—</span><span class="badge badge-fw" id="badgeFw">—</span><span class="badge badge-live" id="badgeLive" style="display:none">● Canlı</span></div>
-      <button class="x-shr-btn" onclick="openShr()"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X'te Paylaş</button>
+      <button class="x-shr-btn" onclick="openShr()"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X'te Paylaş</button><button class="x-shr-btn" onclick="copyShareLink()" style="margin-left:6px;background:var(--surface2);border-color:var(--border-s);color:var(--text2)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Link Kopyala</button>
     </div>
     <div class="rd-grid" id="rdGrid" style="display:none">
       <div class="rd-card"><div class="rd-lbl">Güncel Fiyat</div><div class="rd-val" id="rdPrice">—</div><div class="rd-live">● Yahoo Finance</div></div>
@@ -2952,6 +2952,14 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   }
   analysisData={ticker,company,statuses,details,score,verdict,fw:fwKey||curFW};
   saveToHistory(ticker,company,curEX,fwKey||curFW,score,fw.criteria.length,verdict);
+  // Paylaşılabilir URL güncelle
+  if (window.history && window.history.replaceState) {
+    const p = new URLSearchParams();
+    p.set('t', ticker);
+    p.set('fw', fwKey||curFW);
+    p.set('ex', curEX);
+    window.history.replaceState({}, '', '?' + p.toString());
+  }
   if(fd) analysisData.fd = fd; // finansal verileri canvas için sakla
 
   const ptIdx=portfolio.findIndex(p=>p.ticker===ticker&&p.exchange===curEX);
@@ -3382,6 +3390,24 @@ function drawCanvas(){
 }
 
   function dlShare(){const c=document.getElementById('shrCanvas');const l=document.createElement('a');l.download=`${curTicker}_${curFW}_analiz.png`;l.href=c.toDataURL('image/png');l.click();}
+function getShareURL(){
+  if(!curTicker)return'https://www.barisinvesting.com';
+  const p=new URLSearchParams();
+  p.set('t',curTicker);p.set('fw',curFW);p.set('ex',curEX);
+  return'https://www.barisinvesting.com/?'+p.toString();
+}
+function copyShareLink(){
+  if(!curTicker){showToast('Önce bir hisse analiz edin','warn');return;}
+  const url=getShareURL();
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(()=>showToast('✓ Link kopyalandı! Arkadaşına gönder 🔗'));
+  }else{
+    const inp=document.createElement('input');inp.value=url;
+    document.body.appendChild(inp);inp.select();
+    document.execCommand('copy');document.body.removeChild(inp);
+    showToast('✓ Link kopyalandı!');
+  }
+}
 function dlAndTweet(){
   dlShare();
   setTimeout(()=>{
@@ -3396,7 +3422,7 @@ ${pass.slice(0,3).join(' ')}
 ${fail.slice(0,2).join(' ')}
 
 @barisinvesting ile analiz et 👇
-barisinvesting.com
+${getShareURL()}
 
 #Borsa #Yatırım #${d.ticker}`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,'_blank');
@@ -4088,6 +4114,40 @@ function renderWatchlist(stocks) {
 // ══════════════════════════════════════════════
 buildNav(); buildChips(); setupAC(); loadMkt(); loadNews(); renderHistory();
 loadWatchlist('BIST');
+
+// ── PAYLAŞILABILIR URL PARAMETRELERİ ──────────────────────────────
+// barisinvesting.com/?t=THYAO&fw=buffett&ex=BIST
+(function handleURLParams() {
+  const params = new URLSearchParams(window.location.search);
+  const t  = (params.get('t') || '').toUpperCase().replace(/[^A-Z0-9.]/g,'').slice(0,12);
+  const fw = params.get('fw') || '';
+  const ex = params.get('ex') || '';
+
+  if (!t) return;
+
+  // Exchange seç
+  const validEx = ['BIST','NYSE','NASDAQ'];
+  if (validEx.includes(ex.toUpperCase())) selEx(ex.toUpperCase());
+
+  // Framework seç
+  const validFW = ['buffett','lynch','dalio'];
+  if (validFW.includes(fw.toLowerCase())) selFW(fw.toLowerCase());
+
+  // Ticker doldur
+  const ti = document.getElementById('tickerIn');
+  const ci = document.getElementById('coIn');
+  if (ti) ti.value = t;
+  if (ci) ci.value = BIST[t] || '';
+
+  // Analizi başlat (biraz bekle — sayfa yüklensin)
+  setTimeout(() => doAnalyze(), 800);
+
+  // URL'i temizle — history'e kirli URL kalmasın
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+})();
+
 
 // Auth init — saved email varsa otomatik yükle
 if (!localStorage.getItem('baris_fw_seen')) {
