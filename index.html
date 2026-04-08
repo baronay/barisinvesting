@@ -1398,7 +1398,7 @@ body{
 
 @media(max-width:768px){
   /* Master badge */
-  .master-badge{margin:8px 0;padding:10px 12px;}
+  .master-badge{padding:10px 12px;}
   .mb-title{font-size:9px;}
   .mb-sub{font-size:10px;}
   /* Şirket profili */
@@ -1913,10 +1913,6 @@ body{
       <div class="hist-lbl"><span>Son Analizler</span><span onclick="clearHistory()" style="font-size:9px;color:var(--muted2);cursor:pointer;font-weight:400" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted2)'">temizle</span></div>
       <div id="histList"></div>
     </div>
-    <div class="master-badge" id="masterBadge">
-      <div class="mb-icon">⭐</div>
-      <div><div class="mb-title" id="masterTitle">MASTER SELECTION</div><div class="mb-sub" id="masterText">—</div></div>
-    </div>
     <div class="verdict-sec">
       <div class="verdict-lbl">Son Karar</div>
       <div class="verdict-box" id="verdictBox">— / —</div>
@@ -2148,6 +2144,10 @@ body{
     <div class="fw-teaser" id="fwTeaser">
       <div class="fw-teaser-title">Bu hisseyi diğer yatırımcı gözüyle de değerlendir</div>
       <div class="fw-teaser-row" id="fwTeaserRow"></div>
+    </div>
+    <div class="master-badge" id="masterBadge" style="margin-bottom:8px;">
+      <div class="mb-icon">⭐</div>
+      <div><div class="mb-title" id="masterTitle">MASTER SELECTION</div><div class="mb-sub" id="masterText">—</div></div>
     </div>
     <table class="crit-table"><thead><tr><th>#</th><th>Kriter</th><th>Durum</th><th>Özet</th></tr></thead><tbody id="summaryBody"></tbody></table>
   </div>
