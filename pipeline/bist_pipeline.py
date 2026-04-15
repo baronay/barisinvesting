@@ -300,7 +300,7 @@ async def upsert_supabase(results):
     headers={"apikey":SUPABASE_KEY,"Authorization":f"Bearer {SUPABASE_KEY}",
              "Content-Type":"application/json","Prefer":"resolution=merge-duplicates"}
     async with httpx.AsyncClient(timeout=10.0,follow_redirects=True) as client:
-        r=await client.post(url,headers=headers,json=results)
+        r=await client.post(url+"?on_conflict=ticker,scan_date",headers=headers,json=results)
         if r.status_code in(200,201):print(f"  OK {len(results)} kayit")
         else:print(f"  HATA {r.status_code}: {r.text[:300]}")
 
