@@ -18,14 +18,19 @@ function setCache(key, data) {
 
 // Sadece kesin çalıştığı bilinen kolonlar
 const TV_COLUMNS = [
-  'close',                        // 0 — Fiyat
-  'price_earnings_ttm',           // 1 — F/K
-  'price_book_ratio',             // 2 — PD/DD
-  'market_cap_basic',             // 3 — Piyasa Değeri
-  'enterprise_value_ebitda_ttm',  // 4 — FD/FAVÖK
-  'return_on_equity',             // 5 — ROE
-  'debt_to_equity',               // 6 — Borç/Özsermaye
-  'earnings_per_share_basic_ttm', // 7 — EPS (F/K yedek)
+  'close',
+  'price_earnings_ttm',
+  'price_book_ratio',
+  'market_cap_basic',
+  'enterprise_value_ebitda_ttm',
+  'return_on_equity',
+  'debt_to_equity',
+  'earnings_per_share_basic_ttm',
+  'RSI',                      // YENİ
+  'SMA50',                    // YENİ
+  'SMA200',                   // YENİ
+  'volume',                   // YENİ
+  'average_volume_10d_calc',  // YENİ
 ];
 
 const IDX = Object.fromEntries(TV_COLUMNS.map((c, i) => [c, i]));
