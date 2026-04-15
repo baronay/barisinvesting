@@ -4444,5 +4444,141 @@ function fallbackCopy(text,msg){
   showToast(msg);
 }
 </script>
+   <!-- ── HAFTANIN SEÇİMLERİ WIDGET ── -->
+<div id="garpWidget" style="position:fixed;bottom:24px;right:24px;z-index:9999;font-family:'IBM Plex Sans',sans-serif;">
+  <!-- Kapalı buton -->
+  <button id="garpBtn" onclick="garpToggle()" style="
+    display:flex;align-items:center;gap:8px;
+    background:#0e1220;border:1px solid rgba(77,142,240,0.4);
+    color:#e8edf8;padding:10px 16px;border-radius:8px;
+    cursor:pointer;font-size:13px;font-weight:500;
+    box-shadow:0 4px 24px rgba(0,0,0,0.4);
+    transition:all 0.2s;
+  ">
+    <span style="color:#4d8ef0;font-size:16px;">◈</span>
+    Haftanın Seçimleri
+    <span id="garpBadge" style="background:#4d8ef0;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;display:none;">3</span>
+  </button>
+
+  <!-- Açık panel -->
+  <div id="garpPanel" style="
+    display:none;
+    width:340px;
+    background:#0e1220;
+    border:1px solid rgba(77,142,240,0.25);
+    border-radius:12px;
+    box-shadow:0 8px 40px rgba(0,0,0,0.6);
+    overflow:hidden;
+    margin-bottom:8px;
+  ">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.07);">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#e8edf8;letter-spacing:0.3px;">◈ Haftanın GARP Seçimleri</div>
+        <div id="garpHafta" style="font-size:11px;color:#5a6a8a;margin-top:2px;"></div>
+      </div>
+      <button onclick="garpToggle()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:18px;line-height:1;">×</button>
+    </div>
+
+    <!-- İçerik -->
+    <div id="garpIcerik" style="padding:16px;max-height:420px;overflow-y:auto;">
+      <div style="text-align:center;padding:24px 0;color:#5a6a8a;font-size:13px;">
+        Yükleniyor...
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.07);font-size:11px;color:#3d4f6e;text-align:center;">
+      GARP + Teknik Teyit · Barış Investing AI
+    </div>
+  </div>
+</div>
+
+<script>
+var garpAcik = false;
+var garpYuklendi = false;
+
+function garpToggle() {
+  garpAcik = !garpAcik;
+  var panel = document.getElementById('garpPanel');
+  var btn   = document.getElementById('garpBtn');
+  panel.style.display = garpAcik ? 'block' : 'none';
+  if (garpAcik && !garpYuklendi) garpYukle();
+}
+
+function sinялRenk(s) {
+  if (s === 'AL')    return '#22c55e';
+  if (s === 'IZLE')  return '#f59e0b';
+  if (s === 'NOTR')  return '#a0aec8';
+  return '#f05252';
+}
+
+function garpYukle() {
+  var icerik = document.getElementById('garpIcerik');
+  icerik.innerHTML = '<div style="text-align:center;padding:24px 0;color:#5a6a8a;font-size:13px;">Analiz yükleniyor<br><span style="font-size:11px;opacity:0.6;">İlk yüklemede 10-15 sn sürebilir</span></div>';
+
+  fetch('/api/haftalik-secimler')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      garpYuklendi = true;
+      var secimler = data.secimler || [];
+
+      // Hafta badge
+      document.getElementById('garpHafta').textContent = data.hafta + (data.cache ? ' · önbellek' : ' · yeni analiz');
+      document.getElementById('garpBadge').textContent = secimler.length;
+      document.getElementById('garpBadge').style.display = 'inline';
+
+      if (!secimler.length) {
+        icerik.innerHTML = '<div style="text-align:center;padding:24px;color:#5a6a8a;font-size:13px;">Bu hafta için veri yok</div>';
+        return;
+      }
+
+      var html = '';
+      secimler.forEach(function(h, i) {
+        var renk = sinялRenk(h.sinyal);
+        html += '<div style="' + (i > 0 ? 'border-top:1px solid rgba(255,255,255,0.06);margin-top:12px;padding-top:12px;' : '') + '">';
+        // Ticker + sinyal
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+        html += '<span style="font-size:15px;font-weight:600;color:#e8edf8;font-family:\'IBM Plex Mono\',monospace;">' + h.ticker + '</span>';
+        html += '<span style="font-size:11px;font-weight:600;color:' + renk + ';background:' + renk + '18;padding:2px 8px;border-radius:4px;border:1px solid ' + renk + '33;">' + h.sinyal + '</span>';
+        html += '</div>';
+        // Skorlar
+        html += '<div style="display:flex;gap:12px;margin-bottom:8px;">';
+        html += '<span style="font-size:11px;color:#5a6a8a;">Final <span style="color:#4d8ef0;font-weight:600;">' + h.final_skoru + '</span></span>';
+        html += '<span style="font-size:11px;color:#5a6a8a;">GARP <span style="color:#a0aec8;">' + h.garp_skoru + '</span></span>';
+        html += '<span style="font-size:11px;color:#5a6a8a;">Teknik <span style="color:#a0aec8;">' + h.teknik_skoru + '</span></span>';
+        html += '</div>';
+        // Yorum
+        if (h.yorum) {
+          html += '<div style="font-size:12px;color:#8892b0;line-height:1.6;border-left:2px solid rgba(77,142,240,0.3);padding-left:10px;">' + h.yorum.replace(/\*\*/g,'').replace(/\n/g,'<br>') + '</div>';
+        }
+        // Analiz butonu
+        html += '<button onclick="garpAnalizAc(\'' + h.ticker + '\')" style="margin-top:8px;background:rgba(77,142,240,0.1);border:1px solid rgba(77,142,240,0.2);color:#4d8ef0;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;width:100%;">Detaylı Analiz →</button>';
+        html += '</div>';
+      });
+
+      icerik.innerHTML = html;
+    })
+    .catch(function(e) {
+      icerik.innerHTML = '<div style="text-align:center;padding:24px;color:#f05252;font-size:13px;">Veri alınamadı</div>';
+    });
+}
+
+function garpAnalizAc(ticker) {
+  // Mevcut analiz input'una ticker yaz ve analizi tetikle
+  var input = document.getElementById('tickerInput') || document.querySelector('input[placeholder*="ticker"]') || document.querySelector('input[placeholder*="Ticker"]');
+  if (input) {
+    input.value = ticker;
+    input.dispatchEvent(new Event('input'));
+  }
+  // Paneli kapat
+  garpToggle();
+  // Analiz butonunu bul ve tıkla
+  setTimeout(function() {
+    var btn = document.getElementById('analyzeBtn') || document.querySelector('button[onclick*="analiz"]');
+    if (btn) btn.click();
+  }, 300);
+}
+</script>
 </body>
 </html>
