@@ -23,4 +23,11 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           USDT_TRY: ${{ secrets.USDT_TRY }}
+          BIST_API_URL: ${{ secrets.BIST_API_URL }}
         run: python pipeline/bist_pipeline.py --universe --supabase
+      - name: Run LLM yorumcu
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python pipeline/llm_yorumcu.py
