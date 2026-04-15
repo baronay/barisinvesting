@@ -86,7 +86,11 @@ function parseRow(ticker, row) {
   const roeRaw  = safeNum(col(d, 'return_on_equity'), 4);
   const de        = safeNum(col(d, 'debt_to_equity'));
   const eps       = safeNum(col(d, 'earnings_per_share_basic_ttm'));
-
+  const rsi       = safeNum(col(d, 'RSI'));
+  const sma50     = safeNum(col(d, 'SMA50'));
+  const sma200    = safeNum(col(d, 'SMA200'));
+  const volume    = safeNum(col(d, 'volume'), 0);
+  const avgVolume = safeNum(col(d, 'average_volume_10d_calc'), 0);
   // TV return_on_equity zaten % cinsinden gelir (14.85 = %14.85), x100 yapma
   const roe = roeRaw;
 
@@ -110,6 +114,11 @@ function parseRow(ticker, row) {
     DebtEquity:   de,
     PiyasaDegeri: mc,
     GuncelFiyat:  fiyat,
+    RSI: rsi,
+    SMA50: sma50,
+    SMA200: sma200,
+    volume,
+    avg_volume: avgVolume,
     _raw,
     sinyaller: {
       fk:     fkFinal == null ? 'N/A' : fkFinal < 0 ? 'ZARAR' : fkFinal < 10 ? 'UCUZ' : fkFinal < 20 ? 'ADİL' : fkFinal < 35 ? 'DİKKAT' : 'PAHALI',
