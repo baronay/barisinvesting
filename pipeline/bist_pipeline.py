@@ -1,5 +1,5 @@
 """
-bist_pipeline.py — Baris Investing Otonom Ajan MVP v2
+bist_pipeline.py — Baris Investing Otonom Ajan MVP v3
 """
 
 import httpx
@@ -19,9 +19,6 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 BIST_API_URL = os.getenv("BIST_API_URL", "https://barisinvesting.com/api/bist-ratios")
 USDT_TRY     = float(os.getenv("USDT_TRY", "32.5"))
-TV_SCANNER_URL = "https://scanner.tradingview.com/turkey/scan"
-
-TV_TECHNICAL_COLUMNS = ["RSI","obv","SMA50","SMA200","volume","average_volume_10d_calc"]
 
 BIST_UNIVERSE = [
     "THYAO","ASELS","EREGL","KCHOL","SASA","TOASO","BIMAS",
@@ -91,68 +88,39 @@ def _safe(val,decimals=2):
         return None if(math.isnan(n) or math.isinf(n)) else round(n,decimals)
     except:return None
 
-async def fetch_technical(tickers,client):
-    syms=[f"BIST:{t.upper().replace('.IS','').replace('BIST:','')}" for t in tickers]
-    payload={"symbols":{"tickers":syms,"query":{"types":[]}},"columns":TV_TECHNICAL_COLUMNS}
-    headers={"Content-Type":"application/json","Accept":"application/json",
-             "Origin":"https://www.tradingview.com","Referer":"https://www.tradingview.com/",
-             "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-    try:
-        r=await client.post(TV_SCANNER_URL,json=payload,headers=headers,timeout=15.0)
-        if r.status_code!=200:
-            print(f"  [TV Teknik] HTTP {r.status_code} — atlanacak");return {}
-        data=r.json()
-    except Exception as e:
-        print(f"  [TV Teknik] Hata: {e}");return {}
-    idx={col:i for i,col in enumerate(TV_TECHNICAL_COLUMNS)}
-    results={}
-    for row in data.get("data",[]):
-        sym=row.get("s","").replace("BIST:","").upper()
-        d=row.get("d",[])
-        def c(name):
-            i=idx.get(name)
-            return d[i] if(i is not None and i<len(d)) else None
-        results[sym]={"rsi":_safe(c("RSI")),"obv":_safe(c("obv"),0),
-                      "sma50":_safe(c("SMA50")),"sma200":_safe(c("SMA200")),
-                      "volume":_safe(c("volume"),0),"avg_volume":_safe(c("average_volume_10d_calc"),0)}
-    return results
-
-async def fetch_fundamentals(tickers,client):
+async def fetch_all(tickers):
     ticker_str=",".join([t.upper().replace(".IS","").replace("BIST:","") for t in tickers])
     url=f"{BIST_API_URL}?ticker={ticker_str}"
-    print(f"  [Temel] GET {url}")
-    r=await client.get(url,timeout=20.0)
-    r.raise_for_status()
-    data=r.json()
+    print(f"  [Vercel] GET {url}")
+    async with httpx.AsyncClient(follow_redirects=True,timeout=20.0) as client:
+        r=await client.get(url)
+        r.raise_for_status()
+        data=r.json()
     if len(tickers)==1:
         t=tickers[0].upper().replace(".IS","").replace("BIST:","")
         data={t:data}
     results={}
     for sym,d in data.items():
-        if not isinstance(d,dict) or d.get("hata"):continue
-        results[sym]=d
-    return results
-
-async def fetch_all(tickers):
-    async with httpx.AsyncClient(follow_redirects=True) as client:
-        fund_data,tech_data=await asyncio.gather(
-            fetch_fundamentals(tickers,client),
-            fetch_technical(tickers,client)
-        )
-    print(f"  [Temel] {len(fund_data)} | [Teknik] {len(tech_data)}")
-    results={}
-    for sym,d in fund_data.items():
-        tech=tech_data.get(sym,{})
+        if not isinstance(d,dict) or d.get("hata"):
+            print(f"  SKIP {sym}");continue
         results[sym]=RawRatios(
-            ticker=sym,fiyat=_safe(d.get("GuncelFiyat")),fk=_safe(d.get("FK")),
-            pddd=_safe(d.get("PDDD")),piyasa_degeri=_safe(d.get("PiyasaDegeri"),0),
-            fd_favok=_safe(d.get("FD_FAVOK")),roe=_safe(d.get("ROE")),
+            ticker=sym,
+            fiyat=_safe(d.get("GuncelFiyat")),
+            fk=_safe(d.get("FK")),
+            pddd=_safe(d.get("PDDD")),
+            piyasa_degeri=_safe(d.get("PiyasaDegeri"),0),
+            fd_favok=_safe(d.get("FD_FAVOK")),
+            roe=_safe(d.get("ROE")),
             de=_safe(d.get("DebtEquity")),
             eps=_safe((d.get("_raw") or {}).get("earnings_per_share_basic_ttm")),
             buyume_yoy=_safe((d.get("_raw") or {}).get("revenue_growth_rate_1y")),
-            rsi=tech.get("rsi"),obv=tech.get("obv"),sma50=tech.get("sma50"),
-            sma200=tech.get("sma200"),volume=tech.get("volume"),avg_volume=tech.get("avg_volume"),
+            rsi=_safe(d.get("RSI")),
+            sma50=_safe(d.get("SMA50")),
+            sma200=_safe(d.get("SMA200")),
+            volume=_safe(d.get("volume"),0),
+            avg_volume=_safe(d.get("avg_volume"),0),
         )
+    print(f"  {len(results)}/{len(tickers)} hisse alindi")
     return results
 
 def validate(raw):
@@ -184,7 +152,7 @@ def validate(raw):
     v.de=gate(raw.de,"de")
     v.buyume_yoy=gate(raw.buyume_yoy,"buyume")
     v.rsi=gate(raw.rsi,"rsi")
-    v.obv=raw.obv;v.sma50=raw.sma50;v.sma200=raw.sma200
+    v.sma50=raw.sma50;v.sma200=raw.sma200
     v.volume=raw.volume;v.avg_volume=raw.avg_volume
     v.flags=flags
     return v
@@ -248,8 +216,8 @@ def teknik_score(v):
         veri+=1
         if v.sma50>v.sma200:puan+=15;notlar.append("50MA > 200MA — yukari trend")
         else:puan-=10;notlar.append("50MA < 200MA — asagi trend")
-        if v.fiyat>v.sma50:puan+=10;notlar.append(f"Fiyat > 50MA — pozitif")
-        else:puan-=5;notlar.append(f"Fiyat < 50MA — negatif")
+        if v.fiyat>v.sma50:puan+=10;notlar.append("Fiyat > 50MA — pozitif")
+        else:puan-=5;notlar.append("Fiyat < 50MA — negatif")
     elif v.fiyat and v.sma50:
         veri+=1
         if v.fiyat>v.sma50:puan+=8;notlar.append("Fiyat > 50MA")
@@ -273,7 +241,7 @@ def final_score(garp,teknik,teyit):
     return round(final,1),sinyal
 
 async def run_pipeline(tickers,save_to_supabase=False):
-    print(f"\n{'='*55}\n[{datetime.now().strftime('%H:%M:%S')}] Pipeline v2 -- {len(tickers)} hisse\n{'='*55}")
+    print(f"\n{'='*55}\n[{datetime.now().strftime('%H:%M:%S')}] Pipeline v3 -- {len(tickers)} hisse\n{'='*55}")
     raw_data=await fetch_all(tickers)
     results=[]
     for ticker in tickers:
@@ -296,11 +264,11 @@ async def run_pipeline(tickers,save_to_supabase=False):
 
 async def upsert_supabase(results):
     print("[Supabase] Yaziliyor...")
-    url=f"{SUPABASE_URL}/rest/v1/bist_garp_scan"
+    url=f"{SUPABASE_URL}/rest/v1/bist_garp_scan?on_conflict=ticker,scan_date"
     headers={"apikey":SUPABASE_KEY,"Authorization":f"Bearer {SUPABASE_KEY}",
-             "Content-Type":"application/json","Prefer":"resolution=merge-duplicates"}
+             "Content-Type":"application/json","Prefer":"resolution=merge-duplicates,return=minimal"}
     async with httpx.AsyncClient(timeout=10.0,follow_redirects=True) as client:
-        r=await client.post(url+"?on_conflict=ticker,scan_date",headers=headers,json=results)
+        r=await client.post(url,headers=headers,json=results)
         if r.status_code in(200,201):print(f"  OK {len(results)} kayit")
         else:print(f"  HATA {r.status_code}: {r.text[:300]}")
 
