@@ -1,0 +1,26 @@
+name: BIST GARP Scan
+
+on:
+  schedule:
+    - cron: '0 6 * * 1-5'  # hafta içi her gün 06:00 UTC (09:00 Türkiye)
+  workflow_dispatch:         # manuel tetikleme butonu
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Run pipeline
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          USDT_TRY: ${{ secrets.USDT_TRY }}
+        run: python pipeline/bist_pipeline.py --universe --supabase
