@@ -105,57 +105,59 @@ class ValidatedRatios:
     ts:              str             = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 # ── KATMAN 1: VERİ ÇEKME ─────────────────────────────────────────
-async def fetch_tradingview(tickers: list[str]) -> dict[str, RawRatios]:
-    syms = [f"BIST:{t.upper().replace('.IS','').replace('BIST:','')}" for t in tickers]
-    payload = {
-        "symbols": {"tickers": syms, "query": {"types": []}},
-        "columns": TV_COLUMNS,
-    }
-    headers = {
-        "Content-Type": "application/json",
-        "Accept":       "application/json",
-        "Origin":       "https://www.tradingview.com",
-        "Referer":      "https://www.tradingview.com/",
-        "User-Agent":   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-    }
+# GitHub Actions IP'si TradingView tarafından engelleniyor.
+# Bu yüzden kendi Vercel endpoint'imizi proxy olarak kullanıyoruz.
+# BIST_API_URL = https://barisinvesting.com/api/bist-ratios
 
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        r = await client.post(TV_URL, json=payload, headers=headers)
+BIST_API_URL = os.getenv("BIST_API_URL", "https://barisinvesting.com/api/bist-ratios")
+
+def _safe(val, decimals=2):
+    if val is None or val == "":
+        return None
+    try:
+        n = float(val)
+        return None if (math.isnan(n) or math.isinf(n)) else round(n, decimals)
+    except (TypeError, ValueError):
+        return None
+
+async def fetch_tradingview(tickers: list[str]) -> dict[str, RawRatios]:
+    # Vercel endpoint max 50 ticker destekliyor, batch'e gerek yok
+    ticker_str = ",".join([t.upper().replace(".IS","").replace("BIST:","") for t in tickers])
+    url = f"{BIST_API_URL}?ticker={ticker_str}"
+
+    print(f"  → GET {url}")
+
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.get(url)
         r.raise_for_status()
         data = r.json()
 
-    def _safe(val, decimals=2):
-        if val is None or val == "":
-            return None
-        try:
-            n = float(val)
-            return None if (math.isnan(n) or math.isinf(n)) else round(n, decimals)
-        except (TypeError, ValueError):
-            return None
-
     results: dict[str, RawRatios] = {}
-    for row in data.get("data", []):
-        sym = row.get("s", "").replace("BIST:", "").upper()
-        d   = row.get("d", [])
 
-        def col(name):
-            i = IDX.get(name)
-            return d[i] if (i is not None and i < len(d)) else None
+    # Tek ticker → dict döner, çoklu ticker → {TICKER: dict} döner
+    if len(tickers) == 1:
+        t = tickers[0].upper().replace(".IS","").replace("BIST:","")
+        data = {t: data}
+
+    for sym, d in data.items():
+        if not isinstance(d, dict) or d.get("hata"):
+            print(f"  ✗ {sym}: {d.get('hata','Veri yok') if isinstance(d,dict) else 'Veri yok'}")
+            continue
 
         raw = RawRatios(
             ticker        = sym,
-            fiyat         = _safe(col("close")),
-            fk            = _safe(col("price_earnings_ttm")),
-            pddd          = _safe(col("price_book_ratio")),
-            piyasa_degeri = _safe(col("market_cap_basic"), 0),
-            fd_favok      = _safe(col("enterprise_value_ebitda_ttm")),
-            roe           = _safe(col("return_on_equity")),     # TV → zaten %, x100 yapma
-            de            = _safe(col("debt_to_equity")),
-            eps           = _safe(col("earnings_per_share_basic_ttm")),
-            buyume_yoy    = _safe(col("revenue_growth_rate_1y")),
-            net_kar       = _safe(col("net_income"), 0),
-            toplam_borc   = _safe(col("total_debt"), 0),
-            ozsermaye     = _safe(col("total_equity"), 0),
+            fiyat         = _safe(d.get("GuncelFiyat")),
+            fk            = _safe(d.get("FK")),
+            pddd          = _safe(d.get("PDDD")),
+            piyasa_degeri = _safe(d.get("PiyasaDegeri"), 0),
+            fd_favok      = _safe(d.get("FD_FAVOK")),
+            roe           = _safe(d.get("ROE")),
+            de            = _safe(d.get("DebtEquity")),
+            eps           = _safe(d.get("_raw", {}).get("earnings_per_share_basic_ttm")),
+            buyume_yoy    = _safe(d.get("_raw", {}).get("revenue_growth_rate_1y")),
+            net_kar       = None,
+            toplam_borc   = None,
+            ozsermaye     = None,
         )
         results[sym] = raw
 
