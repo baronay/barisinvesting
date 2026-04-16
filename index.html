@@ -2567,7 +2567,7 @@ function closeSidebar(){
 
 // TABS
 function switchTab(t){
-  ['analiz','portfoy','forum'].forEach(x=>{
+  ['analiz','portfoy','tez','forum'].forEach(x=>{
     document.getElementById('tab-'+x).className='mnav-tab'+(x===t?' active':'');
     const c=document.getElementById('tab-'+x+'-content');if(c)c.className='tab-content'+(x===t?' active':'');
   });
