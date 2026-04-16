@@ -4421,6 +4421,93 @@ if (!localStorage.getItem('baris_fw_seen')) {
     <span id="bnAccountLabel">Hesap</span>
   </button>
 </nav>
+   <!-- ── GARP BİLDİRİM SİSTEMİ ── -->
+<script>
+async function garpBildirimleriYukle() {
+  // Login değilse çalıştırma
+  const { data: { user } } = await window._sb.auth.getUser();
+  if (!user) return;
+
+  // Portföyü çek
+  const { data: portfoy } = await window._sb
+    .from('portfolios')
+    .select('data')
+    .eq('email', user.email)
+    .single();
+  if (!portfoy?.data) return;
+
+  let hisseler;
+  try { hisseler = JSON.parse(portfoy.data); } catch { return; }
+  const bistHisseler = hisseler.filter(h => h.exchange === 'BIST').map(h => h.ticker);
+  if (!bistHisseler.length) return;
+
+  // Scan sonuçlarını çek
+  const { data: scanler } = await window._sb
+    .from('bist_garp_latest')
+    .select('ticker,sinyal,final_skoru,garp_skoru,teknik_teyit,teknik_notlar')
+    .in('ticker', bistHisseler);
+  if (!scanler?.length) return;
+
+  // AL veya yüksek skorlu hisseleri filtrele
+  const dikkat = scanler.filter(s => s.sinyal === 'AL' || s.final_skoru >= 65);
+  if (!dikkat.length) return;
+
+  // Badge oluştur
+  garpBadgeGoster(dikkat);
+}
+
+function garpBadgeGoster(hisseler) {
+  // Eski badge varsa kaldır
+  const eski = document.getElementById('garpNotifBadge');
+  if (eski) eski.remove();
+
+  const badge = document.createElement('div');
+  badge.id = 'garpNotifBadge';
+  badge.style.cssText = `
+    position:fixed;top:16px;right:80px;z-index:9998;
+    background:#0e1220;border:1px solid rgba(77,142,240,0.35);
+    border-radius:8px;padding:0;overflow:hidden;
+    box-shadow:0 4px 24px rgba(0,0,0,0.5);
+    min-width:260px;
+  `;
+
+  const sinyal_renk = s => s==='AL'?'#22c55e':s==='IZLE'?'#f59e0b':'#a0aec8';
+
+  badge.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.07);cursor:pointer;" onclick="document.getElementById('garpNotifPanel').style.display=document.getElementById('garpNotifPanel').style.display==='none'?'block':'none'">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="color:#4d8ef0;font-size:14px;">🔔</span>
+        <span style="font-size:12px;font-weight:600;color:#e8edf8;">Portföy Uyarısı</span>
+        <span style="background:#4d8ef0;color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;">${hisseler.length}</span>
+      </div>
+      <button onclick="event.stopPropagation();document.getElementById('garpNotifBadge').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:16px;">×</button>
+    </div>
+    <div id="garpNotifPanel" style="display:block;padding:10px 14px;max-height:280px;overflow-y:auto;">
+      ${hisseler.map(h => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <div>
+            <span style="font-size:13px;font-weight:600;color:#e8edf8;font-family:'IBM Plex Mono',monospace;">${h.ticker}</span>
+            <span style="font-size:10px;color:#5a6a8a;margin-left:6px;">${h.teknik_teyit||''}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;font-weight:600;color:${sinyal_renk(h.sinyal)}">${h.sinyal}</span>
+            <span style="font-size:11px;color:#4d8ef0;">${h.final_skoru}</span>
+            <button onclick="garpAnalizAc('${h.ticker}')" style="background:rgba(77,142,240,0.1);border:1px solid rgba(77,142,240,0.2);color:#4d8ef0;font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;">Analiz</button>
+          </div>
+        </div>
+      `).join('')}
+      <div style="font-size:10px;color:#3d4f6e;text-align:center;margin-top:8px;">GARP + Teknik Teyit · Barış Investing AI</div>
+    </div>
+  `;
+
+  document.body.appendChild(badge);
+}
+
+// Kullanıcı login olunca tetikle
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(garpBildirimleriYukle, 2000);
+});
+</script>
 <script>
 function showToast(msg,dur){
   dur=dur||2500;
