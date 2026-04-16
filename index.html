@@ -4438,15 +4438,7 @@ async function garpBildirimleriYukle() {
     if (!bistHisseler.length) return;
 
     // Scan sonuçlarını Supabase'den çek
-    const SUPA_URL = 'https://xccbqleacseuknljydelw.supabase.co';
-    const SUPA_KEY = document.querySelector('script[data-supa]')?.dataset?.key
-      || window.__SUPA_KEY__ || '';
-
-    const tickers = bistHisseler.map(t => `"${t}"`).join(',');
-    const sRes = await fetch(
-      `${SUPA_URL}/rest/v1/bist_garp_latest?ticker=in.(${bistHisseler.join(',')})&select=ticker,sinyal,final_skoru,teknik_teyit`,
-      { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
-    );
+    const sRes = await fetch(`/api/garp-bildirim?tickers=${bistHisseler.join(',')}`);
     const scanler = await sRes.json();
     if (!Array.isArray(scanler) || !scanler.length) return;
 
