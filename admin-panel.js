@@ -244,4 +244,133 @@ async function openTezEditor() {
             <span style="font-size:12px;color:#e8edf8;">Yayında</span>
           </label>
         </div>
-        <div style="display:flex;ga
+        <div style="display:flex;gap:8px;">
+          <button onclick="tezKaydet()" style="background:#4d8ef0;border:none;color:#fff;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">Kaydet</button>
+          <button id="tezSilBtn" onclick="tezSil()" style="display:none;background:none;border:1px solid var(--danger);color:var(--danger);padding:10px 20px;border-radius:6px;cursor:pointer;font-size:13px;">Sil</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  tezListeYukle();
+}
+
+async function tezListeYukle() {
+  document.getElementById('tezFormArea').style.display = 'none';
+  document.getElementById('tezListeArea').style.display = 'block';
+  const el = document.getElementById('tezListeIcerik');
+  el.innerHTML = 'Yükleniyor...';
+
+  try {
+    const r = await fetch('/api/tez-admin', {
+      headers: { Authorization: `Bearer ${_adminSecret}` }
+    });
+    const tezler = await r.json();
+
+    if (!tezler.length) {
+      el.innerHTML = '<div style="color:#3d4f6e;font-size:12px;">Henüz tez yok.</div>';
+      return;
+    }
+
+    el.innerHTML = tezler.map(t => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#13182a;border-radius:6px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.06);">
+        <div>
+          <span style="font-size:13px;color:#e8edf8;font-weight:500;">${t.baslik}</span>
+          ${t.ticker ? `<span style="font-size:10px;color:#4d8ef0;margin-left:6px;font-family:'IBM Plex Mono',monospace;">${t.ticker}</span>` : ''}
+          <span style="font-size:10px;color:${t.yayinda ? '#22c55e' : '#5a6a8a'};margin-left:6px;">${t.yayinda ? '● Yayında' : '○ Taslak'}</span>
+        </div>
+        <button onclick="tezDuzenle(${JSON.stringify(t).replace(/"/g, '&quot;')})" style="background:rgba(77,142,240,0.1);border:1px solid rgba(77,142,240,0.2);color:#4d8ef0;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">Düzenle</button>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);font-size:12px;">Hata: ' + e.message + '</div>';
+  }
+}
+
+function tezFormAc(tez) {
+  document.getElementById('tezListeArea').style.display = 'none';
+  document.getElementById('tezFormArea').style.display = 'block';
+
+  if (tez) {
+    document.getElementById('tezFormBaslik').textContent = 'TEZ DÜZENLE';
+    document.getElementById('tezFormId').value = tez.id;
+    document.getElementById('tezBaslik').value = tez.baslik || '';
+    document.getElementById('tezTicker').value = tez.ticker || '';
+    document.getElementById('tezSinyal').value = tez.sinyal || '';
+    document.getElementById('tezKapak').value = tez.kapak_gorseli || '';
+    document.getElementById('tezOzet').value = tez.ozet || '';
+    document.getElementById('tezIcerik').value = tez.icerik || '';
+    document.getElementById('tezYayinda').checked = tez.yayinda || false;
+    document.getElementById('tezSilBtn').style.display = 'inline-block';
+  } else {
+    document.getElementById('tezFormBaslik').textContent = 'YENİ TEZ';
+    document.getElementById('tezFormId').value = '';
+    document.getElementById('tezBaslik').value = '';
+    document.getElementById('tezTicker').value = '';
+    document.getElementById('tezSinyal').value = '';
+    document.getElementById('tezKapak').value = '';
+    document.getElementById('tezOzet').value = '';
+    document.getElementById('tezIcerik').value = '';
+    document.getElementById('tezYayinda').checked = false;
+    document.getElementById('tezSilBtn').style.display = 'none';
+  }
+}
+
+function tezDuzenle(tez) {
+  tezFormAc(tez);
+}
+
+async function tezKaydet() {
+  const id = document.getElementById('tezFormId').value;
+  const body = {
+    baslik:        document.getElementById('tezBaslik').value,
+    ticker:        document.getElementById('tezTicker').value || null,
+    sinyal:        document.getElementById('tezSinyal').value || null,
+    kapak_gorseli: document.getElementById('tezKapak').value || null,
+    ozet:          document.getElementById('tezOzet').value || null,
+    icerik:        document.getElementById('tezIcerik').value || null,
+    yayinda:       document.getElementById('tezYayinda').checked,
+  };
+
+  if (!body.baslik) { showToast('Başlık zorunlu', 'error'); return; }
+
+  try {
+    if (id) {
+      body.id = parseInt(id);
+      await fetch('/api/tez-admin', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_adminSecret}` },
+        body: JSON.stringify(body)
+      });
+      showToast('✓ Tez güncellendi');
+    } else {
+      await fetch('/api/tez-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_adminSecret}` },
+        body: JSON.stringify(body)
+      });
+      showToast('✓ Tez oluşturuldu');
+    }
+    tezListeYukle();
+  } catch(e) {
+    showToast('Hata: ' + e.message, 'error');
+  }
+}
+
+async function tezSil() {
+  const id = document.getElementById('tezFormId').value;
+  if (!id) return;
+  if (!confirm('Bu tez silinsin mi?')) return;
+  try {
+    await fetch('/api/tez-admin', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_adminSecret}` },
+      body: JSON.stringify({ id: parseInt(id) })
+    });
+    showToast('✓ Tez silindi');
+    tezListeYukle();
+  } catch(e) {
+    showToast('Hata: ' + e.message, 'error');
+  }
+}
