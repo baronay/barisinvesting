@@ -328,9 +328,13 @@ RISK: [En kritik 1 risk cümlesi]`;
     if (!bodyEl) return;
 
     bodyEl.innerHTML = `
+      const isBIST = ex === 'BIST';
+
+    bodyEl.innerHTML = `
       <!-- İş açıklaması -->
       <p style="font-size:12px;color:#ccd6f6;font-family:'IBM Plex Sans',sans-serif;line-height:1.8;margin:0 0 14px">${business}</p>
 
+      ${!isBIST ? `
       <!-- Sektör + Hendek grid -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
         <div class="snap-col">
@@ -342,18 +346,25 @@ RISK: [En kritik 1 risk cümlesi]`;
           <div class="snap-col-val">${moat}</div>
         </div>
       </div>
-
       <!-- Rakipler -->
       ${peers.length ? `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
         <span style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted-s,#8892b0);font-family:'IBM Plex Mono',monospace">Rakipler</span>
         ${peers.map(p => `<button class="snap-peer" onclick="qFill('${p}','','${exchange}')">${p}</button>`).join('')}
       </div>` : ''}
+      ` : `
+      <!-- BIST: Sadece hendek -->
+      <div style="margin-bottom:12px">
+        <div class="snap-col" style="width:100%">
+          <div class="snap-col-lbl">Rekabet Avantajı</div>
+          <div class="snap-col-val">${moat}</div>
+        </div>
+      </div>
+      `}
 
       <!-- Risk alert -->
       <div class="snap-alert">⚠ ${risk}</div>
     `;
-
   } catch(e) {
     clearInterval(dotTimer);
     const bodyEl = document.getElementById('snapshotBody');
