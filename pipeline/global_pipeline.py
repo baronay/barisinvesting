@@ -314,22 +314,27 @@ async def get_portfolio_tickers() -> list:
 async def run_pipeline(tickers: list, save_to_supabase: bool = False):
     print(f"\n{'='*55}\n[{datetime.now().strftime('%H:%M:%S')}] Global Pipeline -- {len(tickers)} hisse\n{'='*55}")
 
+    # Crumb al
+    async with httpx.AsyncClient(follow_redirects=True) as client:
+        crumb, cookie = await get_yahoo_crumb(client)
+        print(f"  Crumb: {'OK' if crumb else 'FAILED'}")
+
     results = []
-    # Rate limit icin 5'li batch
     for i in range(0, len(tickers), 5):
         batch = tickers[i:i+5]
-        async with httpx.AsyncClient() as client:
-            tasks = [fetch_yahoo(t, client) for t in batch]
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            tasks = [fetch_yahoo(t, client, crumb, cookie) for t in batch]
             raws = await asyncio.gather(*tasks)
 
         for raw in raws:
             if not raw: continue
-            raw = await fetch_technical_yahoo(raw.ticker, httpx.AsyncClient(), raw)
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                raw = await fetch_technical_yahoo(raw.ticker, client, raw)
             raw = validate_and_score(raw)
-            print(f"  [{raw.ticker}] {raw.exchange} GARP:{raw.garp_skoru} TEKNIK:{raw.teknik_skoru} FINAL:{raw.final_skoru} -> {raw.sinyal}")
+            print(f"  [{raw.ticker}] {raw.exchange} GARP:{raw.garp_skoru} FINAL:{raw.final_skoru} -> {raw.sinyal}")
             results.append(asdict(raw))
 
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1.0)
 
     if save_to_supabase and SUPABASE_URL and SUPABASE_KEY:
         await upsert_supabase(results)
