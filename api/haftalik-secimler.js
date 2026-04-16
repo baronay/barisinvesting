@@ -1,6 +1,3 @@
-// /api/haftalik-secimler.js
-// Kullanici basinca tetiklenir, cache varsa direkt doner
-
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
@@ -12,8 +9,9 @@ function getHaftaKodu() {
   return `${now.getFullYear()}-W${String(hafta).padStart(2, '0')}`;
 }
 
-async function getCachedenSecimler(hafta) {
-  const url = `${SUPABASE_URL}/rest/v1/haftalik_secimler?hafta=eq.${hafta}&select=*`;
+async function getCachedenSecimler(hafta, market) {
+  const key = `${hafta}-${market}`;
+  const url = `${SUPABASE_URL}/rest/v1/haftalik_secimler?hafta=eq.${key}&select=*`;
   const r = await fetch(url, {
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
   });
@@ -21,21 +19,22 @@ async function getCachedenSecimler(hafta) {
   return data?.[0] || null;
 }
 
-async function getTopHisseler() {
-  const url = `${SUPABASE_URL}/rest/v1/bist_garp_latest?sinyal=in.(AL,IZLE)&order=final_skoru.desc&limit=3&select=*`;
+async function getTopHisseler(market) {
+  const tablo = market === 'global' ? 'global_garp_latest' : 'bist_garp_latest';
+  const url = `${SUPABASE_URL}/rest/v1/${tablo}?sinyal=in.(AL,IZLE)&order=final_skoru.desc&limit=3&select=*`;
   const r = await fetch(url, {
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
   });
   return await r.json();
 }
 
-async function llmYorum(hisse) {
-  const prompt = `Hisse: ${hisse.ticker}
+async function llmYorum(hisse, market) {
+  const doviz = market === 'global' ? '$' : '₺';
+  const prompt = `Hisse: ${hisse.ticker}${market === 'global' ? ' ('+hisse.exchange+')' : ''}
 Sinyal: ${hisse.sinyal} (Skor: ${hisse.final_skoru}/100)
 F/K: ${hisse.fk || 'N/A'} | PD/DD: ${hisse.pddd || 'N/A'} | FD/FAVOK: ${hisse.fd_favok || 'N/A'}
 ROE: %${hisse.roe || 'N/A'} | Buyume: %${hisse.buyume_yoy || 'N/A'}
 Teknik: ${hisse.teknik_teyit} (${hisse.teknik_skoru}/100)
-Notlar: ${(hisse.teknik_notlar || []).join(', ')}
 
 Bu hisse icin 2-3 cumlelik net yatirim tezi yaz.`;
 
@@ -57,7 +56,8 @@ Bu hisse icin 2-3 cumlelik net yatirim tezi yaz.`;
   return data?.content?.[0]?.text?.trim() || null;
 }
 
-async function saveCache(hafta, secimler) {
+async function saveCache(hafta, market, secimler) {
+  const key = `${hafta}-${market}`;
   const url = `${SUPABASE_URL}/rest/v1/haftalik_secimler`;
   await fetch(url, {
     method: 'POST',
@@ -67,7 +67,7 @@ async function saveCache(hafta, secimler) {
       'Content-Type': 'application/json',
       Prefer: 'resolution=merge-duplicates'
     },
-    body: JSON.stringify({ hafta, secimler })
+    body: JSON.stringify({ hafta: key, secimler })
   });
 }
 
@@ -75,29 +75,26 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  const market = req.query.market === 'global' ? 'global' : 'bist';
+
   try {
     const hafta = getHaftaKodu();
-
-    // Cache var mi?
-    const cache = await getCachedenSecimler(hafta);
+    const cache = await getCachedenSecimler(hafta, market);
     if (cache) {
-      console.log(`[Haftalik] Cache hit: ${hafta}`);
-      return res.status(200).json({ hafta, secimler: cache.secimler, cache: true });
+      return res.status(200).json({ hafta, market, secimler: cache.secimler, cache: true });
     }
 
-    // Cache yok — top 3 hisseyi cek
-    console.log(`[Haftalik] Cache miss: ${hafta} — LLM tetikleniyor`);
-    const hisseler = await getTopHisseler();
+    const hisseler = await getTopHisseler(market);
     if (!hisseler?.length) {
-      return res.status(404).json({ error: 'Bugün için scan verisi yok' });
+      return res.status(404).json({ error: 'Veri yok' });
     }
 
-    // Her biri icin yorum uret
     const secimler = [];
     for (const h of hisseler) {
-      const yorum = await llmYorum(h);
+      const yorum = await llmYorum(h, market);
       secimler.push({
         ticker:      h.ticker,
+        exchange:    h.exchange || 'BIST',
         sinyal:      h.sinyal,
         final_skoru: h.final_skoru,
         garp_skoru:  h.garp_skoru,
@@ -110,10 +107,8 @@ export default async function handler(req, res) {
       });
     }
 
-    // Cache'e kaydet
-    await saveCache(hafta, secimler);
-
-    return res.status(200).json({ hafta, secimler, cache: false });
+    await saveCache(hafta, market, secimler);
+    return res.status(200).json({ hafta, market, secimler, cache: false });
 
   } catch (e) {
     console.error('[Haftalik] Hata:', e.message);
