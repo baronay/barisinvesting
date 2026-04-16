@@ -22,7 +22,7 @@ function closeAdmin() {
 // ── Kullanıcı listesini yükle ──
 async function loadAdminUsers() {
   const email  = getEmail();
-  const secret = _adminSecret || prompt('Admin şifresi:');
+  const secret = prompt('Tez editörü şifresi (ADMIN_SECRET):');
   if (!secret) return;
   _adminSecret = secret;
 
