@@ -4582,7 +4582,23 @@ function fallbackCopy(text,msg){
 <script>
 var garpAcik = false;
 var garpYuklendi = false;
+var garpAktifTab = 'bist';
 
+function garpTabDegistir(tab) {
+  garpAktifTab = tab;
+  var b = document.getElementById('garpTabBist');
+  var g = document.getElementById('garpTabGlobal');
+  if (b && g) {
+    b.style.background = tab==='bist' ? 'rgba(77,142,240,0.2)' : 'none';
+    b.style.color = tab==='bist' ? '#4d8ef0' : '#5a6a8a';
+    b.style.borderColor = tab==='bist' ? 'rgba(77,142,240,0.4)' : 'rgba(255,255,255,0.1)';
+    g.style.background = tab==='global' ? 'rgba(77,142,240,0.2)' : 'none';
+    g.style.color = tab==='global' ? '#4d8ef0' : '#5a6a8a';
+    g.style.borderColor = tab==='global' ? 'rgba(77,142,240,0.4)' : 'rgba(255,255,255,0.1)';
+  }
+  garpYuklendi = false;
+  garpYukle();
+}
 function garpToggle() {
   garpAcik = !garpAcik;
   var panel = document.getElementById('garpPanel');
@@ -4602,7 +4618,7 @@ function garpYukle() {
   var icerik = document.getElementById('garpIcerik');
   icerik.innerHTML = '<div style="text-align:center;padding:24px 0;color:#5a6a8a;font-size:13px;">Analiz yükleniyor<br><span style="font-size:11px;opacity:0.6;">İlk yüklemede 10-15 sn sürebilir</span></div>';
 
-  fetch('/api/haftalik-secimler')
+  fetch(garpAktifTab === 'global' ? '/api/haftalik-secimler?market=global' : '/api/haftalik-secimler')
     .then(function(r) { return r.json(); })
     .then(function(data) {
       garpYuklendi = true;
