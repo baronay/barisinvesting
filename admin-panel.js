@@ -166,3 +166,82 @@ async function deleteUser(targetEmail, secret) {
     } else showToast('⚠ ' + d.error, 'error');
   } catch (e) { showToast('Hata: ' + e.message, 'error'); }
 }
+// ── TEZ EDİTÖRÜ ──────────────────────────────────────────────────
+
+async function openTezEditor() {
+  const secret = _adminSecret || prompt('Admin şifresi:');
+  if (!secret) return;
+  _adminSecret = secret;
+
+  const modal = document.createElement('div');
+  modal.id = 'tezEditorModal';
+  modal.style.cssText = `
+    position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:10000;
+    display:flex;align-items:flex-start;justify-content:center;
+    overflow-y:auto;padding:20px;
+  `;
+
+  modal.innerHTML = `
+    <div style="background:#0e1220;border:1px solid rgba(77,142,240,0.25);border-radius:12px;width:100%;max-width:820px;padding:24px;margin:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h2 style="font-size:16px;font-weight:700;color:#e8edf8;font-family:'IBM Plex Serif',serif;">✍ Tez Editörü</h2>
+        <button onclick="document.getElementById('tezEditorModal').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:20px;">×</button>
+      </div>
+
+      <!-- Tez listesi -->
+      <div id="tezListeArea" style="margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:11px;color:#5a6a8a;font-family:'IBM Plex Mono',monospace;">MEVCUT TEZLER</span>
+          <button onclick="tezFormAc()" style="background:rgba(77,142,240,0.15);border:1px solid rgba(77,142,240,0.3);color:#4d8ef0;font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;">+ Yeni Tez</button>
+        </div>
+        <div id="tezListeIcerik" style="color:#5a6a8a;font-size:12px;">Yükleniyor...</div>
+      </div>
+
+      <!-- Tez formu -->
+      <div id="tezFormArea" style="display:none;">
+        <div style="font-size:11px;color:#5a6a8a;font-family:'IBM Plex Mono',monospace;margin-bottom:12px;display:flex;justify-content:space-between;">
+          <span id="tezFormBaslik">YENİ TEZ</span>
+          <button onclick="tezListeYukle()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:11px;">← Listeye dön</button>
+        </div>
+        <input type="hidden" id="tezFormId"/>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;">BAŞLIK</label>
+            <input id="tezBaslik" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;" placeholder="Tez başlığı"/>
+          </div>
+          <div>
+            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;">TICKER (opsiyonel)</label>
+            <input id="tezTicker" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;" placeholder="THYAO"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;">SİNYAL</label>
+            <select id="tezSinyal" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;">
+              <option value="">—</option>
+              <option value="AL">AL</option>
+              <option value="IZLE">İZLE</option>
+              <option value="NOTR">NÖTR</option>
+              <option value="KACIN">KAÇIN</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;">KAPAK GÖRSELİ URL</label>
+            <input id="tezKapak" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;" placeholder="https://..."/>
+          </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;">ÖZET (kısa açıklama)</label>
+          <textarea id="tezOzet" rows="2" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;resize:vertical;" placeholder="Kısa özet..."></textarea>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;">İÇERİK (HTML destekler)</label>
+          <textarea id="tezIcerik" rows="12" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:12px;resize:vertical;font-family:'IBM Plex Mono',monospace;" placeholder="Tez içeriği... HTML kullanabilirsin."></textarea>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" id="tezYayinda" style="width:14px;height:14px;"/>
+            <span style="font-size:12px;color:#e8edf8;">Yayında</span>
+          </label>
+        </div>
+        <div style="display:flex;ga
