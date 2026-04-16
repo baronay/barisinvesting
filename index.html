@@ -3716,7 +3716,7 @@ Katalizör Takvimi:
 
 let activeTez = null;
 
-function renderTezler() {
+async function renderTezler() {
   const locked   = document.getElementById('tezler-locked');
   const unlocked = document.getElementById('tezler-content');
   const isLoggedIn = !!(curUser && curUser.email) || !!(localStorage.getItem('bi_email'));
@@ -3730,53 +3730,72 @@ function renderTezler() {
   unlocked.style.display = 'block';
 
   const grid = document.getElementById('tezGrid');
-  if (!TEZLER || TEZLER.length === 0) {
-    grid.innerHTML = `<div class="tez-empty"><div class="tez-empty-icon">📋</div><div class="tez-empty-title">İlk tez yakında geliyor</div><div class="tez-empty-sub">PDF tezleri entegre edildikçe burada görünecek.</div></div>`;
-    return;
-  }
+  grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">Yükleniyor...</div>';
 
-  grid.innerHTML = TEZLER.map(tez => {
-    const verdictLabel = tez.verdict === 'al' ? 'AL' : tez.verdict === 'izle' ? 'İZLE' : 'UZAK DUR';
-    const scoreBarB = Array.from({length: tez.maxScore}, (_,i) =>
-      `<div style="width:${100/tez.maxScore - 2}%;height:100%;background:${i < tez.buffettScore ? '#4d8ef0' : 'var(--rule)'};"></div>`
-    ).join('');
-    const scoreBarL = Array.from({length: tez.maxScore}, (_,i) =>
-      `<div style="width:${100/tez.maxScore - 2}%;height:100%;background:${i < tez.lynchScore ? '#e07b39' : 'var(--rule)'};"></div>`
-    ).join('');
-    return `
-    <div class="tez-card" onclick="openTez('${tez.id}')">
-      <div class="tez-card-header">
-        <div class="tez-card-meta">
-          <span class="tez-ticker">${tez.ticker}</span>
-          <span class="tez-exchange">${tez.exchange}</span>
-          <span class="tez-tag ${tez.verdict}" style="font-size:8px">${verdictLabel}</span>
-          <span class="tez-date">${tez.date}</span>
-        </div>
-        <div class="tez-title">${tez.title}</div>
-        <div class="tez-summary">${tez.summary}</div>
-        <!-- Skor barları -->
-        <div style="display:flex;gap:12px;margin-top:10px;margin-bottom:2px">
-          <div style="flex:1">
-            <div style="font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:3px">BUFFETT ${tez.buffettScore}/${tez.maxScore}</div>
-            <div style="display:flex;gap:2px;height:5px">${scoreBarB}</div>
+  try {
+    const r = await fetch('/api/tezler-public');
+    const tezler = await r.json();
+
+    if (!tezler || !tezler.length) {
+      grid.innerHTML = '<div class="tez-empty"><div class="tez-empty-icon">📋</div><div class="tez-empty-title">İlk tez yakında geliyor</div></div>';
+      return;
+    }
+
+    grid.innerHTML = tezler.map(tez => {
+      const verdictLabel = tez.sinyal === 'AL' ? 'AL' : tez.sinyal === 'IZLE' ? 'İZLE' : tez.sinyal === 'KACIN' ? 'UZAK DUR' : 'NÖTR';
+      const verdictClass = tez.sinyal === 'AL' ? 'al' : tez.sinyal === 'IZLE' ? 'izle' : 'uzak';
+      const tarih = tez.olusturma ? new Date(tez.olusturma).toLocaleDateString('tr-TR', {month:'long',year:'numeric'}) : '';
+      const etiketler = (tez.etiketler || []).map(t => `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted);border:1px solid var(--border);padding:1px 6px">${t}</span>`).join('');
+
+      return `
+      <div class="tez-card" onclick="openTezSupabase(${tez.id})">
+        <div class="tez-card-header">
+          <div class="tez-card-meta">
+            ${tez.ticker ? `<span class="tez-ticker">${tez.ticker}</span>` : ''}
+            <span class="tez-tag ${verdictClass}" style="font-size:8px">${verdictLabel}</span>
+            <span class="tez-date">${tarih}</span>
           </div>
-          <div style="flex:1">
-            <div style="font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:3px">LYNCH ${tez.lynchScore}/${tez.maxScore}</div>
-            <div style="display:flex;gap:2px;height:5px">${scoreBarL}</div>
-          </div>
+          <div class="tez-title">${tez.baslik}</div>
+          <div class="tez-summary">${tez.ozet || ''}</div>
         </div>
-      </div>
-      <div class="tez-card-footer">
-        ${tez.tags.map(t => `<span style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted);border:1px solid var(--border);padding:1px 6px">${t}</span>`).join('')}
-        <button class="tez-read-btn" style="margin-left:auto">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          Tezi Oku
-        </button>
-      </div>
-    </div>`;
-  }).join('');
+        <div class="tez-card-footer">
+          ${etiketler}
+          <button class="tez-read-btn" style="margin-left:auto">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Tezi Oku
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--danger);font-size:13px;">Tezler yüklenemedi</div>';
+  }
 }
 
+function openTezSupabase(id) {
+  fetch('/api/tezler-public?id=' + id)
+    .then(r => r.json())
+    .then(tez => {
+      if (!tez || !tez.icerik) return;
+      const modal = document.getElementById('tezModal') || document.createElement('div');
+      modal.id = 'tezModal';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;';
+      modal.innerHTML = `
+        <div style="background:#0e1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;width:100%;max-width:760px;padding:32px;margin:auto;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+            <div>
+              ${tez.ticker ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4d8ef0;font-weight:600;">${tez.ticker}</span>` : ''}
+              <h1 style="font-size:22px;font-weight:700;color:#e8edf8;font-family:'IBM Plex Serif',serif;margin-top:6px;">${tez.baslik}</h1>
+            </div>
+            <button onclick="document.getElementById('tezModal').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:22px;margin-left:16px;">×</button>
+          </div>
+          <div style="color:#a0aec8;font-size:14px;line-height:1.8;">${tez.icerik}</div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    });
+}
 function openTez(id) {
   const tez = TEZLER.find(t => t.id === id);
   if (!tez) return;
