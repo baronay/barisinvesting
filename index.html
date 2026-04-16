@@ -4425,39 +4425,32 @@ if (!localStorage.getItem('baris_fw_seen')) {
 <script>
 async function garpBildirimleriYukle() {
   try {
-    // Oturum bilgisini localStorage'dan al
-    const session = Object.keys(localStorage)
-      .filter(k => k.includes('supabase') || k.includes('auth'))
-      .map(k => { try { return JSON.parse(localStorage[k]); } catch { return null; } })
-      .find(v => v?.user?.email || v?.email);
-
-    const email = session?.user?.email || session?.email;
-    if (!email) return;
-
-    const SUPA_URL = 'https://xccbqleacseuknljydelw.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2JxbGVhY3NldWtuamp5ZGVsdyIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzE2MDMwMTI5LCJleHAiOjIwMzE2MDYxMjl9.placeholder';
-
-    // Portföyü çek
-    const pRes = await fetch(`${SUPA_URL}/rest/v1/portfolios?email=eq.${encodeURIComponent(email)}&select=data`, {
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
-    });
-    const pData = await pRes.json();
-    if (!pData?.[0]?.data) return;
-
+    // Portföyü localStorage'dan al
+    const raw = localStorage.getItem('bi_portfolio');
+    if (!raw) return;
     let hisseler;
-    try { hisseler = JSON.parse(pData[0].data); } catch { return; }
-    const bistHisseler = hisseler.filter(h => h.exchange === 'BIST').map(h => h.ticker);
+    try { hisseler = JSON.parse(raw); } catch { return; }
+    if (!Array.isArray(hisseler) || !hisseler.length) return;
+
+    const bistHisseler = hisseler
+      .filter(h => h.exchange === 'BIST' || h.exchange === 'bist' || !h.exchange)
+      .map(h => h.ticker);
     if (!bistHisseler.length) return;
 
-    // Scan sonuçlarını çek
-    const tickers = bistHisseler.join(',');
-    const sRes = await fetch(`${SUPA_URL}/rest/v1/bist_garp_latest?ticker=in.(${tickers})&select=ticker,sinyal,final_skoru,teknik_teyit`, {
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
-    });
-    const scanler = await sRes.json();
-    if (!scanler?.length) return;
+    // Scan sonuçlarını Supabase'den çek
+    const SUPA_URL = 'https://xccbqleacseuknljydelw.supabase.co';
+    const SUPA_KEY = document.querySelector('script[data-supa]')?.dataset?.key
+      || window.__SUPA_KEY__ || '';
 
-    const dikkat = scanler.filter(s => s.sinyal === 'AL' || s.final_skoru >= 65);
+    const tickers = bistHisseler.map(t => `"${t}"`).join(',');
+    const sRes = await fetch(
+      `${SUPA_URL}/rest/v1/bist_garp_latest?ticker=in.(${bistHisseler.join(',')})&select=ticker,sinyal,final_skoru,teknik_teyit`,
+      { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
+    );
+    const scanler = await sRes.json();
+    if (!Array.isArray(scanler) || !scanler.length) return;
+
+    const dikkat = scanler.filter(s => s.sinyal === 'AL' || (s.final_skoru >= 65));
     if (!dikkat.length) return;
 
     garpBadgeGoster(dikkat);
@@ -4465,7 +4458,6 @@ async function garpBildirimleriYukle() {
     console.log('[GARP Bildirim] Hata:', e.message);
   }
 }
-
 function garpBadgeGoster(hisseler) {
   // Eski badge varsa kaldır
   const eski = document.getElementById('garpNotifBadge');
