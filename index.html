@@ -4566,7 +4566,7 @@ function garpYukle() {
 
 function garpAnalizAc(ticker) {
   // Mevcut analiz input'una ticker yaz ve analizi tetikle
-  var input = document.getElementById('tickerInput') || document.querySelector('input[placeholder*="ticker"]') || document.querySelector('input[placeholder*="Ticker"]');
+  var input = document.getElementById('tickerIn');
   if (input) {
     input.value = ticker;
     input.dispatchEvent(new Event('input'));
@@ -4575,7 +4575,7 @@ function garpAnalizAc(ticker) {
   garpToggle();
   // Analiz butonunu bul ve tıkla
   setTimeout(function() {
-    var btn = document.getElementById('analyzeBtn') || document.querySelector('button[onclick*="analiz"]');
+    var btn = document.getElementById('anaBtn');
     if (btn) btn.click();
   }, 300);
 }
