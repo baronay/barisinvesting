@@ -77,15 +77,38 @@ def _safe(val, decimals=2):
         return None if (math.isnan(n) or math.isinf(n)) else round(n, decimals)
     except: return None
 
-async def fetch_yahoo(ticker: str, client: httpx.AsyncClient) -> Optional[GlobalRatios]:
-    """Yahoo Finance v10 ile tek hisse verisi cek."""
+async def get_yahoo_crumb(client: httpx.AsyncClient):
+    """Yahoo Finance crumb ve cookie al."""
     try:
-        url = f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{ticker}?modules=summaryDetail,defaultKeyStatistics,financialData,price"
+        r1 = await client.get('https://fc.yahoo.com', 
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
+            follow_redirects=True, timeout=10.0)
+        cookie = r1.headers.get('set-cookie', '').split(';')[0]
+        if not cookie: return None, None
+        
+        r2 = await client.get('https://query1.finance.yahoo.com/v1/test/getcrumb',
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Cookie": cookie,
+                "Referer": "https://finance.yahoo.com/"
+            }, timeout=10.0)
+        crumb = r2.text.strip() if r2.status_code == 200 else None
+        return crumb, cookie
+    except:
+        return None, None
+
+async def fetch_yahoo(ticker: str, client: httpx.AsyncClient, crumb: str = None, cookie: str = None) -> Optional[GlobalRatios]:
+    try:
+        cs = f"&crumb={crumb}" if crumb else ""
+        url = f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{ticker}?modules=summaryDetail,defaultKeyStatistics,financialData,price{cs}"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
             "Accept": "application/json",
             "Referer": "https://finance.yahoo.com/",
         }
+        if cookie:
+            headers["Cookie"] = cookie
+            
         r = await client.get(url, headers=headers, timeout=10.0)
         if r.status_code != 200:
             print(f"  [{ticker}] HTTP {r.status_code}")
