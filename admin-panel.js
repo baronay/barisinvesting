@@ -264,12 +264,15 @@ async function tezListeYukle() {
 
     el.innerHTML = tezler.map(t => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#13182a;border-radius:6px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.06);">
-        <div>
+        <div style="flex:1;min-width:0;">
           <span style="font-size:13px;color:#e8edf8;font-weight:500;">${t.baslik}</span>
           ${t.ticker ? '<span style="font-size:10px;color:#4d8ef0;margin-left:6px;font-family:IBM Plex Mono,monospace;">' + t.ticker + '</span>' : ''}
           <span style="font-size:10px;color:${t.yayinda ? '#22c55e' : '#5a6a8a'};margin-left:6px;">${t.yayinda ? '● Yayinda' : '○ Taslak'}</span>
         </div>
-        <button onclick='tezFormAc(${JSON.stringify(t)})' style="background:rgba(77,142,240,0.1);border:1px solid rgba(77,142,240,0.2);color:#4d8ef0;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">Duzenle</button>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick='tezFormAc(${JSON.stringify(t)})' style="background:rgba(77,142,240,0.1);border:1px solid rgba(77,142,240,0.2);color:#4d8ef0;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">Düzenle</button>
+          <button onclick='tezSilDogrudan(${t.id})' style="background:none;border:1px solid rgba(240,82,82,0.3);color:#f05252;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">Sil</button>
+        </div>
       </div>
     `).join('');
   } catch(e) {
@@ -337,6 +340,21 @@ async function tezKaydet() {
       });
       showToast('Tez olusturuldu');
     }
+    tezListeYukle();
+  } catch(e) {
+    showToast('Hata: ' + e.message);
+  }
+}
+
+async function tezSilDogrudan(id) {
+  if (!id || !confirm('Bu tez silinsin mi?')) return;
+  try {
+    await fetch('/api/tez-admin', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + _tezSecret },
+      body: JSON.stringify({ id: parseInt(id) })
+    });
+    showToast('Tez silindi');
     tezListeYukle();
   } catch(e) {
     showToast('Hata: ' + e.message);
