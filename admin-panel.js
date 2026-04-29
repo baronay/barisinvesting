@@ -175,14 +175,17 @@ async function openTezEditor() {
 
   const modal = document.createElement('div');
   modal.id = 'tezEditorModal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:10000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:10000;display:flex;align-items:stretch;justify-content:center;padding:16px;overflow:hidden;';
 
   modal.innerHTML = `
-    <div style="background:#0e1220;border:1px solid rgba(77,142,240,0.25);border-radius:12px;width:100%;max-width:860px;padding:24px;margin:auto;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <h2 style="font-size:16px;font-weight:700;color:#e8edf8;font-family:'IBM Plex Serif',serif;">&#9997; Tez Editörü</h2>
-        <button onclick="document.getElementById('tezEditorModal').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:20px;">&#215;</button>
+    <div style="background:#0e1220;border:1px solid rgba(77,142,240,0.25);border-radius:12px;width:100%;max-width:900px;display:flex;flex-direction:column;overflow:hidden;">
+      <!-- STICKY HEADER -->
+      <div style="flex-shrink:0;display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.07);">
+        <h2 style="font-size:15px;font-weight:700;color:#e8edf8;font-family:'IBM Plex Serif',serif;">&#9997; Tez Editörü</h2>
+        <button onclick="document.getElementById('tezEditorModal').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:22px;line-height:1;">&#215;</button>
       </div>
+      <!-- SCROLLABLE BODY -->
+      <div style="flex:1;overflow-y:auto;padding:20px;min-height:0;">
 
       <!-- LISTE ALANI -->
       <div id="tezListeArea">
@@ -236,8 +239,8 @@ async function openTezEditor() {
               <span id="tezKapakDurum" style="font-size:11px;color:#5a6a8a;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Henüz seçilmedi</span>
             </div>
             <!-- Preview + mevcut URL göstergesi -->
-            <div id="tezKapakPreviewWrap" style="margin-top:8px;display:none;">
-              <img id="tezKapakPreview" style="height:60px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);object-fit:cover;" />
+            <div id="tezKapakPreviewWrap" style="margin-top:8px;display:none;align-items:center;">
+              <img id="tezKapakPreview" style="height:56px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);object-fit:cover;max-width:140px;" />
               <button onclick="tezKapakTemizle()" style="background:none;border:none;color:#f05252;cursor:pointer;font-size:11px;margin-left:8px;">✕ Kaldır</button>
             </div>
             <!-- Mevcut kayıtlı URL -->
@@ -257,7 +260,7 @@ async function openTezEditor() {
             <label style="font-size:10px;color:#5a6a8a;letter-spacing:1px;">İÇERİK (HTML destekler)</label>
             <button onclick="tezIcerikTemizle()" title="\\n karakterlerini temizle" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;">🧹 \\n Temizle</button>
           </div>
-          <textarea id="tezIcerik" rows="18" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:10px 12px;border-radius:6px;font-size:12px;resize:vertical;font-family:'IBM Plex Mono',monospace;line-height:1.7;" placeholder="Tez içeriği... (HTML etiketleri kullanılabilir)"></textarea>
+          <textarea id="tezIcerik" rows="16" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:10px 12px;border-radius:6px;font-size:12px;resize:vertical;font-family:'IBM Plex Mono',monospace;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word;" placeholder="Tez içeriği... (HTML etiketleri kullanılabilir)"></textarea>
         </div>
 
         <!-- Yayında -->
@@ -274,7 +277,9 @@ async function openTezEditor() {
           <button id="tezSilBtn" onclick="tezSil()" style="display:none;background:none;border:1px solid #f05252;color:#f05252;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:13px;">Sil</button>
           <span id="tezKaydetDurum" style="font-size:12px;color:#5a6a8a;align-self:center;margin-left:8px;"></span>
         </div>
-      </div>
+      </div><!-- /tezFormArea -->
+
+      </div><!-- /scrollable body -->
     </div>
   `;
 
