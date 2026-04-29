@@ -644,7 +644,6 @@ body{
   .mobile-toggle{display:none!important;}
   .sidebar{display:none!important;}
   .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--sidebar);backdrop-filter:blur(12px);border-top:1px solid var(--border-s);z-index:500;height:58px;}
-  #garpWidget{bottom:calc(70px + env(safe-area-inset-bottom,0px))!important;right:12px!important;}
   .bn-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);transition:color .2s;border:none;background:none;-webkit-tap-highlight-color:transparent;padding:6px 0;}
   .bn-tab.active{color:var(--accent);} #bn-tezler{color:var(--gold);opacity:.7;} #bn-tezler.active{color:var(--gold);opacity:1;}
   .bn-tab svg{width:18px;height:18px;}
@@ -1060,6 +1059,15 @@ body{
   font-size: 9px;
   color: var(--muted);
 }
+.tez-getiri-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 4px;
+  display: none; /* JS ile gösterilecek */
+}
+.tez-getiri-badge.pos { color: var(--success); background: var(--success-dim); border: 1px solid rgba(34,197,94,0.25); }
+.tez-getiri-badge.neg { color: var(--danger);  background: var(--danger-dim);  border: 1px solid rgba(240,82,82,0.25); }
+.tez-getiri-badge.neu { color: var(--muted);   background: var(--surface2); }
 .tez-read-btn {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 9px;
@@ -1413,13 +1421,6 @@ body{
   .fw-teaser-row{flex-direction:column;}
 }
 
-
-/* Tez kapak görseli */
-.tez-cover { width:100%;height:160px;object-fit:cover;display:block;border-bottom:1px solid var(--rule);background:var(--surface2); }
-.tez-getiri { font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px; }
-.tez-getiri.pos { color:var(--success);background:var(--success-dim); }
-.tez-getiri.neg { color:var(--danger);background:var(--danger-dim); }
-.tez-getiri.neu { color:var(--muted);background:var(--surface2); }
 
 /* Tez kartı */
 .tez-card {
@@ -1923,12 +1924,12 @@ body{
       <div class="hist-lbl"><span>Son Analizler</span><span onclick="clearHistory()" style="font-size:9px;color:var(--muted2);cursor:pointer;font-weight:400" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted2)'">temizle</span></div>
       <div id="histList"></div>
     </div>
-    <div id="tezBildirim" onclick="tezBildirimAc()" style="display:none;margin:0 12px 10px;border:1px solid rgba(77,142,240,0.3);border-left:3px solid var(--accent);background:rgba(77,142,240,0.06);border-radius:6px;padding:10px 12px;cursor:pointer;transition:background 0.2s;">
+    <div id="tezBildirim" onclick="tezBildirimAc()" style="display:none;margin:0 12px 10px;border:1px solid rgba(77,142,240,0.3);border-left:3px solid var(--accent);background:rgba(77,142,240,0.06);border-radius:6px;padding:10px 12px;cursor:pointer;">
       <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--accent);margin-bottom:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">◈ ARAŞTIRMA TEZİ <span id="tezBildirimSinyal"></span></div>
       <div id="tezBildirimBaslik" style="font-family:'IBM Plex Serif',serif;font-size:12px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:4px;"></div>
       <div style="font-size:10px;color:var(--text2);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
         <span id="tezBildirimTarih" style="color:var(--muted)"></span>
-        <span id="tezBildirimGetiri" class="tb-getiri"></span>
+        <span id="tezBildirimGetiri" class="tb-getiri" style="display:none;"></span>
         <span style="margin-left:auto;color:var(--accent);font-size:11px;">→ Tezi Oku</span>
       </div>
     </div>
@@ -3249,16 +3250,14 @@ async function tezBildirimKontrol(ticker) {
       const gun = Math.floor((Date.now() - new Date(tez.olusturma).getTime()) / 86400000);
       tEl.textContent = gun === 0 ? 'Bugün yayınlandı' : gun + ' gün önce yayınlandı';
     }
-
-    // Getiri — maliyet_fiyat varsa anlık hesapla
     const gEl = document.getElementById('tezBildirimGetiri');
     if (gEl && tez.maliyet_fiyat) {
-      gEl.className = 'tb-getiri neu';
       gEl.textContent = '...';
+      gEl.style.display = 'inline-block';
       (async () => {
         try {
-          const isBist = !tez.exchange || tez.exchange === 'BIST';
-          const sym = isBist ? tez.ticker + '.IS' : tez.ticker;
+          const ex = tez.exchange || 'BIST';
+          const sym = ex === 'BIST' ? tez.ticker + '.IS' : tez.ticker;
           const pr = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym) + '?interval=1d&range=1d');
           const pd = await pr.json();
           const anlik = pd?.chart?.result?.[0]?.meta?.regularMarketPrice;
@@ -3268,10 +3267,10 @@ async function tezBildirimKontrol(ticker) {
           const cls = g > 0.5 ? 'pos' : g < -0.5 ? 'neg' : 'neu';
           gEl.className = 'tb-getiri ' + cls;
           gEl.textContent = (g > 0 ? '+' : '') + g.toFixed(1) + '% getiri';
+          gEl.title = 'Maliyet: ' + maliyet + ' → Anlık: ' + anlik.toFixed(2);
         } catch(e) { gEl.textContent = ''; }
       })();
     }
-
     el.style.display = 'block';
   } catch(e) { /* sessiz */ }
 }
@@ -3829,7 +3828,6 @@ async function renderTezler() {
 
       return `
       <div class="tez-card" onclick="openTezSupabase(${tez.id})">
-        ${tez.kapak_gorseli ? `<img class="tez-cover" src="${tez.kapak_gorseli}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
         <div class="tez-card-header">
           <div class="tez-card-meta">
             ${tez.ticker ? `<span class="tez-ticker">${tez.ticker}</span>` : ''}
@@ -3841,16 +3839,18 @@ async function renderTezler() {
         </div>
         <div class="tez-card-footer">
           ${etiketler}
-          <span id="tez-getiri-${tez.id}" class="tez-getiri neu" style="display:none"></span>
-          <button class="tez-read-btn" style="margin-left:auto">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            Tezi Oku
-          </button>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+            <span id="tez-getiri-${tez.id}" class="tez-getiri-badge neu"></span>
+            <button class="tez-read-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Tezi Oku
+            </button>
+          </div>
         </div>
       </div>`;
     }).join('');
 
-    // Maliyet fiyatı olan tezler için anlık getiri hesapla
+    // maliyet_fiyat olan tezler için anlık getiri hesapla
     tezler.filter(t => t.maliyet_fiyat && t.ticker).forEach(t => tezGetiriHesapla(t));
 
   } catch(e) {
@@ -3858,14 +3858,13 @@ async function renderTezler() {
   }
 }
 
-// Anlık fiyatı Yahoo'dan çekip getiriyi hesapla
 async function tezGetiriHesapla(tez) {
   const el = document.getElementById('tez-getiri-' + tez.id);
   if (!el) return;
   try {
-    const isBist = !tez.exchange || tez.exchange === 'BIST';
-    const sym = isBist ? tez.ticker + '.IS' : tez.ticker;
-    const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym) + '?interval=1d&range=1d');
+    const ex = tez.exchange || 'BIST';
+    const sym = ex === 'BIST' ? tez.ticker + '.IS' : tez.ticker;
+    const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym) + '?interval=1d&range=1d', {cache:'no-store'});
     const d = await r.json();
     const anlik = d?.chart?.result?.[0]?.meta?.regularMarketPrice;
     if (!anlik || isNaN(anlik)) return;
@@ -3873,9 +3872,9 @@ async function tezGetiriHesapla(tez) {
     if (!maliyet) return;
     const getiri = ((anlik - maliyet) / maliyet) * 100;
     const cls = getiri > 0.5 ? 'pos' : getiri < -0.5 ? 'neg' : 'neu';
-    el.className = 'tez-getiri ' + cls;
+    el.className = 'tez-getiri-badge ' + cls;
     el.textContent = (getiri > 0 ? '+' : '') + getiri.toFixed(1) + '%';
-    el.title = 'Maliyet: ' + maliyet + ' → Anlık: ' + anlik.toFixed(2);
+    el.title = 'Maliyet: ' + maliyet + ' → Anlık: ' + anlik.toFixed(2) + ' (' + ex + ')';
     el.style.display = 'inline-block';
   } catch(e) { /* sessiz */ }
 }
@@ -3886,53 +3885,37 @@ function openTezSupabase(id) {
     .then(tez => {
       if (!tez || !tez.icerik) return;
 
-      // \n temizleme — Supabase'den literal \n string gelebiliyor
-      let icerik = tez.icerik;
-      if (icerik.includes('<')) {
-        // HTML içerik — sadece literal \n\n string'lerini temizle
-        icerik = icerik.replace(/\\n\\n/g, '').replace(/\\n/g, '');
-      } else {
-        // Düz metin — gerçek satır sonuna çevir
-        icerik = icerik.replace(/\\n/g, '\n').replace(/\n/g, '<br>');
-      }
+      // \n karakterlerini <br>'e çevir (HTML tag içermiyorsa), HTML içeriyorsa direkt kullan
+      const icerikHtml = tez.icerik.includes('<') 
+        ? tez.icerik 
+        : tez.icerik.replace(/\\n/g, '\n').replace(/\n/g, '<br>');
 
       const sinyal = tez.sinyal || '';
       const sinyalRenk = sinyal === 'AL' ? '#22c55e' : sinyal === 'IZLE' ? '#f59e0b' : sinyal === 'KACIN' ? '#f05252' : '#a0aec8';
       const sinyalLabel = sinyal === 'AL' ? 'AL' : sinyal === 'IZLE' ? 'İZLE' : sinyal === 'KACIN' ? 'UZAK DUR' : sinyal || '';
       const tarih = tez.olusturma ? new Date(tez.olusturma).toLocaleDateString('tr-TR', {day:'numeric',month:'long',year:'numeric'}) : '';
 
-      // Eski modal varsa kaldır
-      const eskiModal = document.getElementById('tezModal');
-      if (eskiModal) eskiModal.remove();
-
-      const modal = document.createElement('div');
+      const modal = document.getElementById('tezModal') || document.createElement('div');
       modal.id = 'tezModal';
-      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;cursor:pointer;';
-
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;';
       modal.innerHTML = `
-        <div onclick="event.stopPropagation()" style="cursor:default;background:#0e1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;width:100%;max-width:760px;overflow:hidden;margin:auto;">
-          ${tez.kapak_gorseli ? `<div style="width:100%;height:200px;overflow:hidden;"><img src="${tez.kapak_gorseli}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'"></div>` : ''}
-          <div style="padding:28px 32px 32px;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
-              <div style="flex:1;min-width:0;">
-                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
-                  ${tez.ticker ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4d8ef0;font-weight:600;background:rgba(77,142,240,0.1);padding:2px 8px;border-radius:4px;">${tez.ticker}</span>` : ''}
-                  ${sinyalLabel ? `<span style="font-size:11px;font-weight:700;color:${sinyalRenk};background:${sinyalRenk}18;border:1px solid ${sinyalRenk}44;padding:2px 8px;border-radius:4px;">${sinyalLabel}</span>` : ''}
-                  ${tarih ? `<span style="font-size:11px;color:#3d4f6e;font-family:'IBM Plex Mono',monospace;">${tarih}</span>` : ''}
-                </div>
-                <h1 style="font-size:22px;font-weight:700;color:#e8edf8;font-family:'IBM Plex Serif',serif;line-height:1.3;">${tez.baslik}</h1>
-                ${tez.ozet ? `<p style="margin-top:8px;font-size:13px;color:#5a6a8a;line-height:1.6;">${tez.ozet}</p>` : ''}
+        <div style="background:#0e1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;width:100%;max-width:760px;padding:32px;margin:auto;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+                ${tez.ticker ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4d8ef0;font-weight:600;background:rgba(77,142,240,0.1);padding:2px 8px;border-radius:4px;">${tez.ticker}</span>` : ''}
+                ${sinyalLabel ? `<span style="font-size:11px;font-weight:700;color:${sinyalRenk};background:${sinyalRenk}18;border:1px solid ${sinyalRenk}44;padding:2px 8px;border-radius:4px;">${sinyalLabel}</span>` : ''}
+                ${tarih ? `<span style="font-size:11px;color:#3d4f6e;font-family:'IBM Plex Mono',monospace;">${tarih}</span>` : ''}
               </div>
-              <button onclick="document.getElementById('tezModal').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:24px;margin-left:16px;flex-shrink:0;line-height:1;">×</button>
+              <h1 style="font-size:22px;font-weight:700;color:#e8edf8;font-family:'IBM Plex Serif',serif;line-height:1.3;">${tez.baslik}</h1>
+              ${tez.ozet ? `<p style="margin-top:8px;font-size:13px;color:#5a6a8a;line-height:1.6;">${tez.ozet}</p>` : ''}
             </div>
-            <hr style="border:none;border-top:1px solid rgba(255,255,255,0.07);margin-bottom:24px;">
-            <div style="color:#a0aec8;font-size:14px;line-height:1.9;">${icerik}</div>
+            <button onclick="document.getElementById('tezModal').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:24px;margin-left:16px;flex-shrink:0;line-height:1;">×</button>
           </div>
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.07);margin-bottom:24px;">
+          <div style="color:#a0aec8;font-size:14px;line-height:1.9;">${icerikHtml}</div>
         </div>
       `;
-
-      // Overlay'e tıklayınca kapat
-      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
       document.body.appendChild(modal);
     });
 }
