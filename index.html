@@ -3253,10 +3253,9 @@ async function tezBildirimKontrol(ticker) {
       (async () => {
         try {
           const ex = tez.exchange || 'BIST';
-          const sym = ex === 'BIST' ? tez.ticker + '.IS' : tez.ticker;
-          const pr = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym) + '?interval=1d&range=1d');
+          const pr = await fetch('/api/tez-admin?price=1&ticker=' + encodeURIComponent(tez.ticker) + '&exchange=' + ex);
           const pd = await pr.json();
-          const anlik = pd?.chart?.result?.[0]?.meta?.regularMarketPrice;
+          const anlik = pd?.price;
           if (!anlik) { gEl.style.display='none'; return; }
           const g = ((anlik - parseFloat(tez.maliyet_fiyat)) / parseFloat(tez.maliyet_fiyat)) * 100;
           gEl.className = 'tb-getiri ' + (g > 0.5 ? 'pos' : g < -0.5 ? 'neg' : 'neu');
@@ -3854,10 +3853,10 @@ async function tezGetiriHesapla(tez) {
   if (!el) return;
   try {
     const ex = tez.exchange || 'BIST';
-    const sym = ex === 'BIST' ? tez.ticker + '.IS' : tez.ticker;
-    const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym) + '?interval=1d&range=1d');
+    // Sunucu proxy üzerinden çek — CORS sorunu yok
+    const r = await fetch('/api/tez-admin?price=1&ticker=' + encodeURIComponent(tez.ticker) + '&exchange=' + ex);
     const d = await r.json();
-    const anlik = d?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    const anlik = d?.price;
     if (!anlik || isNaN(anlik)) return;
     const maliyet = parseFloat(tez.maliyet_fiyat);
     if (!maliyet) return;
