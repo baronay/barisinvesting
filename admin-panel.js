@@ -326,31 +326,24 @@ function tezIcerikTemizle() {
   showToast('✓ \\n karakterleri temizlendi');
 }
 
-// Kapak görselini upload et, URL döndür
+// Kapak görselini base64 olarak oku — direkt DB'e kaydedilir, Storage gerekmez
 async function tezKapakUpload() {
   const input = document.getElementById('tezKapakFile');
   const file  = input?.files[0];
-  if (!file) return null; // yeni dosya yoksa null dön
+  if (!file) return null;
+
+  // 3MB sınırı — daha büyük görselleri reddedelim
+  if (file.size > 3 * 1024 * 1024) {
+    throw new Error('Görsel 3MB altında olmalı');
+  }
 
   const durum = document.getElementById('tezKaydetDurum');
-  if (durum) durum.textContent = 'Görsel yükleniyor...';
+  if (durum) durum.textContent = 'Görsel hazırlanıyor...';
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = async e => {
-      try {
-        const r = await fetch('/api/tez-admin?action=upload_image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + _tezSecret },
-          body: JSON.stringify({ filename: file.name, base64: e.target.result })
-        });
-        const d = await r.json();
-        if (d.url) resolve(d.url);
-        else reject(new Error(d.error || 'Upload başarısız'));
-      } catch(err) {
-        reject(err);
-      }
-    };
+    reader.onload = e => resolve(e.target.result); // data:image/...;base64,...
+    reader.onerror = () => reject(new Error('Dosya okunamadı'));
     reader.readAsDataURL(file);
   });
 }
@@ -475,9 +468,9 @@ async function tezKaydet() {
         showToast('⚠ Görsel yüklenemedi, tez görselsiz kaydedilecek');
       }
     } catch(e) {
-      // Upload hatası — görselsiz kaydetmeye devam et
-      showToast('⚠ Görsel yüklenemedi: ' + e.message.slice(0,60) + ' — tez görselsiz kaydediliyor');
-      kapakUrl = _tezKapakUrl || null; // mevcut URL varsa koru
+      showToast('⚠ ' + e.message);
+      if (durum) durum.textContent = '';
+      return; // görsel hatası varsa dur
     } finally {
       if (durum) durum.textContent = '';
     }
