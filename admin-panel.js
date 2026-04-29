@@ -248,6 +248,18 @@ async function openTezEditor() {
           </div>
         </div>
 
+        <!-- Getiri + Tarih -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">GETİRİ (%) — Tez tarihinden bu yana</label>
+            <input id="tezGetiri" type="number" step="0.1" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;font-family:'IBM Plex Mono',monospace;" placeholder="12.5 veya -8.3"/>
+          </div>
+          <div>
+            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">TEZ TARİHİ (opsiyonel)</label>
+            <input id="tezOlusturma" type="date" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;" />
+          </div>
+        </div>
+
         <!-- Özet -->
         <div style="margin-bottom:12px;">
           <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">ÖZET</label>
@@ -422,6 +434,9 @@ function tezFormAc(tez) {
     document.getElementById('tezOzet').value      = tez.ozet || '';
     document.getElementById('tezIcerik').value    = tez.icerik || '';
     document.getElementById('tezYayinda').checked = tez.yayinda || false;
+    document.getElementById('tezGetiri').value    = (tez.getiri != null && tez.getiri !== '') ? tez.getiri : '';
+    const _tOl = document.getElementById('tezOlusturma');
+    if (_tOl && tez.olusturma) _tOl.value = tez.olusturma.split('T')[0];
     document.getElementById('tezSilBtn').style.display = 'inline-block';
 
     // Mevcut kapak görseli varsa göster
@@ -444,6 +459,9 @@ function tezFormAc(tez) {
     document.getElementById('tezOzet').value      = '';
     document.getElementById('tezIcerik').value    = '';
     document.getElementById('tezYayinda').checked = false;
+    document.getElementById('tezGetiri').value    = '';
+    const _tOlYeni = document.getElementById('tezOlusturma');
+    if (_tOlYeni) _tOlYeni.value = '';
     document.getElementById('tezSilBtn').style.display = 'none';
     if (kapakDurum)  { kapakDurum.textContent = 'Henüz seçilmedi'; kapakDurum.style.color = '#5a6a8a'; }
     if (kapakMevcut) kapakMevcut.value = '';
@@ -476,6 +494,9 @@ async function tezKaydet() {
     }
   }
 
+  const _getiriRaw = document.getElementById('tezGetiri')?.value;
+  const _olusTarih = document.getElementById('tezOlusturma')?.value;
+
   const body = {
     baslik:        document.getElementById('tezBaslik').value,
     ticker:        document.getElementById('tezTicker').value?.toUpperCase() || null,
@@ -484,7 +505,13 @@ async function tezKaydet() {
     ozet:          document.getElementById('tezOzet').value || null,
     icerik:        document.getElementById('tezIcerik').value || null,
     yayinda:       document.getElementById('tezYayinda').checked,
+    getiri:        (_getiriRaw !== '' && _getiriRaw != null) ? parseFloat(_getiriRaw) : null,
   };
+
+  // Yeni tez + manuel tarih seçildiyse override et
+  if (!id && _olusTarih) {
+    body.olusturma = new Date(_olusTarih + 'T12:00:00').toISOString();
+  }
 
   if (!body.baslik) { showToast('Başlık zorunlu'); return; }
 
