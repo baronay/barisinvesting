@@ -163,6 +163,17 @@ body{
 .nav-item.active .nav-num{color:var(--accent);}
 .nav-status{margin-left:auto;font-size:11px;flex-shrink:0;}
 .verdict-sec{padding:10px 20px;margin-top:auto;border-top:1px solid var(--border-s);}
+
+/* ── ANALİZ TEZ BİLDİRİM KARTI ── */
+#tezBildirim{display:none;margin:0 12px 10px;border:1px solid rgba(77,142,240,0.3);border-left:3px solid var(--accent);background:rgba(77,142,240,0.06);border-radius:6px;padding:10px 12px;cursor:pointer;transition:background 0.2s;}
+#tezBildirim:hover{background:rgba(77,142,240,0.12);}
+.tb-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--accent);margin-bottom:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.tb-title{font-family:'IBM Plex Serif',serif;font-size:12px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:4px;}
+.tb-meta{font-size:10px;color:var(--text2);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.tb-getiri{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;}
+.tb-getiri.pos{color:var(--success);background:var(--success-dim);}
+.tb-getiri.neg{color:var(--danger);background:var(--danger-dim);}
+.tb-getiri.neu{color:var(--muted);}
 .verdict-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-family:'IBM Plex Mono',monospace;}
 .verdict-box{font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:700;padding:8px 12px;text-align:center;border:1px solid var(--border-s);color:var(--muted);letter-spacing:1px;}
 .verdict-box.buy{border-color:rgba(16,185,129,.4);color:var(--success);background:var(--success-dim);}
@@ -640,7 +651,6 @@ body{
   .mobile-toggle{display:none!important;}
   .sidebar{display:none!important;}
   .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--sidebar);backdrop-filter:blur(12px);border-top:1px solid var(--border-s);z-index:500;height:58px;}
-  #garpWidget{bottom:calc(74px + env(safe-area-inset-bottom,0px))!important;right:12px!important;}
   .bn-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);transition:color .2s;border:none;background:none;-webkit-tap-highlight-color:transparent;padding:6px 0;}
   .bn-tab.active{color:var(--accent);} #bn-tezler{color:var(--gold);opacity:.7;} #bn-tezler.active{color:var(--gold);opacity:1;}
   .bn-tab svg{width:18px;height:18px;}
@@ -955,15 +965,6 @@ body{
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
-}
-
-/* Tez kapak görseli */
-.tez-cover {
-  width: 100%;
-  aspect-ratio: 16 / 7;
-  object-fit: cover;
-  display: block;
-  border-bottom: 1px solid var(--rule);
 }
 
 /* Tek tez kartı */
@@ -1920,6 +1921,15 @@ body{
     <div class="hist-section" id="histSection" style="display:none">
       <div class="hist-lbl"><span>Son Analizler</span><span onclick="clearHistory()" style="font-size:9px;color:var(--muted2);cursor:pointer;font-weight:400" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted2)'">temizle</span></div>
       <div id="histList"></div>
+    </div>
+    <div id="tezBildirim" onclick="tezBildirimAc()">
+      <div class="tb-eyebrow">◈ ARAŞTIRMA TEZİ <span id="tezBildirimSinyal"></span></div>
+      <div class="tb-title" id="tezBildirimBaslik"></div>
+      <div class="tb-meta">
+        <span id="tezBildirimTarih" style="color:var(--muted)"></span>
+        <span id="tezBildirimGetiri" class="tb-getiri"></span>
+        <span style="margin-left:auto;color:var(--accent);font-size:11px;">→ Tezi Oku</span>
+      </div>
     </div>
     <div class="verdict-sec">
       <div class="verdict-lbl">Son Karar</div>
@@ -3208,6 +3218,61 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   document.getElementById('analysisSection').style.display='block';
   showPage('overview');switchTab('analiz');
   setTimeout(()=>document.getElementById('analysisSection').scrollIntoView({behavior:'smooth',block:'start'}),300);
+  tezBildirimKontrol(ticker);
+}
+
+let _tezBildirimId = null;
+
+async function tezBildirimKontrol(ticker) {
+  const el = document.getElementById('tezBildirim');
+  if (!el) return;
+  el.style.display = 'none';
+  _tezBildirimId = null;
+  try {
+    const r = await fetch('/api/tezler-public?ticker=' + encodeURIComponent(ticker));
+    const tez = await r.json();
+    if (!tez || !tez.id) return;
+    _tezBildirimId = tez.id;
+
+    // Sinyal badge
+    const sEl = document.getElementById('tezBildirimSinyal');
+    const sRenk = {AL:'#22c55e',IZLE:'#f59e0b',KACIN:'#f05252',NOTR:'#a0aec8'};
+    const sLabel = {AL:'AL',IZLE:'İZLE',KACIN:'UZAK DUR',NOTR:'NÖTR'};
+    if (sEl && tez.sinyal) {
+      const r2 = sRenk[tez.sinyal]||'#a0aec8';
+      sEl.innerHTML = `<span style="color:${r2};background:${r2}18;border:1px solid ${r2}44;padding:1px 5px;border-radius:3px;font-weight:700;">${sLabel[tez.sinyal]||tez.sinyal}</span>`;
+    }
+
+    // Başlık
+    const bEl = document.getElementById('tezBildirimBaslik');
+    if (bEl) bEl.textContent = tez.baslik || '';
+
+    // Kaç gün önce
+    const tEl = document.getElementById('tezBildirimTarih');
+    if (tEl && tez.olusturma) {
+      const gun = Math.floor((Date.now() - new Date(tez.olusturma).getTime()) / 86400000);
+      tEl.textContent = gun === 0 ? 'Bugün yayınlandı' : gun + ' gün önce yayınlandı';
+    }
+
+    // Getiri
+    const gEl = document.getElementById('tezBildirimGetiri');
+    if (gEl) {
+      if (tez.getiri != null && tez.getiri !== '' && tez.getiri !== undefined) {
+        const g = parseFloat(tez.getiri);
+        if (!isNaN(g)) {
+          const cls = g > 0 ? 'pos' : g < 0 ? 'neg' : 'neu';
+          gEl.className = 'tb-getiri ' + cls;
+          gEl.textContent = (g > 0 ? '+' : '') + g.toFixed(1) + '% getiri';
+        }
+      }
+    }
+
+    el.style.display = 'block';
+  } catch(e) { /* sessizce geç */ }
+}
+
+function tezBildirimAc() {
+  if (_tezBildirimId) openTezSupabase(_tezBildirimId);
 }
 
 // PORTFOLIO
@@ -3759,7 +3824,6 @@ async function renderTezler() {
 
       return `
       <div class="tez-card" onclick="openTezSupabase(${tez.id})">
-        ${tez.kapak_gorseli ? `<img class="tez-cover" src="${tez.kapak_gorseli}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
         <div class="tez-card-header">
           <div class="tez-card-meta">
             ${tez.ticker ? `<span class="tez-ticker">${tez.ticker}</span>` : ''}
@@ -3802,29 +3866,25 @@ function openTezSupabase(id) {
 
       const modal = document.getElementById('tezModal') || document.createElement('div');
       modal.id = 'tezModal';
-      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;cursor:pointer;';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;';
       modal.innerHTML = `
-        <div onclick="event.stopPropagation()" style="cursor:default;background:#0e1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;width:100%;max-width:760px;overflow:hidden;margin:auto;">
-          ${tez.kapak_gorseli ? `<div style="width:100%;height:200px;overflow:hidden;"><img src="${tez.kapak_gorseli}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'"></div>` : ''}
-          <div style="padding:28px 32px 32px;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
-              <div style="flex:1;min-width:0;">
-                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
-                  ${tez.ticker ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4d8ef0;font-weight:600;background:rgba(77,142,240,0.1);padding:2px 8px;border-radius:4px;">${tez.ticker}</span>` : ''}
-                  ${sinyalLabel ? `<span style="font-size:11px;font-weight:700;color:${sinyalRenk};background:${sinyalRenk}18;border:1px solid ${sinyalRenk}44;padding:2px 8px;border-radius:4px;">${sinyalLabel}</span>` : ''}
-                  ${tarih ? `<span style="font-size:11px;color:#3d4f6e;font-family:'IBM Plex Mono',monospace;">${tarih}</span>` : ''}
-                </div>
-                <h1 style="font-size:22px;font-weight:700;color:#e8edf8;font-family:'IBM Plex Serif',serif;line-height:1.3;">${tez.baslik}</h1>
-                ${tez.ozet ? `<p style="margin-top:8px;font-size:13px;color:#5a6a8a;line-height:1.6;">${tez.ozet}</p>` : ''}
+        <div style="background:#0e1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;width:100%;max-width:760px;padding:32px;margin:auto;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+                ${tez.ticker ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4d8ef0;font-weight:600;background:rgba(77,142,240,0.1);padding:2px 8px;border-radius:4px;">${tez.ticker}</span>` : ''}
+                ${sinyalLabel ? `<span style="font-size:11px;font-weight:700;color:${sinyalRenk};background:${sinyalRenk}18;border:1px solid ${sinyalRenk}44;padding:2px 8px;border-radius:4px;">${sinyalLabel}</span>` : ''}
+                ${tarih ? `<span style="font-size:11px;color:#3d4f6e;font-family:'IBM Plex Mono',monospace;">${tarih}</span>` : ''}
               </div>
-              <button onclick="document.getElementById('tezModal').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:24px;margin-left:16px;flex-shrink:0;line-height:1;">×</button>
+              <h1 style="font-size:22px;font-weight:700;color:#e8edf8;font-family:'IBM Plex Serif',serif;line-height:1.3;">${tez.baslik}</h1>
+              ${tez.ozet ? `<p style="margin-top:8px;font-size:13px;color:#5a6a8a;line-height:1.6;">${tez.ozet}</p>` : ''}
             </div>
-            <hr style="border:none;border-top:1px solid rgba(255,255,255,0.07);margin-bottom:24px;">
-            <div style="color:#a0aec8;font-size:14px;line-height:1.9;">${icerikHtml}</div>
+            <button onclick="document.getElementById('tezModal').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:24px;margin-left:16px;flex-shrink:0;line-height:1;">×</button>
           </div>
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.07);margin-bottom:24px;">
+          <div style="color:#a0aec8;font-size:14px;line-height:1.9;">${icerikHtml}</div>
         </div>
       `;
-      modal.addEventListener('click', function(e){ if(e.target === modal) modal.remove(); });
       document.body.appendChild(modal);
     });
 }
