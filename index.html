@@ -163,6 +163,10 @@ body{
 .nav-item.active .nav-num{color:var(--accent);}
 .nav-status{margin-left:auto;font-size:11px;flex-shrink:0;}
 .verdict-sec{padding:10px 20px;margin-top:auto;border-top:1px solid var(--border-s);}
+.tb-getiri{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;}
+.tb-getiri.pos{color:var(--success);background:var(--success-dim);}
+.tb-getiri.neg{color:var(--danger);background:var(--danger-dim);}
+.tb-getiri.neu{color:var(--muted);}
 .verdict-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-family:'IBM Plex Mono',monospace;}
 .verdict-box{font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:700;padding:8px 12px;text-align:center;border:1px solid var(--border-s);color:var(--muted);letter-spacing:1px;}
 .verdict-box.buy{border-color:rgba(16,185,129,.4);color:var(--success);background:var(--success-dim);}
@@ -640,10 +644,7 @@ body{
   .mobile-toggle{display:none!important;}
   .sidebar{display:none!important;}
   .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--sidebar);backdrop-filter:blur(12px);border-top:1px solid var(--border-s);z-index:500;height:58px;}
-  #garpWidget{
-    bottom:calc(58px + 16px + env(safe-area-inset-bottom, 0px)) !important;
-    right:12px !important;
-  }
+  #garpWidget{bottom:calc(58px + 20px + env(safe-area-inset-bottom,0px))!important;right:12px!important;}
   .bn-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);transition:color .2s;border:none;background:none;-webkit-tap-highlight-color:transparent;padding:6px 0;}
   .bn-tab.active{color:var(--accent);} #bn-tezler{color:var(--gold);opacity:.7;} #bn-tezler.active{color:var(--gold);opacity:1;}
   .bn-tab svg{width:18px;height:18px;}
@@ -1413,6 +1414,14 @@ body{
 }
 
 
+/* Tez kapak görseli */
+.tez-cover{width:100%;height:160px;object-fit:cover;display:block;border-bottom:1px solid var(--rule);background:var(--surface2);}
+/* Getiri badge — kart footer */
+.tez-getiri-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;display:none;}
+.tez-getiri-badge.pos{color:var(--success);background:var(--success-dim);border:1px solid rgba(34,197,94,0.25);}
+.tez-getiri-badge.neg{color:var(--danger);background:var(--danger-dim);border:1px solid rgba(240,82,82,0.25);}
+.tez-getiri-badge.neu{color:var(--muted);background:var(--surface2);}
+
 /* Tez kartı */
 .tez-card {
   background: var(--surface);
@@ -1914,6 +1923,15 @@ body{
     <div class="hist-section" id="histSection" style="display:none">
       <div class="hist-lbl"><span>Son Analizler</span><span onclick="clearHistory()" style="font-size:9px;color:var(--muted2);cursor:pointer;font-weight:400" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted2)'">temizle</span></div>
       <div id="histList"></div>
+    </div>
+    <div id="tezBildirim" onclick="tezBildirimAc()" style="display:none;margin:0 12px 10px;border:1px solid rgba(77,142,240,0.3);border-left:3px solid var(--accent);background:rgba(77,142,240,0.06);border-radius:6px;padding:10px 12px;cursor:pointer;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--accent);margin-bottom:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">◈ ARAŞTIRMA TEZİ <span id="tezBildirimSinyal"></span></div>
+      <div id="tezBildirimBaslik" style="font-family:'IBM Plex Serif',serif;font-size:12px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:4px;"></div>
+      <div style="font-size:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span id="tezBildirimTarih" style="color:var(--muted)"></span>
+        <span id="tezBildirimGetiri" class="tb-getiri" style="display:none;"></span>
+        <span style="margin-left:auto;color:var(--accent);font-size:11px;">→ Tezi Oku</span>
+      </div>
     </div>
     <div class="verdict-sec">
       <div class="verdict-lbl">Son Karar</div>
@@ -3202,7 +3220,54 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   document.getElementById('analysisSection').style.display='block';
   showPage('overview');switchTab('analiz');
   setTimeout(()=>document.getElementById('analysisSection').scrollIntoView({behavior:'smooth',block:'start'}),300);
+  tezBildirimKontrol(ticker);
 }
+
+let _tezBildirimId = null;
+async function tezBildirimKontrol(ticker) {
+  const el = document.getElementById('tezBildirim');
+  if (!el) return;
+  el.style.display = 'none'; _tezBildirimId = null;
+  try {
+    const r = await fetch('/api/tezler-public?ticker=' + encodeURIComponent(ticker));
+    const tez = await r.json();
+    if (!tez || !tez.id) return;
+    _tezBildirimId = tez.id;
+    const sEl = document.getElementById('tezBildirimSinyal');
+    const sRenk = {AL:'#22c55e',IZLE:'#f59e0b',KACIN:'#f05252',NOTR:'#a0aec8'};
+    const sLabel = {AL:'AL',IZLE:'İZLE',KACIN:'UZAK DUR',NOTR:'NÖTR'};
+    if (sEl && tez.sinyal) {
+      const rc = sRenk[tez.sinyal]||'#a0aec8';
+      sEl.innerHTML = `<span style="color:${rc};background:${rc}18;border:1px solid ${rc}44;padding:1px 5px;border-radius:3px;font-weight:700;">${sLabel[tez.sinyal]||tez.sinyal}</span>`;
+    }
+    const bEl = document.getElementById('tezBildirimBaslik');
+    if (bEl) bEl.textContent = tez.baslik || '';
+    const tEl = document.getElementById('tezBildirimTarih');
+    if (tEl && tez.olusturma) {
+      const gun = Math.floor((Date.now() - new Date(tez.olusturma).getTime()) / 86400000);
+      tEl.textContent = gun === 0 ? 'Bugün yayınlandı' : gun + ' gün önce yayınlandı';
+    }
+    const gEl = document.getElementById('tezBildirimGetiri');
+    if (gEl && tez.maliyet_fiyat) {
+      gEl.textContent = '...'; gEl.style.display = 'inline-block';
+      (async () => {
+        try {
+          const ex = tez.exchange || 'BIST';
+          const sym = ex === 'BIST' ? tez.ticker + '.IS' : tez.ticker;
+          const pr = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym) + '?interval=1d&range=1d');
+          const pd = await pr.json();
+          const anlik = pd?.chart?.result?.[0]?.meta?.regularMarketPrice;
+          if (!anlik) { gEl.style.display='none'; return; }
+          const g = ((anlik - parseFloat(tez.maliyet_fiyat)) / parseFloat(tez.maliyet_fiyat)) * 100;
+          gEl.className = 'tb-getiri ' + (g > 0.5 ? 'pos' : g < -0.5 ? 'neg' : 'neu');
+          gEl.textContent = (g > 0 ? '+' : '') + g.toFixed(1) + '% getiri';
+        } catch(e) { gEl.style.display='none'; }
+      })();
+    }
+    el.style.display = 'block';
+  } catch(e) {}
+}
+function tezBildirimAc() { if (_tezBildirimId) openTezSupabase(_tezBildirimId); }
 
 // PORTFOLIO
 function addToPt(){
@@ -3753,6 +3818,7 @@ async function renderTezler() {
 
       return `
       <div class="tez-card" onclick="openTezSupabase(${tez.id})">
+        ${tez.kapak_gorseli ? `<img class="tez-cover" src="${tez.kapak_gorseli}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
         <div class="tez-card-header">
           <div class="tez-card-meta">
             ${tez.ticker ? `<span class="tez-ticker">${tez.ticker}</span>` : ''}
@@ -3764,17 +3830,44 @@ async function renderTezler() {
         </div>
         <div class="tez-card-footer">
           ${etiketler}
-          <button class="tez-read-btn" style="margin-left:auto">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            Tezi Oku
-          </button>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+            <span id="tez-getiri-${tez.id}" class="tez-getiri-badge"></span>
+            <button class="tez-read-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Tezi Oku
+            </button>
+          </div>
         </div>
       </div>`;
     }).join('');
 
+    // maliyet_fiyat olan tezler için getiri hesapla
+    tezler.filter(t => t.maliyet_fiyat && t.ticker).forEach(t => tezGetiriHesapla(t));
+
   } catch(e) {
     grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--danger);font-size:13px;">Tezler yüklenemedi</div>';
   }
+}
+
+async function tezGetiriHesapla(tez) {
+  const el = document.getElementById('tez-getiri-' + tez.id);
+  if (!el) return;
+  try {
+    const ex = tez.exchange || 'BIST';
+    const sym = ex === 'BIST' ? tez.ticker + '.IS' : tez.ticker;
+    const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym) + '?interval=1d&range=1d');
+    const d = await r.json();
+    const anlik = d?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    if (!anlik || isNaN(anlik)) return;
+    const maliyet = parseFloat(tez.maliyet_fiyat);
+    if (!maliyet) return;
+    const getiri = ((anlik - maliyet) / maliyet) * 100;
+    const cls = getiri > 0.5 ? 'pos' : getiri < -0.5 ? 'neg' : 'neu';
+    el.className = 'tez-getiri-badge ' + cls;
+    el.textContent = (getiri > 0 ? '+' : '') + getiri.toFixed(1) + '%';
+    el.title = 'Maliyet: ' + maliyet + ' → Anlık: ' + anlik.toFixed(2) + ' (' + ex + ')';
+    el.style.display = 'inline-block';
+  } catch(e) {}
 }
 
 function openTezSupabase(id) {
@@ -3782,41 +3875,46 @@ function openTezSupabase(id) {
     .then(r => r.json())
     .then(tez => {
       if (!tez || !tez.icerik) return;
-
-      // \n karakterlerini <br>'e çevir (HTML tag içermiyorsa), HTML içeriyorsa direkt kullan
-      const icerikHtml = tez.icerik.includes('<') 
-        ? tez.icerik 
-        : tez.icerik.replace(/\\n/g, '\n').replace(/\n/g, '<br>');
-
+      let icerik = tez.icerik;
+      if (icerik.includes('<')) {
+        icerik = icerik.replace(/\n\n/g, '').replace(/\n/g, '');
+      } else {
+        icerik = icerik.replace(/\n/g, '\n').replace(/\n/g, '<br>');
+      }
       const sinyal = tez.sinyal || '';
-      const sinyalRenk = sinyal === 'AL' ? '#22c55e' : sinyal === 'IZLE' ? '#f59e0b' : sinyal === 'KACIN' ? '#f05252' : '#a0aec8';
-      const sinyalLabel = sinyal === 'AL' ? 'AL' : sinyal === 'IZLE' ? 'İZLE' : sinyal === 'KACIN' ? 'UZAK DUR' : sinyal || '';
-      const tarih = tez.olusturma ? new Date(tez.olusturma).toLocaleDateString('tr-TR', {day:'numeric',month:'long',year:'numeric'}) : '';
-
-      const modal = document.getElementById('tezModal') || document.createElement('div');
+      const sinyalRenk = sinyal==='AL'?'#22c55e':sinyal==='IZLE'?'#f59e0b':sinyal==='KACIN'?'#f05252':'#a0aec8';
+      const sinyalLabel = sinyal==='AL'?'AL':sinyal==='IZLE'?'İZLE':sinyal==='KACIN'?'UZAK DUR':sinyal||'';
+      const tarih = tez.olusturma ? new Date(tez.olusturma).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : '';
+      const eskiModal = document.getElementById('tezModal');
+      if (eskiModal) eskiModal.remove();
+      const modal = document.createElement('div');
       modal.id = 'tezModal';
-      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;cursor:pointer;';
       modal.innerHTML = `
-        <div style="background:#0e1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;width:100%;max-width:760px;padding:32px;margin:auto;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
-            <div style="flex:1;min-width:0;">
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
-                ${tez.ticker ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4d8ef0;font-weight:600;background:rgba(77,142,240,0.1);padding:2px 8px;border-radius:4px;">${tez.ticker}</span>` : ''}
-                ${sinyalLabel ? `<span style="font-size:11px;font-weight:700;color:${sinyalRenk};background:${sinyalRenk}18;border:1px solid ${sinyalRenk}44;padding:2px 8px;border-radius:4px;">${sinyalLabel}</span>` : ''}
-                ${tarih ? `<span style="font-size:11px;color:#3d4f6e;font-family:'IBM Plex Mono',monospace;">${tarih}</span>` : ''}
+        <div onclick="event.stopPropagation()" style="cursor:default;background:#0e1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;width:100%;max-width:760px;overflow:hidden;margin:auto;">
+          ${tez.kapak_gorseli ? `<div style="width:100%;height:200px;overflow:hidden;"><img src="${tez.kapak_gorseli}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'"></div>` : ''}
+          <div style="padding:28px 32px 32px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+                  ${tez.ticker ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4d8ef0;font-weight:600;background:rgba(77,142,240,0.1);padding:2px 8px;border-radius:4px;">${tez.ticker}</span>` : ''}
+                  ${sinyalLabel ? `<span style="font-size:11px;font-weight:700;color:${sinyalRenk};background:${sinyalRenk}18;border:1px solid ${sinyalRenk}44;padding:2px 8px;border-radius:4px;">${sinyalLabel}</span>` : ''}
+                  ${tarih ? `<span style="font-size:11px;color:#3d4f6e;font-family:'IBM Plex Mono',monospace;">${tarih}</span>` : ''}
+                </div>
+                <h1 style="font-size:22px;font-weight:700;color:#e8edf8;font-family:'IBM Plex Serif',serif;line-height:1.3;">${tez.baslik}</h1>
+                ${tez.ozet ? `<p style="margin-top:8px;font-size:13px;color:#5a6a8a;line-height:1.6;">${tez.ozet}</p>` : ''}
               </div>
-              <h1 style="font-size:22px;font-weight:700;color:#e8edf8;font-family:'IBM Plex Serif',serif;line-height:1.3;">${tez.baslik}</h1>
-              ${tez.ozet ? `<p style="margin-top:8px;font-size:13px;color:#5a6a8a;line-height:1.6;">${tez.ozet}</p>` : ''}
+              <button onclick="document.getElementById('tezModal').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:24px;margin-left:16px;flex-shrink:0;line-height:1;">×</button>
             </div>
-            <button onclick="document.getElementById('tezModal').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:24px;margin-left:16px;flex-shrink:0;line-height:1;">×</button>
+            <hr style="border:none;border-top:1px solid rgba(255,255,255,0.07);margin-bottom:24px;">
+            <div style="color:#a0aec8;font-size:14px;line-height:1.9;">${icerik}</div>
           </div>
-          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.07);margin-bottom:24px;">
-          <div style="color:#a0aec8;font-size:14px;line-height:1.9;">${icerikHtml}</div>
-        </div>
-      `;
+        </div>`;
+      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
       document.body.appendChild(modal);
     });
 }
+
 function openTez(id) {
   const tez = TEZLER.find(t => t.id === id);
   if (!tez) return;
@@ -4567,7 +4665,7 @@ function fallbackCopy(text,msg){
 }
 </script>
    <!-- ── HAFTANIN SEÇİMLERİ WIDGET ── -->
-<div id="garpWidget" style="position:fixed;bottom:24px;right:24px;z-index:9999;font-family:'IBM Plex Sans',sans-serif;transition:bottom 0.2s;">
+<div id="garpWidget" style="position:fixed;bottom:24px;right:24px;z-index:9999;font-family:'IBM Plex Sans',sans-serif;">
   <!-- Kapalı buton -->
   <button id="garpBtn" onclick="garpToggle()" style="
     display:flex;align-items:center;gap:8px;
