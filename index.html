@@ -3229,7 +3229,7 @@ async function tezBildirimKontrol(ticker) {
   if (!el) return;
   el.style.display = 'none'; _tezBildirimId = null;
   try {
-    const r = await fetch('/api/tezler-public?ticker=' + encodeURIComponent(ticker));
+    const r = await fetch('/api/tez-admin?pub=1&ticker=' + encodeURIComponent(ticker));
     const tez = await r.json();
     if (!tez || !tez.id) return;
     _tezBildirimId = tez.id;
@@ -3802,7 +3802,7 @@ async function renderTezler() {
   grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">Yükleniyor...</div>';
 
   try {
-    const r = await fetch('/api/tezler-public');
+    const r = await fetch('/api/tez-admin?pub=1');
     const tezler = await r.json();
 
     if (!tezler || !tezler.length) {
@@ -3871,7 +3871,7 @@ async function tezGetiriHesapla(tez) {
 }
 
 function openTezSupabase(id) {
-  fetch('/api/tezler-public?id=' + id)
+  fetch('/api/tez-admin?pub=1&id=' + id)
     .then(r => r.json())
     .then(tez => {
       if (!tez || !tez.icerik) return;
