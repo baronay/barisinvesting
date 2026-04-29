@@ -248,6 +248,28 @@ async function openTezEditor() {
           </div>
         </div>
 
+        <!-- Maliyet + Borsa + Tarih -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">MALİYET FİYATI</label>
+            <input id="tezMaliyet" type="number" step="0.01" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;font-family:'IBM Plex Mono',monospace;" placeholder="45.20"/>
+            <div style="font-size:9px;color:#3d4f6e;margin-top:3px;">Tez tarihindeki fiyat → getiri otomatik</div>
+          </div>
+          <div>
+            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">BORSA</label>
+            <select id="tezExchange" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;">
+              <option value="BIST">BIST</option>
+              <option value="NYSE">NYSE</option>
+              <option value="NASDAQ">NASDAQ</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">TEZ TARİHİ</label>
+            <input id="tezOlusturma" type="date" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;" />
+            <div style="font-size:9px;color:#3d4f6e;margin-top:3px;">Boş = bugün</div>
+          </div>
+        </div>
+
         <!-- Özet -->
         <div style="margin-bottom:12px;">
           <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">ÖZET</label>
@@ -429,6 +451,12 @@ function tezFormAc(tez) {
     document.getElementById('tezOzet').value      = tez.ozet || '';
     document.getElementById('tezIcerik').value    = tez.icerik || '';
     document.getElementById('tezYayinda').checked = tez.yayinda || false;
+    const _mEl = document.getElementById('tezMaliyet');
+    if (_mEl) _mEl.value = tez.maliyet_fiyat != null ? tez.maliyet_fiyat : '';
+    const _eEl = document.getElementById('tezExchange');
+    if (_eEl) _eEl.value = tez.exchange || 'BIST';
+    const _dEl = document.getElementById('tezOlusturma');
+    if (_dEl && tez.olusturma) _dEl.value = tez.olusturma.split('T')[0];
     document.getElementById('tezSilBtn').style.display = 'inline-block';
 
     // Mevcut kapak görseli varsa göster
@@ -451,6 +479,9 @@ function tezFormAc(tez) {
     document.getElementById('tezOzet').value      = '';
     document.getElementById('tezIcerik').value    = '';
     document.getElementById('tezYayinda').checked = false;
+    const _mElY = document.getElementById('tezMaliyet'); if(_mElY) _mElY.value = '';
+    const _eElY = document.getElementById('tezExchange'); if(_eElY) _eElY.value = 'BIST';
+    const _dElY = document.getElementById('tezOlusturma'); if(_dElY) _dElY.value = '';
     document.getElementById('tezSilBtn').style.display = 'none';
     if (kapakDurum)  { kapakDurum.textContent = 'Henüz seçilmedi'; kapakDurum.style.color = '#5a6a8a'; }
     if (kapakMevcut) kapakMevcut.value = '';
@@ -477,6 +508,10 @@ async function tezKaydet() {
     }
   }
 
+  const _maliyetVal = document.getElementById('tezMaliyet')?.value || '';
+  const _exchangeVal = document.getElementById('tezExchange')?.value || 'BIST';
+  const _tarihVal    = document.getElementById('tezOlusturma')?.value || '';
+
   const body = {
     baslik:        document.getElementById('tezBaslik').value,
     ticker:        document.getElementById('tezTicker').value?.toUpperCase() || null,
@@ -485,15 +520,15 @@ async function tezKaydet() {
     ozet:          document.getElementById('tezOzet').value || null,
     icerik:        document.getElementById('tezIcerik').value || null,
     yayinda:       document.getElementById('tezYayinda').checked,
+    maliyet_fiyat: _maliyetVal !== '' ? parseFloat(_maliyetVal) : null,
+    exchange:      _exchangeVal,
   };
 
   if (!body.baslik) { showToast('Başlık zorunlu'); return; }
 
   // Manuel tarih override (sadece yeni tez)
-  const _olOverride = body.olusturma_override;
-  delete body.olusturma_override;
-  if (!id && _olOverride) {
-    body.olusturma = new Date(_olOverride + 'T12:00:00').toISOString();
+  if (!id && _tarihVal) {
+    body.olusturma = new Date(_tarihVal + 'T12:00:00').toISOString();
   }
 
   try {
