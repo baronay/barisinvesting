@@ -956,6 +956,25 @@ body{
   margin-bottom: 24px;
 }
 
+/* Tez kapak görseli */
+.tez-cover {
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  object-fit: cover;
+  display: block;
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface2);
+}
+.tez-cover-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--rule);
+}
+
 /* Tek tez kartı */
 .tez-card {
   background: var(--surface);
@@ -3749,6 +3768,9 @@ async function renderTezler() {
 
       return `
       <div class="tez-card" onclick="openTezSupabase(${tez.id})">
+        ${tez.kapak_gorseli
+          ? `<img class="tez-cover" src="${tez.kapak_gorseli}" alt="${tez.baslik}" loading="lazy" onerror="this.style.display='none'">`
+          : ''}
         <div class="tez-card-header">
           <div class="tez-card-meta">
             ${tez.ticker ? `<span class="tez-ticker">${tez.ticker}</span>` : ''}
@@ -3793,7 +3815,9 @@ function openTezSupabase(id) {
       modal.id = 'tezModal';
       modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;';
       modal.innerHTML = `
-        <div style="background:#0e1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;width:100%;max-width:760px;padding:32px;margin:auto;">
+        <div style="background:#0e1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;width:100%;max-width:760px;overflow:hidden;margin:auto;">
+          ${tez.kapak_gorseli ? `<div style="width:100%;height:220px;overflow:hidden;"><img src="${tez.kapak_gorseli}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'"></div>` : ''}
+          <div style="padding:32px;">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
             <div style="flex:1;min-width:0;">
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
@@ -3808,6 +3832,7 @@ function openTezSupabase(id) {
           </div>
           <hr style="border:none;border-top:1px solid rgba(255,255,255,0.07);margin-bottom:24px;">
           <div style="color:#a0aec8;font-size:14px;line-height:1.9;">${icerikHtml}</div>
+          </div><!-- /padding -->
         </div>
       `;
       document.body.appendChild(modal);
