@@ -17,7 +17,10 @@ export default async function handler(req, res) {
   // Ticker ile tez ara — analiz sonrası bildirim için
   if (ticker) {
     const t = ticker.toUpperCase().replace(/[^A-Z0-9.]/g, '');
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/tezler?ticker=eq.${t}&yayinda=eq.true&select=id,baslik,sinyal,ozet,olusturma,getiri&limit=1`, { headers });
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/tezler?ticker=eq.${t}&yayinda=eq.true&select=id,baslik,sinyal,ozet,olusturma,maliyet_fiyat,exchange&limit=1`,
+      { headers }
+    );
     const data = await r.json();
     return res.status(200).json(data?.[0] || null);
   }
