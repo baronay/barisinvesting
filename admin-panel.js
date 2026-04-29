@@ -355,6 +355,9 @@ async function tezKapakUpload() {
   });
 }
 
+// Global tez haritası — onclick'te JSON.stringify kullanmamak için
+let _tezMap = {};
+
 async function tezListeYukle() {
   document.getElementById('tezFormArea').style.display = 'none';
   document.getElementById('tezListeArea').style.display = 'block';
@@ -372,22 +375,35 @@ async function tezListeYukle() {
       return;
     }
 
-    el.innerHTML = tezler.map(t => `
+    // ID → nesne haritası — onclick'te sadece ID geçiyoruz
+    _tezMap = {};
+    tezler.forEach(t => { _tezMap[t.id] = t; });
+
+    el.innerHTML = tezler.map(t => {
+      const baslik = (t.baslik || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const ticker = (t.ticker || '').replace(/</g,'&lt;');
+      return `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#13182a;border-radius:6px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.06);">
-        <div style="flex:1;min-width:0;">
-          <span style="font-size:13px;color:#e8edf8;font-weight:500;">${t.baslik}</span>
-          ${t.ticker ? '<span style="font-size:10px;color:#4d8ef0;margin-left:6px;font-family:IBM Plex Mono,monospace;">' + t.ticker + '</span>' : ''}
-          <span style="font-size:10px;color:${t.yayinda ? '#22c55e' : '#5a6a8a'};margin-left:6px;">${t.yayinda ? '● Yayinda' : '○ Taslak'}</span>
+        <div style="flex:1;min-width:0;overflow:hidden;">
+          <span style="font-size:13px;color:#e8edf8;font-weight:500;">${baslik}</span>
+          ${t.ticker ? `<span style="font-size:10px;color:#4d8ef0;margin-left:6px;font-family:IBM Plex Mono,monospace;">${ticker}</span>` : ''}
+          <span style="font-size:10px;color:${t.yayinda ? '#22c55e' : '#5a6a8a'};margin-left:6px;">${t.yayinda ? '● Yayında' : '○ Taslak'}</span>
         </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick='tezFormAc(${JSON.stringify(t)})' style="background:rgba(77,142,240,0.1);border:1px solid rgba(77,142,240,0.2);color:#4d8ef0;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">Düzenle</button>
-          <button onclick='tezSilDogrudan(${t.id})' style="background:none;border:1px solid rgba(240,82,82,0.3);color:#f05252;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">Sil</button>
+        <div style="display:flex;gap:6px;flex-shrink:0;margin-left:12px;">
+          <button onclick="tezFormAcId(${t.id})" style="background:rgba(77,142,240,0.1);border:1px solid rgba(77,142,240,0.2);color:#4d8ef0;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">Düzenle</button>
+          <button onclick="tezSilDogrudan(${t.id})" style="background:none;border:1px solid rgba(240,82,82,0.3);color:#f05252;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">Sil</button>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   } catch(e) {
     el.innerHTML = '<div style="color:#f05252;font-size:12px;">Hata: ' + e.message + '</div>';
   }
+}
+
+// ID üzerinden tezFormAc — onclick'te güvenli
+function tezFormAcId(id) {
+  const tez = _tezMap[id];
+  if (tez) tezFormAc(tez);
 }
 
 function tezFormAc(tez) {
@@ -451,13 +467,19 @@ async function tezKaydet() {
   const kapakFile = document.getElementById('tezKapakFile');
   if (kapakFile?.files[0]) {
     try {
-      kapakUrl = await tezKapakUpload();
-      _tezKapakUrl = kapakUrl;
-      if (durum) durum.textContent = '';
+      const uploadedUrl = await tezKapakUpload();
+      if (uploadedUrl) {
+        kapakUrl = uploadedUrl;
+        _tezKapakUrl = kapakUrl;
+      } else {
+        showToast('⚠ Görsel yüklenemedi, tez görselsiz kaydedilecek');
+      }
     } catch(e) {
-      showToast('Görsel yüklenemedi: ' + e.message);
+      // Upload hatası — görselsiz kaydetmeye devam et
+      showToast('⚠ Görsel yüklenemedi: ' + e.message.slice(0,60) + ' — tez görselsiz kaydediliyor');
+      kapakUrl = _tezKapakUrl || null; // mevcut URL varsa koru
+    } finally {
       if (durum) durum.textContent = '';
-      return;
     }
   }
 
