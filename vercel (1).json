@@ -1,0 +1,24 @@
+{
+  "functions": {
+    "analyze.js":           { "maxDuration": 30 },
+    "auth.js":              { "maxDuration": 10 },
+    "bist-ratios.js":       { "maxDuration": 15 },
+    "tez-admin.js":         { "maxDuration": 10 },
+    "market.js":            { "maxDuration": 15 },
+    "garp-bildirim.js":     { "maxDuration": 10 },
+    "haftalik-secimler.js": { "maxDuration": 10 },
+    "forum.js":             { "maxDuration": 10 },
+    "logo.js":              { "maxDuration": 10 },
+    "watchlist.js":         { "maxDuration": 10 }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ]
+}
