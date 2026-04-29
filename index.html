@@ -163,13 +163,6 @@ body{
 .nav-item.active .nav-num{color:var(--accent);}
 .nav-status{margin-left:auto;font-size:11px;flex-shrink:0;}
 .verdict-sec{padding:10px 20px;margin-top:auto;border-top:1px solid var(--border-s);}
-
-/* ── ANALİZ TEZ BİLDİRİM KARTI ── */
-#tezBildirim{display:none;margin:0 12px 10px;border:1px solid rgba(77,142,240,0.3);border-left:3px solid var(--accent);background:rgba(77,142,240,0.06);border-radius:6px;padding:10px 12px;cursor:pointer;transition:background 0.2s;}
-#tezBildirim:hover{background:rgba(77,142,240,0.12);}
-.tb-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--accent);margin-bottom:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.tb-title{font-family:'IBM Plex Serif',serif;font-size:12px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:4px;}
-.tb-meta{font-size:10px;color:var(--text2);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .tb-getiri{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;}
 .tb-getiri.pos{color:var(--success);background:var(--success-dim);}
 .tb-getiri.neg{color:var(--danger);background:var(--danger-dim);}
@@ -651,6 +644,7 @@ body{
   .mobile-toggle{display:none!important;}
   .sidebar{display:none!important;}
   .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--sidebar);backdrop-filter:blur(12px);border-top:1px solid var(--border-s);z-index:500;height:58px;}
+  #garpWidget{bottom:calc(70px + env(safe-area-inset-bottom,0px))!important;right:12px!important;}
   .bn-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);transition:color .2s;border:none;background:none;-webkit-tap-highlight-color:transparent;padding:6px 0;}
   .bn-tab.active{color:var(--accent);} #bn-tezler{color:var(--gold);opacity:.7;} #bn-tezler.active{color:var(--gold);opacity:1;}
   .bn-tab svg{width:18px;height:18px;}
@@ -1420,6 +1414,13 @@ body{
 }
 
 
+/* Tez kapak görseli */
+.tez-cover { width:100%;height:160px;object-fit:cover;display:block;border-bottom:1px solid var(--rule);background:var(--surface2); }
+.tez-getiri { font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px; }
+.tez-getiri.pos { color:var(--success);background:var(--success-dim); }
+.tez-getiri.neg { color:var(--danger);background:var(--danger-dim); }
+.tez-getiri.neu { color:var(--muted);background:var(--surface2); }
+
 /* Tez kartı */
 .tez-card {
   background: var(--surface);
@@ -1922,10 +1923,10 @@ body{
       <div class="hist-lbl"><span>Son Analizler</span><span onclick="clearHistory()" style="font-size:9px;color:var(--muted2);cursor:pointer;font-weight:400" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted2)'">temizle</span></div>
       <div id="histList"></div>
     </div>
-    <div id="tezBildirim" onclick="tezBildirimAc()">
-      <div class="tb-eyebrow">◈ ARAŞTIRMA TEZİ <span id="tezBildirimSinyal"></span></div>
-      <div class="tb-title" id="tezBildirimBaslik"></div>
-      <div class="tb-meta">
+    <div id="tezBildirim" onclick="tezBildirimAc()" style="display:none;margin:0 12px 10px;border:1px solid rgba(77,142,240,0.3);border-left:3px solid var(--accent);background:rgba(77,142,240,0.06);border-radius:6px;padding:10px 12px;cursor:pointer;transition:background 0.2s;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--accent);margin-bottom:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">◈ ARAŞTIRMA TEZİ <span id="tezBildirimSinyal"></span></div>
+      <div id="tezBildirimBaslik" style="font-family:'IBM Plex Serif',serif;font-size:12px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:4px;"></div>
+      <div style="font-size:10px;color:var(--text2);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
         <span id="tezBildirimTarih" style="color:var(--muted)"></span>
         <span id="tezBildirimGetiri" class="tb-getiri"></span>
         <span style="margin-left:auto;color:var(--accent);font-size:11px;">→ Tezi Oku</span>
@@ -3234,41 +3235,45 @@ async function tezBildirimKontrol(ticker) {
     if (!tez || !tez.id) return;
     _tezBildirimId = tez.id;
 
-    // Sinyal badge
     const sEl = document.getElementById('tezBildirimSinyal');
     const sRenk = {AL:'#22c55e',IZLE:'#f59e0b',KACIN:'#f05252',NOTR:'#a0aec8'};
     const sLabel = {AL:'AL',IZLE:'İZLE',KACIN:'UZAK DUR',NOTR:'NÖTR'};
     if (sEl && tez.sinyal) {
-      const r2 = sRenk[tez.sinyal]||'#a0aec8';
-      sEl.innerHTML = `<span style="color:${r2};background:${r2}18;border:1px solid ${r2}44;padding:1px 5px;border-radius:3px;font-weight:700;">${sLabel[tez.sinyal]||tez.sinyal}</span>`;
+      const rc = sRenk[tez.sinyal]||'#a0aec8';
+      sEl.innerHTML = `<span style="color:${rc};background:${rc}18;border:1px solid ${rc}44;padding:1px 5px;border-radius:3px;font-weight:700;">${sLabel[tez.sinyal]||tez.sinyal}</span>`;
     }
-
-    // Başlık
     const bEl = document.getElementById('tezBildirimBaslik');
     if (bEl) bEl.textContent = tez.baslik || '';
-
-    // Kaç gün önce
     const tEl = document.getElementById('tezBildirimTarih');
     if (tEl && tez.olusturma) {
       const gun = Math.floor((Date.now() - new Date(tez.olusturma).getTime()) / 86400000);
       tEl.textContent = gun === 0 ? 'Bugün yayınlandı' : gun + ' gün önce yayınlandı';
     }
 
-    // Getiri
+    // Getiri — maliyet_fiyat varsa anlık hesapla
     const gEl = document.getElementById('tezBildirimGetiri');
-    if (gEl) {
-      if (tez.getiri != null && tez.getiri !== '' && tez.getiri !== undefined) {
-        const g = parseFloat(tez.getiri);
-        if (!isNaN(g)) {
-          const cls = g > 0 ? 'pos' : g < 0 ? 'neg' : 'neu';
+    if (gEl && tez.maliyet_fiyat) {
+      gEl.className = 'tb-getiri neu';
+      gEl.textContent = '...';
+      (async () => {
+        try {
+          const isBist = !tez.exchange || tez.exchange === 'BIST';
+          const sym = isBist ? tez.ticker + '.IS' : tez.ticker;
+          const pr = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym) + '?interval=1d&range=1d');
+          const pd = await pr.json();
+          const anlik = pd?.chart?.result?.[0]?.meta?.regularMarketPrice;
+          if (!anlik) { gEl.textContent = ''; return; }
+          const maliyet = parseFloat(tez.maliyet_fiyat);
+          const g = ((anlik - maliyet) / maliyet) * 100;
+          const cls = g > 0.5 ? 'pos' : g < -0.5 ? 'neg' : 'neu';
           gEl.className = 'tb-getiri ' + cls;
           gEl.textContent = (g > 0 ? '+' : '') + g.toFixed(1) + '% getiri';
-        }
-      }
+        } catch(e) { gEl.textContent = ''; }
+      })();
     }
 
     el.style.display = 'block';
-  } catch(e) { /* sessizce geç */ }
+  } catch(e) { /* sessiz */ }
 }
 
 function tezBildirimAc() {
@@ -3824,6 +3829,7 @@ async function renderTezler() {
 
       return `
       <div class="tez-card" onclick="openTezSupabase(${tez.id})">
+        ${tez.kapak_gorseli ? `<img class="tez-cover" src="${tez.kapak_gorseli}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
         <div class="tez-card-header">
           <div class="tez-card-meta">
             ${tez.ticker ? `<span class="tez-ticker">${tez.ticker}</span>` : ''}
@@ -3835,6 +3841,7 @@ async function renderTezler() {
         </div>
         <div class="tez-card-footer">
           ${etiketler}
+          <span id="tez-getiri-${tez.id}" class="tez-getiri neu" style="display:none"></span>
           <button class="tez-read-btn" style="margin-left:auto">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             Tezi Oku
@@ -3843,9 +3850,34 @@ async function renderTezler() {
       </div>`;
     }).join('');
 
+    // Maliyet fiyatı olan tezler için anlık getiri hesapla
+    tezler.filter(t => t.maliyet_fiyat && t.ticker).forEach(t => tezGetiriHesapla(t));
+
   } catch(e) {
     grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--danger);font-size:13px;">Tezler yüklenemedi</div>';
   }
+}
+
+// Anlık fiyatı Yahoo'dan çekip getiriyi hesapla
+async function tezGetiriHesapla(tez) {
+  const el = document.getElementById('tez-getiri-' + tez.id);
+  if (!el) return;
+  try {
+    const isBist = !tez.exchange || tez.exchange === 'BIST';
+    const sym = isBist ? tez.ticker + '.IS' : tez.ticker;
+    const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym) + '?interval=1d&range=1d');
+    const d = await r.json();
+    const anlik = d?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    if (!anlik || isNaN(anlik)) return;
+    const maliyet = parseFloat(tez.maliyet_fiyat);
+    if (!maliyet) return;
+    const getiri = ((anlik - maliyet) / maliyet) * 100;
+    const cls = getiri > 0.5 ? 'pos' : getiri < -0.5 ? 'neg' : 'neu';
+    el.className = 'tez-getiri ' + cls;
+    el.textContent = (getiri > 0 ? '+' : '') + getiri.toFixed(1) + '%';
+    el.title = 'Maliyet: ' + maliyet + ' → Anlık: ' + anlik.toFixed(2);
+    el.style.display = 'inline-block';
+  } catch(e) { /* sessiz */ }
 }
 
 function openTezSupabase(id) {
