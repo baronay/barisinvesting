@@ -489,6 +489,13 @@ async function tezKaydet() {
 
   if (!body.baslik) { showToast('Başlık zorunlu'); return; }
 
+  // Manuel tarih override (sadece yeni tez)
+  const _olOverride = body.olusturma_override;
+  delete body.olusturma_override;
+  if (!id && _olOverride) {
+    body.olusturma = new Date(_olOverride + 'T12:00:00').toISOString();
+  }
+
   try {
     if (id) {
       body.id = parseInt(id);
