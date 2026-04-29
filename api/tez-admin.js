@@ -24,6 +24,26 @@ export default async function handler(req, res) {
     Prefer: 'return=representation',
   };
 
+  // ── PRICE PROXY (auth gerekmez) — CORS bypass için ──────────
+  // GET /api/tez-admin?price=1&ticker=MPARK&exchange=BIST
+  if (req.method === 'GET' && req.query.price) {
+    const tk = (req.query.ticker || '').toUpperCase().replace(/[^A-Z0-9.]/g, '');
+    const ex = req.query.exchange || 'BIST';
+    if (!tk) return res.status(400).json({ error: 'ticker gerekli' });
+    const sym = ex === 'BIST' ? tk + '.IS' : tk;
+    try {
+      const r = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=1d`,
+        { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' } }
+      );
+      const d = await r.json();
+      const price = d?.chart?.result?.[0]?.meta?.regularMarketPrice ?? null;
+      return res.status(200).json({ price, sym });
+    } catch(e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   // ── PUBLIC OKUMA (auth gerekmez) ──────────────────────────────
   if (req.method === 'GET' && req.query.pub) {
     const { id, ticker } = req.query;
