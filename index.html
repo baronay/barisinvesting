@@ -1670,9 +1670,9 @@ body{
   background:rgba(255,255,255,0.15);border-color:rgba(0,0,0,0.2);
 }
 
-/* CTA #2 — Tezler grid üstünde banner */
+/* CTA #2 — Tezler grid altında banner */
 .tez-cta-banner{
-  margin:0 0 32px 0;padding:32px 28px;
+  margin:48px 0 0 0;padding:32px 28px;
   background:linear-gradient(135deg,rgba(212,168,67,0.08) 0%,rgba(212,168,67,0.02) 100%);
   border:1px solid rgba(212,168,67,0.25);
   border-left:3px solid var(--gold);
@@ -1724,7 +1724,7 @@ body{
 .tez-cta-banner-btn:hover .arr{transform:translateX(4px);}
 
 @media (max-width:768px){
-  .tez-cta-banner{padding:24px 20px;margin:0 0 24px 0;}
+  .tez-cta-banner{padding:24px 20px;margin:32px 0 0 0;}
   .tez-cta-banner-title{font-size:18px;}
   .tez-cta-banner-btn{width:100%;justify-content:center;}
   .tez-cta-banner-inner{flex-direction:column;align-items:stretch;}
@@ -1732,14 +1732,14 @@ body{
 
 /* ── Floating Mini-CTA (sayfa içinde her yerde görünür) ── */
 .tez-fab{
-  position:fixed;bottom:24px;right:24px;
+  position:fixed;bottom:80px;right:24px;
   display:none;align-items:center;gap:10px;
   background:var(--gold);color:#0e1220;
   border:1px solid var(--gold);
   font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;
-  padding:12px 18px;cursor:pointer;letter-spacing:1.2px;
+  padding:11px 16px;cursor:pointer;letter-spacing:1.2px;
   text-transform:uppercase;text-decoration:none;
-  z-index:200;
+  z-index:9998;
   box-shadow:0 8px 24px rgba(0,0,0,0.35),0 0 0 1px rgba(212,168,67,0.3);
   transition:all .25s ease;
   animation:tezFabIn .35s ease;
@@ -1773,10 +1773,10 @@ body{
 }
 @media (max-width:768px){
   .tez-fab{
-    bottom:80px;right:16px;left:16px;
-    justify-content:center;font-size:11px;padding:14px 18px;
+    bottom:140px;right:16px;left:auto;
+    font-size:10px;padding:10px 14px;letter-spacing:1px;
   }
-  .tez-fab.visible{display:flex;}
+  .tez-fab.visible{display:inline-flex;}
 }
 </style>
 <body>
@@ -2439,7 +2439,9 @@ body{
         <div class="tez-page-sub">ARAŞTIRMA · ANALİZ · BARIŞ INVESTING</div>
       </div>
 
-      <!-- ══ CTA #2 — Tezler grid üstünde, görünür konumda ══ -->
+      <div class="tez-grid" id="tezGrid"></div>
+
+      <!-- ══ CTA #2 — Tezler grid altında, daha sakin retention banner ══ -->
       <div class="tez-cta-banner" id="tezCtaBanner">
         <div class="tez-cta-banner-inner">
           <div class="tez-cta-banner-text">
@@ -2458,8 +2460,6 @@ body{
           </button>
         </div>
       </div>
-
-      <div class="tez-grid" id="tezGrid"></div>
     </div>
 
   </div>
@@ -5050,6 +5050,12 @@ function garpAnalizAc(ticker) {
       if (type === 'tezler') {
         window.trackEvent('tezler_page_view');
         window._tezlerEnterTime = Date.now();
+        // Tezler sayfasına girilince FAB'ı hemen göster
+        setTimeout(function() {
+          if (typeof window._checkTezFabVisibility === 'function') {
+            window._checkTezFabVisibility();
+          }
+        }, 100);
       } else if (window._tezlerEnterTime) {
         const dwell = Math.round((Date.now() - window._tezlerEnterTime) / 1000);
         window.trackEvent('tezler_page_exit', {
@@ -5057,6 +5063,9 @@ function garpAnalizAc(ticker) {
           next_page: String(type || 'unknown')
         });
         window._tezlerEnterTime = null;
+        // Başka sayfaya geçince FAB'ı gizle
+        const fab = document.getElementById('tezFab');
+        if (fab) fab.classList.remove('visible');
       }
       return result;
     };
@@ -5211,61 +5220,50 @@ function garpAnalizAc(ticker) {
     window.trackEvent('tez_fab_dismissed');
   };
 
-  // Tezler sayfasında scroll'a göre göster (üstte değilken görünsün)
+  // Tezler sayfasında scroll'a göre değil — sayfa açılır açılmaz göster.
+  // Banner artık altta olduğu için FAB tek görünür CTA, hemen lazım.
+  function checkTezFabVisibility() {
+    const tezlerPage = document.getElementById('page-tezler');
+    const onTezler = tezlerPage && tezlerPage.classList.contains('active');
+    const modal = document.getElementById('tezModal');
+    const modalOpen = modal && (modal.classList.contains('visible') || getComputedStyle(modal).display !== 'none');
+    if (onTezler && !modalOpen) {
+      showTezFab();
+    } else {
+      hideTezFab();
+    }
+  }
+  window._checkTezFabVisibility = checkTezFabVisibility;
+
+  // Sayfa değişiminde, modal açılış/kapanışında yeniden değerlendir
   let _fabScrollTimer = null;
   window.addEventListener('scroll', function() {
     if (_fabScrollTimer) return;
     _fabScrollTimer = setTimeout(function() {
       _fabScrollTimer = null;
-      const tezlerPage = document.getElementById('page-tezler');
-      const onTezler = tezlerPage && tezlerPage.classList.contains('active');
-      const modal = document.getElementById('tezModal');
-      const modalOpen = modal && (modal.classList.contains('visible') || getComputedStyle(modal).display !== 'none');
-      // Sadece tezler sayfasında, modal kapalıyken, biraz scroll edildiyse göster
-      if (onTezler && !modalOpen && window.scrollY > 120) {
-        showTezFab();
-      } else {
-        hideTezFab();
-      }
-    }, 100);
+      checkTezFabVisibility();
+    }, 150);
   }, { passive: true });
 
-  // Sayfa değişince FAB'ı saklamak için showPage'i tekrar dinle
-  // (ana wrapper zaten yukarıda var; burası sadece görünürlüğü temizler)
+  // Sayfa değişince FAB'ı tekrar değerlendir
   document.addEventListener('click', function(e) {
-    // Tezler dışı bir nav tıklamasında FAB hemen gizlensin
-    setTimeout(function() {
-      const tezlerPage = document.getElementById('page-tezler');
-      if (!tezlerPage || !tezlerPage.classList.contains('active')) {
-        hideTezFab();
-      }
-    }, 50);
+    setTimeout(checkTezFabVisibility, 60);
   });
 
   // ════════════════════════════════════════════════════
-  // MODAL KAPANIŞ AKIŞI — banner'a smooth scroll
-  // Kullanıcı tezi okuyup kapatınca CTA banner'ı viewport'a getir
+  // MODAL KAPANIŞ — FAB'ı tekrar göster
+  // (Banner alta taşındığı için zorla scroll yapmıyoruz; FAB zaten ekranda)
   // ════════════════════════════════════════════════════
-  const _origCloseTezForScroll = window.closeTezModal;
-  if (typeof _origCloseTezForScroll === 'function') {
+  const _origCloseTezForFab = window.closeTezModal;
+  if (typeof _origCloseTezForFab === 'function') {
     window.closeTezModal = function() {
-      const result = _origCloseTezForScroll.apply(this, arguments);
-      // 200ms sonra (modal animasyonu bitsin) banner'a kay
+      const result = _origCloseTezForFab.apply(this, arguments);
+      // Modal kapandı, FAB'ı tekrar göster
       setTimeout(function() {
-        const banner = document.getElementById('tezCtaBanner');
-        const tezlerPage = document.getElementById('page-tezler');
-        const onTezler = tezlerPage && tezlerPage.classList.contains('active');
-        if (banner && onTezler) {
-          // Banner viewport'ta görünür mü kontrol et
-          const rect = banner.getBoundingClientRect();
-          const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
-          if (!inView) {
-            banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // FAB göster (scroll yapacağı için zaten görünecek ama garanti olsun)
-            setTimeout(showTezFab, 600);
-          }
+        if (typeof window._checkTezFabVisibility === 'function') {
+          window._checkTezFabVisibility();
         }
-      }, 200);
+      }, 250);
       return result;
     };
   }
