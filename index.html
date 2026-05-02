@@ -4827,5 +4827,88 @@ function garpAnalizAc(ticker) {
   }, 300);
 }
 </script>
+   // ════════════════════════════════════════════════════
+// ANALYTICS HELPER — Umami / Plausible / Vercel uyumlu
+// index.html'in en sonuna, </body>'den önce yerleştir.
+// ════════════════════════════════════════════════════
+(function() {
+  'use strict';
+
+  // Üç sağlayıcıya da aynı anda event gönderen tek fonksiyon
+  window.trackEvent = function(eventName, data) {
+    data = data || {};
+    try {
+      // Umami
+      if (window.umami && typeof window.umami.track === 'function') {
+        window.umami.track(eventName, data);
+      }
+      // Plausible
+      if (typeof window.plausible === 'function') {
+        window.plausible(eventName, { props: data });
+      }
+      // Vercel Insights (zaten kurulu)
+      if (typeof window.va === 'function') {
+        window.va('event', { name: eventName, ...data });
+      }
+    } catch (e) {
+      // Analitik hiçbir zaman uygulamayı kırmamalı
+      console.warn('[analytics]', e);
+    }
+  };
+
+  // ── 1. TEZLER SAYFASI GÖRÜNTÜLENDİ ──
+  // showPage('tezler') çağrıldığında tetiklenecek
+  const _origShowPage = window.showPage;
+  if (typeof _origShowPage === 'function') {
+    window.showPage = function(type) {
+      _origShowPage.apply(this, arguments);
+      if (type === 'tezler') {
+        window.trackEvent('tezler_page_view');
+        window._tezlerEnterTime = Date.now();
+      } else if (window._tezlerEnterTime) {
+        // Tezler'den ÇIKIŞ — ne kadar kaldı?
+        const dwell = Math.round((Date.now() - window._tezlerEnterTime) / 1000);
+        window.trackEvent('tezler_page_exit', {
+          dwell_seconds: dwell,
+          next_page: type
+        });
+        window._tezlerEnterTime = null;
+      }
+    };
+  }
+
+  // ── 2. BİR TEZ AÇILDI (Modal) ──
+  // openTezModal fonksiyonun varsa onu da sarmalıyoruz
+  const _origOpenTez = window.openTezModal;
+  if (typeof _origOpenTez === 'function') {
+    window.openTezModal = function(id) {
+      window.trackEvent('tez_opened', { tez_id: String(id || 'unknown') });
+      window._tezOpenTime = Date.now();
+      return _origOpenTez.apply(this, arguments);
+    };
+  }
+
+  // ── 3. TEZ KAPATILDI — okuma süresi ölç ──
+  const _origCloseTez = window.closeTezModal;
+  if (typeof _origCloseTez === 'function') {
+    window.closeTezModal = function() {
+      if (window._tezOpenTime) {
+        const readTime = Math.round((Date.now() - window._tezOpenTime) / 1000);
+        window.trackEvent('tez_closed', { read_seconds: readTime });
+        window._tezOpenTime = null;
+      }
+      return _origCloseTez.apply(this, arguments);
+    };
+  }
+
+  // ── 4. SAYFA TERK EDİLDİ (gerçek bounce) ──
+  window.addEventListener('beforeunload', function() {
+    if (window._tezlerEnterTime) {
+      const dwell = Math.round((Date.now() - window._tezlerEnterTime) / 1000);
+      // sendBeacon: tarayıcı kapanırken bile garanti gönderim
+      window.trackEvent('tezler_bounce', { dwell_seconds: dwell });
+    }
+  });
+})();
 </body>
 </html>
