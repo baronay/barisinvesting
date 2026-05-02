@@ -1634,6 +1634,101 @@ body{
 .fw-pulse.b{background:var(--accent);}
 .fw-pulse.l{background:var(--lynch);}
 .fw-pulse.d{background:var(--dalio);}
+
+/* ════════════════════════════════════════════════════
+   TEZLER → ANALİZ CTA (Adım 2 — Retention)
+   #d4a843 altın tonu, Bloomberg terminal estetiği
+═══════════════════════════════════════════════════════ */
+
+/* CTA #1 — Tez modal footer'ında, "bu hisseyi analiz et" */
+.tez-cta-analyze{
+  display:flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,var(--gold-dim) 0%,rgba(212,168,67,0.05) 100%);
+  border:1px solid var(--gold);
+  color:var(--gold);
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  padding:9px 16px;cursor:pointer;letter-spacing:1.5px;
+  text-transform:uppercase;text-decoration:none;
+  transition:all .25s ease;
+  position:relative;overflow:hidden;
+}
+.tez-cta-analyze:hover{
+  background:var(--gold);color:#0e1220;
+  box-shadow:0 0 24px rgba(212,168,67,0.4);
+  transform:translateY(-1px);
+}
+.tez-cta-analyze:active{transform:translateY(0);}
+.tez-cta-analyze svg{flex-shrink:0;}
+.tez-cta-analyze .arr{transition:transform .25s;}
+.tez-cta-analyze:hover .arr{transform:translateX(4px);}
+.tez-cta-analyze .ticker-pill{
+  background:rgba(0,0,0,0.25);padding:2px 8px;
+  border:1px solid rgba(212,168,67,0.3);
+  font-weight:700;letter-spacing:1px;
+}
+.tez-cta-analyze:hover .ticker-pill{
+  background:rgba(255,255,255,0.15);border-color:rgba(0,0,0,0.2);
+}
+
+/* CTA #2 — Tezler grid altında banner */
+.tez-cta-banner{
+  margin-top:48px;padding:32px 28px;
+  background:linear-gradient(135deg,rgba(212,168,67,0.08) 0%,rgba(212,168,67,0.02) 100%);
+  border:1px solid rgba(212,168,67,0.25);
+  border-left:3px solid var(--gold);
+  position:relative;overflow:hidden;
+}
+.tez-cta-banner::before{
+  content:'';position:absolute;top:0;right:0;width:200px;height:100%;
+  background:radial-gradient(circle at 100% 50%,var(--gold-dim) 0%,transparent 70%);
+  pointer-events:none;opacity:.6;
+}
+.tez-cta-banner-inner{
+  position:relative;z-index:1;
+  display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;
+}
+.tez-cta-banner-text{flex:1;min-width:280px;}
+.tez-cta-banner-eyebrow{
+  font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;
+  color:var(--gold);letter-spacing:2.5px;text-transform:uppercase;
+  margin-bottom:8px;display:flex;align-items:center;gap:8px;
+}
+.tez-cta-banner-eyebrow::before{
+  content:'';width:24px;height:1px;background:var(--gold);display:inline-block;
+}
+.tez-cta-banner-title{
+  font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:600;
+  color:var(--text);line-height:1.3;margin-bottom:8px;
+}
+.tez-cta-banner-title .accent{color:var(--gold);}
+.tez-cta-banner-desc{
+  font-size:12px;color:var(--text2);line-height:1.6;max-width:520px;
+}
+.tez-cta-banner-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--gold);color:#0e1220;
+  border:1px solid var(--gold);
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;
+  padding:14px 22px;cursor:pointer;letter-spacing:1.5px;
+  text-transform:uppercase;text-decoration:none;
+  transition:all .25s ease;flex-shrink:0;
+  box-shadow:0 4px 16px rgba(212,168,67,0.2);
+}
+.tez-cta-banner-btn:hover{
+  background:#e6bb52;
+  box-shadow:0 8px 32px rgba(212,168,67,0.4);
+  transform:translateY(-2px);
+}
+.tez-cta-banner-btn:active{transform:translateY(0);}
+.tez-cta-banner-btn .arr{transition:transform .25s;}
+.tez-cta-banner-btn:hover .arr{transform:translateX(4px);}
+
+@media (max-width:768px){
+  .tez-cta-banner{padding:24px 20px;margin-top:32px;}
+  .tez-cta-banner-title{font-size:18px;}
+  .tez-cta-banner-btn{width:100%;justify-content:center;}
+  .tez-cta-banner-inner{flex-direction:column;align-items:stretch;}
+}
 </style>
 <body>
 <div id="globalToast"><span class="toast-dot"></span><span class="toast-msg"></span></div>
@@ -1821,6 +1916,15 @@ body{
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
         X'te Paylaş
       </button>
+
+      <!-- ══ CTA #1 — Bu hisseyi şimdi analiz et ══ -->
+      <button type="button" class="tez-cta-analyze" id="tezCtaAnalyze" onclick="ctaTezToAnaliz()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+        <span class="ticker-pill" id="tezCtaTicker">—</span>
+        Şimdi Analiz Et
+        <span class="arr">→</span>
+      </button>
+
       <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.6">
         Bu tez yatırım tavsiyesi değildir.<br>Tüm projeksiyonlar tahmin içermektedir.
       </div>
@@ -2286,6 +2390,26 @@ body{
         <div class="tez-page-sub">ARAŞTIRMA · ANALİZ · BARIŞ INVESTING</div>
       </div>
       <div class="tez-grid" id="tezGrid"></div>
+
+      <!-- ══ CTA #2 — Tezler altında, retention banner ══ -->
+      <div class="tez-cta-banner" id="tezCtaBanner">
+        <div class="tez-cta-banner-inner">
+          <div class="tez-cta-banner-text">
+            <div class="tez-cta-banner-eyebrow">Sıradaki Adım</div>
+            <div class="tez-cta-banner-title">
+              Tezleri okudun. Şimdi <span class="accent">kendi hissene</span> uygula.
+            </div>
+            <div class="tez-cta-banner-desc">
+              Buffett, Lynch, Graham ve Dalio çerçeveleriyle istediğin BIST, NYSE veya NASDAQ hissesini 7 kriterli AI destekli analizden geçir. Tezler ilham, analiz karar verdirir.
+            </div>
+          </div>
+          <button type="button" class="tez-cta-banner-btn" onclick="ctaTezlerToAnaliz('banner')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            Hisse Analizine Başla
+            <span class="arr">→</span>
+          </button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -4828,10 +4952,11 @@ function garpAnalizAc(ticker) {
 }
 </script>
 
-<!-- ══ ANALYTICS HELPER — Tezler retention event'leri ══ -->
+<!-- ══ ANALYTICS HELPER + CTA — Tezler retention ══ -->
 <script>
 // ════════════════════════════════════════════════════
 // ANALYTICS HELPER — Umami / Plausible / Vercel uyumlu
+// + CTA fonksiyonları (Adım 2)
 // ════════════════════════════════════════════════════
 (function() {
   'use strict';
@@ -4840,77 +4965,170 @@ function garpAnalizAc(ticker) {
   window.trackEvent = function(eventName, data) {
     data = data || {};
     try {
-      // Umami
       if (window.umami && typeof window.umami.track === 'function') {
         window.umami.track(eventName, data);
       }
-      // Plausible
       if (typeof window.plausible === 'function') {
         window.plausible(eventName, { props: data });
       }
-      // Vercel Insights (zaten kurulu)
       if (typeof window.va === 'function') {
         window.va('event', { name: eventName, ...data });
       }
     } catch (e) {
-      // Analitik hiçbir zaman uygulamayı kırmamalı
       console.warn('[analytics]', e);
     }
   };
 
-  // ── 1. TEZLER SAYFASI GÖRÜNTÜLENDİ ──
-  // showPage('tezler') çağrıldığında tetiklenecek
+  // Aktif tezin ticker bilgisini global tut (CTA buton için)
+  window._activeTezTicker = null;
+  window._activeTezExchange = null;
+  window._activeTezId = null;
+
+  // ── 1. SAYFA NAVİGASYON ── showPage'i sarmala
   const _origShowPage = window.showPage;
   if (typeof _origShowPage === 'function') {
     window.showPage = function(type) {
-      _origShowPage.apply(this, arguments);
+      const result = _origShowPage.apply(this, arguments);
       if (type === 'tezler') {
         window.trackEvent('tezler_page_view');
         window._tezlerEnterTime = Date.now();
       } else if (window._tezlerEnterTime) {
-        // Tezler'den ÇIKIŞ — ne kadar kaldı?
         const dwell = Math.round((Date.now() - window._tezlerEnterTime) / 1000);
         window.trackEvent('tezler_page_exit', {
           dwell_seconds: dwell,
-          next_page: type
+          next_page: String(type || 'unknown')
         });
         window._tezlerEnterTime = null;
       }
+      return result;
     };
   }
 
-  // ── 2. BİR TEZ AÇILDI (Modal) ──
-  // openTezModal fonksiyonun varsa onu da sarmalıyoruz
-  const _origOpenTez = window.openTezModal;
-  if (typeof _origOpenTez === 'function') {
-    window.openTezModal = function(id) {
-      window.trackEvent('tez_opened', { tez_id: String(id || 'unknown') });
+  // ── 2. TEZ AÇILDI ── hem openTez (statik) hem openTezSupabase (DB) sarmalanır
+  function wrapOpener(fnName) {
+    const orig = window[fnName];
+    if (typeof orig !== 'function') return;
+    window[fnName] = function(id) {
+      const result = orig.apply(this, arguments);
       window._tezOpenTime = Date.now();
-      return _origOpenTez.apply(this, arguments);
+      window._activeTezId = String(id || 'unknown');
+      // CTA #1 footer'ına ticker'ı yaz (DOM güncellemesinden sonra çalışsın)
+      setTimeout(updateTezCtaTicker, 30);
+      window.trackEvent('tez_opened', { tez_id: window._activeTezId });
+      return result;
     };
   }
+  wrapOpener('openTez');
+  wrapOpener('openTezSupabase');
+  wrapOpener('openTezModal'); // herhangi bir varyant
 
-  // ── 3. TEZ KAPATILDI — okuma süresi ölç ──
+  // CTA footer'ındaki ticker pill'i güncelle
+  function updateTezCtaTicker() {
+    const tickerEl  = document.getElementById('tezModalTicker');
+    const exchEl    = document.getElementById('tezModalExchange');
+    const ctaPill   = document.getElementById('tezCtaTicker');
+    const ctaBtn    = document.getElementById('tezCtaAnalyze');
+    if (!ctaPill || !ctaBtn) return;
+    const ticker   = (tickerEl && tickerEl.textContent.trim()) || '';
+    const exchange = (exchEl && exchEl.textContent.trim()) || '';
+    if (ticker && ticker !== '—') {
+      ctaPill.textContent = ticker;
+      ctaBtn.style.display = 'flex';
+      window._activeTezTicker = ticker;
+      window._activeTezExchange = exchange;
+    } else {
+      // Ticker yoksa CTA'yı genel "analize git" haline getir
+      ctaPill.style.display = 'none';
+      ctaBtn.style.display = 'flex';
+      window._activeTezTicker = null;
+    }
+  }
+  window._updateTezCtaTicker = updateTezCtaTicker;
+
+  // ── 3. TEZ KAPATILDI ── okuma süresi
   const _origCloseTez = window.closeTezModal;
   if (typeof _origCloseTez === 'function') {
     window.closeTezModal = function() {
       if (window._tezOpenTime) {
         const readTime = Math.round((Date.now() - window._tezOpenTime) / 1000);
-        window.trackEvent('tez_closed', { read_seconds: readTime });
+        window.trackEvent('tez_closed', {
+          read_seconds: readTime,
+          tez_id: window._activeTezId || 'unknown'
+        });
         window._tezOpenTime = null;
       }
       return _origCloseTez.apply(this, arguments);
     };
   }
 
-  // ── 4. SAYFA TERK EDİLDİ (gerçek bounce) ──
+  // ── 4. SAYFA TERK EDİLDİ ── (gerçek bounce ölçümü)
   window.addEventListener('beforeunload', function() {
     if (window._tezlerEnterTime) {
       const dwell = Math.round((Date.now() - window._tezlerEnterTime) / 1000);
-      // sendBeacon: tarayıcı kapanırken bile garanti gönderim
       window.trackEvent('tezler_bounce', { dwell_seconds: dwell });
     }
   });
+
+  // ════════════════════════════════════════════════════
+  // CTA FONKSİYONLARI — Tezler'den Analiz'e geçiş
+  // ════════════════════════════════════════════════════
+
+  // CTA #1 — Modal'daki "Şimdi Analiz Et" butonu
+  // Aktif tezin ticker'ını analiz form'una doldurur, modal'ı kapatır,
+  // analiz sayfasına geçer ve event yollar.
+  window.ctaTezToAnaliz = function() {
+    const ticker   = window._activeTezTicker;
+    const exchange = (window._activeTezExchange || '').toUpperCase();
+    const tezId    = window._activeTezId || 'unknown';
+
+    window.trackEvent('cta_tez_to_analiz_click', {
+      source: 'modal_footer',
+      ticker: ticker || 'none',
+      tez_id: tezId
+    });
+
+    // Modal'ı kapat
+    if (typeof window.closeTezModal === 'function') {
+      window.closeTezModal();
+    }
+
+    // Ticker form'a yaz
+    const tickerIn = document.getElementById('tickerIn');
+    if (tickerIn && ticker) {
+      tickerIn.value = ticker;
+    }
+
+    // Borsa seçimi (BIST / NYSE / NASDAQ)
+    if (exchange && typeof window.selEx === 'function') {
+      let exKey = null;
+      if (exchange.includes('BIST') || exchange.includes('İST')) exKey = 'BIST';
+      else if (exchange.includes('NYSE')) exKey = 'NYSE';
+      else if (exchange.includes('NASDAQ')) exKey = 'NASDAQ';
+      if (exKey) { try { window.selEx(exKey); } catch(e){} }
+    }
+
+    // Analiz sayfasına geç
+    if (typeof window.switchTab === 'function') window.switchTab('analiz');
+    if (typeof window.showPage === 'function') window.showPage('overview');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // CTA #2 — Tezler grid altındaki banner
+  window.ctaTezlerToAnaliz = function(source) {
+    window.trackEvent('cta_tez_to_analiz_click', {
+      source: source || 'banner',
+      ticker: 'none',
+      tez_id: 'banner_cta'
+    });
+    if (typeof window.switchTab === 'function') window.switchTab('analiz');
+    if (typeof window.showPage === 'function') window.showPage('overview');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Ticker input'una odaklan — kullanıcı direkt yazmaya başlasın
+    setTimeout(function() {
+      const inp = document.getElementById('tickerIn');
+      if (inp) inp.focus();
+    }, 350);
+  };
 })();
 </script>
 </body>
