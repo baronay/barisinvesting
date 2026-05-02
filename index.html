@@ -1778,6 +1778,115 @@ body{
   }
   .tez-fab.visible{display:inline-flex;}
 }
+
+/* ════════════════════════════════════════════════════
+   X (TWITTER) FEED KARTI (Adım 3)
+   Statik + lazy embed, performans dostu
+═══════════════════════════════════════════════════════ */
+.x-card{
+  background:linear-gradient(180deg,#000 0%,#0a0d18 100%);
+  border:1px solid var(--rule);
+  border-top:2px solid #fff;
+  padding:0;
+  overflow:hidden;
+  margin-top:16px;
+}
+.x-card-header{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 14px 12px;
+  border-bottom:1px solid var(--rule);
+}
+.x-card-icon{
+  width:32px;height:32px;flex-shrink:0;
+  background:#000;border:1px solid rgba(255,255,255,0.15);
+  display:flex;align-items:center;justify-content:center;
+}
+.x-card-icon svg{color:#fff;}
+.x-card-meta{flex:1;min-width:0;}
+.x-card-handle{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
+  color:var(--text);letter-spacing:0.5px;
+  display:flex;align-items:center;gap:5px;
+}
+.x-card-handle .verified{
+  display:inline-flex;width:13px;height:13px;color:var(--accent);
+}
+.x-card-name{
+  font-size:9px;color:var(--muted2);
+  font-family:'IBM Plex Mono',monospace;letter-spacing:1.2px;
+  text-transform:uppercase;margin-top:2px;
+}
+.x-card-follow{
+  background:#fff;color:#000;
+  border:1px solid #fff;
+  font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;
+  padding:6px 12px;cursor:pointer;letter-spacing:1px;
+  text-transform:uppercase;text-decoration:none;
+  transition:all .2s;flex-shrink:0;
+  display:inline-flex;align-items:center;gap:5px;
+}
+.x-card-follow:hover{background:#e8e8e8;}
+.x-card-body{padding:14px;}
+.x-card-desc{
+  font-size:11px;color:var(--text2);line-height:1.6;
+  margin-bottom:12px;
+}
+.x-card-stats{
+  display:flex;gap:10px;margin-bottom:14px;
+  padding:10px 12px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--rule);
+}
+.x-stat{flex:1;text-align:center;}
+.x-stat-lbl{
+  font-size:8px;color:var(--muted2);
+  font-family:'IBM Plex Mono',monospace;letter-spacing:1.2px;
+  text-transform:uppercase;margin-bottom:3px;
+}
+.x-stat-val{
+  font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;
+  color:var(--text);
+}
+.x-card-load-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:transparent;color:var(--gold);
+  border:1px solid var(--gold);
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  padding:11px;cursor:pointer;letter-spacing:1.2px;
+  text-transform:uppercase;
+  transition:all .25s ease;
+}
+.x-card-load-btn:hover{
+  background:var(--gold);color:#0e1220;
+  box-shadow:0 0 16px rgba(212,168,67,0.3);
+}
+.x-card-load-btn:disabled{
+  opacity:.5;cursor:wait;
+}
+.x-card-load-btn .spin{
+  width:12px;height:12px;border:1.5px solid currentColor;border-top-color:transparent;
+  border-radius:50%;animation:xspin .8s linear infinite;display:none;
+}
+.x-card-load-btn.loading .spin{display:inline-block;}
+.x-card-load-btn.loading .ico,.x-card-load-btn.loading .arr{display:none;}
+@keyframes xspin{to{transform:rotate(360deg);}}
+
+/* Embed container — yüklendikten sonra dolar */
+.x-embed-container{
+  display:none;margin-top:12px;
+  max-height:500px;overflow-y:auto;
+  border:1px solid var(--rule);
+  background:#000;
+}
+.x-embed-container.loaded{display:block;}
+.x-embed-container::-webkit-scrollbar{width:6px;}
+.x-embed-container::-webkit-scrollbar-track{background:#000;}
+.x-embed-container::-webkit-scrollbar-thumb{background:var(--rule);border-radius:3px;}
+.x-embed-fail{
+  padding:16px;text-align:center;font-size:11px;color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;line-height:1.6;
+}
+.x-embed-fail a{color:var(--gold);text-decoration:none;border-bottom:1px solid var(--gold);}
 </style>
 <body>
 <div id="globalToast"><span class="toast-dot"></span><span class="toast-msg"></span></div>
@@ -2233,6 +2342,45 @@ body{
         <span style="font-size:8px;color:var(--muted2)" id="wlTime"></span>
       </div>
       <div class="wl-grid-v" id="wlGrid"><div class="news-loading">Yükleniyor...</div></div>
+
+      <!-- ══ X (TWITTER) FEED KARTI — Adım 3 ══ -->
+      <div class="x-card" id="xFeedCard">
+        <div class="x-card-header">
+          <div class="x-card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </div>
+          <div class="x-card-meta">
+            <div class="x-card-handle">
+              @barisinvesting
+              <svg class="verified" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.25 1.336.25 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.354-.643.366-.012.001-.024.001-.037.001-.247 0-.484-.092-.665-.26l-3.337-3.5c-.205-.218-.288-.51-.226-.785.063-.273.252-.51.51-.622.255-.114.55-.094.79.054l2.65 2.78 3.7-5.55c.187-.28.518-.43.83-.4.31.03.586.236.71.516s.075.6-.13.86z"/></svg>
+            </div>
+            <div class="x-card-name">Barış Investing · X</div>
+          </div>
+          <a class="x-card-follow"
+             href="https://x.com/barisinvesting"
+             target="_blank"
+             rel="noopener noreferrer"
+             onclick="trackXClick('follow')">
+            Takip Et
+          </a>
+        </div>
+
+        <div class="x-card-body">
+          <div class="x-card-desc">
+            BIST, NYSE ve NASDAQ üzerine günlük piyasa yorumları, hızlı analizler ve makro takvim. Tezler yayınlanmadan önce X'te paylaşılıyor.
+          </div>
+
+          <button type="button" class="x-card-load-btn" id="xLoadBtn" onclick="loadXFeed()">
+            <span class="spin"></span>
+            <svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            <span class="lbl">Tweet'leri Göster</span>
+            <span class="arr">→</span>
+          </button>
+
+          <!-- Lazy-loaded embed buraya gelir -->
+          <div class="x-embed-container" id="xEmbedContainer" aria-live="polite"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -5267,6 +5415,111 @@ function garpAnalizAc(ticker) {
       return result;
     };
   }
+
+  // ════════════════════════════════════════════════════
+  // X (TWITTER) FEED — Lazy embed (Adım 3)
+  // Kullanıcı tıklayana kadar 0 KB yük; tıklandığında widgets.js yüklenir.
+  // Tüm dış linkler target="_blank" + rel="noopener noreferrer".
+  // ════════════════════════════════════════════════════
+  const X_HANDLE = 'barisinvesting';
+  const X_WIDGETS_URL = 'https://platform.twitter.com/widgets.js';
+  let _xWidgetsLoading = null; // Promise — tek seferlik yükleme
+
+  // X linkleri için tıklama tracking (statik linklerde de çalışır)
+  window.trackXClick = function(action) {
+    window.trackEvent('x_link_click', {
+      action: String(action || 'unknown'),
+      handle: X_HANDLE
+    });
+  };
+
+  // widgets.js'i tek seferlik, async yükle
+  function loadXWidgetsScript() {
+    if (window.twttr && window.twttr.widgets) {
+      return Promise.resolve(window.twttr);
+    }
+    if (_xWidgetsLoading) return _xWidgetsLoading;
+
+    _xWidgetsLoading = new Promise(function(resolve, reject) {
+      const script = document.createElement('script');
+      script.src = X_WIDGETS_URL;
+      script.async = true;
+      script.charset = 'utf-8';
+      script.onload = function() {
+        // twttr global'i bekle (widgets.js init'i tamamlasın)
+        const start = Date.now();
+        (function waitForTwttr() {
+          if (window.twttr && window.twttr.widgets) {
+            resolve(window.twttr);
+          } else if (Date.now() - start > 8000) {
+            reject(new Error('twttr global never appeared'));
+          } else {
+            setTimeout(waitForTwttr, 100);
+          }
+        })();
+      };
+      script.onerror = function() {
+        _xWidgetsLoading = null; // tekrar denenebilir
+        reject(new Error('widgets.js failed to load'));
+      };
+      document.head.appendChild(script);
+    });
+
+    return _xWidgetsLoading;
+  }
+
+  // Buton tıklaması — Tweet'leri yükle ve göster
+  window.loadXFeed = function() {
+    const btn = document.getElementById('xLoadBtn');
+    const container = document.getElementById('xEmbedContainer');
+    if (!btn || !container) return;
+
+    // Zaten yüklenmişse hiçbir şey yapma
+    if (container.classList.contains('loaded')) return;
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+    window.trackEvent('x_feed_load_clicked', { handle: X_HANDLE });
+
+    loadXWidgetsScript()
+      .then(function(twttr) {
+        return twttr.widgets.createTimeline(
+          { sourceType: 'profile', screenName: X_HANDLE },
+          container,
+          {
+            theme: 'dark',
+            chrome: 'noheader nofooter noborders transparent',
+            height: 480,
+            dnt: true,            // Do Not Track açık
+            tweetLimit: 5,        // Sadece son 5 tweet (performans)
+            ariaPolite: 'polite'
+          }
+        );
+      })
+      .then(function(embed) {
+        if (!embed) throw new Error('embed returned null');
+        container.classList.add('loaded');
+        btn.style.display = 'none';
+        window.trackEvent('x_feed_load_success', { handle: X_HANDLE });
+      })
+      .catch(function(err) {
+        console.warn('[x-feed]', err);
+        // Graceful fallback — kullanıcı X'e gidebilsin
+        container.innerHTML =
+          '<div class="x-embed-fail">' +
+          'Tweet\'ler şu an yüklenemedi. ' +
+          '<a href="https://x.com/' + X_HANDLE + '" target="_blank" rel="noopener noreferrer" ' +
+          'onclick="trackXClick(\'fallback_link\')">x.com/@' + X_HANDLE + '</a> ' +
+          'üzerinden görüntüleyebilirsin.' +
+          '</div>';
+        container.classList.add('loaded');
+        btn.style.display = 'none';
+        window.trackEvent('x_feed_load_failed', {
+          handle: X_HANDLE,
+          error: String(err && err.message || 'unknown')
+        });
+      });
+  };
 })();
 </script>
 </body>
