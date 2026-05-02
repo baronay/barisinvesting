@@ -1,4 +1,17 @@
 {
+  "functions": {
+    "api/analyze.js":           { "maxDuration": 30 },
+    "api/auth.js":              { "maxDuration": 10 },
+    "api/bist-ratios.js":       { "maxDuration": 15 },
+    "api/tez-admin.js":         { "maxDuration": 10 },
+    "api/market.js":            { "maxDuration": 15 },
+    "api/garp-bildirim.js":     { "maxDuration": 10 },
+    "api/haftalik-secimler.js": { "maxDuration": 10 },
+    "api/forum.js":             { "maxDuration": 10 },
+    "api/logo.js":              { "maxDuration": 10 },
+    "api/watchlist.js":         { "maxDuration": 10 },
+    "api/fair-value.js":        { "maxDuration": 20 }
+  },
   "headers": [
     {
       "source": "/api/(.*)",
