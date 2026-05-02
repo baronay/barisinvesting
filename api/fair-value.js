@@ -103,16 +103,53 @@ async function fetchYahooFundamentals(ticker, isBIST) {
     'cashflowStatementHistory',
   ].join(',');
 
-  const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=${modules}`;
-  const r = await fetch(url, {
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-    headers: { 'User-Agent': 'Mozilla/5.0' }
-  });
-  if (!r.ok) throw new Error(`Yahoo HTTP ${r.status}`);
-  const json = await r.json();
-  const result = json?.quoteSummary?.result?.[0];
-  if (!result) throw new Error('Yahoo: empty response');
+  // Yahoo Vercel/datacenter IP'leri 2024'ten beri agresif filtreliyor.
+  // Tam tarayıcı header set'i + her iki host'u dene (query1/query2).
+  const HEADERS = {
+    'User-Agent':      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Accept':          'application/json, text/plain, */*',
+    'Accept-Language': 'en-US,en;q=0.9,tr;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Referer':         'https://finance.yahoo.com/',
+    'Origin':          'https://finance.yahoo.com',
+    'Cache-Control':   'no-cache',
+    'Pragma':          'no-cache',
+    'Sec-Fetch-Dest':  'empty',
+    'Sec-Fetch-Mode':  'cors',
+    'Sec-Fetch-Site':  'same-site',
+  };
 
+  // İki host dene — biri 401 verirse diğerini test et
+  const hosts = ['query1.finance.yahoo.com', 'query2.finance.yahoo.com'];
+  let lastErr = null;
+  for (const host of hosts) {
+    try {
+      const url = `https://${host}/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=${modules}`;
+      const r = await fetch(url, {
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+        headers: HEADERS,
+      });
+      if (!r.ok) {
+        lastErr = new Error(`Yahoo ${host} HTTP ${r.status}`);
+        continue;
+      }
+      const json = await r.json();
+      const result = json?.quoteSummary?.result?.[0];
+      if (!result) {
+        lastErr = new Error(`Yahoo ${host}: empty response`);
+        continue;
+      }
+
+      // Başarılı — parse et
+      return parseYahooResult(result, isBIST);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('Yahoo: all hosts failed');
+}
+
+function parseYahooResult(result, isBIST) {
   const ks   = result.defaultKeyStatistics || {};
   const fd   = result.financialData || {};
   const sd   = result.summaryDetail || {};
@@ -121,7 +158,7 @@ async function fetchYahooFundamentals(ticker, isBIST) {
 
   const eps         = num(ks.trailingEps?.raw);
   const bookValue   = num(ks.bookValue?.raw);
-  const growthQ     = num(fd.earningsGrowth?.raw);   // 0.15 = %15
+  const growthQ     = num(fd.earningsGrowth?.raw);
   const growthRev   = num(fd.revenueGrowth?.raw);
   const growthRate  = (growthQ != null ? growthQ : growthRev);
   const fcf         = num(fd.freeCashflow?.raw);
@@ -132,16 +169,15 @@ async function fetchYahooFundamentals(ticker, isBIST) {
   const currentPrice= num(fd.currentPrice?.raw) || num(pr.regularMarketPrice?.raw);
   const currency    = pr.currency || (isBIST ? 'TRY' : 'USD');
 
-  // FCF yoksa OCF - |Capex| ile hesapla
   let computedFcf = fcf;
   if (computedFcf == null && opCF != null && capex != null) {
-    computedFcf = opCF + capex;  // capex zaten negatif gelir
+    computedFcf = opCF + capex;
   }
 
   return {
     eps,
     bookValuePS:   bookValue,
-    growthRate:    growthRate,        // decimal: 0.15 = %15
+    growthRate,
     fcf:           computedFcf,
     sharesOut,
     marketCap,
@@ -340,39 +376,68 @@ async function bumpHitCount(ticker, exchange) {
 // CORE: Fair value hesapla
 // ════════════════════════════════════════════════════
 
-async function computeFairValue(ticker, exchange) {
+async function computeFairValue(ticker, exchange, debug) {
   const isBIST = exchange === 'BIST';
+  const dbg = debug ? { attempts: [] } : null;
 
   // Veri çek
   let raw;
   try {
     if (isBIST) {
-      raw = await fetchYahooFundamentals(ticker, true);
+      try {
+        raw = await fetchYahooFundamentals(ticker, true);
+        if (dbg) dbg.attempts.push({ source: 'yahoo', ok: true });
+      } catch (yhErr) {
+        if (dbg) dbg.attempts.push({ source: 'yahoo', ok: false, error: yhErr.message });
+        throw yhErr;
+      }
     } else {
       // NYSE/NASDAQ: Twelve Data tercih, yedek olarak Yahoo
+      let tdErr = null;
       try {
         raw = await fetchTwelveData(ticker);
+        if (dbg) dbg.attempts.push({ source: 'twelvedata', ok: true });
+
         // Twelve Data null'lar varsa Yahoo ile patch
         if (raw.eps == null || raw.bookValuePS == null) {
-          const yh = await fetchYahooFundamentals(ticker, false);
-          raw = {
-            ...raw,
-            eps:          raw.eps ?? yh.eps,
-            bookValuePS:  raw.bookValuePS ?? yh.bookValuePS,
-            growthRate:   raw.growthRate ?? yh.growthRate,
-            fcf:          raw.fcf ?? yh.fcf,
-            sharesOut:    raw.sharesOut ?? yh.sharesOut,
-            currentPrice: raw.currentPrice ?? yh.currentPrice,
-            source:       'twelvedata+yahoo',
-          };
+          try {
+            const yh = await fetchYahooFundamentals(ticker, false);
+            if (dbg) dbg.attempts.push({ source: 'yahoo-patch', ok: true });
+            raw = {
+              ...raw,
+              eps:          raw.eps ?? yh.eps,
+              bookValuePS:  raw.bookValuePS ?? yh.bookValuePS,
+              growthRate:   raw.growthRate ?? yh.growthRate,
+              fcf:          raw.fcf ?? yh.fcf,
+              sharesOut:    raw.sharesOut ?? yh.sharesOut,
+              currentPrice: raw.currentPrice ?? yh.currentPrice,
+              source:       'twelvedata+yahoo',
+            };
+          } catch (patchErr) {
+            if (dbg) dbg.attempts.push({ source: 'yahoo-patch', ok: false, error: patchErr.message });
+            // Patch fail olabilir, twelve data verisiyle devam
+          }
         }
-      } catch (tdErr) {
-        console.log('[fv] Twelve Data failed, falling back to Yahoo:', tdErr.message);
-        raw = await fetchYahooFundamentals(ticker, false);
+      } catch (e) {
+        tdErr = e;
+        if (dbg) dbg.attempts.push({ source: 'twelvedata', ok: false, error: e.message });
+        console.log('[fv] Twelve Data failed, falling back to Yahoo:', e.message);
+        try {
+          raw = await fetchYahooFundamentals(ticker, false);
+          if (dbg) dbg.attempts.push({ source: 'yahoo-fallback', ok: true });
+        } catch (yhErr) {
+          if (dbg) dbg.attempts.push({ source: 'yahoo-fallback', ok: false, error: yhErr.message });
+          // Her iki kaynak da düştü — gerçek hatayı gönder
+          throw new Error(
+            `Twelve Data: ${tdErr.message} | Yahoo: ${yhErr.message}`
+          );
+        }
       }
     }
   } catch (e) {
-    throw new Error(`Veri kaynağına ulaşılamadı: ${e.message}`);
+    const err = new Error(`Veri kaynağına ulaşılamadı: ${e.message}`);
+    if (dbg) err._debug = dbg;
+    throw err;
   }
 
   // Hesapla
@@ -381,7 +446,7 @@ async function computeFairValue(ticker, exchange) {
   const lynch_value  = lynchFairValue(raw, warnings);
   const dcf_value    = simplifiedDCF(raw, warnings);
 
-  return {
+  const result = {
     graham_value,
     lynch_value,
     dcf_value,
@@ -398,6 +463,9 @@ async function computeFairValue(ticker, exchange) {
     warnings,
     sources: { primary: raw.source },
   };
+
+  if (dbg) result._debug = dbg;
+  return result;
 }
 
 // ════════════════════════════════════════════════════
@@ -417,6 +485,7 @@ export default async function handler(req, res) {
   const ticker   = clean(req.query?.ticker || req.body?.ticker);
   const exchange = String(req.query?.exchange || req.body?.exchange || 'BIST').toUpperCase();
   const force    = req.query?.force === '1';
+  const debug    = req.query?.debug === '1';
 
   if (!ticker) return res.status(400).json({ error: 'ticker zorunlu (örn: ?ticker=THYAO&exchange=BIST)' });
   if (!VALID_EXCHANGES.has(exchange)) {
@@ -425,8 +494,11 @@ export default async function handler(req, res) {
 
   const cacheKey = `${ticker}:${exchange}`;
 
+  // Debug mode'da cache'i bypass et — her şeyi taze çek
+  const skipCache = force || debug;
+
   // 1) Hot cache (in-memory, 5dk)
-  if (!force) {
+  if (!skipCache) {
     const hot = hotGet(cacheKey);
     if (hot) {
       res.setHeader('X-FV-Cache', 'hot');
@@ -435,7 +507,7 @@ export default async function handler(req, res) {
   }
 
   // 2) DB cache (Supabase, 24h)
-  if (!force) {
+  if (!skipCache) {
     const db = await readDbCache(ticker, exchange);
     if (db) {
       const payload = {
@@ -460,7 +532,7 @@ export default async function handler(req, res) {
 
   // 3) Hesapla — yeni veri
   try {
-    const result = await computeFairValue(ticker, exchange);
+    const result = await computeFairValue(ticker, exchange, debug);
     const payload = {
       ticker, exchange,
       ...result,
@@ -468,18 +540,29 @@ export default async function handler(req, res) {
       cached:      false,
     };
 
-    // DB'ye yaz (fire-and-forget)
-    writeDbCache(ticker, exchange, payload);
-    hotSet(cacheKey, payload);
+    // DB'ye yaz (fire-and-forget) — debug mode'da yazma
+    if (!debug) {
+      writeDbCache(ticker, exchange, payload);
+      hotSet(cacheKey, payload);
+    }
 
     res.setHeader('X-FV-Cache', 'miss');
     return res.status(200).json(payload);
   } catch (e) {
     console.error('[fair-value]', ticker, exchange, e.message);
-    return res.status(500).json({
+    const errPayload = {
       error:   'Hesaplama başarısız',
       detail:  e.message,
       ticker, exchange,
-    });
+    };
+    if (debug && e._debug) errPayload._debug = e._debug;
+    if (debug) {
+      errPayload._env = {
+        SUPABASE_URL_set:        !!SB_URL,
+        SUPABASE_SERVICE_KEY_set:!!SB_KEY,
+        TWELVE_DATA_API_KEY_set: !!TD_KEY,
+      };
+    }
+    return res.status(500).json(errPayload);
   }
 }
