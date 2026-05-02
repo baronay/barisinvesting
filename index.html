@@ -10,11 +10,11 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;600;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
-   <!-- ══ UMAMI ANALYTICS — Cookieless, GDPR/KVKK uyumlu ══ -->
+<!-- ══ UMAMI ANALYTICS — Cookieless, GDPR/KVKK uyumlu ══ -->
 <script
   defer
   src="https://cloud.umami.is/script.js"
-  data-website-id="<script defer src="https://cloud.umami.is/script.js" data-website-id="39981630-afd1-48ec-8e57-4dac999c9842"></script>"
+  data-website-id="39981630-afd1-48ec-8e57-4dac999c9842"
   data-domains="barisinvesting.com"
   data-do-not-track="true"
   data-cache="true"></script>
@@ -4827,9 +4827,11 @@ function garpAnalizAc(ticker) {
   }, 300);
 }
 </script>
-   // ════════════════════════════════════════════════════
+
+<!-- ══ ANALYTICS HELPER — Tezler retention event'leri ══ -->
+<script>
+// ════════════════════════════════════════════════════
 // ANALYTICS HELPER — Umami / Plausible / Vercel uyumlu
-// index.html'in en sonuna, </body>'den önce yerleştir.
 // ════════════════════════════════════════════════════
 (function() {
   'use strict';
@@ -4910,5 +4912,6 @@ function garpAnalizAc(ticker) {
     }
   });
 })();
+</script>
 </body>
 </html>
