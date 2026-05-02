@@ -1670,9 +1670,9 @@ body{
   background:rgba(255,255,255,0.15);border-color:rgba(0,0,0,0.2);
 }
 
-/* CTA #2 — Tezler grid altında banner */
+/* CTA #2 — Tezler grid üstünde banner */
 .tez-cta-banner{
-  margin-top:48px;padding:32px 28px;
+  margin:0 0 32px 0;padding:32px 28px;
   background:linear-gradient(135deg,rgba(212,168,67,0.08) 0%,rgba(212,168,67,0.02) 100%);
   border:1px solid rgba(212,168,67,0.25);
   border-left:3px solid var(--gold);
@@ -1724,10 +1724,59 @@ body{
 .tez-cta-banner-btn:hover .arr{transform:translateX(4px);}
 
 @media (max-width:768px){
-  .tez-cta-banner{padding:24px 20px;margin-top:32px;}
+  .tez-cta-banner{padding:24px 20px;margin:0 0 24px 0;}
   .tez-cta-banner-title{font-size:18px;}
   .tez-cta-banner-btn{width:100%;justify-content:center;}
   .tez-cta-banner-inner{flex-direction:column;align-items:stretch;}
+}
+
+/* ── Floating Mini-CTA (sayfa içinde her yerde görünür) ── */
+.tez-fab{
+  position:fixed;bottom:24px;right:24px;
+  display:none;align-items:center;gap:10px;
+  background:var(--gold);color:#0e1220;
+  border:1px solid var(--gold);
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;
+  padding:12px 18px;cursor:pointer;letter-spacing:1.2px;
+  text-transform:uppercase;text-decoration:none;
+  z-index:200;
+  box-shadow:0 8px 24px rgba(0,0,0,0.35),0 0 0 1px rgba(212,168,67,0.3);
+  transition:all .25s ease;
+  animation:tezFabIn .35s ease;
+}
+.tez-fab.visible{display:inline-flex;}
+.tez-fab:hover{
+  background:#e6bb52;
+  box-shadow:0 12px 32px rgba(0,0,0,0.4),0 0 24px rgba(212,168,67,0.5);
+  transform:translateY(-2px);
+}
+.tez-fab:active{transform:translateY(0);}
+.tez-fab svg{flex-shrink:0;}
+.tez-fab .arr{transition:transform .25s;}
+.tez-fab:hover .arr{transform:translateX(3px);}
+.tez-fab-close{
+  position:absolute;top:-8px;right:-8px;
+  width:20px;height:20px;border-radius:50%;
+  background:#1c2235;color:var(--text2);
+  border:1px solid var(--rule);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;cursor:pointer;line-height:1;
+  transition:all .2s;
+}
+.tez-fab-close:hover{
+  background:#0e1220;color:var(--text);
+  border-color:var(--gold);
+}
+@keyframes tezFabIn{
+  from{opacity:0;transform:translateY(20px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@media (max-width:768px){
+  .tez-fab{
+    bottom:80px;right:16px;left:16px;
+    justify-content:center;font-size:11px;padding:14px 18px;
+  }
+  .tez-fab.visible{display:flex;}
 }
 </style>
 <body>
@@ -2389,18 +2438,17 @@ body{
         <div class="tez-page-title">Yatırım Tezleri</div>
         <div class="tez-page-sub">ARAŞTIRMA · ANALİZ · BARIŞ INVESTING</div>
       </div>
-      <div class="tez-grid" id="tezGrid"></div>
 
-      <!-- ══ CTA #2 — Tezler altında, retention banner ══ -->
+      <!-- ══ CTA #2 — Tezler grid üstünde, görünür konumda ══ -->
       <div class="tez-cta-banner" id="tezCtaBanner">
         <div class="tez-cta-banner-inner">
           <div class="tez-cta-banner-text">
-            <div class="tez-cta-banner-eyebrow">Sıradaki Adım</div>
+            <div class="tez-cta-banner-eyebrow">Aracı Kullan</div>
             <div class="tez-cta-banner-title">
-              Tezleri okudun. Şimdi <span class="accent">kendi hissene</span> uygula.
+              Tezler ilham, <span class="accent">analiz</span> karar verdirir.
             </div>
             <div class="tez-cta-banner-desc">
-              Buffett, Lynch, Graham ve Dalio çerçeveleriyle istediğin BIST, NYSE veya NASDAQ hissesini 7 kriterli AI destekli analizden geçir. Tezler ilham, analiz karar verdirir.
+              Buffett, Lynch, Graham ve Dalio çerçeveleriyle istediğin BIST, NYSE veya NASDAQ hissesini 7 kriterli AI destekli analizden geçir.
             </div>
           </div>
           <button type="button" class="tez-cta-banner-btn" onclick="ctaTezlerToAnaliz('banner')">
@@ -2410,6 +2458,8 @@ body{
           </button>
         </div>
       </div>
+
+      <div class="tez-grid" id="tezGrid"></div>
     </div>
 
   </div>
@@ -4952,6 +5002,14 @@ function garpAnalizAc(ticker) {
 }
 </script>
 
+<!-- ══ FLOATING MINI-CTA (Tezler sayfasında scroll-aware) ══ -->
+<button type="button" class="tez-fab" id="tezFab" onclick="ctaTezlerToAnaliz('fab')" aria-label="Hisse analizine geç">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+  Analize Geç
+  <span class="arr">→</span>
+  <span class="tez-fab-close" onclick="event.stopPropagation();dismissTezFab()" aria-label="Kapat">✕</span>
+</button>
+
 <!-- ══ ANALYTICS HELPER + CTA — Tezler retention ══ -->
 <script>
 // ════════════════════════════════════════════════════
@@ -5129,6 +5187,88 @@ function garpAnalizAc(ticker) {
       if (inp) inp.focus();
     }, 350);
   };
+
+  // ════════════════════════════════════════════════════
+  // FLOATING MINI-CTA — Tezler sayfasında scroll-aware
+  // ════════════════════════════════════════════════════
+  const FAB_DISMISS_KEY = 'tezFabDismissed_v1';
+
+  function showTezFab() {
+    const fab = document.getElementById('tezFab');
+    if (!fab) return;
+    // Bu oturumda kapattıysa gösterme
+    if (sessionStorage.getItem(FAB_DISMISS_KEY) === '1') return;
+    fab.classList.add('visible');
+  }
+  function hideTezFab() {
+    const fab = document.getElementById('tezFab');
+    if (!fab) return;
+    fab.classList.remove('visible');
+  }
+  window.dismissTezFab = function() {
+    try { sessionStorage.setItem(FAB_DISMISS_KEY, '1'); } catch(e){}
+    hideTezFab();
+    window.trackEvent('tez_fab_dismissed');
+  };
+
+  // Tezler sayfasında scroll'a göre göster (üstte değilken görünsün)
+  let _fabScrollTimer = null;
+  window.addEventListener('scroll', function() {
+    if (_fabScrollTimer) return;
+    _fabScrollTimer = setTimeout(function() {
+      _fabScrollTimer = null;
+      const tezlerPage = document.getElementById('page-tezler');
+      const onTezler = tezlerPage && tezlerPage.classList.contains('active');
+      const modal = document.getElementById('tezModal');
+      const modalOpen = modal && (modal.classList.contains('visible') || getComputedStyle(modal).display !== 'none');
+      // Sadece tezler sayfasında, modal kapalıyken, biraz scroll edildiyse göster
+      if (onTezler && !modalOpen && window.scrollY > 120) {
+        showTezFab();
+      } else {
+        hideTezFab();
+      }
+    }, 100);
+  }, { passive: true });
+
+  // Sayfa değişince FAB'ı saklamak için showPage'i tekrar dinle
+  // (ana wrapper zaten yukarıda var; burası sadece görünürlüğü temizler)
+  document.addEventListener('click', function(e) {
+    // Tezler dışı bir nav tıklamasında FAB hemen gizlensin
+    setTimeout(function() {
+      const tezlerPage = document.getElementById('page-tezler');
+      if (!tezlerPage || !tezlerPage.classList.contains('active')) {
+        hideTezFab();
+      }
+    }, 50);
+  });
+
+  // ════════════════════════════════════════════════════
+  // MODAL KAPANIŞ AKIŞI — banner'a smooth scroll
+  // Kullanıcı tezi okuyup kapatınca CTA banner'ı viewport'a getir
+  // ════════════════════════════════════════════════════
+  const _origCloseTezForScroll = window.closeTezModal;
+  if (typeof _origCloseTezForScroll === 'function') {
+    window.closeTezModal = function() {
+      const result = _origCloseTezForScroll.apply(this, arguments);
+      // 200ms sonra (modal animasyonu bitsin) banner'a kay
+      setTimeout(function() {
+        const banner = document.getElementById('tezCtaBanner');
+        const tezlerPage = document.getElementById('page-tezler');
+        const onTezler = tezlerPage && tezlerPage.classList.contains('active');
+        if (banner && onTezler) {
+          // Banner viewport'ta görünür mü kontrol et
+          const rect = banner.getBoundingClientRect();
+          const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
+          if (!inView) {
+            banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // FAB göster (scroll yapacağı için zaten görünecek ama garanti olsun)
+            setTimeout(showTezFab, 600);
+          }
+        }
+      }, 200);
+      return result;
+    };
+  }
 })();
 </script>
 </body>
