@@ -15,6 +15,52 @@ const HOT_CACHE_TTL   = 5 * 60 * 1000;          // 5 dakika (in-memory)
 const TIMEOUT_MS      = 12000;
 const VALID_EXCHANGES = new Set(['BIST', 'NYSE', 'NASDAQ']);
 
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+// ── Yahoo Crumb + Cookie cache (55 dakika TTL) ──
+// Yahoo 2024'ten beri cookie + crumb token zorunlu kıldı.
+// fc.yahoo.com'dan cookie al → /v1/test/getcrumb ile crumb token al.
+let _crumb = null, _cookie = null, _crumbTs = 0;
+const CRUMB_TTL = 55 * 60 * 1000;
+
+async function getYahooCrumb() {
+  if (_crumb && _cookie && Date.now() - _crumbTs < CRUMB_TTL) {
+    return { crumb: _crumb, cookie: _cookie };
+  }
+  try {
+    const r1 = await fetch('https://fc.yahoo.com', {
+      headers: { 'User-Agent': UA },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(8000),
+    });
+    const setCookie = r1.headers.get('set-cookie') || '';
+    const cookieVal = setCookie.split(';')[0] || '';
+    if (!cookieVal) return { crumb: null, cookie: null };
+
+    const r2 = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', {
+      headers: {
+        'User-Agent':      UA,
+        'Cookie':          cookieVal,
+        'Accept':          'text/plain',
+        'Referer':         'https://finance.yahoo.com/',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (r2.ok) {
+      const txt = await r2.text();
+      if (txt && txt.length > 0) {
+        _crumb   = txt.trim();
+        _cookie  = cookieVal;
+        _crumbTs = Date.now();
+      }
+    }
+  } catch (e) {
+    console.log('[fv] Crumb failed:', e.message);
+  }
+  return { crumb: _crumb, cookie: _cookie };
+}
+
 // ── In-memory hot cache ──
 const HOT = new Map();
 function hotGet(key) {
@@ -43,49 +89,132 @@ function clean(t) {
 // ════════════════════════════════════════════════════
 
 // ── Twelve Data (NYSE/NASDAQ) ──
+// 4 paralel endpoint çağrısı: statistics + balance_sheet + cash_flow + price
+// Free tier: 800 req/gün, 8 req/dk → 4 req/hisse → 2 hisse/dk güvenli
 async function fetchTwelveData(ticker) {
   if (!TD_KEY) throw new Error('Twelve Data API key not configured');
 
-  // statistics endpoint = tüm fundamentals tek istekte
-  // Free tier: 800 req/gün, 8 req/dk
-  const url = `https://api.twelvedata.com/statistics?symbol=${encodeURIComponent(ticker)}&apikey=${TD_KEY}`;
-  const r = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-  if (!r.ok) throw new Error(`Twelve Data HTTP ${r.status}`);
-  const data = await r.json();
+  const base = 'https://api.twelvedata.com';
+  const opts = { signal: AbortSignal.timeout(TIMEOUT_MS) };
+  const k    = `&apikey=${TD_KEY}`;
 
-  if (data.code && data.code !== 200) {
-    throw new Error(`Twelve Data error: ${data.message || data.code}`);
+  // Paralel çağırma — 4 endpoint birden
+  const [statsRes, bsRes, cfRes, priceRes] = await Promise.allSettled([
+    fetch(`${base}/statistics?symbol=${encodeURIComponent(ticker)}${k}`, opts),
+    fetch(`${base}/balance_sheet?symbol=${encodeURIComponent(ticker)}&period=annual&start_date=2022-01-01${k}`, opts),
+    fetch(`${base}/cash_flow?symbol=${encodeURIComponent(ticker)}&period=annual&start_date=2022-01-01${k}`, opts),
+    fetch(`${base}/price?symbol=${encodeURIComponent(ticker)}${k}`, opts),
+  ]);
+
+  // Helper: response → JSON, hata varsa null
+  async function safeJson(settled, label) {
+    if (settled.status !== 'fulfilled') {
+      console.log(`[fv-td] ${label} failed:`, settled.reason?.message);
+      return null;
+    }
+    if (!settled.value.ok) {
+      console.log(`[fv-td] ${label} HTTP ${settled.value.status}`);
+      return null;
+    }
+    try {
+      const j = await settled.value.json();
+      // Twelve Data hata kalıbı: { code: 400, message: "..." }
+      if (j?.code && j.code !== 200) {
+        console.log(`[fv-td] ${label} error:`, j.message);
+        return null;
+      }
+      return j;
+    } catch (e) {
+      return null;
+    }
   }
 
-  const stats = data?.statistics || {};
-  const valuation = stats?.valuations_metrics || {};
-  const finHi = stats?.financials || {};
-  const inc   = finHi?.income_statement || {};
-  const bal   = finHi?.balance_sheet || {};
-  const cf    = finHi?.cash_flow || {};
+  const [stats, balance, cashflow, priceData] = await Promise.all([
+    safeJson(statsRes, 'statistics'),
+    safeJson(bsRes,    'balance_sheet'),
+    safeJson(cfRes,    'cash_flow'),
+    safeJson(priceRes, 'price'),
+  ]);
 
-  // Güncel fiyat ayrı endpoint (statistics fiyat içermez)
-  let price = null;
-  try {
-    const pr = await fetch(
-      `https://api.twelvedata.com/price?symbol=${encodeURIComponent(ticker)}&apikey=${TD_KEY}`,
-      { signal: AbortSignal.timeout(TIMEOUT_MS) }
-    );
-    if (pr.ok) price = num((await pr.json())?.price);
-  } catch(e) { /* swallow */ }
+  if (!stats && !balance && !cashflow) {
+    throw new Error('Twelve Data: tüm endpointler başarısız');
+  }
+
+  // ── statistics'ten temel veriler ──
+  const s        = stats?.statistics || {};
+  const valMet   = s.valuations_metrics || {};
+  const finStat  = s.financials || {};
+  const incStat  = finStat.income_statement || {};
+  const shareStat= s.share_statistics || {};
+  const stockPx  = s.stock_price_summary || {};
+
+  const eps = num(incStat.diluted_eps_ttm) || num(valMet.trailing_eps);
+
+  // Büyüme: önce earnings yoy, yoksa revenue yoy
+  let growthRate = num(incStat.quarterly_earnings_growth_yoy);
+  if (growthRate == null) growthRate = num(incStat.quarterly_revenue_growth);
+
+  // Market cap
+  const marketCap = num(valMet.market_capitalization);
+
+  // ── balance_sheet'ten book value per share ──
+  // Yapı: { balance_sheet: [ { fiscal_date, equity: { common_stock_equity, ... }, ... }, ... ] }
+  let bookValuePS = num(valMet.book_value_per_share_mrq);  // önce statistics'ten dene
+
+  let totalEquity = null;
+  if (balance?.balance_sheet?.length > 0) {
+    const latest = balance.balance_sheet[0];
+    totalEquity = num(latest?.equity?.common_stock_equity)
+              || num(latest?.equity?.total_stockholders_equity)
+              || num(latest?.equity?.shareholders_equity);
+  }
+
+  // Shares outstanding — 3 farklı yerden dene
+  let sharesOut = num(shareStat.shares_outstanding)
+              || num(shareStat.outstanding_shares)
+              || num(s.shares_outstanding);
+
+  // Eğer book value per share yok ama equity ve shares varsa hesapla
+  if (bookValuePS == null && totalEquity != null && sharesOut != null && sharesOut > 0) {
+    bookValuePS = totalEquity / sharesOut;
+  }
+
+  // Eğer shares yok ama market cap ve price varsa türet
+  let priceFromEndpoint = num(priceData?.price);
+
+  // ── cash_flow'dan FCF ──
+  // Yapı: { cash_flow: [ { fiscal_date, free_cash_flow, operating_activities: {...}, investing_activities: {...} } ] }
+  let fcf = null;
+  if (cashflow?.cash_flow?.length > 0) {
+    const latest = cashflow.cash_flow[0];
+    fcf = num(latest.free_cash_flow);
+
+    // Yoksa OCF + Capex (capex genelde negatif olarak gelir)
+    if (fcf == null) {
+      const ocf = num(latest.operating_activities?.operating_cash_flow)
+              ||  num(latest.operating_activities?.cash_flow_from_operating_activities);
+      const capex = num(latest.investing_activities?.capital_expenditures);
+      if (ocf != null && capex != null) {
+        fcf = ocf + capex;  // capex negatif, toplam doğru çıkar
+      }
+    }
+  }
+
+  // sharesOut hâlâ yoksa marketCap/price ile türet
+  if (sharesOut == null && marketCap != null && priceFromEndpoint != null && priceFromEndpoint > 0) {
+    sharesOut = marketCap / priceFromEndpoint;
+  }
 
   return {
-    eps:           num(stats?.financials?.income_statement?.diluted_eps_ttm)
-                || num(valuation?.trailing_eps),
-    bookValuePS:   num(valuation?.book_value_per_share_mrq),
-    growthRate:    num(stats?.financials?.income_statement?.quarterly_earnings_growth_yoy)
-                || num(stats?.financials?.income_statement?.quarterly_revenue_growth),
-    fcf:           num(cf?.free_cash_flow_ttm),
-    sharesOut:     num(stats?.share_statistics?.shares_outstanding),
-    marketCap:     num(valuation?.market_capitalization),
-    currentPrice:  price,
-    currency:      'USD',
-    source:        'twelvedata',
+    eps,
+    bookValuePS,
+    growthRate,
+    fcf,
+    sharesOut,
+    marketCap,
+    currentPrice: priceFromEndpoint,
+    currency:     'USD',
+    source:       'twelvedata',
   };
 }
 
