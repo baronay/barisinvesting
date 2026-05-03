@@ -1887,6 +1887,181 @@ body{
   font-family:'IBM Plex Mono',monospace;line-height:1.6;
 }
 .x-embed-fail a{color:var(--gold);text-decoration:none;border-bottom:1px solid var(--gold);}
+
+/* ════════════════════════════════════════════════════
+   FAIR VALUE CARD — Adil Değer Hesaplama
+   Bloomberg-tarzı, çerçeveye duyarlı, 3 model yan yana
+═══════════════════════════════════════════════════════ */
+.fv-card{
+  background:var(--surface);
+  border:1px solid var(--rule);
+  border-left:3px solid var(--gold);
+  padding:20px 22px;
+  margin-bottom:14px;
+  position:relative;overflow:hidden;
+  display:none;
+}
+.fv-card.visible{display:block;}
+.fv-card.loading{opacity:.6;pointer-events:none;}
+
+.fv-head{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:14px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--rule);
+}
+.fv-head-icon{
+  width:28px;height:28px;
+  background:rgba(212,168,67,0.1);
+  border:1px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold);font-size:14px;
+  flex-shrink:0;
+}
+.fv-head-text{flex:1;}
+.fv-head-title{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
+  color:var(--text);letter-spacing:1.5px;text-transform:uppercase;
+}
+.fv-head-sub{
+  font-size:9px;color:var(--muted2);
+  font-family:'IBM Plex Mono',monospace;letter-spacing:1px;
+  margin-top:2px;
+}
+.fv-current-price{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;
+  color:var(--muted);
+  text-align:right;flex-shrink:0;
+}
+.fv-current-price b{
+  display:block;font-size:16px;color:var(--text);
+  font-weight:600;margin-top:2px;
+}
+
+/* 3 model grid */
+.fv-models{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:12px;
+}
+.fv-model{
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--rule);
+  padding:14px 12px;
+  position:relative;
+  transition:all .3s ease;
+}
+.fv-model.featured{
+  border-color:var(--gold);
+  background:linear-gradient(180deg,rgba(212,168,67,0.06) 0%,rgba(212,168,67,0.01) 100%);
+  box-shadow:0 0 16px rgba(212,168,67,0.15);
+}
+.fv-model.featured::before{
+  content:'SEÇİLİ ÇERÇEVE';
+  position:absolute;top:-8px;left:10px;
+  background:var(--gold);color:#0e1220;
+  font-family:'IBM Plex Mono',monospace;font-size:7px;font-weight:700;
+  padding:2px 6px;letter-spacing:1.5px;
+}
+.fv-model.unavailable{opacity:.4;}
+
+.fv-m-name{
+  font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;
+  color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;
+  margin-bottom:8px;
+}
+.fv-model.featured .fv-m-name{color:var(--gold);}
+
+.fv-m-value{
+  font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;
+  color:var(--text);line-height:1;
+  margin-bottom:6px;
+}
+.fv-model.featured .fv-m-value{font-size:26px;}
+
+.fv-m-delta{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:0.5px;
+}
+.fv-m-delta.cheap{color:var(--success);}
+.fv-m-delta.fair{color:var(--gold);}
+.fv-m-delta.expensive{color:var(--danger);}
+.fv-m-delta.na{color:var(--muted2);}
+
+/* Görsel bar — current price nerede vs fair value */
+.fv-m-bar{
+  height:3px;background:var(--rule);position:relative;
+  margin-top:10px;
+}
+.fv-m-bar-fill{
+  position:absolute;top:0;left:0;height:100%;
+  transition:width .6s ease,background-color .3s;
+}
+.fv-m-bar-fill.cheap{background:var(--success);}
+.fv-m-bar-fill.fair{background:var(--gold);}
+.fv-m-bar-fill.expensive{background:var(--danger);}
+
+.fv-m-formula{
+  font-size:9px;color:var(--muted2);
+  font-family:'IBM Plex Mono',monospace;
+  margin-top:8px;letter-spacing:0.5px;
+  opacity:.8;
+}
+
+/* Footer — disclaimer + warnings */
+.fv-foot{
+  margin-top:14px;padding-top:10px;
+  border-top:1px solid var(--rule);
+  display:flex;justify-content:space-between;align-items:flex-start;gap:14px;
+  font-size:9px;color:var(--muted2);
+  font-family:'IBM Plex Mono',monospace;line-height:1.6;
+}
+.fv-foot-warns{flex:1;}
+.fv-foot-warns ul{margin:0;padding:0;list-style:none;}
+.fv-foot-warns li{
+  padding-left:14px;position:relative;
+}
+.fv-foot-warns li::before{
+  content:'⚠';position:absolute;left:0;color:var(--warn);
+}
+.fv-foot-meta{
+  text-align:right;flex-shrink:0;
+}
+.fv-foot-meta a{color:var(--gold);text-decoration:none;}
+
+/* Loading state */
+.fv-loading{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:32px 20px;
+  color:var(--muted);font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:1px;text-transform:uppercase;
+}
+.fv-loading .spin{
+  width:14px;height:14px;
+  border:2px solid var(--rule);border-top-color:var(--gold);
+  border-radius:50%;animation:fvspin .8s linear infinite;
+}
+@keyframes fvspin{to{transform:rotate(360deg);}}
+
+/* Error state */
+.fv-error{
+  padding:16px 18px;
+  font-size:10px;color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;line-height:1.6;
+  text-align:center;
+}
+
+/* Mobile responsive */
+@media (max-width:768px){
+  .fv-card{padding:16px 14px;}
+  .fv-models{grid-template-columns:1fr;gap:8px;}
+  .fv-model.featured{order:-1;}
+  .fv-m-value{font-size:18px;}
+  .fv-model.featured .fv-m-value{font-size:22px;}
+  .fv-head-sub{display:none;}
+  .fv-foot{flex-direction:column;}
+  .fv-foot-meta{text-align:left;}
+}
 </style>
 <body>
 <div id="globalToast"><span class="toast-dot"></span><span class="toast-msg"></span></div>
@@ -2454,6 +2629,58 @@ body{
       <div class="cons-bar"><div class="cb" id="cBuy" style="width:60%"></div><div class="ch" id="cHold" style="width:25%"></div><div class="cs" id="cSell" style="width:15%"></div></div>
       <div class="cons-lbls"><span id="cBuyL" style="color:var(--success)">AL</span><span id="cHoldL" style="color:var(--warn)">TUT</span><span id="cSellL" style="color:var(--danger)">SAT</span></div>
       <div class="ana-note" id="anaNote">—</div>
+    </div>
+
+    <!-- ══ FAIR VALUE CARD — Adil Değer (3 model) ══ -->
+    <div class="fv-card" id="fvCard">
+      <div class="fv-head">
+        <div class="fv-head-icon">◈</div>
+        <div class="fv-head-text">
+          <div class="fv-head-title">Adil Değer Analizi</div>
+          <div class="fv-head-sub">3 EFSANE · 3 PERSPEKTİF</div>
+        </div>
+        <div class="fv-current-price">
+          ANLIK FİYAT
+          <b id="fvCurrentPrice">—</b>
+        </div>
+      </div>
+
+      <div class="fv-models">
+        <!-- Buffett Multiple (EPS × 12) -->
+        <div class="fv-model" id="fvModelBuffett" data-fw="buffett">
+          <div class="fv-m-name">Buffett · 12x Earnings</div>
+          <div class="fv-m-value" id="fvBuffettValue">—</div>
+          <div class="fv-m-delta na" id="fvBuffettDelta">—</div>
+          <div class="fv-m-bar"><div class="fv-m-bar-fill" id="fvBuffettBar"></div></div>
+          <div class="fv-m-formula">EPS × 12</div>
+        </div>
+
+        <!-- Lynch PEG=1 -->
+        <div class="fv-model" id="fvModelLynch" data-fw="lynch">
+          <div class="fv-m-name">Lynch · PEG=1</div>
+          <div class="fv-m-value" id="fvLynchValue">—</div>
+          <div class="fv-m-delta na" id="fvLynchDelta">—</div>
+          <div class="fv-m-bar"><div class="fv-m-bar-fill" id="fvLynchBar"></div></div>
+          <div class="fv-m-formula">EPS × Büyüme%</div>
+        </div>
+
+        <!-- Graham Defensive PE -->
+        <div class="fv-model" id="fvModelGraham" data-fw="graham">
+          <div class="fv-m-name">Graham · Defensive</div>
+          <div class="fv-m-value" id="fvGrahamValue">—</div>
+          <div class="fv-m-delta na" id="fvGrahamDelta">—</div>
+          <div class="fv-m-bar"><div class="fv-m-bar-fill" id="fvGrahamBar"></div></div>
+          <div class="fv-m-formula">EPS × 15</div>
+        </div>
+      </div>
+
+      <div class="fv-foot">
+        <div class="fv-foot-warns" id="fvWarnings"></div>
+        <div class="fv-foot-meta">
+          <span id="fvSource">—</span><br>
+          <span id="fvComputedAt">—</span>
+        </div>
+      </div>
     </div>
 
     <div class="chart-card"><div class="card-t"><div class="cdot"></div>Radar Analizi</div><div class="radar-wrap"><canvas id="radarC"></canvas></div></div>
@@ -3376,7 +3603,7 @@ async function doAnalyze(){
   document.getElementById('loadingT').textContent=ticker;
   document.getElementById('loadingFW').textContent=`${ex.l} — ${fw.name}`;
   ov.classList.add('visible');
-  ['rdGrid','multGrid','rsiCard','rngCard','anaCard','priceStrip'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});const _mb=document.getElementById('masterBadge');if(_mb)_mb.classList.remove('visible');const _ft=document.getElementById('fwTeaser');if(_ft)_ft.classList.remove('visible');
+  ['rdGrid','multGrid','rsiCard','rngCard','anaCard','priceStrip','fvCard'].forEach(id=>{const e=document.getElementById(id);if(e){e.style.display='none';e.classList.remove('visible');}});const _mb=document.getElementById('masterBadge');if(_mb)_mb.classList.remove('visible');const _ft=document.getElementById('fwTeaser');if(_ft)_ft.classList.remove('visible');
   document.getElementById('badgeLive').style.display='none';
   ['ls1','ls2','ls3','ls4'].forEach((s,i)=>{document.getElementById(s).className='loading-step';setTimeout(()=>{if(i>0)document.getElementById(['ls1','ls2','ls3','ls4'][i-1]).classList.add('done');document.getElementById(s).classList.add('active');},i*700);});
   try{
@@ -3551,6 +3778,10 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   showPage('overview');switchTab('analiz');
   setTimeout(()=>document.getElementById('analysisSection').scrollIntoView({behavior:'smooth',block:'start'}),300);
   tezBildirimKontrol(ticker);
+  // Fair Value hesaplamasını paralel başlat (analiz kullanıcı için akıyor olsun)
+  if (typeof window.loadFairValue === 'function') {
+    window.loadFairValue(ticker, curEX, fwKey || curFW);
+  }
 }
 
 let _tezBildirimId = null;
@@ -5522,6 +5753,208 @@ function garpAnalizAc(ticker) {
         });
       });
   };
+
+  // ════════════════════════════════════════════════════
+  // FAIR VALUE — Adil Değer Hesaplama (Faz C)
+  // /api/fair-value endpoint'inden veri çek, 3 model bar göster
+  // ════════════════════════════════════════════════════
+  let _fvAbortController = null;
+
+  window.loadFairValue = function(ticker, exchange, frameworkKey) {
+    const card = document.getElementById('fvCard');
+    if (!card) return;
+
+    // Önceki istek varsa iptal et (yeni hisse analiz ediliyor)
+    if (_fvAbortController) {
+      try { _fvAbortController.abort(); } catch(_) {}
+    }
+    _fvAbortController = new AbortController();
+
+    // Kartı göster, loading state'e al
+    card.classList.add('visible', 'loading');
+    card.style.display = 'block';
+
+    // Loading mesajı (mevcut içeriği bozmadan)
+    const loadingHtml =
+      '<div class="fv-loading"><span class="spin"></span>Adil değer hesaplanıyor</div>';
+    // Mevcut .fv-models'in content'ini yedekle, sonra geri getireceğiz
+    const modelsEl = card.querySelector('.fv-models');
+    if (modelsEl) modelsEl.style.opacity = '.4';
+
+    const url = `/api/fair-value?ticker=${encodeURIComponent(ticker)}&exchange=${encodeURIComponent(exchange)}`;
+
+    fetch(url, { signal: _fvAbortController.signal })
+      .then(r => {
+        if (!r.ok) {
+          // 4xx/5xx — body'yi parse et, mesajı göster
+          return r.json().then(j => { throw new Error(j.detail || j.error || `HTTP ${r.status}`); });
+        }
+        return r.json();
+      })
+      .then(data => {
+        renderFairValue(data, frameworkKey);
+        card.classList.remove('loading');
+        if (modelsEl) modelsEl.style.opacity = '1';
+
+        // Analytics: hangi hisse için fair value görüldü
+        if (typeof window.trackEvent === 'function') {
+          window.trackEvent('fair_value_viewed', {
+            ticker:     String(ticker || 'unknown'),
+            exchange:   String(exchange || 'unknown'),
+            framework:  String(frameworkKey || 'none'),
+            cached:     !!data.cached,
+            has_buffett:!!data.dcf_value,
+            has_lynch:  !!data.lynch_value,
+            has_graham: !!data.graham_value,
+          });
+        }
+      })
+      .catch(err => {
+        if (err.name === 'AbortError') return;
+        console.warn('[fv]', err);
+        renderFairValueError(err.message || 'Hesaplama yapılamadı');
+        card.classList.remove('loading');
+        if (modelsEl) modelsEl.style.opacity = '1';
+      });
+  };
+
+  // Bir model satırını render et (Buffett / Lynch / Graham)
+  function renderFvModel(modelKey, value, currentPrice, isFeatured) {
+    const valueEl = document.getElementById(`fv${capitalize(modelKey)}Value`);
+    const deltaEl = document.getElementById(`fv${capitalize(modelKey)}Delta`);
+    const barEl   = document.getElementById(`fv${capitalize(modelKey)}Bar`);
+    const cardEl  = document.getElementById(`fvModel${capitalize(modelKey)}`);
+    if (!valueEl || !deltaEl || !barEl || !cardEl) return;
+
+    cardEl.classList.toggle('featured', !!isFeatured);
+
+    if (value == null || !isFinite(value) || value <= 0) {
+      valueEl.textContent = 'N/A';
+      deltaEl.textContent = 'Veri yetersiz';
+      deltaEl.className = 'fv-m-delta na';
+      barEl.style.width = '0%';
+      barEl.className = 'fv-m-bar-fill';
+      cardEl.classList.add('unavailable');
+      return;
+    }
+    cardEl.classList.remove('unavailable');
+
+    // Currency formatting
+    const sym = currentPrice && value && currentPrice > 0 ? '' : '';
+    valueEl.textContent = formatPrice(value);
+
+    if (currentPrice == null || currentPrice <= 0) {
+      deltaEl.textContent = formatPrice(value);
+      deltaEl.className = 'fv-m-delta na';
+      barEl.style.width = '50%';
+      return;
+    }
+
+    // Yüzde fark
+    const diffPct = ((value - currentPrice) / currentPrice) * 100;
+    let label, klass;
+    if (diffPct > 10) {
+      label = `+%${diffPct.toFixed(0)} ucuz`;
+      klass = 'cheap';
+    } else if (diffPct < -10) {
+      label = `%${diffPct.toFixed(0)} pahalı`;
+      klass = 'expensive';
+    } else {
+      label = `Adil (~%${diffPct.toFixed(0)})`;
+      klass = 'fair';
+    }
+    deltaEl.textContent = label;
+    deltaEl.className = 'fv-m-delta ' + klass;
+
+    // Bar genişliği — current price'a göre value'nun konumu
+    // 50% = adil, daha sağa = ucuz (fair value yüksek), daha sola = pahalı
+    const barWidth = Math.max(10, Math.min(100, 50 + (diffPct / 2)));
+    barEl.style.width = barWidth + '%';
+    barEl.className = 'fv-m-bar-fill ' + klass;
+  }
+
+  function renderFairValue(data, frameworkKey) {
+    // Anlık fiyat
+    const cpEl = document.getElementById('fvCurrentPrice');
+    if (cpEl) cpEl.textContent = formatPrice(data.current_price) || '—';
+
+    // Hangi model featured olacak — seçili çerçeveye göre
+    // FW key'leri: 'buffett','lynch','dalio','graham'
+    // Dalio için Buffett'i öne çıkarıyoruz (DCF benzeri kalite-odaklı)
+    let featured = 'buffett';
+    if (frameworkKey === 'lynch')   featured = 'lynch';
+    else if (frameworkKey === 'graham') featured = 'graham';
+    else if (frameworkKey === 'dalio')  featured = 'buffett';
+    // Default 'buffett' kalır
+
+    renderFvModel('buffett', data.dcf_value,    data.current_price, featured === 'buffett');
+    renderFvModel('lynch',   data.lynch_value,  data.current_price, featured === 'lynch');
+    renderFvModel('graham',  data.graham_value, data.current_price, featured === 'graham');
+
+    // Footer — warnings
+    const warnsEl = document.getElementById('fvWarnings');
+    if (warnsEl) {
+      const warnings = (data.warnings || []).filter(Boolean);
+      if (warnings.length === 0) {
+        warnsEl.innerHTML = '<div style="opacity:.5">Tüm değerleme modelleri çalıştı.</div>';
+      } else {
+        warnsEl.innerHTML = '<ul>' +
+          warnings.slice(0, 3).map(w => `<li>${esc(w)}</li>`).join('') +
+          '</ul>';
+      }
+    }
+
+    // Footer — meta
+    const srcEl = document.getElementById('fvSource');
+    const dtEl  = document.getElementById('fvComputedAt');
+    if (srcEl) {
+      const src = (data.sources && data.sources.primary) || 'unknown';
+      const cached = data.cached ? ' · cache' : ' · live';
+      srcEl.textContent = `Kaynak: ${src}${cached}`;
+    }
+    if (dtEl && data.computed_at) {
+      try {
+        const dt = new Date(data.computed_at);
+        dtEl.textContent = dt.toLocaleString('tr-TR', {
+          day:'2-digit', month:'2-digit', year:'numeric',
+          hour:'2-digit', minute:'2-digit'
+        });
+      } catch (_) { dtEl.textContent = ''; }
+    }
+  }
+
+  function renderFairValueError(msg) {
+    const card = document.getElementById('fvCard');
+    if (!card) return;
+    // Mevcut layout korunsun, sadece warnings'e hata yaz
+    const warnsEl = document.getElementById('fvWarnings');
+    if (warnsEl) {
+      warnsEl.innerHTML = `<div style="color:var(--danger)">⚠ Adil değer hesaplanamadı: ${esc(msg)}</div>`;
+    }
+    // Tüm modelleri N/A göster
+    ['buffett','lynch','graham'].forEach(m => {
+      const v = document.getElementById(`fv${capitalize(m)}Value`);
+      const d = document.getElementById(`fv${capitalize(m)}Delta`);
+      const b = document.getElementById(`fv${capitalize(m)}Bar`);
+      if (v) v.textContent = 'N/A';
+      if (d) { d.textContent = '—'; d.className = 'fv-m-delta na'; }
+      if (b) { b.style.width = '0%'; b.className = 'fv-m-bar-fill'; }
+    });
+  }
+
+  // Helpers
+  function capitalize(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  function formatPrice(v) {
+    if (v == null || !isFinite(v)) return '—';
+    if (v >= 1000) return v.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    return v.toFixed(2);
+  }
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, c =>
+      ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
 })();
 </script>
 </body>
