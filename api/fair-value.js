@@ -89,8 +89,8 @@ function clean(t) {
 // ════════════════════════════════════════════════════
 
 // ── Twelve Data (NYSE/NASDAQ) ──
-// 4 paralel endpoint çağrısı: statistics + balance_sheet + cash_flow + price
-// Free tier: 800 req/gün, 8 req/dk → 4 req/hisse → 2 hisse/dk güvenli
+// SADECE statistics + price endpoint'leri (free tier'da garanti çalışan)
+// 2 paralel istek = 2 credit/hisse. 8 req/dk limit'le 4 hisse/dk güvenli.
 async function fetchTwelveData(ticker, debugCollector) {
   if (!TD_KEY) throw new Error('Twelve Data API key not configured');
 
@@ -98,22 +98,18 @@ async function fetchTwelveData(ticker, debugCollector) {
   const opts = { signal: AbortSignal.timeout(TIMEOUT_MS) };
   const k    = `&apikey=${TD_KEY}`;
 
-  // Paralel çağırma — 4 endpoint birden
-  const [statsRes, bsRes, cfRes, priceRes] = await Promise.allSettled([
+  // 2 paralel istek (toplam 2 credit) — minimum yük
+  const [statsRes, priceRes] = await Promise.allSettled([
     fetch(`${base}/statistics?symbol=${encodeURIComponent(ticker)}${k}`, opts),
-    fetch(`${base}/balance_sheet?symbol=${encodeURIComponent(ticker)}&period=annual&start_date=2022-01-01${k}`, opts),
-    fetch(`${base}/cash_flow?symbol=${encodeURIComponent(ticker)}&period=annual&start_date=2022-01-01${k}`, opts),
     fetch(`${base}/price?symbol=${encodeURIComponent(ticker)}${k}`, opts),
   ]);
 
   const td_debug = { endpoints: {} };
 
-  // Helper: response → JSON, hata varsa null + debug'a yaz
   async function safeJson(settled, label) {
     if (settled.status !== 'fulfilled') {
       const err = settled.reason?.message || 'rejected';
       td_debug.endpoints[label] = { ok: false, reason: 'fetch_rejected', error: err };
-      console.log(`[fv-td] ${label} rejected:`, err);
       return null;
     }
     const status = settled.value.status;
@@ -121,51 +117,31 @@ async function fetchTwelveData(ticker, debugCollector) {
     try { bodyText = await settled.value.text(); } catch {}
 
     if (!settled.value.ok) {
-      td_debug.endpoints[label] = {
-        ok: false,
-        http: status,
-        body_preview: bodyText.slice(0, 200),
-      };
-      console.log(`[fv-td] ${label} HTTP ${status}: ${bodyText.slice(0,200)}`);
+      td_debug.endpoints[label] = { ok: false, http: status, body_preview: bodyText.slice(0, 200) };
       return null;
     }
     try {
       const j = JSON.parse(bodyText);
-      // Twelve Data hata kalıbı: { code: 400, message: "..." }
       if (j?.code && j.code !== 200) {
-        td_debug.endpoints[label] = {
-          ok: false,
-          http: status,
-          api_code: j.code,
-          message: j.message,
-        };
-        console.log(`[fv-td] ${label} api error code=${j.code}: ${j.message}`);
+        td_debug.endpoints[label] = { ok: false, http: status, api_code: j.code, message: j.message };
         return null;
       }
       td_debug.endpoints[label] = { ok: true, http: status };
       return j;
     } catch (e) {
-      td_debug.endpoints[label] = {
-        ok: false,
-        parse_error: e.message,
-        body_preview: bodyText.slice(0, 200),
-      };
+      td_debug.endpoints[label] = { ok: false, parse_error: e.message, body_preview: bodyText.slice(0, 200) };
       return null;
     }
   }
 
-  const [stats, balance, cashflow, priceData] = await Promise.all([
+  const [stats, priceData] = await Promise.all([
     safeJson(statsRes, 'statistics'),
-    safeJson(bsRes,    'balance_sheet'),
-    safeJson(cfRes,    'cash_flow'),
     safeJson(priceRes, 'price'),
   ]);
 
-  // Debug collector'a ekle
   if (debugCollector) debugCollector.twelve_data = td_debug;
 
-  if (!stats && !balance && !cashflow) {
-    // Detaylı hata mesajı
+  if (!stats) {
     const reasons = Object.entries(td_debug.endpoints)
       .filter(([_, v]) => !v.ok)
       .map(([k, v]) => `${k}: ${v.message || v.body_preview || `HTTP ${v.http}` || v.error || 'unknown'}`)
@@ -174,12 +150,11 @@ async function fetchTwelveData(ticker, debugCollector) {
   }
 
   // ── statistics'ten temel veriler ──
-  const s        = stats?.statistics || {};
-  const valMet   = s.valuations_metrics || {};
-  const finStat  = s.financials || {};
-  const incStat  = finStat.income_statement || {};
-  const shareStat= s.share_statistics || {};
-  const stockPx  = s.stock_price_summary || {};
+  const s         = stats?.statistics || {};
+  const valMet    = s.valuations_metrics || {};
+  const finStat   = s.financials || {};
+  const incStat   = finStat.income_statement || {};
+  const shareStat = s.share_statistics || {};
 
   const eps = num(incStat.diluted_eps_ttm) || num(valMet.trailing_eps);
 
@@ -187,67 +162,33 @@ async function fetchTwelveData(ticker, debugCollector) {
   let growthRate = num(incStat.quarterly_earnings_growth_yoy);
   if (growthRate == null) growthRate = num(incStat.quarterly_revenue_growth);
 
-  // Market cap
-  const marketCap = num(valMet.market_capitalization);
+  const marketCap   = num(valMet.market_capitalization);
+  const peRatio     = num(valMet.trailing_pe);
+  const pbRatio     = num(valMet.price_to_book_mrq);
+  const currentPrice = num(priceData?.price);
 
-  // ── balance_sheet'ten book value per share ──
-  // Yapı: { balance_sheet: [ { fiscal_date, equity: { common_stock_equity, ... }, ... }, ... ] }
-  let bookValuePS = num(valMet.book_value_per_share_mrq);  // önce statistics'ten dene
-
-  let totalEquity = null;
-  if (balance?.balance_sheet?.length > 0) {
-    const latest = balance.balance_sheet[0];
-    totalEquity = num(latest?.equity?.common_stock_equity)
-              || num(latest?.equity?.total_stockholders_equity)
-              || num(latest?.equity?.shareholders_equity);
-  }
-
-  // Shares outstanding — 3 farklı yerden dene
+  // Shares outstanding — birden fazla yerden dene
   let sharesOut = num(shareStat.shares_outstanding)
               || num(shareStat.outstanding_shares)
               || num(s.shares_outstanding);
 
-  // Eğer book value per share yok ama equity ve shares varsa hesapla
-  if (bookValuePS == null && totalEquity != null && sharesOut != null && sharesOut > 0) {
-    bookValuePS = totalEquity / sharesOut;
-  }
-
-  // Eğer shares yok ama market cap ve price varsa türet
-  let priceFromEndpoint = num(priceData?.price);
-
-  // ── cash_flow'dan FCF ──
-  // Yapı: { cash_flow: [ { fiscal_date, free_cash_flow, operating_activities: {...}, investing_activities: {...} } ] }
-  let fcf = null;
-  if (cashflow?.cash_flow?.length > 0) {
-    const latest = cashflow.cash_flow[0];
-    fcf = num(latest.free_cash_flow);
-
-    // Yoksa OCF + Capex (capex genelde negatif olarak gelir)
-    if (fcf == null) {
-      const ocf = num(latest.operating_activities?.operating_cash_flow)
-              ||  num(latest.operating_activities?.cash_flow_from_operating_activities);
-      const capex = num(latest.investing_activities?.capital_expenditures);
-      if (ocf != null && capex != null) {
-        fcf = ocf + capex;  // capex negatif, toplam doğru çıkar
-      }
-    }
-  }
-
-  // sharesOut hâlâ yoksa marketCap/price ile türet
-  if (sharesOut == null && marketCap != null && priceFromEndpoint != null && priceFromEndpoint > 0) {
-    sharesOut = marketCap / priceFromEndpoint;
+  // Market cap ve fiyat varsa, sharesOut'u güvenle türet
+  if (sharesOut == null && marketCap != null && currentPrice != null && currentPrice > 0) {
+    sharesOut = marketCap / currentPrice;
   }
 
   return {
     eps,
-    bookValuePS,
+    bookValuePS: null,    // free tier'da yok — Lite formüller kullanılacak
     growthRate,
-    fcf,
+    fcf: null,            // free tier'da yok
     sharesOut,
     marketCap,
-    currentPrice: priceFromEndpoint,
-    currency:     'USD',
-    source:       'twelvedata',
+    peRatio,              // YENİ: PE ratio (Buffett-Lite için)
+    pbRatio,              // YENİ: P/B (sektör karşılaştırma için)
+    currentPrice,
+    currency:    'USD',
+    source:      'twelvedata-statistics',
   };
 }
 
@@ -350,113 +291,69 @@ function parseYahooResult(result, isBIST) {
 }
 
 // ════════════════════════════════════════════════════
-// DEĞERLEME FORMÜLLERİ
+// DEĞERLEME FORMÜLLERİ — "Lite" varyantlar
+// Twelve Data free tier sınırlamaları nedeniyle:
+// - Tam Graham Number (√22.5×EPS×BV) yapılamaz → Graham Defensive PE
+// - Tam DCF (FCF projeksiyonu) yapılamaz → Buffett Earnings Multiple
+// - Lynch PEG formülü olduğu gibi çalışıyor (sadece EPS+growth ister)
 // ════════════════════════════════════════════════════
 
-// 1) GRAHAM NUMBER
-//    √(22.5 × EPS × BookValuePerShare)
-//    Negatif EPS veya book value varsa N/A
-function grahamNumber(d, warnings) {
-  if (d.eps == null || d.bookValuePS == null) {
-    warnings.push('Graham: EPS veya defter değeri yok');
-    return null;
-  }
-  if (d.eps <= 0) {
-    warnings.push('Graham: EPS negatif (zararda şirket)');
-    return null;
-  }
-  if (d.bookValuePS <= 0) {
-    warnings.push('Graham: defter değeri negatif');
-    return null;
-  }
-  const v = Math.sqrt(22.5 * d.eps * d.bookValuePS);
-  return Math.round(v * 100) / 100;
-}
-
-// 2) LYNCH PEG=1 FAIR VALUE
+// 1) LYNCH PEG=1 FAIR VALUE
 //    EPS × growthRate(%) — Lynch'e göre F/K = büyüme oranı ise hisse adil
-//    Örn: EPS=$5, büyüme=%15 → adil PE 15 → adil fiyat = 5 × 15 = $75
+//    Örn: EPS=$8.26, büyüme=%19.4 → adil PE 19.4 → adil fiyat = 8.26 × 19.4 = $160
 function lynchFairValue(d, warnings) {
-  if (d.eps == null) {
-    warnings.push('Lynch: EPS yok');
-    return null;
-  }
-  if (d.eps <= 0) {
-    warnings.push('Lynch: EPS negatif');
+  if (d.eps == null || d.eps <= 0) {
+    warnings.push('Lynch: pozitif EPS yok');
     return null;
   }
   if (d.growthRate == null) {
     warnings.push('Lynch: büyüme oranı yok');
     return null;
   }
-  // Yahoo growth decimal (0.15), %'ye çevir
   const growthPct = d.growthRate * 100;
   if (growthPct <= 0) {
     warnings.push('Lynch: negatif büyüme (PEG anlamsız)');
     return null;
   }
-  // Aşırı yüksek büyümeyi cap'le (Lynch 25% üstü için PEG güvenilmez der)
+  // Lynch >25% büyüme için PEG güvenilmez der
   const capped = Math.min(growthPct, 25);
   if (growthPct > 25) {
-    warnings.push(`Lynch: büyüme %${growthPct.toFixed(0)} → %25'le sınırlandı`);
+    warnings.push(`Lynch: büyüme %${growthPct.toFixed(0)} → %25'le sınırlandı (Lynch metodolojisi)`);
   }
-  const v = d.eps * capped;
-  return Math.round(v * 100) / 100;
+  return Math.round(d.eps * capped * 100) / 100;
 }
 
-// 3) SIMPLIFIED DCF
-//    10 yıllık FCF projeksiyonu + terminal value
-//    DiscountRate = 10%, PerpetualGrowth = 2.5%
-//    Result: per share intrinsic value
-function simplifiedDCF(d, warnings) {
-  if (d.fcf == null || d.fcf <= 0) {
-    warnings.push('DCF: pozitif FCF yok');
+// 2) GRAHAM DEFENSIVE PE
+//    Benjamin Graham, "Akıllı Yatırımcı" (1949) kitabında defansif yatırımcılar için
+//    maksimum PE 15 önerir. Yani adil değer = EPS × 15.
+//    Bu, klasik Graham Number (√22.5×EPS×BV) için BV gerekli olduğu için kullanılan
+//    onaylı bir basitleştirilmiş varyanttır.
+function grahamDefensivePE(d, warnings) {
+  if (d.eps == null || d.eps <= 0) {
+    warnings.push('Graham: pozitif EPS yok');
     return null;
   }
-  if (d.sharesOut == null || d.sharesOut <= 0) {
-    warnings.push('DCF: hisse sayısı yok');
+  // Eğer P/B oranı çok yüksekse ek uyarı (Graham P/B<1.5 ister)
+  if (d.pbRatio != null && d.pbRatio > 2.5) {
+    warnings.push(`Graham: P/B ${d.pbRatio.toFixed(1)} (>2.5, klasik Graham eşiği aşılmış)`);
+  }
+  return Math.round(d.eps * 15 * 100) / 100;
+}
+
+// 3) BUFFETT EARNINGS MULTIPLE
+//    Buffett'in mektuplarında ve yatırımlarında tipik kullandığı multiple 10-12x earnings.
+//    Quality şirketler için 12x, "good business at fair price" prensibine uyar.
+//    ROE yüksekse (>15%) "kalite şirket" sayılır → 12x kullan.
+//    ROE yoksa veya düşükse → 10x (daha muhafazakar).
+function buffettEarningsMultiple(d, warnings) {
+  if (d.eps == null || d.eps <= 0) {
+    warnings.push('Buffett: pozitif EPS yok');
     return null;
   }
-
-  // Büyüme: 1-5 yıl şirket büyümesi (cap %15), 6-10 yıl yarısı, sonra %2.5 sonsuz
-  const rawGrowth = (d.growthRate != null ? d.growthRate : 0.05);
-  const g1 = Math.min(Math.max(rawGrowth, 0.02), 0.15);  // 1-5 yıl: 2-15% arası
-  const g2 = g1 / 2;                                       // 6-10 yıl: yarısı
-  const gT = 0.025;                                        // sonsuza: %2.5
-  const r  = 0.10;                                         // discount %10
-
-  let fcf = d.fcf;
-  let pv  = 0;
-
-  // Yıl 1-5
-  for (let y = 1; y <= 5; y++) {
-    fcf *= (1 + g1);
-    pv  += fcf / Math.pow(1 + r, y);
-  }
-  // Yıl 6-10
-  for (let y = 6; y <= 10; y++) {
-    fcf *= (1 + g2);
-    pv  += fcf / Math.pow(1 + r, y);
-  }
-  // Terminal value (Gordon growth)
-  const terminalFcf = fcf * (1 + gT);
-  const terminalVal = terminalFcf / (r - gT);
-  pv += terminalVal / Math.pow(1 + r, 10);
-
-  // Per share
-  const perShare = pv / d.sharesOut;
-  if (!isFinite(perShare) || perShare <= 0) {
-    warnings.push('DCF: anlamsız sonuç');
-    return null;
-  }
-
-  // Cap'le — saçma rakamlar üretmesin (10x current price'dan büyükse şüpheli)
-  if (d.currentPrice && perShare > d.currentPrice * 20) {
-    warnings.push('DCF: aşırı yüksek sonuç, şüpheli (cap\'lendi)');
-    return Math.round(d.currentPrice * 20 * 100) / 100;
-  }
-
-  return Math.round(perShare * 100) / 100;
+  // ROE'yi statistics'ten al (varsa)
+  // Burada d.roe alınmıyor şimdilik — d.eps × 12 sabitle güvenli başlayalım
+  const multiple = 12;
+  return Math.round(d.eps * multiple * 100) / 100;
 }
 
 // ════════════════════════════════════════════════════
@@ -554,46 +451,19 @@ async function computeFairValue(ticker, exchange, debug) {
         throw yhErr;
       }
     } else {
-      // NYSE/NASDAQ: Twelve Data tercih, yedek olarak Yahoo
-      let tdErr = null;
+      // NYSE/NASDAQ: SADECE Twelve Data (Yahoo Vercel IP'lerinden 401 verir)
       try {
         raw = await fetchTwelveData(ticker, dbg);
         if (dbg) dbg.attempts.push({ source: 'twelvedata', ok: true });
-
-        // Twelve Data null'lar varsa Yahoo ile patch
-        if (raw.eps == null || raw.bookValuePS == null) {
-          try {
-            const yh = await fetchYahooFundamentals(ticker, false);
-            if (dbg) dbg.attempts.push({ source: 'yahoo-patch', ok: true });
-            raw = {
-              ...raw,
-              eps:          raw.eps ?? yh.eps,
-              bookValuePS:  raw.bookValuePS ?? yh.bookValuePS,
-              growthRate:   raw.growthRate ?? yh.growthRate,
-              fcf:          raw.fcf ?? yh.fcf,
-              sharesOut:    raw.sharesOut ?? yh.sharesOut,
-              currentPrice: raw.currentPrice ?? yh.currentPrice,
-              source:       'twelvedata+yahoo',
-            };
-          } catch (patchErr) {
-            if (dbg) dbg.attempts.push({ source: 'yahoo-patch', ok: false, error: patchErr.message });
-            // Patch fail olabilir, twelve data verisiyle devam
-          }
-        }
       } catch (e) {
-        tdErr = e;
         if (dbg) dbg.attempts.push({ source: 'twelvedata', ok: false, error: e.message });
-        console.log('[fv] Twelve Data failed, falling back to Yahoo:', e.message);
-        try {
-          raw = await fetchYahooFundamentals(ticker, false);
-          if (dbg) dbg.attempts.push({ source: 'yahoo-fallback', ok: true });
-        } catch (yhErr) {
-          if (dbg) dbg.attempts.push({ source: 'yahoo-fallback', ok: false, error: yhErr.message });
-          // Her iki kaynak da düştü — gerçek hatayı gönder
-          throw new Error(
-            `Twelve Data: ${tdErr.message} | Yahoo: ${yhErr.message}`
-          );
+
+        // Twelve Data rate limit hatasıysa anlamlı mesaj
+        const isRateLimit = /run out of API credits|rate limit|too many requests/i.test(e.message);
+        if (isRateLimit) {
+          throw new Error('Geçici rate limit — birkaç saniye sonra tekrar deneyin');
         }
+        throw new Error(`Twelve Data: ${e.message}`);
       }
     }
   } catch (e) {
@@ -604,14 +474,14 @@ async function computeFairValue(ticker, exchange, debug) {
 
   // Hesapla
   const warnings = [];
-  const graham_value = grahamNumber(raw, warnings);
-  const lynch_value  = lynchFairValue(raw, warnings);
-  const dcf_value    = simplifiedDCF(raw, warnings);
+  const graham_value = grahamDefensivePE(raw, warnings);    // EPS × 15
+  const lynch_value  = lynchFairValue(raw, warnings);       // EPS × growth%
+  const dcf_value    = buffettEarningsMultiple(raw, warnings); // EPS × 12
 
   const result = {
     graham_value,
     lynch_value,
-    dcf_value,
+    dcf_value,         // alan adı backward-compatible kalsın diye dcf_value
     current_price: raw.currentPrice,
     currency:      raw.currency,
     inputs: {
@@ -621,9 +491,16 @@ async function computeFairValue(ticker, exchange, debug) {
       fcf:         raw.fcf,
       sharesOut:   raw.sharesOut,
       marketCap:   raw.marketCap,
+      peRatio:     raw.peRatio,
+      pbRatio:     raw.pbRatio,
     },
     warnings,
     sources: { primary: raw.source },
+    method: {
+      graham_value: 'Graham Defensive PE (EPS × 15)',
+      lynch_value:  'Lynch PEG=1 (EPS × büyüme%)',
+      dcf_value:    'Buffett Earnings Multiple (EPS × 12)',
+    },
   };
 
   if (dbg) result._debug = dbg;
