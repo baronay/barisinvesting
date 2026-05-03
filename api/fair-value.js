@@ -91,7 +91,7 @@ function clean(t) {
 // ── Twelve Data (NYSE/NASDAQ) ──
 // 4 paralel endpoint çağrısı: statistics + balance_sheet + cash_flow + price
 // Free tier: 800 req/gün, 8 req/dk → 4 req/hisse → 2 hisse/dk güvenli
-async function fetchTwelveData(ticker) {
+async function fetchTwelveData(ticker, debugCollector) {
   if (!TD_KEY) throw new Error('Twelve Data API key not configured');
 
   const base = 'https://api.twelvedata.com';
@@ -106,25 +106,50 @@ async function fetchTwelveData(ticker) {
     fetch(`${base}/price?symbol=${encodeURIComponent(ticker)}${k}`, opts),
   ]);
 
-  // Helper: response → JSON, hata varsa null
+  const td_debug = { endpoints: {} };
+
+  // Helper: response → JSON, hata varsa null + debug'a yaz
   async function safeJson(settled, label) {
     if (settled.status !== 'fulfilled') {
-      console.log(`[fv-td] ${label} failed:`, settled.reason?.message);
+      const err = settled.reason?.message || 'rejected';
+      td_debug.endpoints[label] = { ok: false, reason: 'fetch_rejected', error: err };
+      console.log(`[fv-td] ${label} rejected:`, err);
       return null;
     }
+    const status = settled.value.status;
+    let bodyText = '';
+    try { bodyText = await settled.value.text(); } catch {}
+
     if (!settled.value.ok) {
-      console.log(`[fv-td] ${label} HTTP ${settled.value.status}`);
+      td_debug.endpoints[label] = {
+        ok: false,
+        http: status,
+        body_preview: bodyText.slice(0, 200),
+      };
+      console.log(`[fv-td] ${label} HTTP ${status}: ${bodyText.slice(0,200)}`);
       return null;
     }
     try {
-      const j = await settled.value.json();
+      const j = JSON.parse(bodyText);
       // Twelve Data hata kalıbı: { code: 400, message: "..." }
       if (j?.code && j.code !== 200) {
-        console.log(`[fv-td] ${label} error:`, j.message);
+        td_debug.endpoints[label] = {
+          ok: false,
+          http: status,
+          api_code: j.code,
+          message: j.message,
+        };
+        console.log(`[fv-td] ${label} api error code=${j.code}: ${j.message}`);
         return null;
       }
+      td_debug.endpoints[label] = { ok: true, http: status };
       return j;
     } catch (e) {
+      td_debug.endpoints[label] = {
+        ok: false,
+        parse_error: e.message,
+        body_preview: bodyText.slice(0, 200),
+      };
       return null;
     }
   }
@@ -136,8 +161,16 @@ async function fetchTwelveData(ticker) {
     safeJson(priceRes, 'price'),
   ]);
 
+  // Debug collector'a ekle
+  if (debugCollector) debugCollector.twelve_data = td_debug;
+
   if (!stats && !balance && !cashflow) {
-    throw new Error('Twelve Data: tüm endpointler başarısız');
+    // Detaylı hata mesajı
+    const reasons = Object.entries(td_debug.endpoints)
+      .filter(([_, v]) => !v.ok)
+      .map(([k, v]) => `${k}: ${v.message || v.body_preview || `HTTP ${v.http}` || v.error || 'unknown'}`)
+      .join(' | ');
+    throw new Error(`Twelve Data başarısız: ${reasons}`);
   }
 
   // ── statistics'ten temel veriler ──
@@ -524,7 +557,7 @@ async function computeFairValue(ticker, exchange, debug) {
       // NYSE/NASDAQ: Twelve Data tercih, yedek olarak Yahoo
       let tdErr = null;
       try {
-        raw = await fetchTwelveData(ticker);
+        raw = await fetchTwelveData(ticker, dbg);
         if (dbg) dbg.attempts.push({ source: 'twelvedata', ok: true });
 
         // Twelve Data null'lar varsa Yahoo ile patch
