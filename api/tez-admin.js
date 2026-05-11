@@ -1,13 +1,16 @@
-// /api/tez-admin.js — Tez CRUD (admin) + Public tez okuma
+// /api/tez-admin.js — Tez CRUD (admin) + Public tez okuma + Görsel upload
 // GET /api/tez-admin                    → admin: tüm tezler (auth gerekli)
 // GET /api/tez-admin?pub=1&id=X         → public: tek tez
 // GET /api/tez-admin?pub=1&ticker=MPARK → public: ticker'a göre tez
 // GET /api/tez-admin?pub=1              → public: tüm yayındaki tezler
+// GET /api/tez-admin?price=1&ticker=..  → public: anlık fiyat proxy
+// POST /api/tez-admin?action=upload_image → admin: görsel upload (base64)
 // POST/PUT/DELETE                        → admin CRUD (auth gerekli)
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
-const ADMIN_SECRET = process.env.ADMIN_SECRET;
+const SUPABASE_URL    = process.env.SUPABASE_URL;
+const SUPABASE_KEY    = process.env.SUPABASE_SERVICE_KEY;
+const ADMIN_SECRET    = process.env.ADMIN_SECRET;
+const STORAGE_BUCKET  = process.env.TEZ_STORAGE_BUCKET || 'tez-kapaklari';
 
 export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 
@@ -25,7 +28,6 @@ export default async function handler(req, res) {
   };
 
   // ── PRICE PROXY (auth gerekmez) — CORS bypass için ──────────
-  // GET /api/tez-admin?price=1&ticker=MPARK&exchange=BIST
   if (req.method === 'GET' && req.query.price) {
     const tk = (req.query.ticker || '').toUpperCase().replace(/[^A-Z0-9.]/g, '');
     const ex = req.query.exchange || 'BIST';
@@ -72,6 +74,70 @@ export default async function handler(req, res) {
   const auth = req.headers.authorization || '';
   if (auth !== `Bearer ${ADMIN_SECRET}`) {
     return res.status(401).json({ error: 'Yetkisiz' });
+  }
+
+  // ── GÖRSEL UPLOAD (admin) ─────────────────────────────────────
+  // POST /api/tez-admin?action=upload_image
+  // body: { filename, base64 }  (base64 = "data:image/png;base64,...")
+  if (req.method === 'POST' && req.query.action === 'upload_image') {
+    try {
+      const { filename, base64 } = req.body || {};
+      if (!filename || !base64) {
+        return res.status(400).json({ error: 'filename ve base64 zorunlu' });
+      }
+
+      // data URI'dan mime type + raw base64 çıkar
+      const m = base64.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
+      if (!m) return res.status(400).json({ error: 'Geçersiz base64 (data URI bekleniyor)' });
+      const mime = m[1];
+      const raw  = m[2];
+      const buf  = Buffer.from(raw, 'base64');
+
+      // Uzantı: filename'dan al, yoksa mime'dan türet
+      const extFromName = (filename.match(/\.([a-zA-Z0-9]+)$/) || [])[1];
+      const extFromMime = mime.split('/')[1];
+      const ext = (extFromName || extFromMime || 'png').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      // Güvenli ve benzersiz path
+      const stamp = Date.now();
+      const slug  = filename
+        .replace(/\.[^.]+$/, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+        .slice(0, 40) || 'kapak';
+      const path = `${stamp}-${slug}.${ext}`;
+
+      // Supabase Storage'a yükle
+      const upUrl = `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${path}`;
+      const upRes = await fetch(upUrl, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': mime,
+          'x-upsert': 'true',
+        },
+        body: buf,
+      });
+
+      if (!upRes.ok) {
+        const errTxt = await upRes.text();
+        return res.status(500).json({
+          error: 'Storage upload başarısız',
+          detail: errTxt,
+          status: upRes.status,
+          bucket: STORAGE_BUCKET,
+        });
+      }
+
+      // Public URL
+      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${path}`;
+      return res.status(200).json({ url: publicUrl, path, bucket: STORAGE_BUCKET });
+
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
   }
 
   // GET — admin tüm tezler
