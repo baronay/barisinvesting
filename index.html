@@ -2578,9 +2578,10 @@ body{
       <div class="rd-card"><div class="rd-lbl">Gelir Büyümesi</div><div class="rd-val" id="rdRevG">—</div><div class="rd-sub">YoY</div></div>
       <div class="rd-card"><div class="rd-lbl">Kurumsal Sahiplik</div><div class="rd-val" id="rdInst">—</div><div class="rd-sub" id="rdInstS">—</div></div>
     </div>
+    <div id="scoreGaugeBox" style="margin-bottom:1px;"></div>
     <div class="ov-grid">
-      <div class="stat-card"><div class="stat-lbl">Analiz Skoru</div><div class="stat-val" id="statScore">—</div><div class="stat-sub">kriter üzerinden</div></div>
       <div class="stat-card"><div class="stat-lbl">Geçen Kriter</div><div class="stat-val" id="statPass" style="color:var(--success)">—</div><div class="stat-sub" id="statPassS">—</div></div>
+      <div class="stat-card"><div class="stat-lbl">Analiz Skoru</div><div class="stat-val" id="statScore">—</div><div class="stat-sub">kriter üzerinden</div></div>
     </div>
     <!-- Live price strip above multiples -->
     <div id="priceStrip" style="display:none;background:#000;border:1px solid var(--border2);padding:11px 14px;margin-bottom:10px;display:none;align-items:center;gap:20px;flex-wrap:wrap;">
@@ -3767,6 +3768,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   const bfw=document.getElementById('badgeFw');bfw.textContent=fw.name;bfw.className='badge badge-fw '+(fwKey||curFW);
   document.getElementById('stockHdr').classList.add('visible');
   document.getElementById('statScore').textContent=`${score}/${fw.criteria.length}`;
+  if(typeof renderScoreGauge==='function')renderScoreGauge('scoreGaugeBox',score,fw.criteria.length,{title:(fwKey||curFW).toUpperCase()+' SKORU'});
   const pc=statuses.filter(s=>s==='pass').length,fc=statuses.filter(s=>s==='fail').length;
   document.getElementById('statPass').textContent=pc;
   document.getElementById('statPassS').textContent=`${fc} kaldı, ${statuses.filter(s=>s==='neutral').length} belirsiz`;
@@ -5060,6 +5062,7 @@ if (!localStorage.getItem('baris_fw_seen')) {
 <script src="/auth-logic.js"></script>
 <script src="/admin-panel.js"></script>
 <script src="/analyze-features.js"></script>
+<script src="/score-gauge.js"></script>
 
 <!-- MOBILE HESAP SHEET -->
 <div id="mobileAccountSheet" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.5)" onclick="closeMobileAccount()">
