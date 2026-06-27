@@ -2455,7 +2455,8 @@ body{
 
   <!-- HERO at top — 2 kolon: sol arama, sağ piyasa özeti -->
   <div class="hero">
-    <div class="hero-inner">
+    <div data-tiles-bg data-tiles-size="32" style="position:absolute;inset:0;z-index:0;"></div>
+    <div class="hero-inner" style="position:relative;z-index:2;">
       <!-- Sol: arama -->
       <div class="hero-left">
         <div class="hero-tag">Barış Investing · Yatırım Analiz Merkezi</div>
@@ -5063,6 +5064,7 @@ if (!localStorage.getItem('baris_fw_seen')) {
 <script src="/admin-panel.js"></script>
 <script src="/analyze-features.js"></script>
 <script src="/score-gauge.js"></script>
+<script src="/tiles-bg.js"></script>
 
 <!-- MOBILE HESAP SHEET -->
 <div id="mobileAccountSheet" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.5)" onclick="closeMobileAccount()">
