@@ -241,7 +241,7 @@ async function openTezEditor() {
             <!-- Preview + mevcut URL göstergesi -->
             <div id="tezKapakPreviewWrap" style="margin-top:8px;display:none;">
               <img id="tezKapakPreview" style="height:60px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);object-fit:cover;" />
-              <button onclick="tezKapakTemizle()" style="background:none;border:none;color:#c08274;cursor:pointer;font-size:11px;margin-left:8px;">✕ Kaldır</button>
+              <button onclick="tezKapakTemizle()" style="background:none;border:none;color:#d2796b;cursor:pointer;font-size:11px;margin-left:8px;">✕ Kaldır</button>
             </div>
             <!-- Mevcut kayıtlı URL -->
             <input type="hidden" id="tezKapakMevcut"/>
@@ -296,7 +296,7 @@ async function openTezEditor() {
         <!-- Butonlar -->
         <div style="display:flex;gap:8px;">
           <button onclick="tezKaydet()" style="background:#c2ad84;border:none;color:#fff;padding:10px 22px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">Kaydet</button>
-          <button id="tezSilBtn" onclick="tezSil()" style="display:none;background:none;border:1px solid #c08274;color:#c08274;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:13px;">Sil</button>
+          <button id="tezSilBtn" onclick="tezSil()" style="display:none;background:none;border:1px solid #d2796b;color:#d2796b;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:13px;">Sil</button>
           <span id="tezKaydetDurum" style="font-size:12px;color:#5d6675;align-self:center;margin-left:8px;"></span>
         </div>
       </div><!-- /tezFormArea -->
@@ -317,7 +317,7 @@ function tezKapakOnizle(input) {
   const wrap  = document.getElementById('tezKapakPreviewWrap');
   const img   = document.getElementById('tezKapakPreview');
   durum.textContent = file.name;
-  durum.style.color = '#94ad81';
+  durum.style.color = '#74c389';
   const reader = new FileReader();
   reader.onload = e => {
     img.src = e.target.result;
@@ -407,17 +407,17 @@ async function tezListeYukle() {
           <div style="font-size:13px;color:#e8edf8;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${baslik}</div>
           <div style="margin-top:3px;display:flex;align-items:center;gap:6px;">
             ${t.ticker ? `<span style="font-size:10px;color:#c2ad84;font-family:'JetBrains Mono',monospace;">${ticker}</span>` : ''}
-            <span style="font-size:10px;color:${t.yayinda ? '#94ad81' : '#5d6675'};">${t.yayinda ? '● Yayında' : '○ Taslak'}</span>
+            <span style="font-size:10px;color:${t.yayinda ? '#74c389' : '#5d6675'};">${t.yayinda ? '● Yayında' : '○ Taslak'}</span>
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
           <button onclick="tezFormAcId(${t.id})" style="background:rgba(194,173,132,0.1);border:1px solid rgba(194,173,132,0.2);color:#c2ad84;font-size:11px;padding:5px 12px;border-radius:4px;cursor:pointer;white-space:nowrap;">✏ Düzenle</button>
-          <button onclick="tezSilDogrudan(${t.id})" style="background:none;border:1px solid rgba(168,116,106,0.3);color:#c08274;font-size:11px;padding:5px 10px;border-radius:4px;cursor:pointer;">✕</button>
+          <button onclick="tezSilDogrudan(${t.id})" style="background:none;border:1px solid rgba(168,116,106,0.3);color:#d2796b;font-size:11px;padding:5px 10px;border-radius:4px;cursor:pointer;">✕</button>
         </div>
       </div>`;
     }).join('');
   } catch(e) {
-    el.innerHTML = '<div style="color:#c08274;font-size:12px;">Hata: ' + e.message + '</div>';
+    el.innerHTML = '<div style="color:#d2796b;font-size:12px;">Hata: ' + e.message + '</div>';
   }
 }
 
@@ -463,7 +463,7 @@ function tezFormAc(tez) {
     if (tez.kapak_gorseli) {
       _tezKapakUrl = tez.kapak_gorseli;
       if (kapakMevcut)  kapakMevcut.value = tez.kapak_gorseli;
-      if (kapakDurum)   { kapakDurum.textContent = 'Mevcut görsel'; kapakDurum.style.color = '#94ad81'; }
+      if (kapakDurum)   { kapakDurum.textContent = 'Mevcut görsel'; kapakDurum.style.color = '#74c389'; }
       if (kapakImg)     kapakImg.src = tez.kapak_gorseli;
       if (kapakWrap)    kapakWrap.style.display = 'block';
     } else {
