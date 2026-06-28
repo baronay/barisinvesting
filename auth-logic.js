@@ -153,8 +153,8 @@ function showToast(msg, type = 'success') {
   t.textContent = msg;
   const styles = {
     success: 'background:#f4f1ec;color:var(--success,#3f4a3c);border-color:rgba(26,107,58,0.3)',
-    warn:    'background:#f4f1ec;color:var(--warn,#b08a5a);border-color:rgba(184,112,10,0.3)',
-    error:   'background:#f4f1ec;color:var(--danger,#c0392b);border-color:rgba(192,57,43,0.3)'
+    warn:    'background:#f4f1ec;color:var(--warn,#b08a5a);border-color:rgba(176,138,90,0.3)',
+    error:   'background:#f4f1ec;color:var(--danger,#c0392b);border-color:rgba(165,90,82,0.3)'
   };
   t.style.cssText += ';' + (styles[type] || styles.success);
   t.style.opacity = '1';
