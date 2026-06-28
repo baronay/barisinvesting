@@ -7,7 +7,6 @@
 <title>Yatırım Analiz Merkezi — Barış Investing</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230e1220'/%3E%3Crect x='0' y='0' width='4' height='32' fill='%234d8ef0'/%3E%3Ctext x='18' y='24' font-family='Georgia,serif' font-weight='700' font-size='22' fill='%23e8edf8' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
 <link rel="shortcut icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230e1220'/%3E%3Crect x='0' y='0' width='4' height='32' fill='%234d8ef0'/%3E%3Ctext x='18' y='24' font-family='Georgia,serif' font-weight='700' font-size='22' fill='%23e8edf8' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;600;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 <!-- ══ UMAMI ANALYTICS — Cookieless, GDPR/KVKK uyumlu ══ -->
@@ -19,75 +18,110 @@
   data-do-not-track="true"
   data-cache="true"></script>
 <style>
-/* ════════════════════════════════════════════════════
-   BARIŞ INVESTING — PREMIUM DARK THEME v3
-   Font: Outfit + JetBrains Mono
-   Colors: Deep Navy · Electric Blue · Emerald/Amber
-════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
 :root{
-  /* ══ BARIŞ INVESTING — KOYU FİNANS TERMİNALİ ══
-     Sidebar lacivert + tutarlı koyu içerik alanı
-     Tüm yazılar okunabilir, kontrast WCAG AA+ uyumlu */
+  --font-head:'Playfair Display',Georgia,serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,monospace;
 
-  /* ── ANA ARKA PLANLAR ── */
-  --bg:#13182a;          /* ana sayfa koyu lacivert */
-  --bg2:#0f1422;         /* biraz daha koyu */
-  --surface:#1c2235;     /* kart yüzeyi */
-  --surface2:#222840;    /* hover/secondary yüzey */
-  --surface3:#2a3250;    /* tertiary */
+  --bg:#0b0f15;
+  --bg2:#080b10;
+  --surface:#0f141d;
+  --surface2:#141a25;
+  --surface3:#1a2130;
 
-  /* ── SIDEBAR ── */
-  --sidebar:#0e1220;     /* sidebar biraz daha koyu */
-  --sidebar2:#151929;
-  --sidebar3:#1c2235;
+  --sidebar:#080b10;
+  --sidebar2:#0c1018;
+  --sidebar3:#121826;
 
-  /* ── BORDER ── */
-  --border:rgba(255,255,255,0.08);
-  --border2:rgba(255,255,255,0.05);
-  --border-s:rgba(255,255,255,0.10);
-  --glass:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.05);
+  --border2:rgba(255,255,255,0.04);
+  --border-s:rgba(255,255,255,0.07);
+  --glass:rgba(255,255,255,0.04);
+  --rule:rgba(255,255,255,0.05);
 
-  /* ── ACCENT: Kurumsal Bloomberg mavisi ── */
-  --accent:#4d8ef0;
-  --accent2:#2563eb;
-  --accent-dim:rgba(77,142,240,0.15);
-  --accent-glow:rgba(77,142,240,0.25);
+  --accent:#c2ad84;
+  --accent2:#a8946b;
+  --accent-dim:rgba(194,173,132,0.10);
+  --accent-glow:rgba(194,173,132,0.16);
 
-  --gold:#d4a843;
-  --gold-dim:rgba(212,168,67,0.15);
+  --gold:#c2ad84;
+  --gold-dim:rgba(194,173,132,0.12);
 
-  /* ── SEMANTIC: Klasik terminal renkleri ── */
-  --success:#22c55e;     /* parlak yeşil — pozitif */
-  --success-dim:rgba(34,197,94,0.12);
-  --danger:#f05252;      /* terminal kırmızısı */
-  --danger-dim:rgba(240,82,82,0.12);
-  --warn:#f59e0b;
-  --warn-dim:rgba(245,158,11,0.12);
+  --success:#7f9473;
+  --success-dim:rgba(63,74,60,0.20);
+  --success-deep:#3f4a3c;
 
-  --lynch:#e07b39;
-  --dalio:#9b77cc;
+  --danger:#a8746a;
+  --danger-dim:rgba(92,43,41,0.22);
+  --danger-deep:#5c2b29;
 
-  /* ── TEXT: Net, okunabilir ── */
-  --text:#e8edf8;        /* neredeyse beyaz, göz yormaz */
-  --text2:#a0aec8;       /* ikincil metin */
-  --muted:#5a6a8a;       /* muted */
-  --muted2:#3d4f6e;
-  --muted-s:#8892b0;
+  --warn:#b89b6a;
+  --warn-dim:rgba(184,155,106,0.14);
 
-  --rule:rgba(255,255,255,0.07);
+  --lynch:#b08a5a;
+  --dalio:#8a7e94;
+
+  --text:#e2e8f0;
+  --text2:#9aa3b2;
+  --muted:#5d6675;
+  --muted2:#3a4150;
+  --muted-s:#7a8493;
 }
+
 *{margin:0;padding:0;box-sizing:border-box;}
+
+html{-webkit-text-size-adjust:100%;}
+
 body{
   background:var(--bg);
   background-image:
-    radial-gradient(ellipse 70% 50% at 0% 0%, rgba(37,99,235,0.06) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(139,92,246,0.04) 0%, transparent 50%);
+    radial-gradient(ellipse 60% 45% at 0% 0%, rgba(194,173,132,0.035) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 40% at 100% 100%, rgba(255,255,255,0.015) 0%, transparent 55%);
   color:var(--text);
-  font-family:'IBM Plex Sans',sans-serif;
+  font-family:var(--font-body);
+  font-weight:400;
+  font-size:14px;
+  line-height:1.6;
+  letter-spacing:0.1px;
   min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
 }
+
+h1,h2,h3,h4,h5,h6{
+  font-family:var(--font-head);
+  font-weight:600;
+  letter-spacing:-0.2px;
+  color:var(--text);
+  line-height:1.25;
+}
+h1{font-size:30px;font-weight:700;}
+h2{font-size:23px;}
+h3{font-size:18px;}
+
+input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:var(--text);}
+
+.mono,code,kbd,samp,pre{
+  font-family:var(--font-mono);
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum" 1,"lnum" 1;
+  letter-spacing:0;
+}
+
+::selection{background:rgba(194,173,132,0.22);color:#fff;}
+
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.06);border-radius:2px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.10);}
+*{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.06) transparent;}
+
+::placeholder{color:var(--muted);opacity:1;}
+
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 .app{display:flex;min-height:100vh;}
 .mobile-toggle{display:none;position:fixed;top:12px;left:12px;z-index:1100;background:var(--surface2);border:1px solid var(--glass);color:var(--text2);width:40px;height:40px;cursor:pointer;font-size:18px;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
 
