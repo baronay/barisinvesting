@@ -181,7 +181,7 @@ async function openTezEditor() {
     <div style="background:#0e1220;border:1px solid rgba(194,173,132,0.25);border-radius:12px;width:100%;max-width:900px;display:flex;flex-direction:column;overflow:hidden;">
       <!-- STICKY HEADER -->
       <div style="flex-shrink:0;display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.07);">
-        <h2 style="font-size:15px;font-weight:700;color:#e8edf8;font-family:'Playfair Display',serif;">&#9997; Tez Editörü</h2>
+        <h2 style="font-size:15px;font-weight:700;color:#ffffff;font-family:'Playfair Display',serif;">&#9997; Tez Editörü</h2>
         <button onclick="document.getElementById('tezEditorModal').remove()" style="background:none;border:none;color:#5d6675;cursor:pointer;font-size:22px;line-height:1;">&#215;</button>
       </div>
       <!-- SCROLLABLE BODY -->
@@ -208,11 +208,11 @@ async function openTezEditor() {
         <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px;">
           <div>
             <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">BAŞLIK</label>
-            <input id="tezBaslik" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;" placeholder="Tez başlığı"/>
+            <input id="tezBaslik" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;" placeholder="Tez başlığı"/>
           </div>
           <div>
             <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">TICKER</label>
-            <input id="tezTicker" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;" placeholder="THYAO"/>
+            <input id="tezTicker" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;" placeholder="THYAO"/>
           </div>
         </div>
 
@@ -220,7 +220,7 @@ async function openTezEditor() {
         <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:12px;">
           <div>
             <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">SİNYAL</label>
-            <select id="tezSinyal" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;">
+            <select id="tezSinyal" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;">
               <option value="">—</option>
               <option value="AL">AL</option>
               <option value="IZLE">İZLE</option>
@@ -241,7 +241,7 @@ async function openTezEditor() {
             <!-- Preview + mevcut URL göstergesi -->
             <div id="tezKapakPreviewWrap" style="margin-top:8px;display:none;">
               <img id="tezKapakPreview" style="height:60px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);object-fit:cover;" />
-              <button onclick="tezKapakTemizle()" style="background:none;border:none;color:#d2796b;cursor:pointer;font-size:11px;margin-left:8px;">✕ Kaldır</button>
+              <button onclick="tezKapakTemizle()" style="background:none;border:none;color:#f05252;cursor:pointer;font-size:11px;margin-left:8px;">✕ Kaldır</button>
             </div>
             <!-- Mevcut kayıtlı URL -->
             <input type="hidden" id="tezKapakMevcut"/>
@@ -252,12 +252,12 @@ async function openTezEditor() {
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
           <div>
             <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">MALİYET FİYATI</label>
-            <input id="tezMaliyet" type="number" step="0.01" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;font-family:'JetBrains Mono',monospace;" placeholder="45.20"/>
+            <input id="tezMaliyet" type="number" step="0.01" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;font-family:'JetBrains Mono',monospace;" placeholder="45.20"/>
             <div style="font-size:9px;color:#3a4150;margin-top:3px;">Tez tarihindeki fiyat → getiri otomatik</div>
           </div>
           <div>
             <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">BORSA</label>
-            <select id="tezExchange" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;">
+            <select id="tezExchange" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;">
               <option value="BIST">BIST</option>
               <option value="NYSE">NYSE</option>
               <option value="NASDAQ">NASDAQ</option>
@@ -265,7 +265,7 @@ async function openTezEditor() {
           </div>
           <div>
             <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">TEZ TARİHİ</label>
-            <input id="tezOlusturma" type="date" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;" />
+            <input id="tezOlusturma" type="date" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;" />
             <div style="font-size:9px;color:#3a4150;margin-top:3px;">Boş = bugün</div>
           </div>
         </div>
@@ -273,7 +273,7 @@ async function openTezEditor() {
         <!-- Özet -->
         <div style="margin-bottom:12px;">
           <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">ÖZET</label>
-          <textarea id="tezOzet" rows="2" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;resize:vertical;" placeholder="Kısa özet..."></textarea>
+          <textarea id="tezOzet" rows="2" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;resize:vertical;" placeholder="Kısa özet..."></textarea>
         </div>
 
         <!-- İçerik -->
@@ -282,21 +282,21 @@ async function openTezEditor() {
             <label style="font-size:10px;color:#5d6675;letter-spacing:1px;">İÇERİK (HTML destekler)</label>
             <button onclick="tezIcerikTemizle()" title="\\n karakterlerini temizle" style="background:rgba(184,155,106,0.1);border:1px solid rgba(184,155,106,0.3);color:#b89b6a;font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;">🧹 \\n Temizle</button>
           </div>
-          <textarea id="tezIcerik" rows="16" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:10px 12px;border-radius:6px;font-size:12px;resize:vertical;font-family:'JetBrains Mono',monospace;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word;" placeholder="Tez içeriği... (HTML etiketleri kullanılabilir)"></textarea>
+          <textarea id="tezIcerik" rows="16" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:10px 12px;border-radius:6px;font-size:12px;resize:vertical;font-family:'JetBrains Mono',monospace;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word;" placeholder="Tez içeriği... (HTML etiketleri kullanılabilir)"></textarea>
         </div>
 
         <!-- Yayında -->
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
             <input type="checkbox" id="tezYayinda" style="width:14px;height:14px;"/>
-            <span style="font-size:12px;color:#e8edf8;">Yayında</span>
+            <span style="font-size:12px;color:#ffffff;">Yayında</span>
           </label>
         </div>
 
         <!-- Butonlar -->
         <div style="display:flex;gap:8px;">
           <button onclick="tezKaydet()" style="background:#c2ad84;border:none;color:#fff;padding:10px 22px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">Kaydet</button>
-          <button id="tezSilBtn" onclick="tezSil()" style="display:none;background:none;border:1px solid #d2796b;color:#d2796b;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:13px;">Sil</button>
+          <button id="tezSilBtn" onclick="tezSil()" style="display:none;background:none;border:1px solid #f05252;color:#f05252;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:13px;">Sil</button>
           <span id="tezKaydetDurum" style="font-size:12px;color:#5d6675;align-self:center;margin-left:8px;"></span>
         </div>
       </div><!-- /tezFormArea -->
@@ -317,7 +317,7 @@ function tezKapakOnizle(input) {
   const wrap  = document.getElementById('tezKapakPreviewWrap');
   const img   = document.getElementById('tezKapakPreview');
   durum.textContent = file.name;
-  durum.style.color = '#74c389';
+  durum.style.color = '#22c55e';
   const reader = new FileReader();
   reader.onload = e => {
     img.src = e.target.result;
@@ -404,20 +404,20 @@ async function tezListeYukle() {
       return `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#13182a;border-radius:6px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.06);gap:8px;">
         <div style="flex:1;min-width:0;overflow:hidden;">
-          <div style="font-size:13px;color:#e8edf8;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${baslik}</div>
+          <div style="font-size:13px;color:#ffffff;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${baslik}</div>
           <div style="margin-top:3px;display:flex;align-items:center;gap:6px;">
             ${t.ticker ? `<span style="font-size:10px;color:#c2ad84;font-family:'JetBrains Mono',monospace;">${ticker}</span>` : ''}
-            <span style="font-size:10px;color:${t.yayinda ? '#74c389' : '#5d6675'};">${t.yayinda ? '● Yayında' : '○ Taslak'}</span>
+            <span style="font-size:10px;color:${t.yayinda ? '#22c55e' : '#5d6675'};">${t.yayinda ? '● Yayında' : '○ Taslak'}</span>
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
           <button onclick="tezFormAcId(${t.id})" style="background:rgba(194,173,132,0.1);border:1px solid rgba(194,173,132,0.2);color:#c2ad84;font-size:11px;padding:5px 12px;border-radius:4px;cursor:pointer;white-space:nowrap;">✏ Düzenle</button>
-          <button onclick="tezSilDogrudan(${t.id})" style="background:none;border:1px solid rgba(168,116,106,0.3);color:#d2796b;font-size:11px;padding:5px 10px;border-radius:4px;cursor:pointer;">✕</button>
+          <button onclick="tezSilDogrudan(${t.id})" style="background:none;border:1px solid rgba(168,116,106,0.3);color:#f05252;font-size:11px;padding:5px 10px;border-radius:4px;cursor:pointer;">✕</button>
         </div>
       </div>`;
     }).join('');
   } catch(e) {
-    el.innerHTML = '<div style="color:#d2796b;font-size:12px;">Hata: ' + e.message + '</div>';
+    el.innerHTML = '<div style="color:#f05252;font-size:12px;">Hata: ' + e.message + '</div>';
   }
 }
 
@@ -463,7 +463,7 @@ function tezFormAc(tez) {
     if (tez.kapak_gorseli) {
       _tezKapakUrl = tez.kapak_gorseli;
       if (kapakMevcut)  kapakMevcut.value = tez.kapak_gorseli;
-      if (kapakDurum)   { kapakDurum.textContent = 'Mevcut görsel'; kapakDurum.style.color = '#74c389'; }
+      if (kapakDurum)   { kapakDurum.textContent = 'Mevcut görsel'; kapakDurum.style.color = '#22c55e'; }
       if (kapakImg)     kapakImg.src = tez.kapak_gorseli;
       if (kapakWrap)    kapakWrap.style.display = 'block';
     } else {
