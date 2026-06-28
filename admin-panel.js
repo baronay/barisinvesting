@@ -92,7 +92,7 @@ function renderAdminTable(users, secret) {
     tr.innerHTML = `
       <td>
         <span style="font-family:'JetBrains Mono',monospace;font-size:10px">${u.email}</span>
-        ${u.is_admin          ? '<span style="font-size:8px;padding:1px 4px;background:rgba(184,112,10,0.15);color:var(--warn);border:1px solid rgba(184,112,10,0.3);margin-left:4px">admin</span>' : ''}
+        ${u.is_admin          ? '<span style="font-size:8px;padding:1px 4px;background:rgba(176,138,90,0.15);color:var(--warn);border:1px solid rgba(176,138,90,0.3);margin-left:4px">admin</span>' : ''}
         ${u.marketing_consent ? '<span style="font-size:10px;color:var(--success);margin-left:3px" title="Mail izni var">✉</span>' : ''}
         ${u.referred_by       ? '<span style="font-size:10px;color:var(--muted2);margin-left:3px" title="Davet ile katıldı">⤷</span>' : ''}
       </td>
