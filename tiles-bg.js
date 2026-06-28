@@ -31,7 +31,7 @@
       transition: background 1.6s ease;
     }
     .tiles-cell:hover {
-      background: var(--accent, #4d8ef0);
+      background: var(--accent, #c2ad84);
       transition: background 0s;
     }
     @media (max-width: 700px) {
