@@ -91,7 +91,7 @@ function renderAdminTable(users, secret) {
 
     tr.innerHTML = `
       <td>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px">${u.email}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px">${u.email}</span>
         ${u.is_admin          ? '<span style="font-size:8px;padding:1px 4px;background:rgba(184,112,10,0.15);color:var(--warn);border:1px solid rgba(184,112,10,0.3);margin-left:4px">admin</span>' : ''}
         ${u.marketing_consent ? '<span style="font-size:10px;color:var(--success);margin-left:3px" title="Mail izni var">✉</span>' : ''}
         ${u.referred_by       ? '<span style="font-size:10px;color:var(--muted2);margin-left:3px" title="Davet ile katıldı">⤷</span>' : ''}
@@ -104,15 +104,15 @@ function renderAdminTable(users, secret) {
       <td>
         <div style="display:flex;gap:4px;align-items:center">
           <input type="number" id="cr_${safeId}"
-            style="width:44px;background:var(--bg2);border:1px solid var(--border);padding:3px 5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text);text-align:center"
+            style="width:44px;background:var(--bg2);border:1px solid var(--border);padding:3px 5px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);text-align:center"
             value="3" min="1" max="100"/>
           <button onclick="addCredits('${u.email}','${secret}')"
-            style="background:var(--accent2);color:#fff;border:none;padding:3px 8px;cursor:pointer;font-size:9px;font-family:'IBM Plex Mono',monospace">+Ekle</button>
+            style="background:var(--accent2);color:#fff;border:none;padding:3px 8px;cursor:pointer;font-size:9px;font-family:'JetBrains Mono',monospace">+Ekle</button>
         </div>
       </td>
       <td>
         <button onclick="deleteUser('${u.email}','${secret}')"
-          style="background:none;border:1px solid var(--danger);color:var(--danger);padding:3px 7px;cursor:pointer;font-size:9px;font-family:'IBM Plex Mono',monospace">Sil</button>
+          style="background:none;border:1px solid var(--danger);color:var(--danger);padding:3px 7px;cursor:pointer;font-size:9px;font-family:'JetBrains Mono',monospace">Sil</button>
       </td>
     `;
     body.appendChild(tr);
@@ -178,11 +178,11 @@ async function openTezEditor() {
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:10000;display:flex;align-items:stretch;justify-content:center;padding:16px;overflow:hidden;';
 
   modal.innerHTML = `
-    <div style="background:#0e1220;border:1px solid rgba(77,142,240,0.25);border-radius:12px;width:100%;max-width:900px;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="background:#0e1220;border:1px solid rgba(194,173,132,0.25);border-radius:12px;width:100%;max-width:900px;display:flex;flex-direction:column;overflow:hidden;">
       <!-- STICKY HEADER -->
       <div style="flex-shrink:0;display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.07);">
-        <h2 style="font-size:15px;font-weight:700;color:#e8edf8;font-family:'IBM Plex Serif',serif;">&#9997; Tez Editörü</h2>
-        <button onclick="document.getElementById('tezEditorModal').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:22px;line-height:1;">&#215;</button>
+        <h2 style="font-size:15px;font-weight:700;color:#e8edf8;font-family:'Playfair Display',serif;">&#9997; Tez Editörü</h2>
+        <button onclick="document.getElementById('tezEditorModal').remove()" style="background:none;border:none;color:#5d6675;cursor:pointer;font-size:22px;line-height:1;">&#215;</button>
       </div>
       <!-- SCROLLABLE BODY -->
       <div style="flex:1;overflow-y:auto;padding:20px;min-height:0;box-sizing:border-box;">
@@ -190,36 +190,36 @@ async function openTezEditor() {
       <!-- LISTE ALANI -->
       <div id="tezListeArea">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <span style="font-size:11px;color:#5a6a8a;font-family:'IBM Plex Mono',monospace;">MEVCUT TEZLER</span>
-          <button onclick="tezFormAc(null)" style="background:rgba(77,142,240,0.15);border:1px solid rgba(77,142,240,0.3);color:#4d8ef0;font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;">+ Yeni Tez</button>
+          <span style="font-size:11px;color:#5d6675;font-family:'JetBrains Mono',monospace;">MEVCUT TEZLER</span>
+          <button onclick="tezFormAc(null)" style="background:rgba(194,173,132,0.15);border:1px solid rgba(194,173,132,0.3);color:#c2ad84;font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;">+ Yeni Tez</button>
         </div>
-        <div id="tezListeIcerik" style="color:#5a6a8a;font-size:12px;">Yükleniyor...</div>
+        <div id="tezListeIcerik" style="color:#5d6675;font-size:12px;">Yükleniyor...</div>
       </div>
 
       <!-- FORM ALANI -->
       <div id="tezFormArea" style="display:none;">
-        <div style="font-size:11px;color:#5a6a8a;font-family:'IBM Plex Mono',monospace;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:11px;color:#5d6675;font-family:'JetBrains Mono',monospace;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
           <span id="tezFormBaslik">YENİ TEZ</span>
-          <button onclick="tezListeYukle()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:11px;">&#8592; Listeye dön</button>
+          <button onclick="tezListeYukle()" style="background:none;border:none;color:#5d6675;cursor:pointer;font-size:11px;">&#8592; Listeye dön</button>
         </div>
         <input type="hidden" id="tezFormId"/>
 
         <!-- Satır 1: Başlık + Ticker -->
         <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px;">
           <div>
-            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">BAŞLIK</label>
+            <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">BAŞLIK</label>
             <input id="tezBaslik" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;" placeholder="Tez başlığı"/>
           </div>
           <div>
-            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">TICKER</label>
-            <input id="tezTicker" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;" placeholder="THYAO"/>
+            <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">TICKER</label>
+            <input id="tezTicker" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;" placeholder="THYAO"/>
           </div>
         </div>
 
         <!-- Satır 2: Sinyal + Kapak Görseli -->
         <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:12px;">
           <div>
-            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">SİNYAL</label>
+            <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">SİNYAL</label>
             <select id="tezSinyal" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;">
               <option value="">—</option>
               <option value="AL">AL</option>
@@ -229,19 +229,19 @@ async function openTezEditor() {
             </select>
           </div>
           <div>
-            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">KAPAK GÖRSELİ</label>
+            <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">KAPAK GÖRSELİ</label>
             <div style="display:flex;gap:8px;align-items:center;">
               <!-- Gizli file input -->
               <input type="file" id="tezKapakFile" accept="image/*" style="display:none;" onchange="tezKapakOnizle(this)"/>
-              <button onclick="document.getElementById('tezKapakFile').click()" style="background:rgba(77,142,240,0.1);border:1px solid rgba(77,142,240,0.3);color:#4d8ef0;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;">
+              <button onclick="document.getElementById('tezKapakFile').click()" style="background:rgba(194,173,132,0.1);border:1px solid rgba(194,173,132,0.3);color:#c2ad84;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;">
                 📁 Görsel Seç
               </button>
-              <span id="tezKapakDurum" style="font-size:11px;color:#5a6a8a;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Henüz seçilmedi</span>
+              <span id="tezKapakDurum" style="font-size:11px;color:#5d6675;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Henüz seçilmedi</span>
             </div>
             <!-- Preview + mevcut URL göstergesi -->
             <div id="tezKapakPreviewWrap" style="margin-top:8px;display:none;">
               <img id="tezKapakPreview" style="height:60px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);object-fit:cover;" />
-              <button onclick="tezKapakTemizle()" style="background:none;border:none;color:#f05252;cursor:pointer;font-size:11px;margin-left:8px;">✕ Kaldır</button>
+              <button onclick="tezKapakTemizle()" style="background:none;border:none;color:#c08274;cursor:pointer;font-size:11px;margin-left:8px;">✕ Kaldır</button>
             </div>
             <!-- Mevcut kayıtlı URL -->
             <input type="hidden" id="tezKapakMevcut"/>
@@ -251,12 +251,12 @@ async function openTezEditor() {
         <!-- Maliyet + Borsa + Tarih -->
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
           <div>
-            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">MALİYET FİYATI</label>
-            <input id="tezMaliyet" type="number" step="0.01" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;font-family:'IBM Plex Mono',monospace;" placeholder="45.20"/>
-            <div style="font-size:9px;color:#3d4f6e;margin-top:3px;">Tez tarihindeki fiyat → getiri otomatik</div>
+            <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">MALİYET FİYATI</label>
+            <input id="tezMaliyet" type="number" step="0.01" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;font-family:'JetBrains Mono',monospace;" placeholder="45.20"/>
+            <div style="font-size:9px;color:#3a4150;margin-top:3px;">Tez tarihindeki fiyat → getiri otomatik</div>
           </div>
           <div>
-            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">BORSA</label>
+            <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">BORSA</label>
             <select id="tezExchange" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;">
               <option value="BIST">BIST</option>
               <option value="NYSE">NYSE</option>
@@ -264,25 +264,25 @@ async function openTezEditor() {
             </select>
           </div>
           <div>
-            <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">TEZ TARİHİ</label>
+            <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">TEZ TARİHİ</label>
             <input id="tezOlusturma" type="date" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;" />
-            <div style="font-size:9px;color:#3d4f6e;margin-top:3px;">Boş = bugün</div>
+            <div style="font-size:9px;color:#3a4150;margin-top:3px;">Boş = bugün</div>
           </div>
         </div>
 
         <!-- Özet -->
         <div style="margin-bottom:12px;">
-          <label style="font-size:10px;color:#5a6a8a;display:block;margin-bottom:4px;letter-spacing:1px;">ÖZET</label>
+          <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">ÖZET</label>
           <textarea id="tezOzet" rows="2" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:8px 10px;border-radius:6px;font-size:13px;resize:vertical;" placeholder="Kısa özet..."></textarea>
         </div>
 
         <!-- İçerik -->
         <div style="margin-bottom:12px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-            <label style="font-size:10px;color:#5a6a8a;letter-spacing:1px;">İÇERİK (HTML destekler)</label>
-            <button onclick="tezIcerikTemizle()" title="\\n karakterlerini temizle" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;">🧹 \\n Temizle</button>
+            <label style="font-size:10px;color:#5d6675;letter-spacing:1px;">İÇERİK (HTML destekler)</label>
+            <button onclick="tezIcerikTemizle()" title="\\n karakterlerini temizle" style="background:rgba(184,155,106,0.1);border:1px solid rgba(184,155,106,0.3);color:#b89b6a;font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;">🧹 \\n Temizle</button>
           </div>
-          <textarea id="tezIcerik" rows="16" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:10px 12px;border-radius:6px;font-size:12px;resize:vertical;font-family:'IBM Plex Mono',monospace;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word;" placeholder="Tez içeriği... (HTML etiketleri kullanılabilir)"></textarea>
+          <textarea id="tezIcerik" rows="16" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#e8edf8;padding:10px 12px;border-radius:6px;font-size:12px;resize:vertical;font-family:'JetBrains Mono',monospace;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word;" placeholder="Tez içeriği... (HTML etiketleri kullanılabilir)"></textarea>
         </div>
 
         <!-- Yayında -->
@@ -295,9 +295,9 @@ async function openTezEditor() {
 
         <!-- Butonlar -->
         <div style="display:flex;gap:8px;">
-          <button onclick="tezKaydet()" style="background:#4d8ef0;border:none;color:#fff;padding:10px 22px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">Kaydet</button>
-          <button id="tezSilBtn" onclick="tezSil()" style="display:none;background:none;border:1px solid #f05252;color:#f05252;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:13px;">Sil</button>
-          <span id="tezKaydetDurum" style="font-size:12px;color:#5a6a8a;align-self:center;margin-left:8px;"></span>
+          <button onclick="tezKaydet()" style="background:#c2ad84;border:none;color:#fff;padding:10px 22px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">Kaydet</button>
+          <button id="tezSilBtn" onclick="tezSil()" style="display:none;background:none;border:1px solid #c08274;color:#c08274;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:13px;">Sil</button>
+          <span id="tezKaydetDurum" style="font-size:12px;color:#5d6675;align-self:center;margin-left:8px;"></span>
         </div>
       </div><!-- /tezFormArea -->
 
@@ -317,7 +317,7 @@ function tezKapakOnizle(input) {
   const wrap  = document.getElementById('tezKapakPreviewWrap');
   const img   = document.getElementById('tezKapakPreview');
   durum.textContent = file.name;
-  durum.style.color = '#22c55e';
+  durum.style.color = '#94ad81';
   const reader = new FileReader();
   reader.onload = e => {
     img.src = e.target.result;
@@ -329,7 +329,7 @@ function tezKapakOnizle(input) {
 function tezKapakTemizle() {
   document.getElementById('tezKapakFile').value = '';
   document.getElementById('tezKapakDurum').textContent = 'Henüz seçilmedi';
-  document.getElementById('tezKapakDurum').style.color = '#5a6a8a';
+  document.getElementById('tezKapakDurum').style.color = '#5d6675';
   document.getElementById('tezKapakPreviewWrap').style.display = 'none';
   document.getElementById('tezKapakMevcut').value = '';
   _tezKapakUrl = null;
@@ -390,7 +390,7 @@ async function tezListeYukle() {
     const tezler = await r.json();
 
     if (!Array.isArray(tezler) || !tezler.length) {
-      el.innerHTML = '<div style="color:#3d4f6e;font-size:12px;">Henuz tez yok.</div>';
+      el.innerHTML = '<div style="color:#3a4150;font-size:12px;">Henuz tez yok.</div>';
       return;
     }
 
@@ -406,18 +406,18 @@ async function tezListeYukle() {
         <div style="flex:1;min-width:0;overflow:hidden;">
           <div style="font-size:13px;color:#e8edf8;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${baslik}</div>
           <div style="margin-top:3px;display:flex;align-items:center;gap:6px;">
-            ${t.ticker ? `<span style="font-size:10px;color:#4d8ef0;font-family:'IBM Plex Mono',monospace;">${ticker}</span>` : ''}
-            <span style="font-size:10px;color:${t.yayinda ? '#22c55e' : '#5a6a8a'};">${t.yayinda ? '● Yayında' : '○ Taslak'}</span>
+            ${t.ticker ? `<span style="font-size:10px;color:#c2ad84;font-family:'JetBrains Mono',monospace;">${ticker}</span>` : ''}
+            <span style="font-size:10px;color:${t.yayinda ? '#94ad81' : '#5d6675'};">${t.yayinda ? '● Yayında' : '○ Taslak'}</span>
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick="tezFormAcId(${t.id})" style="background:rgba(77,142,240,0.1);border:1px solid rgba(77,142,240,0.2);color:#4d8ef0;font-size:11px;padding:5px 12px;border-radius:4px;cursor:pointer;white-space:nowrap;">✏ Düzenle</button>
-          <button onclick="tezSilDogrudan(${t.id})" style="background:none;border:1px solid rgba(240,82,82,0.3);color:#f05252;font-size:11px;padding:5px 10px;border-radius:4px;cursor:pointer;">✕</button>
+          <button onclick="tezFormAcId(${t.id})" style="background:rgba(194,173,132,0.1);border:1px solid rgba(194,173,132,0.2);color:#c2ad84;font-size:11px;padding:5px 12px;border-radius:4px;cursor:pointer;white-space:nowrap;">✏ Düzenle</button>
+          <button onclick="tezSilDogrudan(${t.id})" style="background:none;border:1px solid rgba(168,116,106,0.3);color:#c08274;font-size:11px;padding:5px 10px;border-radius:4px;cursor:pointer;">✕</button>
         </div>
       </div>`;
     }).join('');
   } catch(e) {
-    el.innerHTML = '<div style="color:#f05252;font-size:12px;">Hata: ' + e.message + '</div>';
+    el.innerHTML = '<div style="color:#c08274;font-size:12px;">Hata: ' + e.message + '</div>';
   }
 }
 
@@ -463,11 +463,11 @@ function tezFormAc(tez) {
     if (tez.kapak_gorseli) {
       _tezKapakUrl = tez.kapak_gorseli;
       if (kapakMevcut)  kapakMevcut.value = tez.kapak_gorseli;
-      if (kapakDurum)   { kapakDurum.textContent = 'Mevcut görsel'; kapakDurum.style.color = '#22c55e'; }
+      if (kapakDurum)   { kapakDurum.textContent = 'Mevcut görsel'; kapakDurum.style.color = '#94ad81'; }
       if (kapakImg)     kapakImg.src = tez.kapak_gorseli;
       if (kapakWrap)    kapakWrap.style.display = 'block';
     } else {
-      if (kapakDurum)   { kapakDurum.textContent = 'Henüz seçilmedi'; kapakDurum.style.color = '#5a6a8a'; }
+      if (kapakDurum)   { kapakDurum.textContent = 'Henüz seçilmedi'; kapakDurum.style.color = '#5d6675'; }
       if (kapakMevcut)  kapakMevcut.value = '';
     }
   } else {
@@ -483,7 +483,7 @@ function tezFormAc(tez) {
     const _eElY = document.getElementById('tezExchange'); if(_eElY) _eElY.value = 'BIST';
     const _dElY = document.getElementById('tezOlusturma'); if(_dElY) _dElY.value = '';
     document.getElementById('tezSilBtn').style.display = 'none';
-    if (kapakDurum)  { kapakDurum.textContent = 'Henüz seçilmedi'; kapakDurum.style.color = '#5a6a8a'; }
+    if (kapakDurum)  { kapakDurum.textContent = 'Henüz seçilmedi'; kapakDurum.style.color = '#5d6675'; }
     if (kapakMevcut) kapakMevcut.value = '';
   }
 }
