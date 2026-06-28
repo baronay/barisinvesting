@@ -175,7 +175,7 @@
 
   // Gradient stops — terminal palet
   const STRENGTH_STOPS = {
-    weak:     ['#d0a89f', '#c08274', '#7f1d1d'],
+    weak:     ['#d0a89f', '#d2796b', '#7f1d1d'],
     moderate: ['#cdbb95', '#b89b6a', '#78350f'],
     strong:   ['#f0d997', '#d4a843', '#8a6a25'],
   };
