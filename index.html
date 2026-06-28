@@ -2304,6 +2304,200 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .fv-foot,
 .fv-loading,
 .fv-error{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1,"lnum" 1;}
+
+/* ═══════════════════════════════════════════════════════════
+   PORTAL — Content-First Landing (Quiet Luxury · Bento Grid)
+   ═══════════════════════════════════════════════════════════ */
+:root{
+  --cream:#ece4d4;
+  --cream2:#cfc6b4;
+  --cream-dim:rgba(236,228,212,0.06);
+  --anthracite:#0b0f15;
+  --anthracite2:#10151e;
+  --portal-border:rgba(236,228,212,0.08);
+  --portal-border-s:rgba(236,228,212,0.14);
+}
+
+/* Route view toggling */
+.rv{display:block;}
+body.route-terminal #portalRoot{display:none;}
+body.route-portal   #terminalRoot{display:none;}
+body.route-portal   .mobile-toggle{display:none !important;}
+
+/* Portal shell */
+#portalRoot{
+  min-height:100vh;
+  background:
+    radial-gradient(ellipse 70% 50% at 12% -5%, rgba(194,173,132,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 100% 105%, rgba(236,228,212,0.035) 0%, transparent 55%),
+    var(--anthracite);
+  color:var(--cream);
+}
+.pt-wrap{max-width:1180px;margin:0 auto;padding:0 28px 96px;}
+
+/* Top bar */
+.pt-topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+  padding:26px 0 22px;border-bottom:1px solid var(--portal-border);
+  position:sticky;top:0;z-index:50;
+  background:linear-gradient(to bottom, var(--anthracite) 65%, rgba(11,15,21,0));
+  backdrop-filter:blur(6px);
+}
+.pt-brand{display:flex;flex-direction:column;line-height:1;}
+.pt-brand-tag{font-family:var(--font-mono);font-size:9px;letter-spacing:3.5px;color:var(--cream2);opacity:.7;text-transform:uppercase;margin-bottom:7px;}
+.pt-brand-name{font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--cream);}
+.pt-brand-name span{color:var(--accent);}
+.pt-topnav{display:flex;align-items:center;gap:10px;}
+.pt-soc{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid var(--portal-border-s);color:var(--cream2);text-decoration:none;transition:all .22s;font-size:12px;border-radius:2px;}
+.pt-soc:hover{border-color:var(--accent);color:var(--accent);box-shadow:0 0 16px var(--accent-glow);transform:translateY(-1px);}
+.pt-soc svg{width:15px;height:15px;}
+
+/* Terminal entry button — premium/elite */
+.pt-enter{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--anthracite);text-decoration:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--accent) 0%,#d8c49a 50%,var(--accent2) 100%);
+  border:1px solid var(--accent);padding:11px 20px;border-radius:2px;
+  box-shadow:0 6px 26px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,0.28);
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;
+  position:relative;overflow:hidden;white-space:nowrap;
+}
+.pt-enter:hover{transform:translateY(-2px);box-shadow:0 10px 34px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,0.34);}
+.pt-enter::after{content:"";position:absolute;top:0;left:-120%;width:60%;height:100%;background:linear-gradient(110deg,transparent,rgba(255,255,255,0.45),transparent);transform:skewX(-18deg);transition:left .6s;}
+.pt-enter:hover::after{left:160%;}
+.pt-enter .arr{font-size:14px;line-height:1;}
+
+/* Hero header */
+.pt-hero{padding:54px 0 30px;}
+.pt-eyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:4px;color:var(--accent);text-transform:uppercase;margin-bottom:16px;}
+.pt-h1{font-family:var(--font-head);font-size:clamp(32px,5vw,52px);font-weight:700;line-height:1.08;color:var(--cream);letter-spacing:-.5px;max-width:760px;}
+.pt-h1 em{font-style:italic;color:var(--accent);}
+.pt-lede{margin-top:18px;max-width:600px;font-size:15px;line-height:1.7;color:var(--cream2);}
+
+/* Section heading */
+.pt-sec{margin-top:64px;}
+.pt-sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:22px;border-bottom:1px solid var(--portal-border);padding-bottom:14px;}
+.pt-sec-title{font-family:var(--font-head);font-size:22px;font-weight:600;color:var(--cream);}
+.pt-sec-title .k{font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-right:10px;vertical-align:middle;}
+.pt-sec-link{font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;color:var(--cream2);text-transform:uppercase;cursor:pointer;text-decoration:none;transition:color .2s;}
+.pt-sec-link:hover{color:var(--accent);}
+
+/* ── BENTO GRID ── */
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:18px;margin-top:8px;}
+.bento-card{
+  background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);
+  border:1px solid var(--portal-border);border-radius:14px;
+  padding:24px;position:relative;overflow:hidden;
+  transition:border-color .25s,transform .25s,box-shadow .25s;
+}
+.bento-card:hover{border-color:var(--portal-border-s);}
+.bento-card.clickable{cursor:pointer;}
+.bento-card.clickable:hover{transform:translateY(-3px);box-shadow:0 18px 50px rgba(0,0,0,0.45);border-color:rgba(194,173,132,0.30);}
+
+.b-span-8{grid-column:span 8;} .b-span-7{grid-column:span 7;}
+.b-span-6{grid-column:span 6;} .b-span-5{grid-column:span 5;}
+.b-span-4{grid-column:span 4;} .b-span-12{grid-column:span 12;}
+.b-row-2{grid-row:span 2;}
+
+/* Featured tez (Haftanın Seçimi) */
+.feat-tez{display:flex;flex-direction:column;min-height:340px;justify-content:flex-end;cursor:pointer;}
+.feat-tez .feat-cover{position:absolute;inset:0;z-index:0;}
+.feat-tez .feat-cover img{width:100%;height:100%;object-fit:cover;opacity:.34;filter:saturate(.85);}
+.feat-tez .feat-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,var(--anthracite2) 8%,rgba(16,21,30,0.55) 55%,rgba(16,21,30,0.15) 100%);}
+.feat-inner{position:relative;z-index:1;}
+.feat-kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:18px;}
+.feat-kicker .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);animation:pulse 1.6s infinite;}
+.feat-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.feat-ticker{font-family:var(--font-mono);font-size:13px;font-weight:600;letter-spacing:2px;color:var(--cream);border:1px solid var(--portal-border-s);padding:3px 10px;border-radius:2px;}
+.feat-sig{font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:2px;padding:3px 10px;border-radius:2px;text-transform:uppercase;}
+.feat-sig.al{background:var(--success-dim);color:var(--success);border:1px solid var(--success);}
+.feat-sig.izle{background:var(--warn-dim);color:var(--warn);border:1px solid var(--warn);}
+.feat-sig.uzak{background:var(--danger-dim);color:var(--danger);border:1px solid var(--danger);}
+.feat-sig.notr{background:var(--glass);color:var(--cream2);border:1px solid var(--portal-border-s);}
+.feat-date{font-family:var(--font-mono);font-size:10px;color:var(--cream2);opacity:.7;}
+.feat-title{font-family:var(--font-head);font-size:clamp(22px,2.4vw,30px);font-weight:700;line-height:1.18;color:var(--cream);margin-bottom:12px;max-width:620px;}
+.feat-summary{font-size:14px;line-height:1.65;color:var(--cream2);max-width:560px;margin-bottom:20px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.feat-cta{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11px;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;}
+.feat-tez:hover .feat-cta{gap:13px;}
+.feat-skeleton{min-height:340px;display:flex;align-items:center;justify-content:center;color:var(--cream2);font-family:var(--font-mono);font-size:11px;letter-spacing:2px;opacity:.5;}
+
+/* Side stack cards */
+.side-card{display:flex;flex-direction:column;justify-content:space-between;min-height:161px;}
+.side-card .sc-tag{font-family:var(--font-mono);font-size:9px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:14px;}
+.side-card .sc-title{font-family:var(--font-head);font-size:20px;font-weight:600;color:var(--cream);line-height:1.25;margin-bottom:8px;}
+.side-card .sc-desc{font-size:13px;line-height:1.6;color:var(--cream2);}
+.side-card .sc-foot{margin-top:16px;}
+
+/* Terminal promo card */
+.term-card{
+  background:
+    radial-gradient(ellipse 90% 70% at 100% 0%, rgba(194,173,132,0.14) 0%, transparent 60%),
+    linear-gradient(160deg,#13161d 0%,#0d1016 100%);
+  border:1px solid rgba(194,173,132,0.22);
+}
+.term-card .sc-title{color:var(--cream);}
+.term-glyph{font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:var(--accent);opacity:.5;margin-bottom:12px;}
+
+/* Newsletter */
+.news-row{display:flex;gap:8px;margin-top:14px;}
+.news-in{flex:1;min-width:0;background:rgba(0,0,0,0.25);border:1px solid var(--portal-border-s);color:var(--cream);font-size:13px;padding:11px 13px;border-radius:3px;outline:none;transition:border-color .2s;}
+.news-in:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+.news-in::placeholder{color:var(--cream2);opacity:.55;}
+.news-btn{flex-shrink:0;background:var(--accent);color:var(--anthracite);border:none;font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:1px;padding:0 18px;border-radius:3px;cursor:pointer;transition:background .2s,transform .2s;}
+.news-btn:hover{background:#d6c399;transform:translateY(-1px);}
+.news-ok{font-family:var(--font-mono);font-size:11px;color:var(--success);margin-top:12px;display:none;}
+
+/* YouTube grid */
+.yt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;}
+.yt-card{display:block;text-decoration:none;color:inherit;border:1px solid var(--portal-border);border-radius:12px;overflow:hidden;background:var(--surface);transition:transform .25s,border-color .25s,box-shadow .25s;}
+.yt-card:hover{transform:translateY(-3px);border-color:rgba(194,173,132,0.30);box-shadow:0 16px 44px rgba(0,0,0,0.42);}
+.yt-thumb{position:relative;aspect-ratio:16/9;overflow:hidden;background:var(--anthracite2);}
+.yt-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .4s;}
+.yt-card:hover .yt-thumb img{transform:scale(1.05);}
+.yt-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+.yt-play span{width:54px;height:54px;border-radius:50%;background:rgba(11,15,21,0.72);border:1.5px solid var(--cream);display:flex;align-items:center;justify-content:center;color:var(--cream);backdrop-filter:blur(2px);transition:background .2s,transform .2s;}
+.yt-card:hover .yt-play span{background:var(--accent);border-color:var(--accent);color:var(--anthracite);transform:scale(1.08);}
+.yt-body{padding:15px 16px 17px;}
+.yt-tt{font-family:var(--font-head);font-size:15px;font-weight:600;color:var(--cream);line-height:1.35;margin-bottom:7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.yt-mt{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:var(--cream2);opacity:.7;text-transform:uppercase;}
+
+/* X feed */
+.x-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;align-items:start;}
+.x-card{border:1px solid var(--portal-border);border-radius:12px;background:var(--surface);padding:20px;transition:border-color .25s,transform .25s;display:flex;flex-direction:column;}
+.x-card:hover{border-color:rgba(194,173,132,0.28);transform:translateY(-2px);}
+.x-head{display:flex;align-items:center;gap:11px;margin-bottom:14px;}
+.x-av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;color:var(--anthracite);font-size:17px;flex-shrink:0;}
+.x-id{display:flex;flex-direction:column;line-height:1.3;min-width:0;}
+.x-name{font-family:var(--font-body);font-size:14px;font-weight:600;color:var(--cream);}
+.x-handle{font-family:var(--font-mono);font-size:11px;color:var(--cream2);opacity:.7;}
+.x-logo{margin-left:auto;color:var(--cream2);opacity:.5;}
+.x-text{font-size:14px;line-height:1.6;color:var(--cream);white-space:pre-wrap;word-wrap:break-word;}
+.x-text a{color:var(--accent);text-decoration:none;}
+.x-foot{margin-top:16px;padding-top:13px;border-top:1px solid var(--portal-border);display:flex;align-items:center;justify-content:space-between;}
+.x-date{font-family:var(--font-mono);font-size:10px;color:var(--cream2);opacity:.6;}
+.x-open{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:var(--accent);text-decoration:none;text-transform:uppercase;}
+
+/* Portal footer */
+.pt-foot{margin-top:80px;padding-top:28px;border-top:1px solid var(--portal-border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.pt-foot-l{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:var(--cream2);opacity:.6;}
+.pt-foot .pt-enter{font-size:10px;padding:9px 16px;}
+
+/* Responsive */
+@media(max-width:900px){
+  .b-span-8,.b-span-7,.b-span-6,.b-span-5,.b-span-4{grid-column:span 12;}
+  .b-row-2{grid-row:auto;}
+  .pt-wrap{padding:0 18px 72px;}
+  .feat-tez{min-height:300px;}
+}
+@media(max-width:560px){
+  .pt-topbar{flex-direction:row;flex-wrap:wrap;}
+  .pt-brand-name{font-size:18px;}
+  .pt-enter{font-size:10px;padding:9px 14px;letter-spacing:1.5px;}
+  .pt-soc{width:30px;height:30px;}
+  .pt-hero{padding:36px 0 22px;}
+  .yt-grid,.x-grid{grid-template-columns:1fr;}
+}
 </style>
 <body>
 <div id="globalToast"><span class="toast-dot"></span><span class="toast-msg"></span></div>
@@ -2544,6 +2738,104 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════
+     PORTAL  (route: "/")  — Finansal Araştırma & Medya vitrini
+     ═══════════════════════════════════════════════════════════ -->
+<div id="portalRoot" class="rv">
+  <div class="pt-wrap">
+
+    <!-- Top bar -->
+    <div class="pt-topbar">
+      <div class="pt-brand">
+        <div class="pt-brand-tag">Finansal Araştırma & Medya</div>
+        <div class="pt-brand-name">Barış <span>Investing</span></div>
+      </div>
+      <div class="pt-topnav">
+        <a class="pt-soc" id="ptYtLink" href="#" target="_blank" rel="noopener" title="YouTube">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 7.5a3 3 0 0 0-2.1-2.1C19 4.9 12 4.9 12 4.9s-7 0-8.9.5A3 3 0 0 0 1 7.5 31 31 0 0 0 .5 12 31 31 0 0 0 1 16.5a3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5A3 3 0 0 0 23 16.5 31 31 0 0 0 23.5 12 31 31 0 0 0 23 7.5zM9.8 15.3V8.7l5.7 3.3z"/></svg>
+        </a>
+        <a class="pt-soc" id="ptXLink" href="#" target="_blank" rel="noopener" title="X">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 2.3h3.3l-7.2 8.2 8.5 11.2h-6.7l-5.2-6.8-6 6.8H1.6l7.7-8.8L1.1 2.3H8l4.7 6.2zM17 19.9h1.8L7.1 4.2H5.1z"/></svg>
+        </a>
+        <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="pt-hero">
+      <div class="pt-eyebrow">◈ Haftalık Araştırma · Tezler · Medya</div>
+      <h1 class="pt-h1">Piyasayı <em>okumanın</em> sakin yolu.</h1>
+      <p class="pt-lede">BIST ve global piyasalar üzerine derin yatırım tezleri, haftalık seçimler ve içerik. Tüm analiz araçları profesyonel <strong style="color:var(--cream)">Terminal</strong>'de.</p>
+    </div>
+
+    <!-- BENTO: featured tez + side stack -->
+    <div class="bento">
+      <!-- Haftanın Seçimi (featured tez) -->
+      <div class="bento-card feat-tez b-span-8 b-row-2 clickable" id="featTez">
+        <div class="feat-skeleton">HAFTANIN SEÇİMİ YÜKLENİYOR…</div>
+      </div>
+
+      <!-- Terminal promo -->
+      <div class="bento-card term-card side-card b-span-4 clickable" data-route="/terminal">
+        <div>
+          <div class="term-glyph">◢◤ TERMINAL</div>
+          <div class="sc-title">Analiz & Tarama Merkezi</div>
+          <div class="sc-desc">Buffett, Lynch, Dalio ve Graham çerçeveleriyle 7 kriterli AI analizi, adil değer ve GARP taraması.</div>
+        </div>
+        <div class="sc-foot">
+          <span class="pt-enter" style="pointer-events:none">Terminal'e Giriş <span class="arr">→</span></span>
+        </div>
+      </div>
+
+      <!-- Newsletter -->
+      <div class="bento-card side-card b-span-4">
+        <div>
+          <div class="sc-tag">◈ Haftalık Bülten</div>
+          <div class="sc-title">Hafta sonu özetini al</div>
+          <div class="sc-desc">Tezler, seçimler ve piyasa notları e-postana gelsin.</div>
+        </div>
+        <div class="sc-foot">
+          <div class="news-row">
+            <input class="news-in" id="newsEmail" type="email" placeholder="ornek@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')portalNewsletter()"/>
+            <button class="news-btn" onclick="portalNewsletter()">Abone Ol</button>
+          </div>
+          <div class="news-ok" id="newsOk">✓ Teşekkürler — listeye eklendin.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- YouTube -->
+    <div class="pt-sec">
+      <div class="pt-sec-head">
+        <div class="pt-sec-title"><span class="k">▶ Video</span>YouTube</div>
+        <a class="pt-sec-link" id="ptYtAll" href="#" target="_blank" rel="noopener">Kanala git →</a>
+      </div>
+      <div class="yt-grid" id="ytGrid"></div>
+    </div>
+
+    <!-- X feed -->
+    <div class="pt-sec">
+      <div class="pt-sec-head">
+        <div class="pt-sec-title"><span class="k">𝕏 Akış</span>X / Twitter</div>
+        <a class="pt-sec-link" id="ptXAll" href="#" target="_blank" rel="noopener">Profili gör →</a>
+      </div>
+      <div class="x-grid" id="xGrid"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="pt-foot">
+      <div class="pt-foot-l">© <span id="ptYear"></span> Barış Investing · Araştırma & bilgi amaçlıdır, yatırım tavsiyesi değildir.</div>
+      <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
+    </div>
+
+  </div>
+</div>
+<!-- /portalRoot -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     TERMINAL  (route: "/terminal")  — mevcut analiz aracı
+     ═══════════════════════════════════════════════════════════ -->
+<div id="terminalRoot" class="rv">
 <div class="app">
 <div class="sidebar" id="sidebar">
   <div class="brand">
@@ -3145,7 +3437,8 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
       </div>
     </div>
   </div>
-</div><script>
+</div>
+</div><!-- /terminalRoot --><script>
 // ===== DATA =====
 const BIST={'THYAO':'Türk Hava Yolları','EREGL':'Ereğli Demir Çelik','SAHOL':'Sabancı Holding','KCHOL':'Koç Holding','ASELS':'Aselsan','BIMAS':'BİM Mağazalar','TUPRS':'Tüpraş','AKBNK':'Akbank','ISCTR':'İş Bankası','FROTO':'Ford Otosan','TOASO':'Tofaş Otomobil','VAKBN':'Vakıfbank','PGSUS':'Pegasus','TAVHL':'TAV Havalimanları','SISE':'Şişecam','TURSG':'Türkiye Sigorta','GARAN':'Garanti BBVA','YKBNK':'Yapı Kredi','HALKB':'Halkbank','TCELL':'Turkcell','TTKOM':'Türk Telekom','ARCLK':'Arçelik','VESTL':'Vestel','ENKAI':'Enka İnşaat','PETKM':'Petkim','KOZAL':'Koza Altın','KRDMD':'Kardemir','SOKM':'Şok Marketler','MGROS':'Migros','ULKER':'Ülker','CCOLA':'Coca-Cola İçecek','MAVI':'Mavi Giyim','LOGO':'Logo Yazılım','EKGYO':'Emlak Konut','ENJSA':'Enerjisa','QNBTR':'QNB Finansbank','TSKB':'TSKB','ALBRK':'Albaraka Türk','SKBNK':'Şekerbank','DOAS':'Doğuş Otomotiv','OTKAR':'Otokar','TTRAK':'Türk Traktör','NETAS':'Netaş','AYEN':'Ayen Enerji','AKSEN':'Aksen Enerji','ZOREN':'Zorlu Enerji','ODAS':'Odaş Elektrik','KOZAA':'Koza Madencilik','IPEKE':'İpek Doğal Enerji','GUBRF':'Gübre Fabrikaları','ALKIM':'Alkim Kimya','SASA':'Sasa Polyester','BRISA':'Brisa Bridgestone','TKFEN':'Tekfen Holding','DOHOL':'Doğan Holding','GLYHO':'Global Yatırım Holding','IHLGM':'İHL Holding','AKCNS':'Akçansa','BOLUC':'Bolu Çimento','ADANA':'Adana Çimento','CIMSA':'Çimsa','GOLTS':'Göltaş Çimento','MRDIN':'Mardin Çimento','UNYEC':'Ünye Çimento','KONYA':'Konya Çimento','ISGYO':'İş GYO','VKGYO':'Vakıf GYO','RAYSG':'Ray Sigorta','ANSGR':'Anadolu Sigorta','ANHYT':'Anadolu Hayat','AVHOL':'Avivasa','HEPSI':'Hepsiburada','LCWGR':'LC Waikiki','ARENA':'Arena Bilgisayar','INDES':'İndes Bilgisayar','LINK':'Link Bilgisayar','RYSAS':'Reysaş Lojistik','CLEBI':'Çelebi Havacılık','NUHCM':'Nuh Çimento','CELHA':'Çelik Halat','PARSN':'Parsan Makine','AGHOL':'AG Anadolu Grubu','MERIT':'Merit Turizm'};
 const BIST_P=['THYAO','EREGL','SAHOL','ASELS','BIMAS','KCHOL'];
@@ -6202,6 +6495,183 @@ function garpAnalizAc(ticker) {
     return String(s || '').replace(/[&<>"']/g, c =>
       ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PORTAL ROUTER + CONTENT  (SPA: "/" portal · "/terminal" araç)
+     ═══════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  'use strict';
+
+  /* ───────── BARIŞ — BURAYI DOLDUR ─────────
+     Video / tweet ID'lerini ve linkleri buradan yönet. */
+  const CONFIG = {
+    youtubeChannel : 'https://www.youtube.com/@barisinvesting',
+    xProfile       : 'https://x.com/barisinvesting',
+    xHandle        : 'barisinvesting',
+    xName          : 'Barış Investing',
+    // YouTube video ID'leri (watch?v=XXXX kısmı):
+    videos: [
+      // { id:'dQw4w9WgXcQ', title:'BIST Haftalık Görünüm', meta:'Bülten' },
+    ],
+    // Öne çıkan tweetler (manuel kart — API gerektirmez):
+    tweets: [
+      // { text:'THYAO bilanço notları...', url:'https://x.com/barisinvesting/status/000', date:'2 gün önce' },
+    ]
+  };
+
+  /* ───────── ROUTER ───────── */
+  const portal   = document.getElementById('portalRoot');
+  const terminal = document.getElementById('terminalRoot');
+  const TITLE = { portal:'Barış Investing — Finansal Araştırma & Medya',
+                  terminal:'Terminal — Barış Investing' };
+
+  function applyRoute(path, replace){
+    const isTerminal = /^\/terminal(\/|$)/.test(path);
+    document.body.classList.toggle('route-terminal', isTerminal);
+    document.body.classList.toggle('route-portal', !isTerminal);
+    document.title = isTerminal ? TITLE.terminal : TITLE.portal;
+    const norm = isTerminal ? '/terminal' : '/';
+    if (replace) history.replaceState({route:norm}, '', norm);
+    if (isTerminal){ window.scrollTo(0,0); }
+    else { if (!portalLoaded) loadPortal(); }
+    if (typeof window.trackEvent === 'function')
+      window.trackEvent('route_view', { route: isTerminal ? 'terminal' : 'portal' });
+  }
+
+  function navigate(path){
+    if (location.pathname === path){ applyRoute(path,false); return; }
+    history.pushState({route:path}, '', path);
+    applyRoute(path,false);
+  }
+  window.goTerminal = function(){ navigate('/terminal'); };
+  window.goPortal   = function(){ navigate('/'); };
+
+  // data-route linklerini yakala (SPA geçiş)
+  document.addEventListener('click', function(e){
+    const el = e.target.closest('[data-route]');
+    if (!el) return;
+    e.preventDefault();
+    navigate(el.getAttribute('data-route'));
+  });
+
+  window.addEventListener('popstate', function(){ applyRoute(location.pathname,false); });
+
+  /* ───────── PORTAL CONTENT ───────── */
+  let portalLoaded = false;
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function loadPortal(){
+    portalLoaded = true;
+    const y = document.getElementById('ptYear'); if (y) y.textContent = new Date().getFullYear();
+    // sosyal linkler
+    const yt=document.getElementById('ptYtLink'), ytA=document.getElementById('ptYtAll');
+    const x=document.getElementById('ptXLink'),  xA=document.getElementById('ptXAll');
+    if(yt) yt.href=CONFIG.youtubeChannel; if(ytA) ytA.href=CONFIG.youtubeChannel;
+    if(x)  x.href =CONFIG.xProfile;       if(xA)  xA.href =CONFIG.xProfile;
+    loadFeaturedTez();
+    renderVideos();
+    renderTweets();
+  }
+
+  /* Haftanın Seçimi — en güncel tez */
+  async function loadFeaturedTez(){
+    const host = document.getElementById('featTez');
+    if (!host) return;
+    try{
+      const r = await fetch('/api/tez-admin?pub=1');
+      const list = await r.json();
+      if (!Array.isArray(list) || !list.length){
+        host.innerHTML = '<div class="feat-inner"><div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div><div class="feat-title">İlk tez yakında geliyor</div><div class="feat-summary">Yeni araştırma tezleri burada yayınlanacak.</div></div>';
+        host.classList.remove('clickable');
+        return;
+      }
+      const t = list[0];
+      const sigMap = { AL:['al','AL'], IZLE:['izle','İZLE'], KACIN:['uzak','UZAK DUR'], NOTR:['notr','NÖTR'] };
+      const sig = sigMap[t.sinyal] || sigMap.NOTR;
+      const tarih = t.olusturma ? new Date(t.olusturma).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : '';
+      host.innerHTML =
+        (t.kapak_gorseli ? `<div class="feat-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : '') +
+        '<div class="feat-inner">' +
+          '<div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div>' +
+          '<div class="feat-meta">' +
+            (t.ticker ? `<span class="feat-ticker">${esc(t.ticker)}</span>` : '') +
+            `<span class="feat-sig ${sig[0]}">${sig[1]}</span>` +
+            (tarih ? `<span class="feat-date">${esc(tarih)}</span>` : '') +
+          '</div>' +
+          `<div class="feat-title">${esc(t.baslik||'')}</div>` +
+          (t.ozet ? `<div class="feat-summary">${esc(t.ozet)}</div>` : '') +
+          '<div class="feat-cta">Tezi Oku <span>→</span></div>' +
+        '</div>';
+      host.onclick = function(){
+        navigate('/terminal');
+        if (typeof window.openTezSupabase === 'function') setTimeout(()=>window.openTezSupabase(t.id), 60);
+      };
+    }catch(e){
+      host.innerHTML = '<div class="feat-inner"><div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div><div class="feat-title">Tez yüklenemedi</div></div>';
+      host.classList.remove('clickable');
+    }
+  }
+
+  /* YouTube grid */
+  function renderVideos(){
+    const grid = document.getElementById('ytGrid');
+    if (!grid) return;
+    if (!CONFIG.videos.length){
+      grid.innerHTML = `<a class="yt-card" href="${esc(CONFIG.youtubeChannel)}" target="_blank" rel="noopener"><div class="yt-thumb"><div class="yt-play"><span>▶</span></div></div><div class="yt-body"><div class="yt-tt">Videolar yakında</div><div class="yt-mt">Kanala git →</div></div></a>`;
+      return;
+    }
+    grid.innerHTML = CONFIG.videos.map(v=>{
+      const thumb = `https://i.ytimg.com/vi/${encodeURIComponent(v.id)}/hqdefault.jpg`;
+      const url   = `https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}`;
+      return `<a class="yt-card" href="${url}" target="_blank" rel="noopener">
+        <div class="yt-thumb"><img src="${thumb}" alt="" loading="lazy"><div class="yt-play"><span>▶</span></div></div>
+        <div class="yt-body"><div class="yt-tt">${esc(v.title||'Video')}</div><div class="yt-mt">${esc(v.meta||'YouTube')}</div></div>
+      </a>`;
+    }).join('');
+  }
+
+  /* X feed — manuel kartlar (free API yok) */
+  function renderTweets(){
+    const grid = document.getElementById('xGrid');
+    if (!grid) return;
+    const initial = (CONFIG.xName||'B').trim().charAt(0).toUpperCase();
+    const xLogo = '<svg class="x-logo" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 2.3h3.3l-7.2 8.2 8.5 11.2h-6.7l-5.2-6.8-6 6.8H1.6l7.7-8.8L1.1 2.3H8l4.7 6.2zM17 19.9h1.8L7.1 4.2H5.1z"/></svg>';
+    if (!CONFIG.tweets.length){
+      grid.innerHTML = `<div class="x-card"><div class="x-head"><div class="x-av">${initial}</div><div class="x-id"><span class="x-name">${esc(CONFIG.xName)}</span><span class="x-handle">@${esc(CONFIG.xHandle)}</span></div>${xLogo}</div><div class="x-text">Son paylaşımlar yakında burada akacak.</div><div class="x-foot"><span class="x-date">—</span><a class="x-open" href="${esc(CONFIG.xProfile)}" target="_blank" rel="noopener">Profili gör →</a></div></div>`;
+      return;
+    }
+    grid.innerHTML = CONFIG.tweets.map(tw=>{
+      const txt = esc(tw.text||'').replace(/(\$[A-Z]{2,6})/g,'<a href="'+esc(CONFIG.xProfile)+'" target="_blank" rel="noopener">$1</a>');
+      return `<div class="x-card">
+        <div class="x-head"><div class="x-av">${initial}</div><div class="x-id"><span class="x-name">${esc(CONFIG.xName)}</span><span class="x-handle">@${esc(CONFIG.xHandle)}</span></div>${xLogo}</div>
+        <div class="x-text">${txt}</div>
+        <div class="x-foot"><span class="x-date">${esc(tw.date||'')}</span><a class="x-open" href="${esc(tw.url||CONFIG.xProfile)}" target="_blank" rel="noopener">Tweet'i aç →</a></div>
+      </div>`;
+    }).join('');
+  }
+
+  /* Newsletter — mevcut auth e-posta toplama uçuyla uyumlu, sessiz fallback */
+  window.portalNewsletter = function(){
+    const inp = document.getElementById('newsEmail');
+    const ok  = document.getElementById('newsOk');
+    if (!inp) return;
+    const email = (inp.value||'').trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ inp.focus(); inp.style.borderColor='var(--danger)'; return; }
+    inp.style.borderColor='';
+    fetch('/api/auth?newsletter=1', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, source:'portal_newsletter', consent:true })
+    }).catch(()=>{});
+    if (ok){ ok.style.display='block'; }
+    inp.value=''; inp.disabled=true;
+    if (typeof window.trackEvent === 'function') window.trackEvent('newsletter_signup', { source:'portal' });
+  };
+
+  /* ───────── INIT ───────── */
+  applyRoute(location.pathname, true);
 })();
 </script>
 </body>
