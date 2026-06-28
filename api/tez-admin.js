@@ -39,8 +39,11 @@ export default async function handler(req, res) {
         { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' } }
       );
       const d = await r.json();
-      const price = d?.chart?.result?.[0]?.meta?.regularMarketPrice ?? null;
-      return res.status(200).json({ price, sym });
+      const meta = d?.chart?.result?.[0]?.meta;
+      const price = meta?.regularMarketPrice ?? null;
+      const prev = meta?.chartPreviousClose || meta?.previousClose;
+      const change = (price && prev) ? ((price - prev) / prev * 100) : null;
+      return res.status(200).json({ price, change, sym });
     } catch(e) {
       return res.status(500).json({ error: e.message });
     }
