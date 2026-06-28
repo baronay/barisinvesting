@@ -2323,6 +2323,11 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 body.route-terminal #portalRoot{display:none;}
 body.route-portal   #terminalRoot{display:none;}
 body.route-portal   .mobile-toggle{display:none !important;}
+/* Portal'da terminal onboarding modallarını gizle */
+body.route-portal #fwModal,
+body.route-portal #authModal,
+body.route-portal #adminModal,
+body.route-portal #loadingOv{display:none !important;}
 
 /* Portal shell */
 #portalRoot{
@@ -2447,6 +2452,35 @@ body.route-portal   .mobile-toggle{display:none !important;}
 .news-btn{flex-shrink:0;background:var(--accent);color:var(--anthracite);border:none;font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:1px;padding:0 18px;border-radius:3px;cursor:pointer;transition:background .2s,transform .2s;}
 .news-btn:hover{background:#d6c399;transform:translateY(-1px);}
 .news-ok{font-family:var(--font-mono);font-size:11px;color:var(--success);margin-top:12px;display:none;}
+
+/* Portal tez grid */
+.pt-tez-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;}
+.pt-tez-skel{grid-column:1/-1;text-align:center;padding:40px;color:var(--cream2);font-family:var(--font-mono);font-size:11px;letter-spacing:2px;opacity:.5;}
+.pt-tez-card{position:relative;border:1px solid var(--portal-border);border-radius:12px;background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;min-height:200px;transition:transform .25s,border-color .25s,box-shadow .25s;}
+.pt-tez-card:hover{transform:translateY(-3px);border-color:rgba(194,173,132,0.30);box-shadow:0 16px 44px rgba(0,0,0,0.42);}
+.ptz-cover{height:120px;overflow:hidden;background:var(--anthracite2);position:relative;flex-shrink:0;}
+.ptz-cover img{width:100%;height:100%;object-fit:cover;opacity:.82;transition:transform .4s;}
+.pt-tez-card:hover .ptz-cover img{transform:scale(1.05);}
+.ptz-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,var(--surface),transparent 60%);}
+.ptz-body{padding:16px 18px 18px;display:flex;flex-direction:column;flex:1;}
+.ptz-meta{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.ptz-ticker{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:1px;color:var(--cream);border:1px solid var(--portal-border-s);padding:2px 8px;border-radius:2px;}
+.ptz-sig{font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;padding:2px 8px;border-radius:2px;}
+.ptz-sig.al{background:var(--success-dim);color:var(--success);border:1px solid var(--success);}
+.ptz-sig.izle{background:var(--warn-dim);color:var(--warn);border:1px solid var(--warn);}
+.ptz-sig.uzak{background:var(--danger-dim);color:var(--danger);border:1px solid var(--danger);}
+.ptz-sig.notr{background:var(--glass);color:var(--cream2);border:1px solid var(--portal-border-s);}
+.ptz-date{font-family:var(--font-mono);font-size:9px;color:var(--cream2);opacity:.65;margin-left:auto;}
+.ptz-title{font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--cream);line-height:1.3;margin-bottom:8px;}
+.ptz-sum{font-size:13px;line-height:1.55;color:var(--cream2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:14px;}
+.ptz-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;}
+.ptz-read{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:var(--accent);text-transform:uppercase;}
+.ptz-getiri{font-family:var(--font-mono);font-size:11px;font-weight:600;}
+.ptz-getiri.pos{color:var(--success);} .ptz-getiri.neg{color:var(--danger);} .ptz-getiri.neu{color:var(--cream2);}
+
+/* X embeds (official widgets) */
+.x-embed{display:flex;justify-content:center;min-height:60px;}
+.x-embed .twitter-tweet{margin:0 !important;}
 
 /* YouTube grid */
 .yt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;}
@@ -2775,24 +2809,12 @@ body.route-portal   .mobile-toggle{display:none !important;}
         <div class="feat-skeleton">HAFTANIN SEÇİMİ YÜKLENİYOR…</div>
       </div>
 
-      <!-- Terminal promo -->
-      <div class="bento-card term-card side-card b-span-4 clickable" data-route="/terminal">
-        <div>
-          <div class="term-glyph">◢◤ TERMINAL</div>
-          <div class="sc-title">Analiz & Tarama Merkezi</div>
-          <div class="sc-desc">Buffett, Lynch, Dalio ve Graham çerçeveleriyle 7 kriterli AI analizi, adil değer ve GARP taraması.</div>
-        </div>
-        <div class="sc-foot">
-          <span class="pt-enter" style="pointer-events:none">Terminal'e Giriş <span class="arr">→</span></span>
-        </div>
-      </div>
-
-      <!-- Newsletter -->
+      <!-- Newsletter (primary CTA) -->
       <div class="bento-card side-card b-span-4">
         <div>
           <div class="sc-tag">◈ Haftalık Bülten</div>
           <div class="sc-title">Hafta sonu özetini al</div>
-          <div class="sc-desc">Tezler, seçimler ve piyasa notları e-postana gelsin.</div>
+          <div class="sc-desc">Yeni tezler, haftalık seçimler ve piyasa notları doğrudan e-postana gelsin.</div>
         </div>
         <div class="sc-foot">
           <div class="news-row">
@@ -2801,6 +2823,29 @@ body.route-portal   .mobile-toggle{display:none !important;}
           </div>
           <div class="news-ok" id="newsOk">✓ Teşekkürler — listeye eklendin.</div>
         </div>
+      </div>
+
+      <!-- Terminal entry (opsiyonel) -->
+      <div class="bento-card term-card side-card b-span-4 clickable" data-route="/terminal">
+        <div>
+          <div class="term-glyph">◢◤ TERMINAL · OPSİYONEL</div>
+          <div class="sc-title">Analiz & Tarama Merkezi</div>
+          <div class="sc-desc">Hisse analizi ve portföy takibi için profesyonel terminale geç.</div>
+        </div>
+        <div class="sc-foot">
+          <span class="pt-enter" style="pointer-events:none">Terminal'e Giriş <span class="arr">→</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Araştırma Tezleri -->
+    <div class="pt-sec">
+      <div class="pt-sec-head">
+        <div class="pt-sec-title"><span class="k">◈ Araştırma</span>Yatırım Tezleri</div>
+        <span class="pt-sec-link" id="ptTezCount"></span>
+      </div>
+      <div class="pt-tez-grid" id="tezGridPortal">
+        <div class="pt-tez-skel">Tezler yükleniyor…</div>
       </div>
     </div>
 
@@ -2854,8 +2899,6 @@ body.route-portal   .mobile-toggle{display:none !important;}
   <div class="main-nav">
     <div class="mnav-tab active" id="tab-analiz" onclick="switchTab('analiz')">Analiz</div>
     <div class="mnav-tab" id="tab-portfoy" onclick="switchTab('portfoy')">Portföy</div>
-    <div class="mnav-tab" id="tab-tez" onclick="switchTab('tez')">Tezler</div>
-    <div class="mnav-tab" id="tab-forum" onclick="switchTab('forum')">Forum</div>
   </div>
 
   <!-- ANALIZ TAB -->
@@ -2893,9 +2936,6 @@ body.route-portal   .mobile-toggle{display:none !important;}
     <div class="nav-lbl">Menü</div>
     <div class="nav-item active" id="nav-overview" onclick="showPage('overview');closeSidebar();">
       <span class="nav-num">00</span>Dashboard<span class="nav-status">◎</span>
-    </div>
-    <div class="nav-item" id="nav-tezler" onclick="showPage('tezler');closeSidebar();">
-      <span class="nav-num">★</span>Yatırım Tezleri<span class="nav-status" style="font-size:9px;color:var(--gold)">ÜYE</span>
     </div>
     <div class="nav-lbl" id="navLabel">Kriterler</div>
     <div id="navList"></div>
@@ -3684,8 +3724,8 @@ function closeSidebar(){
 
 // TABS
 function switchTab(t){
-  ['analiz','portfoy','tez','forum'].forEach(x=>{
-    document.getElementById('tab-'+x).className='mnav-tab'+(x===t?' active':'');
+  ['analiz','portfoy'].forEach(x=>{
+    const b=document.getElementById('tab-'+x);if(b)b.className='mnav-tab'+(x===t?' active':'');
     const c=document.getElementById('tab-'+x+'-content');if(c)c.className='tab-content'+(x===t?' active':'');
   });
 }
@@ -6505,20 +6545,22 @@ function garpAnalizAc(ticker) {
 (function(){
   'use strict';
 
-  /* ───────── BARIŞ — BURAYI DOLDUR ─────────
-     Video / tweet ID'lerini ve linkleri buradan yönet. */
+  /* ───────── İÇERİK YÖNETİMİ ─────────
+     Yeni video/tweet eklemek için ID'leri buraya ekle. */
   const CONFIG = {
     youtubeChannel : 'https://www.youtube.com/@barisinvesting',
     xProfile       : 'https://x.com/barisinvesting',
     xHandle        : 'barisinvesting',
     xName          : 'Barış Investing',
-    // YouTube video ID'leri (watch?v=XXXX kısmı):
+    // YouTube video ID'leri (başlık oEmbed ile otomatik gelir):
     videos: [
-      // { id:'dQw4w9WgXcQ', title:'BIST Haftalık Görünüm', meta:'Bülten' },
+      { id:'j6x2vlFdcl8' },
+      { id:'s1ia0hntGpo' },
     ],
-    // Öne çıkan tweetler (manuel kart — API gerektirmez):
+    // Tweet ID'leri (status/ sonrası rakamlar):
     tweets: [
-      // { text:'THYAO bilanço notları...', url:'https://x.com/barisinvesting/status/000', date:'2 gün önce' },
+      '2070563096955957403',
+      '2070833771549425678',
     ]
   };
 
@@ -6571,51 +6613,101 @@ function garpAnalizAc(ticker) {
     const x=document.getElementById('ptXLink'),  xA=document.getElementById('ptXAll');
     if(yt) yt.href=CONFIG.youtubeChannel; if(ytA) ytA.href=CONFIG.youtubeChannel;
     if(x)  x.href =CONFIG.xProfile;       if(xA)  xA.href =CONFIG.xProfile;
-    loadFeaturedTez();
+    loadTezler();
     renderVideos();
     renderTweets();
   }
 
-  /* Haftanın Seçimi — en güncel tez */
-  async function loadFeaturedTez(){
+  const sigMap = { AL:['al','AL'], IZLE:['izle','İZLE'], KACIN:['uzak','UZAK DUR'], NOTR:['notr','NÖTR'] };
+  function trDate(s){ return s ? new Date(s).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : ''; }
+  function openTez(id){ if (typeof window.openTezSupabase === 'function') window.openTezSupabase(id); }
+
+  /* Tüm tezleri tek seferde çek → Haftanın Seçimi + tez grid */
+  async function loadTezler(){
     const host = document.getElementById('featTez');
-    if (!host) return;
+    const grid = document.getElementById('tezGridPortal');
     try{
       const r = await fetch('/api/tez-admin?pub=1');
       const list = await r.json();
       if (!Array.isArray(list) || !list.length){
-        host.innerHTML = '<div class="feat-inner"><div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div><div class="feat-title">İlk tez yakında geliyor</div><div class="feat-summary">Yeni araştırma tezleri burada yayınlanacak.</div></div>';
-        host.classList.remove('clickable');
+        if (host){ host.classList.remove('clickable'); host.innerHTML = '<div class="feat-inner"><div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div><div class="feat-title">İlk tez yakında geliyor</div><div class="feat-summary">Yeni araştırma tezleri burada yayınlanacak.</div></div>'; }
+        if (grid) grid.innerHTML = '<div class="pt-tez-skel">Henüz tez yayınlanmadı.</div>';
         return;
       }
-      const t = list[0];
-      const sigMap = { AL:['al','AL'], IZLE:['izle','İZLE'], KACIN:['uzak','UZAK DUR'], NOTR:['notr','NÖTR'] };
-      const sig = sigMap[t.sinyal] || sigMap.NOTR;
-      const tarih = t.olusturma ? new Date(t.olusturma).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : '';
-      host.innerHTML =
-        (t.kapak_gorseli ? `<div class="feat-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : '') +
-        '<div class="feat-inner">' +
-          '<div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div>' +
-          '<div class="feat-meta">' +
-            (t.ticker ? `<span class="feat-ticker">${esc(t.ticker)}</span>` : '') +
-            `<span class="feat-sig ${sig[0]}">${sig[1]}</span>` +
-            (tarih ? `<span class="feat-date">${esc(tarih)}</span>` : '') +
-          '</div>' +
-          `<div class="feat-title">${esc(t.baslik||'')}</div>` +
-          (t.ozet ? `<div class="feat-summary">${esc(t.ozet)}</div>` : '') +
-          '<div class="feat-cta">Tezi Oku <span>→</span></div>' +
-        '</div>';
-      host.onclick = function(){
-        navigate('/terminal');
-        if (typeof window.openTezSupabase === 'function') setTimeout(()=>window.openTezSupabase(t.id), 60);
-      };
+      renderFeatured(list[0]);
+      renderTezGrid(list);
     }catch(e){
-      host.innerHTML = '<div class="feat-inner"><div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div><div class="feat-title">Tez yüklenemedi</div></div>';
-      host.classList.remove('clickable');
+      if (host){ host.classList.remove('clickable'); host.innerHTML = '<div class="feat-inner"><div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div><div class="feat-title">Tez yüklenemedi</div></div>'; }
+      if (grid) grid.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Tezler yüklenemedi.</div>';
     }
   }
 
-  /* YouTube grid */
+  function renderFeatured(t){
+    const host = document.getElementById('featTez');
+    if (!host || !t) return;
+    const sig = sigMap[t.sinyal] || sigMap.NOTR;
+    host.innerHTML =
+      (t.kapak_gorseli ? `<div class="feat-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : '') +
+      '<div class="feat-inner">' +
+        '<div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div>' +
+        '<div class="feat-meta">' +
+          (t.ticker ? `<span class="feat-ticker">${esc(t.ticker)}</span>` : '') +
+          `<span class="feat-sig ${sig[0]}">${sig[1]}</span>` +
+          (t.olusturma ? `<span class="feat-date">${esc(trDate(t.olusturma))}</span>` : '') +
+        '</div>' +
+        `<div class="feat-title">${esc(t.baslik||'')}</div>` +
+        (t.ozet ? `<div class="feat-summary">${esc(t.ozet)}</div>` : '') +
+        '<div class="feat-cta">Tezi Oku <span>→</span></div>' +
+      '</div>';
+    host.onclick = function(){ openTez(t.id); };
+  }
+
+  function renderTezGrid(list){
+    const grid = document.getElementById('tezGridPortal');
+    const cnt  = document.getElementById('ptTezCount');
+    if (!grid) return;
+    if (cnt) cnt.textContent = list.length + ' tez';
+    grid.innerHTML = list.map(t=>{
+      const sig = sigMap[t.sinyal] || sigMap.NOTR;
+      return `<div class="pt-tez-card" onclick="window.__openTez(${t.id})">
+        ${t.kapak_gorseli ? `<div class="ptz-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+        <div class="ptz-body">
+          <div class="ptz-meta">
+            ${t.ticker ? `<span class="ptz-ticker">${esc(t.ticker)}</span>` : ''}
+            <span class="ptz-sig ${sig[0]}">${sig[1]}</span>
+            ${t.olusturma ? `<span class="ptz-date">${esc(trDate(t.olusturma))}</span>` : ''}
+          </div>
+          <div class="ptz-title">${esc(t.baslik||'')}</div>
+          ${t.ozet ? `<div class="ptz-sum">${esc(t.ozet)}</div>` : ''}
+          <div class="ptz-foot">
+            <span class="ptz-read">Tezi Oku →</span>
+            <span class="ptz-getiri" id="ptz-get-${t.id}"></span>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    // maliyet_fiyat olan tezler için getiri
+    list.filter(t=>t.maliyet_fiyat && t.ticker).forEach(portalTezGetiri);
+  }
+  window.__openTez = openTez;
+
+  async function portalTezGetiri(t){
+    const el = document.getElementById('ptz-get-' + t.id);
+    if (!el) return;
+    try{
+      const ex = t.exchange || 'BIST';
+      const r = await fetch('/api/tez-admin?price=1&ticker=' + encodeURIComponent(t.ticker) + '&exchange=' + ex);
+      const d = await r.json();
+      const anlik = d && d.price;
+      const maliyet = parseFloat(t.maliyet_fiyat);
+      if (!anlik || isNaN(anlik) || !maliyet) return;
+      const g = ((anlik - maliyet) / maliyet) * 100;
+      el.className = 'ptz-getiri ' + (g > 0.5 ? 'pos' : g < -0.5 ? 'neg' : 'neu');
+      el.textContent = (g > 0 ? '+' : '') + g.toFixed(1) + '%';
+    }catch(e){}
+  }
+
+  /* YouTube grid — başlıklar oEmbed ile otomatik */
   function renderVideos(){
     const grid = document.getElementById('ytGrid');
     if (!grid) return;
@@ -6623,34 +6715,63 @@ function garpAnalizAc(ticker) {
       grid.innerHTML = `<a class="yt-card" href="${esc(CONFIG.youtubeChannel)}" target="_blank" rel="noopener"><div class="yt-thumb"><div class="yt-play"><span>▶</span></div></div><div class="yt-body"><div class="yt-tt">Videolar yakında</div><div class="yt-mt">Kanala git →</div></div></a>`;
       return;
     }
-    grid.innerHTML = CONFIG.videos.map(v=>{
+    grid.innerHTML = CONFIG.videos.map((v,i)=>{
       const thumb = `https://i.ytimg.com/vi/${encodeURIComponent(v.id)}/hqdefault.jpg`;
       const url   = `https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}`;
       return `<a class="yt-card" href="${url}" target="_blank" rel="noopener">
-        <div class="yt-thumb"><img src="${thumb}" alt="" loading="lazy"><div class="yt-play"><span>▶</span></div></div>
-        <div class="yt-body"><div class="yt-tt">${esc(v.title||'Video')}</div><div class="yt-mt">${esc(v.meta||'YouTube')}</div></div>
+        <div class="yt-thumb"><img src="${thumb}" alt="" loading="lazy" onerror="this.src='https://i.ytimg.com/vi/${encodeURIComponent(v.id)}/0.jpg'"><div class="yt-play"><span>▶</span></div></div>
+        <div class="yt-body"><div class="yt-tt" id="yt-tt-${i}">${esc(v.title||'YouTube videosu')}</div><div class="yt-mt">${esc(v.meta||'YouTube')}</div></div>
       </a>`;
     }).join('');
+    // gerçek başlıkları oEmbed ile doldur
+    CONFIG.videos.forEach((v,i)=>{
+      if (v.title) return;
+      fetch(`https://www.youtube.com/oembed?url=https://youtu.be/${encodeURIComponent(v.id)}&format=json`)
+        .then(r=> r.ok ? r.json() : null)
+        .then(d=>{ if(d && d.title){ const el=document.getElementById('yt-tt-'+i); if(el) el.textContent=d.title; } })
+        .catch(()=>{});
+    });
   }
 
-  /* X feed — manuel kartlar (free API yok) */
+  /* X feed — resmî embed (gerçek tweet + görsel) */
+  let twLoading = false;
   function renderTweets(){
     const grid = document.getElementById('xGrid');
     if (!grid) return;
-    const initial = (CONFIG.xName||'B').trim().charAt(0).toUpperCase();
-    const xLogo = '<svg class="x-logo" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 2.3h3.3l-7.2 8.2 8.5 11.2h-6.7l-5.2-6.8-6 6.8H1.6l7.7-8.8L1.1 2.3H8l4.7 6.2zM17 19.9h1.8L7.1 4.2H5.1z"/></svg>';
     if (!CONFIG.tweets.length){
-      grid.innerHTML = `<div class="x-card"><div class="x-head"><div class="x-av">${initial}</div><div class="x-id"><span class="x-name">${esc(CONFIG.xName)}</span><span class="x-handle">@${esc(CONFIG.xHandle)}</span></div>${xLogo}</div><div class="x-text">Son paylaşımlar yakında burada akacak.</div><div class="x-foot"><span class="x-date">—</span><a class="x-open" href="${esc(CONFIG.xProfile)}" target="_blank" rel="noopener">Profili gör →</a></div></div>`;
+      const initial = (CONFIG.xName||'B').trim().charAt(0).toUpperCase();
+      grid.innerHTML = `<div class="x-card"><div class="x-head"><div class="x-av">${initial}</div><div class="x-id"><span class="x-name">${esc(CONFIG.xName)}</span><span class="x-handle">@${esc(CONFIG.xHandle)}</span></div></div><div class="x-text">Son paylaşımlar yakında burada akacak.</div><div class="x-foot"><span class="x-date">—</span><a class="x-open" href="${esc(CONFIG.xProfile)}" target="_blank" rel="noopener">Profili gör →</a></div></div>`;
       return;
     }
-    grid.innerHTML = CONFIG.tweets.map(tw=>{
-      const txt = esc(tw.text||'').replace(/(\$[A-Z]{2,6})/g,'<a href="'+esc(CONFIG.xProfile)+'" target="_blank" rel="noopener">$1</a>');
-      return `<div class="x-card">
-        <div class="x-head"><div class="x-av">${initial}</div><div class="x-id"><span class="x-name">${esc(CONFIG.xName)}</span><span class="x-handle">@${esc(CONFIG.xHandle)}</span></div>${xLogo}</div>
-        <div class="x-text">${txt}</div>
-        <div class="x-foot"><span class="x-date">${esc(tw.date||'')}</span><a class="x-open" href="${esc(tw.url||CONFIG.xProfile)}" target="_blank" rel="noopener">Tweet'i aç →</a></div>
-      </div>`;
-    }).join('');
+    grid.innerHTML = '';
+    const cells = CONFIG.tweets.map(id=>{
+      const cell = document.createElement('div');
+      cell.className = 'x-embed';
+      grid.appendChild(cell);
+      return { id, cell };
+    });
+    const build = ()=> cells.forEach(c=>{
+      try { window.twttr.widgets.createTweet(String(c.id), c.cell, { theme:'dark', dnt:true, conversation:'none', align:'center' }); }
+      catch(e){}
+    });
+    // widget yüklenmezse / engellenirse link kartı fallback
+    const fallback = ()=> cells.forEach(c=>{
+      if (c.cell.querySelector('iframe')) return;
+      const url = `https://x.com/${esc(CONFIG.xHandle)}/status/${esc(c.id)}`;
+      const initial = (CONFIG.xName||'B').trim().charAt(0).toUpperCase();
+      c.cell.innerHTML = `<a class="x-card" href="${url}" target="_blank" rel="noopener" style="text-decoration:none;width:100%;max-width:550px;"><div class="x-head"><div class="x-av">${initial}</div><div class="x-id"><span class="x-name">${esc(CONFIG.xName)}</span><span class="x-handle">@${esc(CONFIG.xHandle)}</span></div></div><div class="x-text" style="color:var(--cream2)">Tweet'i X üzerinde görüntüle.</div><div class="x-foot"><span class="x-date">—</span><span class="x-open">Tweet'i aç →</span></div></a>`;
+    });
+    const runBuild = ()=>{ build(); setTimeout(fallback, 3500); };
+    if (window.twttr && window.twttr.widgets){ runBuild(); return; }
+    if (twLoading){ let n=0; const t=setInterval(()=>{ if(window.twttr&&window.twttr.widgets){clearInterval(t);runBuild();} else if(++n>20){clearInterval(t);fallback();} },300); return; }
+    twLoading = true;
+    const s = document.createElement('script');
+    s.src = 'https://platform.twitter.com/widgets.js';
+    s.async = true; s.charset = 'utf-8';
+    s.onload = runBuild;
+    s.onerror = fallback;
+    document.head.appendChild(s);
+    setTimeout(()=>{ if(!(window.twttr&&window.twttr.widgets)) fallback(); }, 5000);
   }
 
   /* Newsletter — mevcut auth e-posta toplama uçuyla uyumlu, sessiz fallback */
