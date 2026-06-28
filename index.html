@@ -2489,6 +2489,32 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .ptz-getiri{font-family:var(--font-mono);font-size:11px;font-weight:600;}
 .ptz-getiri.pos{color:var(--success);} .ptz-getiri.neg{color:var(--danger);} .ptz-getiri.neu{color:var(--cream2);}
 
+/* Mercek — tema kart serisi */
+.spot-sub{font-size:14px;line-height:1.6;color:var(--cream2);max-width:680px;margin:-6px 0 20px;}
+.spot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.spot-card{position:relative;display:flex;flex-direction:column;border:1px solid var(--portal-border);border-radius:14px;background:linear-gradient(165deg,#13161d 0%,#0c0f15 100%);padding:20px 20px 18px;overflow:hidden;transition:transform .28s,border-color .28s,box-shadow .28s;}
+.spot-card::before{content:"";position:absolute;left:0;top:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent 70%);opacity:.5;transition:opacity .28s;}
+.spot-card:hover{transform:translateY(-4px);border-color:rgba(194,173,132,0.32);box-shadow:0 20px 50px rgba(0,0,0,0.5);}
+.spot-card:hover::before{opacity:1;}
+.spot-num{position:absolute;top:16px;right:18px;font-family:var(--font-head);font-size:30px;font-weight:700;color:var(--accent);opacity:.14;line-height:1;}
+.spot-top{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.spot-tk{font-family:var(--font-mono);font-size:12px;font-weight:600;letter-spacing:1px;color:var(--cream);border:1px solid var(--portal-border-s);padding:3px 9px;border-radius:3px;}
+.spot-extag{font-family:var(--font-mono);font-size:8px;letter-spacing:1.5px;color:var(--cream2);opacity:.6;text-transform:uppercase;}
+.spot-px{margin-left:auto;text-align:right;}
+.spot-price{font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--cream);font-variant-numeric:tabular-nums;}
+.spot-chg{font-family:var(--font-mono);font-size:10px;font-weight:600;margin-top:1px;}
+.spot-chg.pos{color:var(--success);} .spot-chg.neg{color:var(--danger);} .spot-chg.neu{color:var(--cream2);}
+.spot-name{font-family:var(--font-head);font-size:19px;font-weight:700;color:var(--cream);line-height:1.2;margin-bottom:6px;}
+.spot-poz{font-family:var(--font-head);font-style:italic;font-size:14px;color:var(--accent);margin-bottom:16px;line-height:1.3;}
+.spot-lbl{font-family:var(--font-mono);font-size:8px;letter-spacing:2px;color:var(--cream2);text-transform:uppercase;opacity:.7;margin-bottom:5px;}
+.spot-metrik{font-size:13px;line-height:1.5;color:var(--cream);font-weight:500;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--portal-border);}
+.spot-rol{font-size:12.5px;line-height:1.6;color:var(--cream2);margin-bottom:16px;flex:1;}
+.spot-add{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;background:transparent;border:1px solid var(--portal-border-s);color:var(--cream);font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.5px;padding:10px;border-radius:7px;cursor:pointer;transition:all .2s;margin-top:auto;}
+.spot-add:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.spot-add.added{border-color:var(--success);color:var(--success);background:var(--success-dim);cursor:default;}
+@media(max-width:1080px){.spot-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.spot-grid{grid-template-columns:1fr;}}
+
 /* Tek satır tez teaser */
 .pt-tez-row{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
 @media(max-width:980px){.pt-tez-row{grid-template-columns:repeat(2,1fr);}}
@@ -2968,6 +2994,16 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
           <span class="pt-enter" style="pointer-events:none">Terminal'e Giriş <span class="arr">→</span></span>
         </div>
       </div>
+    </div>
+
+    <!-- Mercek — öne çıkan tema kart serisi -->
+    <div class="pt-sec" id="spotSec">
+      <div class="pt-sec-head">
+        <div class="pt-sec-title"><span class="k" id="spotKicker">◈ Mercek</span><span id="spotTitle">Tema</span></div>
+        <a class="pt-sec-link" id="spotVideo" href="#" target="_blank" rel="noopener" style="display:none">Videoda anlattım →</a>
+      </div>
+      <div class="spot-sub" id="spotSub"></div>
+      <div class="spot-grid" id="spotGrid"></div>
     </div>
 
     <!-- Araştırma Tezleri (tek satır teaser) -->
@@ -6795,7 +6831,32 @@ function garpAnalizAc(ticker) {
     tweets: [
       '2070563096955957403',
       '2070833771549425678',
-    ]
+    ],
+    // Mercek — öne çıkan tema kart serisi (videodaki şirketler):
+    spotlight: {
+      kicker: 'Mercek · Tema',
+      title: 'Bellek Devleri',
+      subtitle: 'Yapay zekânın bellek tedarik zinciri — videoda detaylı anlattığım oyuncular',
+      videoUrl: 'https://www.youtube.com/watch?v=j6x2vlFdcl8',
+      cards: [
+        { sym:'MU', ex:'US', disp:'MU', exTag:'NASDAQ', cur:'$', name:'Micron',
+          pozisyon:"ABD'nin Bayrak Taşıyıcısı",
+          metrik:'%85+ brüt kâr marjı · Q4 $50B gelir revizyonu',
+          rol:"AI veri merkezleri için batı dünyasındaki en güvenli HBM ve DRAM tedarikçisi. Apple ve Microsoft'un birincil tedarik ortağı." },
+        { sym:'000660.KS', ex:'KRX', disp:'SK HYNIX', exTag:'KRX', cur:'₩', name:'SK Hynix',
+          pozisyon:'HBM Teknolojisinin Öncüsü',
+          metrik:'$29B değerinde potansiyel ABD ADR listeleme adımı',
+          rol:"NVIDIA'nın en gelişmiş mimarilerine (Blackwell ve sonrası) HBM3e/HBM4 tedariğinde pazar lideri. Teknolojik bariyeri en yüksek oyuncu." },
+        { sym:'005930.KS', ex:'KRX', disp:'SAMSUNG', exTag:'KRX', cur:'₩', name:'Samsung Electronics',
+          pozisyon:'Uykudan Uyanan Dev',
+          metrik:'Global bellek üretim kapasitesi liderliği',
+          rol:'Geleneksel bellek pazarının lideri; AI HBM kalifikasyonunu tamamlayarak pazara arz şoku ya da denge getirebilecek en büyük kapasite unsuru.' },
+        { sym:'WDC', ex:'US', disp:'WDC', exTag:'NASDAQ', cur:'$', name:'SanDisk / Western Digital',
+          pozisyon:'Depolama ve NAND Kulvarı',
+          metrik:'Kurumsal SSD (Enterprise SSD) talebi',
+          rol:'Üretken yapay zekânın eğittiği devasa veri setlerinin kalıcı olarak depolanması gereken yüksek hızlı kurumsal depolama üssü.' },
+      ]
+    }
   };
 
   /* ───────── ROUTER ───────── */
@@ -6852,6 +6913,7 @@ function garpAnalizAc(ticker) {
     if(yt) yt.href=CONFIG.youtubeChannel; if(ytA) ytA.href=CONFIG.youtubeChannel;
     if(x)  x.href =CONFIG.xProfile;       if(xA)  xA.href =CONFIG.xProfile;
     loadTezler();
+    renderSpotlight();
     loadTrackRecord();
     renderMarket();
     renderWatchlist();
@@ -7159,6 +7221,18 @@ function garpAnalizAc(ticker) {
     wlSave(wlGet().filter(x=>!(x.tk===tk && x.ex===ex)));
     renderWatchlist();
   };
+  // Programatik ekleme (tema kartlarından)
+  window.wlAddItem = function(tk, ex, name, target){
+    const list = wlGet();
+    if (list.some(x=>x.tk===tk && x.ex===ex)) return 'exists';
+    const c = _px[tk+'|'+ex];
+    list.push({ tk, ex, target: (target&&isFinite(target))?target:null, name: name||'', base: (c&&c.price)||null });
+    wlSave(list);
+    renderWatchlist();
+    if (typeof window.trackEvent==='function') window.trackEvent('watchlist_add', { ticker:tk, exchange:ex, source:'spotlight' });
+    return 'added';
+  };
+  function curOf(ex){ return ex==='BIST' ? '₺' : (ex==='KRX'||ex==='KS') ? '₩' : '$'; }
   window.wlGoLogin = function(){
     navigate('/terminal');
     setTimeout(()=>{ if (typeof window.showAuthModal==='function') window.showAuthModal(); }, 140);
@@ -7196,7 +7270,7 @@ function garpAnalizAc(ticker) {
       const prEl = document.getElementById('wl-pr-'+it.tk+'-'+it.ex);
       const chEl = document.getElementById('wl-ch-'+it.tk+'-'+it.ex);
       const subEl= document.getElementById('wl-sub-'+it.tk+'-'+it.ex);
-      const cur = (it.ex==='US') ? '$' : '₺';
+      const cur = curOf(it.ex);
       if (!q || q.price==null){ if(prEl) prEl.textContent='—'; return; }
       if (prEl) prEl.textContent = cur + (q.price>=1000 ? Number(q.price).toLocaleString('en-US',{maximumFractionDigits:0}) : Number(q.price).toFixed(2));
       if (chEl && q.change!=null){
@@ -7228,6 +7302,64 @@ function garpAnalizAc(ticker) {
     const box = document.getElementById('wlSuggest');
     if (box && w && !w.contains(e.target)) box.classList.remove('open');
   });
+
+  /* ── MERCEK (tema kart serisi) ── */
+  function renderSpotlight(){
+    const sp = CONFIG.spotlight;
+    const grid = document.getElementById('spotGrid');
+    const sec  = document.getElementById('spotSec');
+    if (!grid) return;
+    if (!sp || !sp.cards || !sp.cards.length){ if(sec) sec.style.display='none'; return; }
+    const k = document.getElementById('spotKicker'); if(k) k.textContent = '◈ ' + (sp.kicker||'Mercek');
+    const t = document.getElementById('spotTitle'); if(t) t.textContent = sp.title||'Tema';
+    const s = document.getElementById('spotSub');   if(s) s.textContent = sp.subtitle||'';
+    const v = document.getElementById('spotVideo');
+    if (v && sp.videoUrl){ v.href = sp.videoUrl; v.style.display=''; }
+    grid.innerHTML = sp.cards.map((c,i)=>`
+      <div class="spot-card">
+        <div class="spot-num">${i+1}</div>
+        <div class="spot-top">
+          <span class="spot-tk">${esc(c.disp||c.sym)}</span>
+          <span class="spot-extag">${esc(c.exTag||'')}</span>
+          <div class="spot-px"><div class="spot-price" id="spot-pr-${i}">…</div><div class="spot-chg neu" id="spot-ch-${i}"></div></div>
+        </div>
+        <div class="spot-name">${esc(c.name||'')}</div>
+        <div class="spot-poz">${esc(c.pozisyon||'')}</div>
+        <div class="spot-lbl">Kritik Metrik</div>
+        <div class="spot-metrik">${esc(c.metrik||'')}</div>
+        <div class="spot-lbl">Rol</div>
+        <div class="spot-rol">${esc(c.rol||'')}</div>
+        <button class="spot-add" id="spot-add-${i}" onclick="window.spotAdd(${i})">+ Takibe Ekle</button>
+      </div>`).join('');
+    // canlı fiyatlar
+    sp.cards.forEach(async (c,i)=>{
+      const q = await getPrice(c.sym, c.ex);
+      const pr = document.getElementById('spot-pr-'+i);
+      const ch = document.getElementById('spot-ch-'+i);
+      if (!q || q.price==null){ if(pr) pr.textContent=''; return; }
+      if (pr) pr.textContent = (c.cur||'') + (q.price>=1000 ? Number(q.price).toLocaleString('en-US',{maximumFractionDigits:0}) : Number(q.price).toFixed(2));
+      if (ch && q.change!=null){
+        const d = q.change>0.04?'pos':q.change<-0.04?'neg':'neu';
+        ch.className='spot-chg '+d;
+        ch.textContent=(q.change>0?'▲ +':q.change<0?'▼ ':'— ')+Math.abs(q.change).toFixed(2)+'%';
+      }
+    });
+    // zaten takiptekileri işaretle
+    const wl = wlGet();
+    sp.cards.forEach((c,i)=>{
+      if (wl.some(x=>x.tk===c.sym && x.ex===c.ex)){
+        const btn=document.getElementById('spot-add-'+i);
+        if(btn){ btn.textContent='✓ Takipte'; btn.classList.add('added'); }
+      }
+    });
+  }
+  window.spotAdd = function(i){
+    const c = CONFIG.spotlight && CONFIG.spotlight.cards[i];
+    if (!c) return;
+    const res = window.wlAddItem(c.sym, c.ex, c.name);
+    const btn = document.getElementById('spot-add-'+i);
+    if (btn){ btn.textContent = res==='exists' ? '✓ Zaten takipte' : '✓ Takibe eklendi'; btn.classList.add('added'); }
+  };
 
   /* YouTube grid — başlıklar oEmbed ile otomatik */
   function renderVideos(){
