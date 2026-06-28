@@ -154,9 +154,9 @@
   };
 
   const STRENGTH_STOPS = {
-    weak:     ['#e0a89f', '#d2796b'],
+    weak:     ['#fca5a5', '#f05252'],
     moderate: ['#cdbb95', '#b89b6a'],
-    strong:   ['#9bd1a6', '#74c389'],
+    strong:   ['#86efac', '#22c55e'],
   };
 
   let _gradCounter = 0;
