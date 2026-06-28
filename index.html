@@ -2454,6 +2454,14 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .news-in::placeholder{color:var(--cream2);opacity:.55;}
 .news-btn{flex-shrink:0;background:var(--accent);color:var(--anthracite);border:none;font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:1px;padding:0 18px;border-radius:3px;cursor:pointer;transition:background .2s,transform .2s;}
 .news-btn:hover{background:#d6c399;transform:translateY(-1px);}
+.news-btn:disabled{opacity:.6;cursor:default;transform:none;}
+.news-msg{font-family:var(--font-mono);font-size:11px;margin-top:10px;min-height:14px;}
+.news-msg.err{color:var(--danger);}
+.news-msg.hint{color:var(--cream2);opacity:.7;}
+.news-done{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid rgba(34,197,94,0.35);background:var(--success-dim);border-radius:8px;margin-top:14px;animation:fadeIn .35s ease;}
+.news-done-ic{width:30px;height:30px;border-radius:50%;background:var(--success);color:var(--anthracite);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;}
+.news-done-t{font-family:var(--font-head);font-size:15px;font-weight:600;color:var(--cream);}
+.news-done-s{font-size:12px;line-height:1.5;color:var(--cream2);margin-top:2px;}
 .news-ok{font-family:var(--font-mono);font-size:11px;color:var(--success);margin-top:12px;display:none;}
 
 /* Portal tez grid */
@@ -2836,7 +2844,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <!-- Hero -->
     <div class="pt-hero">
       <div class="pt-eyebrow">◈ Haftalık Araştırma · Tezler · Medya</div>
-      <h1 class="pt-h1">Piyasayı <em>okumanın</em> sakin yolu.</h1>
+      <h1 class="pt-h1">Sistematik Yatırımın <em>Yeni Merkezi</em>.</h1>
       <p class="pt-lede">BIST ve global piyasalar üzerine derin yatırım tezleri, haftalık seçimler ve içerik. Tüm analiz araçları profesyonel <strong style="color:var(--cream)">Terminal</strong>'de.</p>
     </div>
 
@@ -2855,11 +2863,20 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
           <div class="sc-desc">Yeni tezler, haftalık seçimler ve piyasa notları doğrudan e-postana gelsin.</div>
         </div>
         <div class="sc-foot">
-          <div class="news-row">
-            <input class="news-in" id="newsEmail" type="email" placeholder="ornek@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')portalNewsletter()"/>
-            <button class="news-btn" onclick="portalNewsletter()">Abone Ol</button>
+          <div id="newsForm">
+            <div class="news-row">
+              <input class="news-in" id="newsEmail" type="email" placeholder="ornek@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')portalNewsletter()"/>
+              <button class="news-btn" id="newsBtn" onclick="portalNewsletter()">Abone Ol</button>
+            </div>
+            <div class="news-msg" id="newsMsg"></div>
           </div>
-          <div class="news-ok" id="newsOk">✓ Teşekkürler — listeye eklendin.</div>
+          <div class="news-done" id="newsDone" style="display:none">
+            <div class="news-done-ic">✓</div>
+            <div>
+              <div class="news-done-t">Abonelik onaylandı</div>
+              <div class="news-done-s" id="newsDoneSub"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -6944,20 +6961,42 @@ function garpAnalizAc(ticker) {
   }
 
   /* Newsletter — mevcut auth e-posta toplama uçuyla uyumlu, sessiz fallback */
-  window.portalNewsletter = function(){
+  /* Newsletter — gerçek onay: sunucu cevabı doğrulanır */
+  window.portalNewsletter = async function(){
     const inp = document.getElementById('newsEmail');
-    const ok  = document.getElementById('newsOk');
-    if (!inp) return;
+    const btn = document.getElementById('newsBtn');
+    const msg = document.getElementById('newsMsg');
+    if (!inp || !btn) return;
     const email = (inp.value||'').trim();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ inp.focus(); inp.style.borderColor='var(--danger)'; return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
+      inp.focus(); inp.style.borderColor='var(--danger)';
+      if (msg){ msg.textContent='Geçerli bir e-posta gir.'; msg.className='news-msg err'; }
+      return;
+    }
     inp.style.borderColor='';
-    fetch('/api/auth?action=login', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ email, marketingConsent:true })
-    }).catch(()=>{});
-    if (ok){ ok.style.display='block'; }
-    inp.value=''; inp.disabled=true;
-    if (typeof window.trackEvent === 'function') window.trackEvent('newsletter_signup', { source:'portal' });
+    if (msg){ msg.textContent=''; msg.className='news-msg'; }
+    const oldTxt = btn.textContent;
+    btn.disabled = true; inp.disabled = true; btn.textContent = 'Gönderiliyor…';
+    try{
+      const r = await fetch('/api/auth?action=login', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ email, marketingConsent:true })
+      });
+      const data = await r.json().catch(()=>({}));
+      const saved = r.ok && !data.warning && !(data.user && data.user.offline);
+      if (!saved) throw new Error(data.warning || ('HTTP '+r.status));
+      // başarı → onay paneline geç
+      const form = document.getElementById('newsForm');
+      const done = document.getElementById('newsDone');
+      const sub  = document.getElementById('newsDoneSub');
+      if (sub)  sub.textContent = email + ' listeye eklendi. İlk bülten hafta sonu gelecek.';
+      if (form) form.style.display = 'none';
+      if (done) done.style.display = 'flex';
+      if (typeof window.trackEvent === 'function') window.trackEvent('newsletter_signup', { source:'portal' });
+    }catch(e){
+      btn.disabled=false; inp.disabled=false; btn.textContent=oldTxt;
+      if (msg){ msg.textContent='Bir şeyler ters gitti — birazdan tekrar dene.'; msg.className='news-msg err'; }
+    }
   };
 
   /* ───────── INIT ───────── */
