@@ -45,9 +45,9 @@
       border-color:#9aa3b2;
     }
     #snapshotCard .snap-alert {
-      background:rgba(192,57,43,0.08);
-      border:1px solid rgba(192,57,43,0.25);
-      border-left:3px solid rgba(192,57,43,0.6);
+      background:rgba(165,90,82,0.08);
+      border:1px solid rgba(165,90,82,0.25);
+      border-left:3px solid rgba(165,90,82,0.6);
       padding:8px 12px;
       font-size:10px;color:#e07060;
       font-family:'Inter',sans-serif;
@@ -98,7 +98,7 @@ function checkMasterBadge(ticker, exchange) {
     badge.style.cssText = `
       display:inline-flex;align-items:center;gap:8px;
       padding:8px 16px;margin:10px 0 2px;
-      background:linear-gradient(135deg,rgba(154,125,58,0.15),rgba(212,175,55,0.06));
+      background:linear-gradient(135deg,rgba(154,125,58,0.15),rgba(194,173,132,0.06));
       border:1px solid rgba(154,125,58,0.4);
       animation:masterPulse 2s ease-in-out 2;
     `;
@@ -113,7 +113,7 @@ function checkMasterBadge(ticker, exchange) {
     badge.style.cssText = `
       display:inline-flex;align-items:center;gap:8px;
       padding:8px 16px;margin:10px 0 2px;
-      background:rgba(36,81,163,0.1);
+      background:rgba(168,148,107,0.1);
       border:1px solid rgba(255,255,255,0.25);
     `;
     badge.innerHTML = `
@@ -208,7 +208,7 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
   logoWrap.style.cssText = `
     width:42px;height:42px;flex-shrink:0;
     background:rgba(255,255,255,0.06);
-    border:1px solid rgba(212,168,67,0.25);
+    border:1px solid rgba(194,173,132,0.25);
     border-radius:6px;overflow:hidden;
     display:flex;align-items:center;justify-content:center;
     font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);
@@ -230,7 +230,7 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
   titleCol.innerHTML = `
     <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:#e8edf8;letter-spacing:2px;line-height:1">${ticker}</div>
     <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;font-family:'Inter',sans-serif;">${company || ''}</div>
-    <div style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;background:rgba(212,168,67,0.10);border:1px solid rgba(212,168,67,0.25);border-radius:3px;padding:2px 7px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--gold,#d4a843);letter-spacing:1px;">
+    <div style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;background:rgba(194,173,132,0.10);border:1px solid rgba(194,173,132,0.25);border-radius:3px;padding:2px 7px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--gold,#d4a843);letter-spacing:1px;">
       ${flag} ${exchange}
     </div>
   `;
@@ -258,7 +258,7 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
 
   // Ince gold çizgi ayraç
   const divider = document.createElement('div');
-  divider.style.cssText = 'height:1px;background:rgba(212,168,67,0.15);margin:0 -20px 14px;';
+  divider.style.cssText = 'height:1px;background:rgba(194,173,132,0.15);margin:0 -20px 14px;';
   card.appendChild(divider);
 
   // Body — loading state
