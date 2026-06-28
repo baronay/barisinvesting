@@ -2537,6 +2537,54 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 @media(max-width:980px){.mkt-grid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:560px){.mkt-grid{grid-template-columns:repeat(2,1fr);}}
 
+/* Takip Listem (watchlist) */
+.wl-add{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.wl-search-wrap{position:relative;flex:1;min-width:200px;}
+.wl-in{width:100%;background:rgba(0,0,0,0.25);border:1px solid var(--portal-border-s);color:var(--cream);font-size:13px;padding:11px 13px;border-radius:6px;outline:none;transition:border-color .2s;}
+.wl-in:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+.wl-in::placeholder{color:var(--cream2);opacity:.5;}
+.wl-target{width:130px;flex:none;}
+.wl-ex{background:rgba(0,0,0,0.25);border:1px solid var(--portal-border-s);color:var(--cream);font-size:13px;padding:11px;border-radius:6px;outline:none;cursor:pointer;}
+.wl-ex:focus{border-color:var(--accent);}
+.wl-btn{background:var(--accent);color:var(--anthracite);border:none;font-family:var(--font-mono);font-size:12px;font-weight:600;letter-spacing:.5px;padding:0 18px;border-radius:6px;cursor:pointer;transition:background .2s,transform .2s;white-space:nowrap;}
+.wl-btn:hover{background:#d6c399;transform:translateY(-1px);}
+.wl-btn:disabled{opacity:.5;cursor:default;transform:none;}
+.wl-suggest{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--anthracite2);border:1px solid var(--portal-border-s);border-radius:8px;overflow:hidden;z-index:30;display:none;box-shadow:0 16px 40px rgba(0,0,0,0.5);}
+.wl-suggest.open{display:block;}
+.wl-sug-item{padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:background .15s;border-bottom:1px solid var(--portal-border);}
+.wl-sug-item:last-child{border-bottom:none;}
+.wl-sug-item:hover{background:rgba(194,173,132,0.10);}
+.wl-sug-tk{font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--cream);}
+.wl-sug-nm{font-size:12px;color:var(--cream2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wl-sug-ex{font-family:var(--font-mono);font-size:9px;color:var(--accent);letter-spacing:1px;flex-shrink:0;}
+.wl-list{display:flex;flex-direction:column;gap:8px;}
+.wl-empty{text-align:center;padding:38px 20px;border:1px dashed var(--portal-border-s);border-radius:12px;color:var(--cream2);}
+.wl-empty-t{font-family:var(--font-head);font-size:17px;color:var(--cream);margin-bottom:8px;}
+.wl-empty-s{font-size:13px;line-height:1.6;opacity:.8;}
+.wl-row{display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--portal-border);border-radius:10px;background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);transition:border-color .2s;}
+.wl-row.hit{border-color:rgba(34,197,94,0.5);background:linear-gradient(160deg,rgba(34,197,94,0.08),var(--anthracite2));}
+.wl-r-tk{font-family:var(--font-mono);font-size:13px;font-weight:600;letter-spacing:1px;color:var(--cream);min-width:64px;}
+.wl-r-mid{flex:1;min-width:0;}
+.wl-r-nm{font-size:12px;color:var(--cream2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wl-r-sub{font-family:var(--font-mono);font-size:10px;color:var(--cream2);opacity:.7;margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.wl-tez-chip{color:var(--accent);cursor:pointer;text-decoration:none;}
+.wl-tez-chip:hover{text-decoration:underline;}
+.wl-hit-badge{color:var(--success);font-weight:600;}
+.wl-r-px{text-align:right;flex-shrink:0;}
+.wl-r-price{font-family:var(--font-mono);font-size:15px;font-weight:600;color:var(--cream);font-variant-numeric:tabular-nums;}
+.wl-r-chg{font-family:var(--font-mono);font-size:11px;font-weight:600;margin-top:2px;}
+.wl-r-chg.pos{color:var(--success);} .wl-r-chg.neg{color:var(--danger);} .wl-r-chg.neu{color:var(--cream2);}
+.wl-r-rm{background:none;border:none;color:var(--cream2);opacity:.5;cursor:pointer;font-size:15px;padding:4px 6px;transition:color .2s,opacity .2s;flex-shrink:0;}
+.wl-r-rm:hover{color:var(--danger);opacity:1;}
+.wl-foot{margin-top:14px;font-size:12px;color:var(--cream2);}
+.wl-foot a{color:var(--accent);cursor:pointer;text-decoration:none;}
+.wl-foot a:hover{text-decoration:underline;}
+@media(max-width:560px){
+  .wl-add{flex-direction:column;}
+  .wl-target,.wl-ex,.wl-search-wrap{width:100%;}
+  .wl-r-nm{display:none;}
+}
+
 /* X embeds (official widgets) */
 .x-embed{display:flex;justify-content:center;min-height:60px;}
 .x-embed .twitter-tweet{margin:0 !important;}
@@ -2960,6 +3008,25 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div class="mkt-grid" id="mktGrid">
         <div class="mkt-skel">Piyasa verisi yükleniyor…</div>
       </div>
+    </div>
+
+    <!-- Takip Listem (Watchlist) -->
+    <div class="pt-sec">
+      <div class="pt-sec-head">
+        <div class="pt-sec-title"><span class="k">◈ Kişisel</span>Takip Listem</div>
+        <span class="pt-sec-link" id="wlCount" style="cursor:default;pointer-events:none"></span>
+      </div>
+      <div class="wl-add">
+        <div class="wl-search-wrap">
+          <input class="wl-in" id="wlTicker" placeholder="Hisse ara veya kod gir (örn. THYAO, AAPL)" autocomplete="off" spellcheck="false" oninput="wlSearch()" onkeydown="if(event.key==='Enter')wlAdd()"/>
+          <div class="wl-suggest" id="wlSuggest"></div>
+        </div>
+        <select class="wl-ex" id="wlExchange"><option value="BIST">BIST</option><option value="US">ABD</option></select>
+        <input class="wl-in wl-target" id="wlTarget" type="number" placeholder="Hedef (ops.)" step="any" onkeydown="if(event.key==='Enter')wlAdd()"/>
+        <button class="wl-btn" id="wlAddBtn" onclick="wlAdd()">+ Ekle</button>
+      </div>
+      <div class="wl-list" id="wlList"></div>
+      <div class="wl-foot" id="wlFoot"></div>
     </div>
 
     <!-- YouTube -->
@@ -6787,6 +6854,7 @@ function garpAnalizAc(ticker) {
     loadTezler();
     loadTrackRecord();
     renderMarket();
+    renderWatchlist();
     renderVideos();
     renderTweets();
   }
@@ -6883,7 +6951,7 @@ function garpAnalizAc(ticker) {
     host.onclick = function(){ openTez(t.id); };
   }
 
-  /* Paylaşılan fiyat cache (teaser getiri + sicil) */
+  /* Paylaşılan fiyat cache (teaser getiri + sicil + watchlist) */
   const _px = {};
   async function getPrice(tk, ex){
     const k = tk + '|' + ex;
@@ -6891,8 +6959,8 @@ function garpAnalizAc(ticker) {
     try{
       const r = await fetch('/api/tez-admin?price=1&ticker=' + encodeURIComponent(tk) + '&exchange=' + ex);
       const d = await r.json();
-      _px[k] = (d && isFinite(d.price)) ? d.price : null;
-    }catch(e){ _px[k] = null; }
+      _px[k] = { price: (d && isFinite(d.price)) ? d.price : null, change: (d && isFinite(d.change)) ? d.change : null };
+    }catch(e){ _px[k] = { price:null, change:null }; }
     return _px[k];
   }
 
@@ -6900,7 +6968,8 @@ function garpAnalizAc(ticker) {
     const el = document.getElementById('ptz-get-' + t.id);
     if (!el) return;
     const ex = t.exchange || 'BIST';
-    const anlik = await getPrice(t.ticker, ex);
+    const q = await getPrice(t.ticker, ex);
+    const anlik = q && q.price;
     const maliyet = parseFloat(t.maliyet_fiyat);
     if (!anlik || !maliyet) return;
     const g = ((anlik - maliyet) / maliyet) * 100;
@@ -6924,7 +6993,8 @@ function garpAnalizAc(ticker) {
       if (!scored.length){ table.innerHTML = '<div class="trk-skel">Henüz fiyatlı (maliyetli) tez yok.</div>'; return; }
       const rows = await Promise.all(scored.map(async t=>{
         const ex = t.exchange || 'BIST';
-        const px = await getPrice(t.ticker, ex);
+        const q = await getPrice(t.ticker, ex);
+        const px = q && q.price;
         const cost = parseFloat(t.maliyet_fiyat);
         const ret = (px && cost) ? ((px - cost) / cost * 100) : null;
         return { t, ex, cost, px, ret };
@@ -7011,6 +7081,153 @@ function garpAnalizAc(ticker) {
       _mktTimer = setInterval(()=>{ if (document.body.classList.contains('route-portal')) renderMarket(); }, 60000);
     }
   }
+
+  /* ── TAKİP LİSTEM (Watchlist) ── */
+  const WL_KEY = 'bi_watchlist';
+  let _wlMem = null;          // localStorage yoksa bellek yedeği
+  let _wlTimer = null;
+  let _wlPending = {};        // öneriden gelen ad/borsa
+  let _wlSearchT = null;
+
+  function wlGet(){
+    try{ const v = localStorage.getItem(WL_KEY); return v ? JSON.parse(v) : []; }
+    catch(e){ return _wlMem || []; }
+  }
+  function wlSave(list){
+    _wlMem = list;
+    try{ localStorage.setItem(WL_KEY, JSON.stringify(list)); }catch(e){}
+  }
+
+  // Arama (market.js type=search)
+  function wlSearch(){
+    const inp = document.getElementById('wlTicker');
+    const box = document.getElementById('wlSuggest');
+    if (!inp || !box) return;
+    const q = (inp.value||'').trim();
+    if (q.length < 2){ box.classList.remove('open'); box.innerHTML=''; return; }
+    clearTimeout(_wlSearchT);
+    _wlSearchT = setTimeout(async ()=>{
+      try{
+        const r = await fetch('/api/market?type=search&ticker=' + encodeURIComponent(q));
+        const j = await r.json();
+        const res = (j && j.results) || [];
+        if (!res.length){ box.classList.remove('open'); box.innerHTML=''; return; }
+        box.innerHTML = res.map(o=>{
+          const ex = /BIST|\.IS|IST/i.test(o.exchange||'') ? 'BIST' : 'US';
+          return `<div class="wl-sug-item" onclick='wlPick(${JSON.stringify({tk:o.ticker,nm:o.name||'',ex}).replace(/'/g,"&#39;")})'>
+            <span class="wl-sug-tk">${esc(o.ticker)}</span>
+            <span class="wl-sug-nm">${esc(o.name||'')}</span>
+            <span class="wl-sug-ex">${ex}</span>
+          </div>`;
+        }).join('');
+        box.classList.add('open');
+      }catch(e){ box.classList.remove('open'); }
+    }, 260);
+  }
+  window.wlSearch = wlSearch;
+  window.wlPick = function(o){
+    const inp=document.getElementById('wlTicker'), sel=document.getElementById('wlExchange'), box=document.getElementById('wlSuggest');
+    if(inp) inp.value = o.tk;
+    if(sel) sel.value = o.ex || 'BIST';
+    _wlPending[o.tk.toUpperCase()] = { name:o.nm||'', ex:o.ex||'BIST' };
+    if(box){ box.classList.remove('open'); box.innerHTML=''; }
+    const tgt=document.getElementById('wlTarget'); if(tgt) tgt.focus();
+  };
+
+  window.wlAdd = async function(){
+    const inp = document.getElementById('wlTicker');
+    const sel = document.getElementById('wlExchange');
+    const tgt = document.getElementById('wlTarget');
+    const box = document.getElementById('wlSuggest');
+    if (!inp) return;
+    const tk = (inp.value||'').toUpperCase().replace(/[^A-Z0-9.]/g,'');
+    const ex = (sel && sel.value) || 'BIST';
+    const target = tgt && tgt.value ? parseFloat(tgt.value) : null;
+    if (!tk){ inp.focus(); return; }
+    const list = wlGet();
+    if (list.some(x=>x.tk===tk && x.ex===ex)){ inp.style.borderColor='var(--warn)'; setTimeout(()=>inp.style.borderColor='',900); return; }
+    const name = (_wlPending[tk] && _wlPending[tk].name) || '';
+    const q = await getPrice(tk, ex);
+    list.push({ tk, ex, target: (target && isFinite(target))?target:null, name, base: (q&&q.price)||null });
+    wlSave(list);
+    inp.value=''; if(tgt) tgt.value=''; if(box){box.classList.remove('open');box.innerHTML='';}
+    inp.focus();
+    renderWatchlist();
+    if (typeof window.trackEvent==='function') window.trackEvent('watchlist_add', { ticker:tk, exchange:ex });
+  };
+  window.wlRemove = function(tk, ex){
+    wlSave(wlGet().filter(x=>!(x.tk===tk && x.ex===ex)));
+    renderWatchlist();
+  };
+  window.wlGoLogin = function(){
+    navigate('/terminal');
+    setTimeout(()=>{ if (typeof window.showAuthModal==='function') window.showAuthModal(); }, 140);
+  };
+
+  async function renderWatchlist(){
+    const wrap = document.getElementById('wlList');
+    const cnt  = document.getElementById('wlCount');
+    const foot = document.getElementById('wlFoot');
+    if (!wrap) return;
+    const list = wlGet();
+    if (cnt) cnt.textContent = list.length ? list.length + ' hisse' : '';
+    if (foot) foot.innerHTML = '💾 Liste bu cihazda saklanıyor. <a onclick="wlGoLogin()">Giriş yap</a> → her cihazda senkron + hedef uyarısı maili (yakında).';
+    if (!list.length){
+      wrap.innerHTML = '<div class="wl-empty"><div class="wl-empty-t">Takibe başla</div><div class="wl-empty-s">İzlemek istediğin hisseleri ekle — canlı fiyat, günlük değişim ve hedefe ulaşınca uyarı burada.</div></div>';
+      return;
+    }
+    // tez eşleştirme
+    let tezMap = {};
+    try{ (await getTezler()||[]).forEach(t=>{ if(t.ticker) tezMap[t.ticker.toUpperCase()] = t.id; }); }catch(e){}
+    // iskelet
+    wrap.innerHTML = list.map(it=>`<div class="wl-row" id="wl-${it.tk}-${it.ex}">
+      <span class="wl-r-tk">${esc(it.tk)}</span>
+      <div class="wl-r-mid">
+        ${it.name ? `<div class="wl-r-nm">${esc(it.name)}</div>` : `<div class="wl-r-nm">${esc(it.ex)}</div>`}
+        <div class="wl-r-sub" id="wl-sub-${it.tk}-${it.ex}">${it.target?('Hedef: '+it.target):'—'}</div>
+      </div>
+      <div class="wl-r-px"><div class="wl-r-price" id="wl-pr-${it.tk}-${it.ex}">…</div><div class="wl-r-chg neu" id="wl-ch-${it.tk}-${it.ex}"></div></div>
+      <button class="wl-r-rm" title="Kaldır" onclick="wlRemove('${it.tk}','${it.ex}')">✕</button>
+    </div>`).join('');
+    // fiyatları çek
+    list.forEach(async it=>{
+      const q = await getPrice(it.tk, it.ex);
+      const row = document.getElementById('wl-'+it.tk+'-'+it.ex);
+      const prEl = document.getElementById('wl-pr-'+it.tk+'-'+it.ex);
+      const chEl = document.getElementById('wl-ch-'+it.tk+'-'+it.ex);
+      const subEl= document.getElementById('wl-sub-'+it.tk+'-'+it.ex);
+      const cur = (it.ex==='US') ? '$' : '₺';
+      if (!q || q.price==null){ if(prEl) prEl.textContent='—'; return; }
+      if (prEl) prEl.textContent = cur + (q.price>=1000 ? Number(q.price).toLocaleString('en-US',{maximumFractionDigits:0}) : Number(q.price).toFixed(2));
+      if (chEl && q.change!=null){
+        const d = q.change>0.04?'pos':q.change<-0.04?'neg':'neu';
+        chEl.className = 'wl-r-chg '+d;
+        chEl.textContent = (q.change>0?'▲ +':q.change<0?'▼ ':'— ')+Math.abs(q.change).toFixed(2)+'%';
+      }
+      // hedef + tez + uyarı
+      const parts = [];
+      let hit = false;
+      if (it.target!=null){
+        if (it.base!=null) hit = (it.base<it.target && q.price>=it.target) || (it.base>it.target && q.price<=it.target);
+        else hit = q.price>=it.target;
+        parts.push('Hedef: '+cur+it.target);
+      }
+      const tezId = tezMap[it.tk];
+      if (tezId) parts.push(`<a class="wl-tez-chip" onclick="window.__openTez(${tezId})">📄 Tez</a>`);
+      if (hit){ parts.push('<span class="wl-hit-badge">🎯 Hedefe ulaştı</span>'); if(row) row.classList.add('hit'); }
+      if (subEl) subEl.innerHTML = parts.length ? parts.join(' · ') : '—';
+    });
+    if (!_wlTimer){
+      _wlTimer = setInterval(()=>{ if (document.body.classList.contains('route-portal') && wlGet().length){ Object.keys(_px).forEach(k=>delete _px[k]); renderWatchlist(); renderMarket(); } }, 60000);
+    }
+  }
+
+  // öneri kutusunu dışarı tıklayınca kapat
+  document.addEventListener('click', function(e){
+    const w = document.querySelector('.wl-search-wrap');
+    const box = document.getElementById('wlSuggest');
+    if (box && w && !w.contains(e.target)) box.classList.remove('open');
+  });
 
   /* YouTube grid — başlıklar oEmbed ile otomatik */
   function renderVideos(){
