@@ -23,6 +23,8 @@
   ],
   "rewrites": [
     { "source": "/terminal", "destination": "/index.html" },
-    { "source": "/terminal/(.*)", "destination": "/index.html" }
+    { "source": "/terminal/(.*)", "destination": "/index.html" },
+    { "source": "/tezler", "destination": "/index.html" },
+    { "source": "/tezler/(.*)", "destination": "/index.html" }
   ]
 }
