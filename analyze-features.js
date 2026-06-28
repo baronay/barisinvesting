@@ -30,7 +30,7 @@
       margin-bottom:5px;
     }
     #snapshotCard .snap-col-val {
-      font-size:12px;color:#e2e8f0;font-weight:500;
+      font-size:12px;color:#ffffff;font-weight:500;
       font-family:'Inter',sans-serif;line-height:1.5;
     }
     #snapshotCard .snap-peer {
@@ -41,7 +41,7 @@
       cursor:pointer;transition:all 0.15s;letter-spacing:0.5px;
     }
     #snapshotCard .snap-peer:hover {
-      background:rgba(255,255,255,0.18);color:#e2e8f0;
+      background:rgba(255,255,255,0.18);color:#ffffff;
       border-color:#9aa3b2;
     }
     #snapshotCard .snap-alert {
@@ -135,7 +135,7 @@ function makeLogoEl(ticker, company, website, fmpLogoUrl) {
   const initial  = (company || ticker || '?')[0].toUpperCase();
 
   // Deterministik renk
-  const colors = ['#c2ad84','#3f4a3c','#b08a5a','#8a7e94','#b08a5a','#c0392b','#46584a','#3c5560'];
+  const colors = ['#c2ad84','#166534','#b08a5a','#8a7e94','#b08a5a','#c0392b','#15803d','#3c5560'];
   const colorIdx = ticker.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colors.length;
 
   const wrap = document.createElement('div');
@@ -228,7 +228,7 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
   // Ticker + şirket adı + bayrak pill
   const titleCol = document.createElement('div');
   titleCol.innerHTML = `
-    <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:#e8edf8;letter-spacing:2px;line-height:1">${ticker}</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:2px;line-height:1">${ticker}</div>
     <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;font-family:'Inter',sans-serif;">${company || ''}</div>
     <div style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;background:rgba(194,173,132,0.10);border:1px solid rgba(194,173,132,0.25);border-radius:3px;padding:2px 7px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--gold,#d4a843);letter-spacing:1px;">
       ${flag} ${exchange}
@@ -332,7 +332,7 @@ RISK: [En kritik 1 risk cümlesi]`;
 
     bodyEl.innerHTML = `
       <!-- İş açıklaması -->
-      <p style="font-size:12px;color:#e2e8f0;font-family:'Inter',sans-serif;line-height:1.8;margin:0 0 14px">${business}</p>
+      <p style="font-size:12px;color:#ffffff;font-family:'Inter',sans-serif;line-height:1.8;margin:0 0 14px">${business}</p>
 
       ${!isBIST ? `
       <!-- Sektör + Hendek grid -->
