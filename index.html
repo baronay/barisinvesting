@@ -2499,6 +2499,33 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .ptz-getiri{font-family:var(--font-mono);font-size:11px;font-weight:600;}
 .ptz-getiri.pos{color:var(--success);} .ptz-getiri.neg{color:var(--danger);} .ptz-getiri.neu{color:var(--cream2);}
 
+/* Haber / Mercek — tıklanabilir video + kart serisi */
+.news-card{border:1px solid var(--portal-border);border-radius:14px;background:linear-gradient(165deg,#13161d 0%,#0c0f15 100%);overflow:hidden;}
+.news-head{display:flex;align-items:center;gap:16px;padding:16px 18px;cursor:pointer;transition:background .2s;}
+.news-head:hover{background:rgba(194,173,132,0.04);}
+.news-thumb{width:124px;height:70px;border-radius:8px;background-size:cover;background-position:center;background-color:#0a0d12;flex-shrink:0;position:relative;border:1px solid var(--portal-border);}
+.news-thumb::after{content:"▶";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;text-shadow:0 2px 8px rgba(0,0,0,0.7);opacity:.92;}
+.news-meta{flex:1;min-width:0;}
+.news-kicker{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.news-kicker::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--danger);animation:newspulse 1.6s infinite;}
+.news-title{font-family:var(--font-head);font-size:21px;font-weight:700;color:var(--cream);line-height:1.2;}
+.news-sub{font-size:13px;color:var(--cream2);margin-top:5px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.news-toggle{flex-shrink:0;background:transparent;border:1px solid var(--portal-border-s);color:var(--cream);font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.5px;padding:8px 14px;border-radius:7px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.news-toggle:hover{border-color:var(--accent);color:var(--accent);}
+.news-body{padding:0 18px 18px;border-top:1px solid var(--portal-border);margin-top:0;}
+.news-video{position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#0a0d12;background-size:cover;background-position:center;cursor:pointer;border:1px solid var(--portal-border);margin:18px 0;}
+.news-video .nv-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,0.1),rgba(0,0,0,0.45));}
+.news-video .nv-play span{width:62px;height:62px;border-radius:50%;background:rgba(194,173,132,0.92);color:#0c0f15;display:flex;align-items:center;justify-content:center;font-size:20px;padding-left:4px;box-shadow:0 8px 30px rgba(0,0,0,0.5);transition:transform .2s;}
+.news-video:hover .nv-play span{transform:scale(1.08);}
+.news-video iframe{width:100%;height:100%;border:0;display:block;}
+.news-cards-lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--cream2);opacity:.7;margin-bottom:12px;}
+@keyframes newspulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+@media(max-width:560px){
+  .news-head{flex-wrap:wrap;}
+  .news-thumb{width:100%;height:170px;}
+  .news-toggle{width:100%;}
+}
+
 /* Mercek — tema kart serisi */
 .spot-sub{font-size:14px;line-height:1.6;color:var(--cream2);max-width:680px;margin:-6px 0 20px;}
 .spot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
@@ -2553,6 +2580,10 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .trk-ret{font-family:var(--font-mono);font-size:17px;font-weight:600;flex-shrink:0;font-variant-numeric:tabular-nums;text-align:right;min-width:74px;}
 .trk-ret.pos{color:var(--success);} .trk-ret.neg{color:var(--danger);} .trk-ret.neu{color:var(--cream2);}
 .trk-note{font-family:var(--font-mono);font-size:9px;letter-spacing:.3px;color:var(--cream2);opacity:.5;margin-top:14px;line-height:1.6;}
+.trk-head{cursor:pointer;}
+.trk-head-right{display:flex;align-items:center;gap:14px;}
+.trk-summary{font-family:var(--font-mono);font-size:11px;color:var(--cream2);}
+@media(max-width:560px){.trk-summary{display:none;}}
 @media(max-width:680px){
   .trk-kpis{grid-template-columns:repeat(2,1fr);}
   .trk-tt{white-space:normal;}
@@ -3007,16 +3038,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       </div>
     </div>
 
-    <!-- Mercek — öne çıkan tema kart serisi -->
-    <div class="pt-sec" id="spotSec">
-      <div class="pt-sec-head">
-        <div class="pt-sec-title"><span class="k" id="spotKicker">◈ Mercek</span><span id="spotTitle">Tema</span></div>
-        <a class="pt-sec-link" id="spotVideo" href="#" target="_blank" rel="noopener" style="display:none">Videoda anlattım →</a>
-      </div>
-      <div class="spot-sub" id="spotSub"></div>
-      <div class="spot-grid" id="spotGrid"></div>
-    </div>
-
     <!-- Araştırma Tezleri (tek satır teaser) -->
     <div class="pt-sec">
       <div class="pt-sec-head">
@@ -3028,32 +3049,46 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       </div>
     </div>
 
-    <!-- Tez Sicili (Track Record) -->
-    <div class="pt-sec">
-      <div class="pt-sec-head">
-        <div class="pt-sec-title"><span class="k">◈ Şeffaf</span>Tez Sicili</div>
-        <a class="pt-sec-link" data-route="/tezler" href="/tezler">Tüm Tezler →</a>
+    <!-- Haber / Mercek — tıklanabilir video + kart serisi -->
+    <div class="pt-sec" id="spotSec">
+      <div class="news-card" id="newsCard">
+        <div class="news-head" onclick="toggleSpotlight()">
+          <div class="news-thumb" id="newsThumb"></div>
+          <div class="news-meta">
+            <div class="news-kicker" id="spotKicker">◈ Mercek · Son Dakika</div>
+            <div class="news-title" id="spotTitle">Tema</div>
+            <div class="news-sub" id="spotSub"></div>
+          </div>
+          <button class="news-toggle" id="spotToggle" aria-label="Aç/Kapat">İncele ▾</button>
+        </div>
+        <div class="news-body" id="newsBody" style="display:none">
+          <div class="news-video" id="newsVideo"></div>
+          <div class="news-cards-lbl">Bu temadaki oyuncular — takibe ekle, terminalde izle</div>
+          <div class="spot-grid" id="spotGrid"></div>
+        </div>
       </div>
-      <div class="trk-kpis">
-        <div class="trk-kpi"><div class="trk-kpi-v" id="trkCount">—</div><div class="trk-kpi-l">Alım Çağrısı</div></div>
-        <div class="trk-kpi"><div class="trk-kpi-v" id="trkWin">—</div><div class="trk-kpi-l">İsabet Oranı</div></div>
-        <div class="trk-kpi"><div class="trk-kpi-v" id="trkAvg">—</div><div class="trk-kpi-l">Ort. Getiri</div></div>
-        <div class="trk-kpi"><div class="trk-kpi-v" id="trkBest">—</div><div class="trk-kpi-l">En İyi Seçim</div></div>
-      </div>
-      <div class="trk-table" id="trkTable">
-        <div class="trk-skel">Sicil hesaplanıyor…</div>
-      </div>
-      <div class="trk-note">İsabet oranı ve ortalama getiri yalnızca AL (alım) çağrıları üzerinden hesaplanır; tablo şeffaflık için tüm tezleri gösterir. Maliyet, tezin yayınlandığı andaki referans fiyattır; getiriler canlı fiyata göre hesaplanır. Geçmiş performans gelecek getiriyi garanti etmez, yatırım tavsiyesi değildir.</div>
     </div>
 
-    <!-- Piyasa Nabzı (canlı endeksler) -->
+    <!-- Tez Sicili (Track Record) — açılır/kapanır -->
     <div class="pt-sec">
-      <div class="pt-sec-head">
-        <div class="pt-sec-title"><span class="k">◈ Canlı</span>Piyasa Nabzı</div>
-        <span class="pt-sec-link" id="mktUpdated" style="cursor:default;pointer-events:none"></span>
+      <div class="pt-sec-head trk-head" onclick="toggleSicil()">
+        <div class="pt-sec-title"><span class="k">◈ Şeffaf</span>Tez Sicili</div>
+        <div class="trk-head-right">
+          <span class="trk-summary" id="trkSummary"></span>
+          <button class="news-toggle" id="trkToggle">Göster ▾</button>
+        </div>
       </div>
-      <div class="mkt-grid" id="mktGrid">
-        <div class="mkt-skel">Piyasa verisi yükleniyor…</div>
+      <div class="trk-body" id="trkBody" style="display:none">
+        <div class="trk-kpis">
+          <div class="trk-kpi"><div class="trk-kpi-v" id="trkCount">—</div><div class="trk-kpi-l">Alım Çağrısı</div></div>
+          <div class="trk-kpi"><div class="trk-kpi-v" id="trkWin">—</div><div class="trk-kpi-l">İsabet Oranı</div></div>
+          <div class="trk-kpi"><div class="trk-kpi-v" id="trkAvg">—</div><div class="trk-kpi-l">Ort. Getiri</div></div>
+          <div class="trk-kpi"><div class="trk-kpi-v" id="trkBest">—</div><div class="trk-kpi-l">En İyi Seçim</div></div>
+        </div>
+        <div class="trk-table" id="trkTable">
+          <div class="trk-skel">Sicil hesaplanıyor…</div>
+        </div>
+        <div class="trk-note">İsabet oranı ve ortalama getiri yalnızca AL (alım) çağrıları üzerinden hesaplanır; tablo şeffaflık için tüm tezleri gösterir. Maliyet, tezin yayınlandığı andaki referans fiyattır; getiriler canlı fiyata göre hesaplanır. Geçmiş performans gelecek getiriyi garanti etmez, yatırım tavsiyesi değildir.</div>
       </div>
     </div>
 
@@ -6915,7 +6950,6 @@ function garpAnalizAc(ticker) {
     loadTezler();
     renderSpotlight();
     loadTrackRecord();
-    renderMarket();
     renderVideos();
     renderTweets();
   }
@@ -7072,6 +7106,8 @@ function garpAnalizAc(ticker) {
       setKpi('trkWin', n ? Math.round(wins/n*100)+'%' : '—', wins/Math.max(n,1)>=0.5?'pos':'');
       setKpi('trkAvg', n ? (avg>0?'+':'')+avg.toFixed(1)+'%' : '—', avg>=0?'pos':'neg');
       setKpi('trkBest', best ? best.t.ticker+' '+(best.ret>0?'+':'')+best.ret.toFixed(1)+'%' : '—', best&&best.ret>=0?'pos':'neg');
+      const sumEl=document.getElementById('trkSummary');
+      if(sumEl) sumEl.textContent = n ? `${n} alım · %${Math.round(wins/n*100)} isabet · ${(avg>0?'+':'')+avg.toFixed(1)}% ort.` : '';
       // tablo — tarihe göre yeni→eski
       const sorted = rows.slice().sort((a,b)=> new Date(b.t.olusturma||0) - new Date(a.t.olusturma||0));
       table.innerHTML = sorted.map(r=>{
@@ -7303,17 +7339,27 @@ function garpAnalizAc(ticker) {
   });
 
   /* ── MERCEK (tema kart serisi) ── */
+  function ytId(url){ if(!url) return ''; const m=String(url).match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{6,})/); return m?m[1]:''; }
   function renderSpotlight(){
     const sp = CONFIG.spotlight;
     const grid = document.getElementById('spotGrid');
     const sec  = document.getElementById('spotSec');
     if (!grid) return;
     if (!sp || !sp.cards || !sp.cards.length){ if(sec) sec.style.display='none'; return; }
-    const k = document.getElementById('spotKicker'); if(k) k.textContent = '◈ ' + (sp.kicker||'Mercek');
+    const k = document.getElementById('spotKicker'); if(k) k.textContent = '◈ ' + (sp.kicker||'Mercek · Son Dakika');
     const t = document.getElementById('spotTitle'); if(t) t.textContent = sp.title||'Tema';
     const s = document.getElementById('spotSub');   if(s) s.textContent = sp.subtitle||'';
-    const v = document.getElementById('spotVideo');
-    if (v && sp.videoUrl){ v.href = sp.videoUrl; v.style.display=''; }
+    const vid = ytId(sp.videoUrl);
+    const thumb = document.getElementById('newsThumb');
+    if (thumb){ if(vid){ thumb.style.backgroundImage=`url(https://img.youtube.com/vi/${vid}/hqdefault.jpg)`; } else { thumb.style.display='none'; } }
+    const nv = document.getElementById('newsVideo');
+    if (nv){
+      if (vid){
+        nv.style.backgroundImage=`url(https://img.youtube.com/vi/${vid}/hqdefault.jpg)`;
+        nv.innerHTML='<div class="nv-play"><span>▶</span></div>';
+        nv.onclick=function(){ nv.innerHTML=`<iframe src="https://www.youtube.com/embed/${vid}?autoplay=1&rel=0" title="${esc(sp.title||'video')}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`; nv.onclick=null; nv.style.cursor='default'; if(typeof window.trackEvent==='function')window.trackEvent('spotlight_video_play',{}); };
+      } else { nv.style.display='none'; }
+    }
     grid.innerHTML = sp.cards.map((c,i)=>`
       <div class="spot-card">
         <div class="spot-num">${i+1}</div>
@@ -7330,7 +7376,6 @@ function garpAnalizAc(ticker) {
         <div class="spot-rol">${esc(c.rol||'')}</div>
         <button class="spot-add" id="spot-add-${i}" onclick="window.spotAdd(${i})">+ Takibe Ekle</button>
       </div>`).join('');
-    // canlı fiyatlar
     sp.cards.forEach(async (c,i)=>{
       const q = await getPrice(c.sym, c.ex);
       const pr = document.getElementById('spot-pr-'+i);
@@ -7343,7 +7388,6 @@ function garpAnalizAc(ticker) {
         ch.textContent=(q.change>0?'▲ +':q.change<0?'▼ ':'— ')+Math.abs(q.change).toFixed(2)+'%';
       }
     });
-    // zaten takiptekileri işaretle
     const wl = wlGet();
     sp.cards.forEach((c,i)=>{
       if (wl.some(x=>x.tk===c.sym && x.ex===c.ex)){
@@ -7352,6 +7396,23 @@ function garpAnalizAc(ticker) {
       }
     });
   }
+  window.toggleSpotlight = function(){
+    const body=document.getElementById('newsBody');
+    const btn=document.getElementById('spotToggle');
+    if(!body) return;
+    const open = body.style.display==='none';
+    body.style.display = open?'block':'none';
+    if(btn) btn.textContent = open?'Kapat ▴':'İncele ▾';
+    if(open && typeof window.trackEvent==='function') window.trackEvent('spotlight_open',{});
+  };
+  window.toggleSicil = function(){
+    const body=document.getElementById('trkBody');
+    const btn=document.getElementById('trkToggle');
+    if(!body) return;
+    const open = body.style.display==='none';
+    body.style.display = open?'block':'none';
+    if(btn) btn.textContent = open?'Gizle ▴':'Göster ▾';
+  };
   window.spotAdd = function(i){
     const c = CONFIG.spotlight && CONFIG.spotlight.cards[i];
     if (!c) return;
