@@ -147,13 +147,13 @@ function showToast(msg, type = 'success') {
   if (!t) {
     t = document.createElement('div');
     t.id = 'toastEl';
-    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:9px 16px;font-size:11px;font-family:"IBM Plex Mono",monospace;border:1px solid;z-index:9999;transition:opacity 0.4s;pointer-events:none;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;opacity:0';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:9px 16px;font-size:11px;font-family:"JetBrains Mono",monospace;border:1px solid;z-index:9999;transition:opacity 0.4s;pointer-events:none;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;opacity:0';
     document.body.appendChild(t);
   }
   t.textContent = msg;
   const styles = {
-    success: 'background:#f4f1ec;color:var(--success,#1a6b3a);border-color:rgba(26,107,58,0.3)',
-    warn:    'background:#f4f1ec;color:var(--warn,#b8700a);border-color:rgba(184,112,10,0.3)',
+    success: 'background:#f4f1ec;color:var(--success,#3f4a3c);border-color:rgba(26,107,58,0.3)',
+    warn:    'background:#f4f1ec;color:var(--warn,#b08a5a);border-color:rgba(184,112,10,0.3)',
     error:   'background:#f4f1ec;color:var(--danger,#c0392b);border-color:rgba(192,57,43,0.3)'
   };
   t.style.cssText += ';' + (styles[type] || styles.success);
@@ -249,8 +249,8 @@ function showRefSection() {
         to   { opacity:1; transform: translateY(0); }
       }
       #refCardInject { animation: refSlideIn 0.35s ease forwards; }
-      #refCardInject:hover { border-color: rgba(168,184,216,0.4) !important; }
-      #refCardInject .ref-copy-btn:hover { background: rgba(168,184,216,0.2) !important; color:#ccd6f6 !important; }
+      #refCardInject:hover { border-color: rgba(255,255,255,0.4) !important; }
+      #refCardInject .ref-copy-btn:hover { background: rgba(255,255,255,0.2) !important; color:#e2e8f0 !important; }
     `;
     document.head.appendChild(style);
   }
@@ -265,40 +265,40 @@ function showRefSection() {
     'gap:0',
     'margin-top:14px',
     'max-width:580px',
-    'background:#1a1f2e',
-    'border:1px solid rgba(168,184,216,0.18)',
+    'background:#141a25',
+    'border:1px solid rgba(255,255,255,0.18)',
     'overflow:hidden',
     'transition:border-color 0.2s',
   ].join(';');
 
   // Sol ikon bloğu
   const iconCol = document.createElement('div');
-  iconCol.style.cssText = 'padding:0 14px;background:#2451a3;display:flex;align-items:center;justify-content:center;flex-shrink:0;min-height:48px;';
-  iconCol.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+  iconCol.style.cssText = 'padding:0 14px;background:#c2ad84;display:flex;align-items:center;justify-content:center;flex-shrink:0;min-height:48px;';
+  iconCol.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15110a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
 
   // Orta metin bloğu
   const textCol = document.createElement('div');
-  textCol.style.cssText = 'flex:1;min-width:0;padding:9px 12px;border-left:1px solid rgba(168,184,216,0.10);';
+  textCol.style.cssText = 'flex:1;min-width:0;padding:9px 12px;border-left:1px solid rgba(255,255,255,0.10);';
   const subText = refCount > 0
     ? '\u2713 ' + refCount + ' davet \u00b7 +' + (refCount * 2) + ' hak kazand\u0131n'
     : 'Hen\u00fcz davet yok \u2014 ilk davetini yap!';
   textCol.innerHTML =
-    '<div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#a8b8d8;font-family:\'IBM Plex Mono\',monospace;font-weight:600;margin-bottom:2px;">ARKADAŞINI DAVET ET — SEN +2, O +1 HAK KAZANIR</div>' +
-    '<div style="font-size:9px;color:#6b7a99;font-family:\'IBM Plex Mono\',monospace;">' + subText + '</div>';
+    '<div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#9aa3b2;font-family:\'JetBrains Mono\',monospace;font-weight:600;margin-bottom:2px;">ARKADAŞINI DAVET ET — SEN +2, O +1 HAK KAZANIR</div>' +
+    '<div style="font-size:9px;color:#7a8493;font-family:\'JetBrains Mono\',monospace;">' + subText + '</div>';
 
   // Referans kodu bloğu
   const codeCol = document.createElement('div');
-  codeCol.style.cssText = 'font-family:\'IBM Plex Mono\',monospace;font-size:12px;font-weight:600;color:#ccd6f6;letter-spacing:2px;padding:0 12px;border-left:1px solid rgba(168,184,216,0.10);display:flex;align-items:center;min-height:48px;flex-shrink:0;';
+  codeCol.style.cssText = 'font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:600;color:#e2e8f0;letter-spacing:2px;padding:0 12px;border-left:1px solid rgba(255,255,255,0.10);display:flex;align-items:center;min-height:48px;flex-shrink:0;';
   codeCol.textContent = curUser.ref_code;
 
   // Kopyala butonu
   const copyBtn = document.createElement('button');
   copyBtn.className = 'ref-copy-btn';
   copyBtn.onclick = copyRefLink;
-  copyBtn.style.cssText = 'background:#2451a3;border:none;border-left:1px solid rgba(255,255,255,0.10);color:#fff;font-family:\'IBM Plex Mono\',monospace;font-size:9px;font-weight:600;padding:0 14px;cursor:pointer;white-space:nowrap;letter-spacing:1px;text-transform:uppercase;min-height:48px;transition:background 0.15s;';
+  copyBtn.style.cssText = 'background:#c2ad84;border:none;border-left:1px solid rgba(255,255,255,0.10);color:#15110a;font-family:\'JetBrains Mono\',monospace;font-size:9px;font-weight:600;padding:0 14px;cursor:pointer;white-space:nowrap;letter-spacing:1px;text-transform:uppercase;min-height:48px;transition:background 0.15s;';
   copyBtn.textContent = 'Kopyala';
-  copyBtn.onmouseover = function() { this.style.background = '#1a3a6b'; };
-  copyBtn.onmouseout  = function() { this.style.background = '#2451a3'; };
+  copyBtn.onmouseover = function() { this.style.background = '#a8946b'; };
+  copyBtn.onmouseout  = function() { this.style.background = '#c2ad84'; };
 
   card.appendChild(iconCol);
   card.appendChild(textCol);
