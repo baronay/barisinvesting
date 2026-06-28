@@ -6782,9 +6782,9 @@ function garpAnalizAc(ticker) {
     const email = (inp.value||'').trim();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ inp.focus(); inp.style.borderColor='var(--danger)'; return; }
     inp.style.borderColor='';
-    fetch('/api/auth?newsletter=1', {
+    fetch('/api/auth?action=login', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ email, source:'portal_newsletter', consent:true })
+      body: JSON.stringify({ email, marketingConsent:true })
     }).catch(()=>{});
     if (ok){ ok.style.display='block'; }
     inp.value=''; inp.disabled=true;
