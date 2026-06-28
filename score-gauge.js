@@ -1,56 +1,36 @@
-// ================================================================
-// score-gauge.js — Barış Investing
-// Yarım daire animasyonlu skor göstergesi
-// Terminal estetiği: IBM Plex, gold accent, küçük strength rozeti
-//
-// Kullanım:
-//   renderScoreGauge('scoreGaugeBox', score, max);
-//   renderScoreGauge('scoreGaugeBox', 5, 7, { title: 'BUFFETT SKORU' });
-// ================================================================
-
 (function () {
-  // ── CSS ────────────────────────────────────────────────────────
   const css = `
     .sg-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-left: 4px solid var(--accent);
+      border-left: 2px solid var(--accent);
+      border-radius: 3px;
       padding: 18px 22px 14px;
       position: relative;
-      overflow: hidden;
       margin-bottom: 1px;
     }
-    .sg-card::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 120px;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, var(--accent-dim, rgba(212,168,67,.06)));
-      pointer-events: none;
-    }
+    .sg-card.weak     { border-left-color: var(--danger); }
+    .sg-card.moderate { border-left-color: var(--warn); }
+    .sg-card.strong   { border-left-color: var(--success); }
     .sg-hdr {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 4px;
-      position: relative;
-      z-index: 1;
+      margin-bottom: 6px;
     }
     .sg-title {
       font-size: 9px;
-      letter-spacing: 1.5px;
+      letter-spacing: 2px;
       text-transform: uppercase;
-      color: var(--muted);
+      color: var(--muted-s);
       font-family: 'JetBrains Mono', monospace;
     }
     .sg-badge {
       font-size: 8px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      padding: 3px 8px;
-      border: 1px solid;
+      font-weight: 500;
+      letter-spacing: 2px;
+      padding: 3px 9px;
+      border: 1px solid var(--border-s);
       font-family: 'JetBrains Mono', monospace;
       text-transform: uppercase;
       opacity: 0;
@@ -58,24 +38,24 @@
     }
     .sg-badge.weak {
       color: var(--danger);
-      border-color: rgba(168,116,106,.3);
-      background: var(--danger-dim, rgba(168,116,106,.08));
+      border-color: rgba(210,121,107,.28);
+      background: var(--danger-dim);
     }
     .sg-badge.moderate {
       color: var(--warn);
-      border-color: rgba(184,155,106,.3);
-      background: var(--warn-dim, rgba(184,155,106,.08));
+      border-color: rgba(184,155,106,.28);
+      background: var(--warn-dim);
     }
     .sg-badge.strong {
-      color: var(--accent);
-      border-color: rgba(212,168,67,.35);
-      background: rgba(212,168,67,.08);
+      color: var(--success);
+      border-color: rgba(116,195,137,.28);
+      background: var(--success-dim);
     }
     .sg-arc {
       position: relative;
       width: 100%;
-      max-width: 260px;
-      margin: 0 auto;
+      max-width: 240px;
+      margin: 2px auto 0;
     }
     .sg-arc svg {
       display: block;
@@ -86,17 +66,17 @@
     .sg-arc-bg {
       fill: none;
       stroke: var(--rule);
-      stroke-width: 6;
-      opacity: .35;
+      stroke-width: 4;
+      opacity: .6;
     }
     .sg-arc-fg {
       fill: none;
-      stroke-width: 6;
+      stroke-width: 4;
       stroke-linecap: round;
     }
     .sg-val {
       position: absolute;
-      bottom: 2px;
+      bottom: 0;
       left: 0;
       right: 0;
       text-align: center;
@@ -120,9 +100,10 @@
     .sg-num .sg-slash,
     .sg-num .sg-max {
       color: var(--muted);
-      font-size: 16px;
+      font-size: 15px;
       font-family: 'JetBrains Mono', monospace;
-      font-weight: 500;
+      font-weight: 400;
+      font-variant-numeric: tabular-nums;
       opacity: 0;
       animation: sgFade .5s ease .7s forwards;
     }
@@ -133,7 +114,7 @@
       text-transform: uppercase;
       color: var(--muted);
       font-family: 'JetBrains Mono', monospace;
-      margin-top: 4px;
+      margin-top: 5px;
       opacity: 0;
       animation: sgFade .5s ease .9s forwards;
     }
@@ -148,7 +129,7 @@
     @media (max-width: 600px) {
       .sg-card { padding: 14px 16px 10px; }
       .sg-num { font-size: 28px; height: 32px; }
-      .sg-arc { max-width: 220px; }
+      .sg-arc { max-width: 210px; }
     }
   `;
 
@@ -159,12 +140,11 @@
     document.head.appendChild(style);
   }
 
-  // ── Strength logic ─────────────────────────────────────────────
   function strengthOf(score, max) {
     const pct = score / max;
-    if (pct >= 0.71) return 'strong';   // 5+/7
-    if (pct >= 0.43) return 'moderate'; // 3-4/7
-    return 'weak';                      // 0-2/7
+    if (pct >= 0.71) return 'strong';
+    if (pct >= 0.43) return 'moderate';
+    return 'weak';
   }
 
   const STRENGTH_LBL = {
@@ -173,16 +153,14 @@
     strong: 'Güçlü',
   };
 
-  // Gradient stops — terminal palet
   const STRENGTH_STOPS = {
-    weak:     ['#d0a89f', '#d2796b', '#7f1d1d'],
-    moderate: ['#cdbb95', '#b89b6a', '#78350f'],
-    strong:   ['#f0d997', '#d4a843', '#8a6a25'],
+    weak:     ['#e0a89f', '#d2796b'],
+    moderate: ['#cdbb95', '#b89b6a'],
+    strong:   ['#9bd1a6', '#74c389'],
   };
 
   let _gradCounter = 0;
 
-  // ── Main render ────────────────────────────────────────────────
   window.renderScoreGauge = function (containerId, score, max, opts) {
     opts = opts || {};
     const c = document.getElementById(containerId);
@@ -211,7 +189,7 @@
     const label = opts.label || (max + ' kriter üzerinden');
 
     c.innerHTML =
-      '<div class="sg-card">' +
+      '<div class="sg-card ' + strength + '">' +
         '<div class="sg-hdr">' +
           '<div class="sg-title">' + title + '</div>' +
           '<div class="sg-badge ' + strength + '">' + STRENGTH_LBL[strength] + '</div>' +
@@ -243,14 +221,13 @@
         '</div>' +
       '</div>';
 
-    // Stroke fill animation (empty → score)
     const fg = c.querySelector('.sg-arc-fg');
     if (fg && typeof fg.animate === 'function') {
       fg.animate(
         [
-          { strokeDashoffset: '0',                       offset: 0 },
-          { strokeDashoffset: '0',                       offset: 0.28 },
-          { strokeDashoffset: String(distForValue),      offset: 1 }
+          { strokeDashoffset: '0',                  offset: 0 },
+          { strokeDashoffset: '0',                  offset: 0.28 },
+          { strokeDashoffset: String(distForValue), offset: 1 }
         ],
         {
           duration: 1400,
@@ -259,7 +236,6 @@
         }
       );
     } else if (fg) {
-      // Fallback (eski tarayıcı)
       fg.style.transition = 'stroke-dashoffset 1s cubic-bezier(0.65, 0, 0.35, 1) 0.4s';
       fg.setAttribute('stroke-dashoffset', String(distForValue));
     }
