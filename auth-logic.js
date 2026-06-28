@@ -152,7 +152,7 @@ function showToast(msg, type = 'success') {
   }
   t.textContent = msg;
   const styles = {
-    success: 'background:#f4f1ec;color:var(--success,#3f4a3c);border-color:rgba(26,107,58,0.3)',
+    success: 'background:#f4f1ec;color:var(--success,#166534);border-color:rgba(26,107,58,0.3)',
     warn:    'background:#f4f1ec;color:var(--warn,#b08a5a);border-color:rgba(176,138,90,0.3)',
     error:   'background:#f4f1ec;color:var(--danger,#c0392b);border-color:rgba(165,90,82,0.3)'
   };
@@ -250,7 +250,7 @@ function showRefSection() {
       }
       #refCardInject { animation: refSlideIn 0.35s ease forwards; }
       #refCardInject:hover { border-color: rgba(255,255,255,0.4) !important; }
-      #refCardInject .ref-copy-btn:hover { background: rgba(255,255,255,0.2) !important; color:#e2e8f0 !important; }
+      #refCardInject .ref-copy-btn:hover { background: rgba(255,255,255,0.2) !important; color:#ffffff !important; }
     `;
     document.head.appendChild(style);
   }
@@ -288,7 +288,7 @@ function showRefSection() {
 
   // Referans kodu bloğu
   const codeCol = document.createElement('div');
-  codeCol.style.cssText = 'font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:600;color:#e2e8f0;letter-spacing:2px;padding:0 12px;border-left:1px solid rgba(255,255,255,0.10);display:flex;align-items:center;min-height:48px;flex-shrink:0;';
+  codeCol.style.cssText = 'font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:600;color:#ffffff;letter-spacing:2px;padding:0 12px;border-left:1px solid rgba(255,255,255,0.10);display:flex;align-items:center;min-height:48px;flex-shrink:0;';
   codeCol.textContent = curUser.ref_code;
 
   // Kopyala butonu
