@@ -49,11 +49,11 @@
   --gold:#c2ad84;
   --gold-dim:rgba(194,173,132,0.12);
 
-  --success:#7f9473;
+  --success:#94ad81;
   --success-dim:rgba(63,74,60,0.20);
   --success-deep:#3f4a3c;
 
-  --danger:#a8746a;
+  --danger:#c08274;
   --danger-dim:rgba(92,43,41,0.22);
   --danger-deep:#5c2b29;
 
@@ -338,7 +338,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .hero-right{background:rgba(255,255,255,.025);border-left:1px solid var(--border-s);padding:20px 22px;display:flex;flex-direction:column;gap:0;position:relative;z-index:1;}
 .hero-tag{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;font-family:'JetBrains Mono',monospace;}
 .hero-title{font-family:'Playfair Display',serif;font-size:clamp(22px,2.8vw,34px);font-weight:700;line-height:1.2;margin-bottom:8px;color:#e8e6e0;}
-.hero-title span{color:#7aabf7;}
+.hero-title span{color:#cdbb95;}
 .hero-sub{font-size:11px;color:var(--muted);max-width:480px;line-height:1.9;margin-bottom:18px;font-weight:300;}
 .hero-search-row{display:flex;max-width:580px;position:relative;}
 .hero-ticker-in{width:110px;flex-shrink:0;background:var(--surface2);border:1px solid var(--glass);border-right:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;padding:13px 14px;text-transform:uppercase;letter-spacing:2px;outline:none;transition:border-color .2s,box-shadow .2s;}
@@ -839,9 +839,9 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .ref-cta-title{
   font-family:'JetBrains Mono',monospace;
   font-size:10px;font-weight:600;letter-spacing:1.5px;
-  text-transform:uppercase;color:#a8b8d8;margin-bottom:2px;
+  text-transform:uppercase;color:#9aa3b2;margin-bottom:2px;
 }
-.ref-cta-sub{font-size:9px;color:#6b7fa8;font-family:'JetBrains Mono',monospace;}
+.ref-cta-sub{font-size:9px;color:#7a8493;font-family:'JetBrains Mono',monospace;}
 .ref-cta-actions{display:flex;align-items:center;gap:0;flex-shrink:0;}
 .ref-code-box{
   font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;
@@ -1749,7 +1749,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
   box-shadow:0 4px 16px rgba(212,168,67,0.2);
 }
 .tez-cta-banner-btn:hover{
-  background:#e6bb52;
+  background:#c2ad84;
   box-shadow:0 8px 32px rgba(212,168,67,0.4);
   transform:translateY(-2px);
 }
@@ -1780,7 +1780,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 }
 .tez-fab.visible{display:inline-flex;}
 .tez-fab:hover{
-  background:#e6bb52;
+  background:#c2ad84;
   box-shadow:0 12px 32px rgba(0,0,0,0.4),0 0 24px rgba(212,168,67,0.5);
   transform:translateY(-2px);
 }
@@ -3155,7 +3155,7 @@ function pill(s){if(!s||s==='pending')return'<span class="sp pending">○</span>
 function icon(s){return s==='pass'?'✓':s==='fail'?'✗':s==='neutral'?'?':'○';}
 function pStat(str){if(!str)return'neutral';const u=str.toUpperCase();if(u.includes('PASS'))return'pass';if(u.includes('FAIL'))return'fail';return'neutral';}
 function avatarLetter(name){return(name||'?')[0].toUpperCase();}
-function avatarBg(name){const h=(name||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0);const cs=['#2d8fff','#00e5a0','#f97316','#ff4d6a','#00c8ff','#8a7e94'];return cs[h%cs.length];}
+function avatarBg(name){const h=(name||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0);const cs=['#c2ad84','#7f9473','#b08a5a','#c08274','#9db4a8','#8a7e94'];return cs[h%cs.length];}
 
 // SIDEBAR
 function toggleSidebar(){
@@ -3444,10 +3444,10 @@ function renderRealData(fd){
     document.getElementById('anaLive').textContent='● Yahoo Finance';
     const cons=fd.recommendationKey||'hold';
     const cm={'strongBuy':'GÜÇLÜ AL','buy':'AL','hold':'TUT','sell':'SAT','strongSell':'GÜÇLÜ SAT'};
-    const cc=cons.includes('buy')?'#00e5a0':cons.includes('sell')?'#ff4d6a':'#ffb830';
+    const cc=cons.includes('buy')?'#7f9473':cons.includes('sell')?'#c08274':'#b89b6a';
     document.getElementById('anaCons').textContent=cm[cons]||cons.toUpperCase();document.getElementById('anaCons').style.color=cc;
     document.getElementById('anaTarget').textContent=`${fd.targetMeanPrice.toFixed(2)} ${fd.currency}`;
-    document.getElementById('anaUp').textContent=`%${up}`;document.getElementById('anaUp').style.color=parseFloat(up)>0?'#00e5a0':'#ff4d6a';
+    document.getElementById('anaUp').textContent=`%${up}`;document.getElementById('anaUp').style.color=parseFloat(up)>0?'#7f9473':'#c08274';
     const bp=cons.includes('buy')?65:cons==='hold'?30:10,hp=25,sp=100-bp-hp;
     setTimeout(()=>{document.getElementById('cBuy').style.width=bp+'%';document.getElementById('cHold').style.width=hp+'%';document.getElementById('cSell').style.width=sp+'%';},300);
     document.getElementById('cBuyL').textContent=`AL %${bp}`;document.getElementById('cHoldL').textContent=`TUT %${hp}`;document.getElementById('cSellL').textContent=`SAT %${sp}`;
@@ -3548,7 +3548,7 @@ function renderMult(m){
 function renderCharts(data){
   const fw=FW[curFW];const sc=data.statuses.map(s=>s==='pass'?100:s==='fail'?15:50);
   const cl=data.statuses.map(s=>s==='pass'?'rgba(26,107,58,0.7)':s==='fail'?'rgba(192,57,43,0.7)':'rgba(184,112,10,0.6)');
-  const ac=curFW==='lynch'?'#8b4513':curFW==='dalio'?'#5b2d8e':'#2451a3';
+  const ac=curFW==='lynch'?'#b08a5a':curFW==='dalio'?'#8a7e94':'#c2ad84';
   if(radarChart)radarChart.destroy();if(barChart)barChart.destroy();
   radarChart=new Chart(document.getElementById('radarC').getContext('2d'),{type:'radar',data:{labels:fw.criteria.map(c=>c.name.split(' ')[0]),datasets:[{data:sc,backgroundColor:ac+'20',borderColor:ac,borderWidth:1.5,pointBackgroundColor:ac,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'#e8e4dc'},pointLabels:{color:'#6b6560',font:{family:'JetBrains Mono',size:9}},angleLines:{color:'#e8e4dc'}}},plugins:{legend:{display:false}}}});
   barChart=new Chart(document.getElementById('barC').getContext('2d'),{type:'bar',data:{labels:fw.criteria.map((_,i)=>String(i+1).padStart(2,'0')),datasets:[{data:sc,backgroundColor:cl,borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100,ticks:{display:false},grid:{color:'#f4f1ec'},border:{color:'#d4cfc6'}},x:{ticks:{color:'#6b6560',font:{family:'JetBrains Mono',size:9}},grid:{display:false},border:{color:'#d4cfc6'}}},plugins:{legend:{display:false}}}});
@@ -3760,7 +3760,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   const isBISTticker=(curEX==='BIST');
 
   function makeAvatar(tk){
-    const colors=['#2451a3','#1a6b3a','#8b4513','#5b2d8e','#0f6e56','#7d2c2c','#1e5799','#4a3728','#2c5f6e','#6b4c11'];
+    const colors=['#c2ad84','#3f4a3c','#b08a5a','#8a7e94','#46584a','#5c2b29','#a8946b','#5a4636','#3c5560','#7d6438'];
     let h=0;for(let i=0;i<tk.length;i++){h=((h<<5)-h)+tk.charCodeAt(i);h|=0;}
     const col=colors[Math.abs(h)%colors.length];
     const lbl=tk.length>=2?tk.substring(0,2):tk;
@@ -3832,10 +3832,10 @@ async function tezBildirimKontrol(ticker) {
     if (!tez || !tez.id) return;
     _tezBildirimId = tez.id;
     const sEl = document.getElementById('tezBildirimSinyal');
-    const sRenk = {AL:'#7f9473',IZLE:'#b89b6a',KACIN:'#a8746a',NOTR:'#a0aec8'};
+    const sRenk = {AL:'#7f9473',IZLE:'#b89b6a',KACIN:'#a8746a',NOTR:'#9aa3b2'};
     const sLabel = {AL:'AL',IZLE:'İZLE',KACIN:'UZAK DUR',NOTR:'NÖTR'};
     if (sEl && tez.sinyal) {
-      const rc = sRenk[tez.sinyal]||'#a0aec8';
+      const rc = sRenk[tez.sinyal]||'#9aa3b2';
       sEl.innerHTML = `<span style="color:${rc};background:${rc}18;border:1px solid ${rc}44;padding:1px 5px;border-radius:3px;font-weight:700;">${sLabel[tez.sinyal]||tez.sinyal}</span>`;
     }
     const bEl = document.getElementById('tezBildirimBaslik');
@@ -3975,7 +3975,7 @@ function renderPt(){
   document.getElementById('psAvgB').textContent=avgB==='—'?'—':`${avgB}/7`;
   document.getElementById('psAvgL').textContent=`Lynch: ${avgL==='—'?'—':`${avgL}/7`}`;
   const dEl=document.getElementById('psAvgD');if(dEl)dEl.textContent=avgD==='—'?'—':`${avgD}/7`;
-  const cols=['#2451a3','#1a6b3a','#8b4513','#c0392b','#b8700a','#5b2d8e','#2c7a7b','#9a7d3a'];
+  const cols=['#c2ad84','#3f4a3c','#b08a5a','#c0392b','#b08a5a','#8a7e94','#2c7a7b','#9a7d3a'];
   const mix=document.getElementById('mixBars');mix.innerHTML='';
   portfolio.forEach((p,i)=>{
     const cost=p.buyPrice*p.qty;const costN=cost*(p.currency==='$'?USD_TRY:1);const wt=(costN/total*100).toFixed(1);const isTL=p.currency==='₺';
@@ -4202,7 +4202,7 @@ function drawCanvas(){
     bg2.addColorStop(0,clr+'cc'); bg2.addColorStop(1,clr+'44');
     ctx.fillStyle=bg2; ctx.fillRect(bx,by,bW*fp,bH);
     // Metin
-    ctx.fillStyle='#d8e4f8'; ctx.font=`500 18px "JetBrains Mono",monospace`;
+    ctx.fillStyle='#e2e8f0'; ctx.font=`500 18px "JetBrains Mono",monospace`;
     const nm=cr.name.length>22?cr.name.substring(0,21)+'…':cr.name;
     ctx.fillText(nm,60,y+rowH/2+4);
     const lbl=s==='pass'?'✓ GEÇTİ':s==='fail'?'✗ KALDI':'◑ BELİRSİZ';
@@ -4226,7 +4226,7 @@ function drawCanvas(){
     ['Brüt Marj',   pct(fd.grossMargin),  fd.grossMargin!=null&&fd.grossMargin>0.3?PASS:NEUT],
     ['Net Marj',    pct(fd.profitMargin), fd.profitMargin!=null&&fd.profitMargin>0.1?PASS:NEUT],
     ['FCF',         big(fd.freeCashflow), fd.freeCashflow!=null&&fd.freeCashflow>0?PASS:fd.freeCashflow!=null?FAIL:NEUT],
-    ['Piy. Değeri', big(fd.marketCap),    '#8ba3cc'],
+    ['Piy. Değeri', big(fd.marketCap),    '#9aa3b2'],
   ];
 
   const rRowH=Math.min(52,(H-sY-80)/rows.length);
@@ -4479,7 +4479,7 @@ function openTezSupabase(id) {
         icerik = icerik.replace(/\n/g, '\n').replace(/\n/g, '<br>');
       }
       const sinyal = tez.sinyal || '';
-      const sinyalRenk = sinyal==='AL'?'#7f9473':sinyal==='IZLE'?'#b89b6a':sinyal==='KACIN'?'#a8746a':'#a0aec8';
+      const sinyalRenk = sinyal==='AL'?'#7f9473':sinyal==='IZLE'?'#b89b6a':sinyal==='KACIN'?'#a8746a':'#9aa3b2';
       const sinyalLabel = sinyal==='AL'?'AL':sinyal==='IZLE'?'İZLE':sinyal==='KACIN'?'UZAK DUR':sinyal||'';
       const tarih = tez.olusturma ? new Date(tez.olusturma).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : '';
       const eskiModal = document.getElementById('tezModal');
@@ -4496,15 +4496,15 @@ function openTezSupabase(id) {
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
                   ${tez.ticker ? `<span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#c2ad84;font-weight:600;background:rgba(194,173,132,0.1);padding:2px 8px;border-radius:4px;">${tez.ticker}</span>` : ''}
                   ${sinyalLabel ? `<span style="font-size:11px;font-weight:700;color:${sinyalRenk};background:${sinyalRenk}18;border:1px solid ${sinyalRenk}44;padding:2px 8px;border-radius:4px;">${sinyalLabel}</span>` : ''}
-                  ${tarih ? `<span style="font-size:11px;color:#3d4f6e;font-family:'JetBrains Mono',monospace;">${tarih}</span>` : ''}
+                  ${tarih ? `<span style="font-size:11px;color:#3a4150;font-family:'JetBrains Mono',monospace;">${tarih}</span>` : ''}
                 </div>
                 <h1 style="font-size:22px;font-weight:700;color:#e8edf8;font-family:'Playfair Display',serif;line-height:1.3;">${tez.baslik}</h1>
-                ${tez.ozet ? `<p style="margin-top:8px;font-size:13px;color:#5a6a8a;line-height:1.6;">${tez.ozet}</p>` : ''}
+                ${tez.ozet ? `<p style="margin-top:8px;font-size:13px;color:#5d6675;line-height:1.6;">${tez.ozet}</p>` : ''}
               </div>
-              <button onclick="document.getElementById('tezModal').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:24px;margin-left:16px;flex-shrink:0;line-height:1;">×</button>
+              <button onclick="document.getElementById('tezModal').remove()" style="background:none;border:none;color:#5d6675;cursor:pointer;font-size:24px;margin-left:16px;flex-shrink:0;line-height:1;">×</button>
             </div>
             <hr style="border:none;border-top:1px solid rgba(255,255,255,0.07);margin-bottom:24px;">
-            <div style="color:#a0aec8;font-size:14px;line-height:1.9;">${icerik}</div>
+            <div style="color:#9aa3b2;font-size:14px;line-height:1.9;">${icerik}</div>
           </div>
         </div>`;
       modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
@@ -4941,7 +4941,7 @@ function updateMobileAccountUI() {
   } else {
     if (guestDiv) guestDiv.style.display = 'block';
     if (userDiv) userDiv.style.display = 'none';
-    if (bnIcon) { bnIcon.textContent = '?'; bnIcon.style.background = 'var(--border-s)'; bnIcon.style.color = '#8892b0'; }
+    if (bnIcon) { bnIcon.textContent = '?'; bnIcon.style.background = 'var(--border-s)'; bnIcon.style.color = '#7a8493'; }
     if (bnLabel) bnLabel.textContent = 'Giriş';
   }
 }
@@ -5106,28 +5106,28 @@ if (!localStorage.getItem('baris_fw_seen')) {
     <!-- Giriş yapılmamış -->
     <div id="mobileAccountGuest">
       <div style="font-family:'Playfair Display',serif;font-size:18px;color:#e8e6e0;margin-bottom:6px">Hesabın yok mu?</div>
-      <div style="font-size:11px;color:#8892b0;margin-bottom:16px;line-height:1.7">E-posta ile kayıt ol, 5 ücretsiz analiz hakkı kazan. Portföyün bulutta saklanır.</div>
+      <div style="font-size:11px;color:#7a8493;margin-bottom:16px;line-height:1.7">E-posta ile kayıt ol, 5 ücretsiz analiz hakkı kazan. Portföyün bulutta saklanır.</div>
       <input id="mobileEmailIn" type="email" placeholder="e-posta adresin" autocomplete="email"
         style="width:100%;background:#111827;border:1px solid var(--border-s);color:#e8e6e0;font-family:'JetBrains Mono',monospace;font-size:13px;padding:12px 14px;outline:none;margin-bottom:8px;box-sizing:border-box;"
         onkeydown="if(event.key==='Enter')doMobileAuth()"/>
       <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;cursor:pointer">
         <input type="checkbox" id="mobileMarketingConsent" style="margin-top:3px;flex-shrink:0"/>
-        <span style="font-size:10px;color:#8892b0;line-height:1.6">Yeni analizler ve piyasa yorumları hakkında bana e-posta gönderebilirsiniz</span>
+        <span style="font-size:10px;color:#7a8493;line-height:1.6">Yeni analizler ve piyasa yorumları hakkında bana e-posta gönderebilirsiniz</span>
       </label>
       <button onclick="doMobileAuth()" style="width:100%;background:var(--accent2);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:13px;cursor:pointer;margin-bottom:8px">Giriş Yap</button>
       <div id="mobileAuthErr" style="display:none;font-size:10px;color:var(--danger);padding:6px;font-family:'JetBrains Mono',monospace"></div>
-      <button onclick="closeMobileAccount()" style="width:100%;background:transparent;border:1px solid var(--border-s);color:#8892b0;font-family:'JetBrains Mono',monospace;font-size:11px;padding:10px;cursor:pointer">Şimdi değil</button>
+      <button onclick="closeMobileAccount()" style="width:100%;background:transparent;border:1px solid var(--border-s);color:#7a8493;font-family:'JetBrains Mono',monospace;font-size:11px;padding:10px;cursor:pointer">Şimdi değil</button>
     </div>
     <!-- Giriş yapılmış -->
     <div id="mobileAccountUser" style="display:none">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
         <div id="mobileAvatar" style="width:44px;height:44px;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">?</div>
         <div>
-          <div id="mobileUserEmail" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#a8b8d8;word-break:break-all"></div>
+          <div id="mobileUserEmail" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9aa3b2;word-break:break-all"></div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
-            <div style="font-size:9px;color:#8892b0;font-family:'JetBrains Mono',monospace">ANALİZ HAKKI</div>
-            <div id="mobileCreditVal" style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#a8b8d8"></div>
-            <div style="height:2px;flex:1;background:var(--border-s);position:relative"><div id="mobileCreditBar" style="position:absolute;left:0;top:0;height:100%;background:#a8b8d8;transition:width 0.5s"></div></div>
+            <div style="font-size:9px;color:#7a8493;font-family:'JetBrains Mono',monospace">ANALİZ HAKKI</div>
+            <div id="mobileCreditVal" style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#9aa3b2"></div>
+            <div style="height:2px;flex:1;background:var(--border-s);position:relative"><div id="mobileCreditBar" style="position:absolute;left:0;top:0;height:100%;background:#9aa3b2;transition:width 0.5s"></div></div>
           </div>
         </div>
       </div>
@@ -5155,7 +5155,7 @@ if (!localStorage.getItem('baris_fw_seen')) {
     <span>Forum</span>
   </button>
   <button class="bn-tab" id="bn-hesap" onclick="openMobileAccount()">
-    <div id="bnAccountIcon" style="width:22px;height:22px;border-radius:50%;background:var(--border-s);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:11px;font-weight:700;color:#8892b0">?</div>
+    <div id="bnAccountIcon" style="width:22px;height:22px;border-radius:50%;background:var(--border-s);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:11px;font-weight:700;color:#7a8493">?</div>
     <span id="bnAccountLabel">Hesap</span>
   </button>
 </nav>
@@ -5203,7 +5203,7 @@ function garpBadgeGoster(hisseler) {
     min-width:260px;
   `;
 
-  const sinyal_renk = s => s==='AL'?'#7f9473':s==='IZLE'?'#b89b6a':'#a0aec8';
+  const sinyal_renk = s => s==='AL'?'#7f9473':s==='IZLE'?'#b89b6a':'#9aa3b2';
 
   badge.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.07);cursor:pointer;" onclick="document.getElementById('garpNotifPanel').style.display=document.getElementById('garpNotifPanel').style.display==='none'?'block':'none'">
@@ -5212,14 +5212,14 @@ function garpBadgeGoster(hisseler) {
         <span style="font-size:12px;font-weight:600;color:#e8edf8;">Portföy Uyarısı</span>
         <span style="background:#c2ad84;color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;">${hisseler.length}</span>
       </div>
-      <button onclick="event.stopPropagation();document.getElementById('garpNotifBadge').remove()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:16px;">×</button>
+      <button onclick="event.stopPropagation();document.getElementById('garpNotifBadge').remove()" style="background:none;border:none;color:#5d6675;cursor:pointer;font-size:16px;">×</button>
     </div>
     <div id="garpNotifPanel" style="display:block;padding:10px 14px;max-height:280px;overflow-y:auto;">
       ${hisseler.map(h => `
         <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
           <div>
             <span style="font-size:13px;font-weight:600;color:#e8edf8;font-family:'JetBrains Mono',monospace;">${h.ticker}</span>
-            <span style="font-size:10px;color:#5a6a8a;margin-left:6px;">${h.teknik_teyit||''}</span>
+            <span style="font-size:10px;color:#5d6675;margin-left:6px;">${h.teknik_teyit||''}</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:11px;font-weight:600;color:${sinyal_renk(h.sinyal)}">${h.sinyal}</span>
@@ -5228,7 +5228,7 @@ function garpBadgeGoster(hisseler) {
           </div>
         </div>
       `).join('')}
-      <div style="font-size:10px;color:#3d4f6e;text-align:center;margin-top:8px;">GARP + Teknik Teyit · Barış Investing AI</div>
+      <div style="font-size:10px;color:#3a4150;text-align:center;margin-top:8px;">GARP + Teknik Teyit · Barış Investing AI</div>
     </div>
   `;
 
@@ -5294,24 +5294,24 @@ function fallbackCopy(text,msg){
     <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.07);">
       <div>
         <div style="font-size:13px;font-weight:600;color:#e8edf8;letter-spacing:0.3px;">◈ Haftanın GARP Seçimleri</div>
-        <div id="garpHafta" style="font-size:11px;color:#5a6a8a;margin-top:2px;"></div>
+        <div id="garpHafta" style="font-size:11px;color:#5d6675;margin-top:2px;"></div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <button id="garpTabBist" onclick="garpTabDegistir('bist')" style="background:rgba(194,173,132,0.2);border:1px solid rgba(194,173,132,0.4);color:#c2ad84;font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-weight:600;">BIST</button>
-        <button id="garpTabGlobal" onclick="garpTabDegistir('global')" style="background:none;border:1px solid rgba(255,255,255,0.1);color:#5a6a8a;font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;">Global</button>
-        <button onclick="garpToggle()" style="background:none;border:none;color:#5a6a8a;cursor:pointer;font-size:18px;line-height:1;margin-left:4px;">×</button>
+        <button id="garpTabGlobal" onclick="garpTabDegistir('global')" style="background:none;border:1px solid rgba(255,255,255,0.1);color:#5d6675;font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;">Global</button>
+        <button onclick="garpToggle()" style="background:none;border:none;color:#5d6675;cursor:pointer;font-size:18px;line-height:1;margin-left:4px;">×</button>
       </div>
     </div>
 
     <!-- İçerik -->
     <div id="garpIcerik" style="padding:16px;max-height:420px;overflow-y:auto;">
-      <div style="text-align:center;padding:24px 0;color:#5a6a8a;font-size:13px;">
+      <div style="text-align:center;padding:24px 0;color:#5d6675;font-size:13px;">
         Yükleniyor...
       </div>
     </div>
 
     <!-- Footer -->
-    <div style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.07);font-size:11px;color:#3d4f6e;text-align:center;">
+    <div style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.07);font-size:11px;color:#3a4150;text-align:center;">
       GARP + Teknik Teyit · Barış Investing AI
     </div>
   </div>
@@ -5328,10 +5328,10 @@ function garpTabDegistir(tab) {
   var g = document.getElementById('garpTabGlobal');
   if (b && g) {
     b.style.background = tab==='bist' ? 'rgba(194,173,132,0.2)' : 'none';
-    b.style.color = tab==='bist' ? '#c2ad84' : '#5a6a8a';
+    b.style.color = tab==='bist' ? '#c2ad84' : '#5d6675';
     b.style.borderColor = tab==='bist' ? 'rgba(194,173,132,0.4)' : 'rgba(255,255,255,0.1)';
     g.style.background = tab==='global' ? 'rgba(194,173,132,0.2)' : 'none';
-    g.style.color = tab==='global' ? '#c2ad84' : '#5a6a8a';
+    g.style.color = tab==='global' ? '#c2ad84' : '#5d6675';
     g.style.borderColor = tab==='global' ? 'rgba(194,173,132,0.4)' : 'rgba(255,255,255,0.1)';
   }
   garpYuklendi = false;
@@ -5348,13 +5348,13 @@ function garpToggle() {
 function sinялRenk(s) {
   if (s === 'AL')    return '#7f9473';
   if (s === 'IZLE')  return '#b89b6a';
-  if (s === 'NOTR')  return '#a0aec8';
+  if (s === 'NOTR')  return '#9aa3b2';
   return '#a8746a';
 }
 
 function garpYukle() {
   var icerik = document.getElementById('garpIcerik');
-  icerik.innerHTML = '<div style="text-align:center;padding:24px 0;color:#5a6a8a;font-size:13px;">Analiz yükleniyor<br><span style="font-size:11px;opacity:0.6;">İlk yüklemede 10-15 sn sürebilir</span></div>';
+  icerik.innerHTML = '<div style="text-align:center;padding:24px 0;color:#5d6675;font-size:13px;">Analiz yükleniyor<br><span style="font-size:11px;opacity:0.6;">İlk yüklemede 10-15 sn sürebilir</span></div>';
 
   fetch(garpAktifTab === 'global' ? '/api/haftalik-secimler?market=global' : '/api/haftalik-secimler')
     .then(function(r) { return r.json(); })
@@ -5368,7 +5368,7 @@ function garpYukle() {
       document.getElementById('garpBadge').style.display = 'inline';
 
       if (!secimler.length) {
-        icerik.innerHTML = '<div style="text-align:center;padding:24px;color:#5a6a8a;font-size:13px;">Bu hafta için veri yok</div>';
+        icerik.innerHTML = '<div style="text-align:center;padding:24px;color:#5d6675;font-size:13px;">Bu hafta için veri yok</div>';
         return;
       }
 
@@ -5383,13 +5383,13 @@ function garpYukle() {
         html += '</div>';
         // Skorlar
         html += '<div style="display:flex;gap:12px;margin-bottom:8px;">';
-        html += '<span style="font-size:11px;color:#5a6a8a;">Final <span style="color:#c2ad84;font-weight:600;">' + h.final_skoru + '</span></span>';
-        html += '<span style="font-size:11px;color:#5a6a8a;">GARP <span style="color:#a0aec8;">' + h.garp_skoru + '</span></span>';
-        html += '<span style="font-size:11px;color:#5a6a8a;">Teknik <span style="color:#a0aec8;">' + h.teknik_skoru + '</span></span>';
+        html += '<span style="font-size:11px;color:#5d6675;">Final <span style="color:#c2ad84;font-weight:600;">' + h.final_skoru + '</span></span>';
+        html += '<span style="font-size:11px;color:#5d6675;">GARP <span style="color:#9aa3b2;">' + h.garp_skoru + '</span></span>';
+        html += '<span style="font-size:11px;color:#5d6675;">Teknik <span style="color:#9aa3b2;">' + h.teknik_skoru + '</span></span>';
         html += '</div>';
         // Yorum
         if (h.yorum) {
-          html += '<div style="font-size:12px;color:#8892b0;line-height:1.6;border-left:2px solid rgba(194,173,132,0.3);padding-left:10px;">' + h.yorum.replace(/\*\*/g,'').replace(/\n/g,'<br>') + '</div>';
+          html += '<div style="font-size:12px;color:#7a8493;line-height:1.6;border-left:2px solid rgba(194,173,132,0.3);padding-left:10px;">' + h.yorum.replace(/\*\*/g,'').replace(/\n/g,'<br>') + '</div>';
         }
         // Analiz butonu
         html += '<button onclick="garpAnalizAc(\'' + h.ticker + '\')" style="margin-top:8px;background:rgba(194,173,132,0.1);border:1px solid rgba(194,173,132,0.2);color:#c2ad84;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;width:100%;">Detaylı Analiz →</button>';
