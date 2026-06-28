@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="description" content="Hisse senetlerini Warren Buffett, Peter Lynch ve Ray Dalio yatırım çerçeveleriyle analiz et. BIST, NYSE ve NASDAQ hisseleri için AI destekli 7 kriterli değerlendirme.">
+<meta name="description" content="Hisse senetlerini Warren Buffett ve Peter Lynch yatırım çerçeveleriyle analiz et. BIST, NYSE ve NASDAQ hisseleri için AI destekli 7 kriterli değerlendirme.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Yatırım Analiz Merkezi — Barış Investing</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1220'/%3E%3Crect x='0.8' y='0.8' width='30.4' height='30.4' rx='6.2' fill='none' stroke='%23c2ad84' stroke-opacity='0.55'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-weight='700' font-size='21' fill='%23c2ad84' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
@@ -123,6 +123,16 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 .app{display:flex;min-height:100vh;}
+.sb-collapse-btn{display:none;background:none;border:1px solid var(--border-s);color:var(--muted);width:26px;height:26px;cursor:pointer;font-size:13px;align-items:center;justify-content:center;border-radius:4px;transition:all .2s;}
+.sb-collapse-btn:hover{color:var(--accent);border-color:var(--accent);}
+.sb-reopen{display:none;}
+@media(min-width:769px){
+  .sb-collapse-btn{display:flex;}
+  .sidebar{transition:width .25s ease,opacity .2s ease;}
+  .app.sb-collapsed .sidebar{width:0;min-width:0;opacity:0;border-right:none;overflow:hidden;pointer-events:none;}
+  .sb-reopen{position:fixed;left:0;top:14px;z-index:1100;background:var(--surface);border:1px solid var(--border-s);border-left:none;color:var(--accent);width:24px;height:36px;cursor:pointer;font-size:13px;border-radius:0 7px 7px 0;align-items:center;justify-content:center;box-shadow:2px 2px 12px rgba(0,0,0,0.4);}
+  .app.sb-collapsed .sb-reopen{display:flex;}
+}
 .mobile-toggle{display:none;position:fixed;top:12px;left:12px;z-index:1100;background:var(--surface2);border:1px solid var(--glass);color:var(--text2);width:40px;height:40px;cursor:pointer;font-size:18px;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
 
 /* ── TOAST ── */
@@ -2564,6 +2574,8 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 @media(max-width:560px){.mkt-grid{grid-template-columns:repeat(2,1fr);}}
 
 /* Takip Listem (watchlist) */
+.wl-intro{font-size:13px;line-height:1.6;color:var(--cream2);margin:-2px 0 18px;max-width:680px;}
+.wl-intro strong{color:var(--cream);}
 .wl-add{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
 .wl-search-wrap{position:relative;flex:1;min-width:200px;}
 .wl-in{width:100%;background:rgba(0,0,0,0.25);border:1px solid var(--portal-border-s);color:var(--cream);font-size:13px;padding:11px 13px;border-radius:6px;outline:none;transition:border-color .2s;}
@@ -2742,7 +2754,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <div class="fw-opts">
       <button class="fw-opt buffett" onclick="selFWModal('buffett')"><div class="fw-opt-name">Warren Buffett</div><div class="fw-opt-desc">Değer yatırımı. Güçlü hendek, kaliteli yönetim, makul fiyat.</div><div class="fw-tags-wrap"><span class="fw-tag">ROE</span><span class="fw-tag">Hendek</span><span class="fw-tag">FCF</span><span class="fw-tag">Değerleme</span></div></button>
       <button class="fw-opt lynch" onclick="selFWModal('lynch')"><div class="fw-opt-name">Peter Lynch</div><div class="fw-opt-desc">Büyüme ve hikaye. Günlük hayatta gözlemlenebilen şirketler, PEG odaklı.</div><div class="fw-tags-wrap"><span class="fw-tag">Saha Avantajı</span><span class="fw-tag">PEG</span><span class="fw-tag">Bilanço</span><span class="fw-tag">Insider</span></div></button>
-      <button class="fw-opt dalio" onclick="selFWModal('dalio')" style="border-color:rgba(138,126,148,0.4);"><div class="fw-opt-name" style="color:#8a7e94">Ray Dalio</div><div class="fw-opt-desc">Makro perspektif. Borç döngüsü, para politikası ve sistemik riskler.</div><div class="fw-tags-wrap"><span class="fw-tag">Borç Döngüsü</span><span class="fw-tag">Makro</span><span class="fw-tag">Enflasyon</span><span class="fw-tag">Kur Riski</span></div></button>
     </div>
     <button class="fw-skip" onclick="closeFWModal()">Şimdi değil — devam et</button>
   </div>
@@ -3046,25 +3057,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       </div>
     </div>
 
-    <!-- Takip Listem (Watchlist) -->
-    <div class="pt-sec">
-      <div class="pt-sec-head">
-        <div class="pt-sec-title"><span class="k">◈ Kişisel</span>Takip Listem</div>
-        <span class="pt-sec-link" id="wlCount" style="cursor:default;pointer-events:none"></span>
-      </div>
-      <div class="wl-add">
-        <div class="wl-search-wrap">
-          <input class="wl-in" id="wlTicker" placeholder="Hisse ara veya kod gir (örn. THYAO, AAPL)" autocomplete="off" spellcheck="false" oninput="wlSearch()" onkeydown="if(event.key==='Enter')wlAdd()"/>
-          <div class="wl-suggest" id="wlSuggest"></div>
-        </div>
-        <select class="wl-ex" id="wlExchange"><option value="BIST">BIST</option><option value="US">ABD</option></select>
-        <input class="wl-in wl-target" id="wlTarget" type="number" placeholder="Hedef (ops.)" step="any" onkeydown="if(event.key==='Enter')wlAdd()"/>
-        <button class="wl-btn" id="wlAddBtn" onclick="wlAdd()">+ Ekle</button>
-      </div>
-      <div class="wl-list" id="wlList"></div>
-      <div class="wl-foot" id="wlFoot"></div>
-    </div>
-
     <!-- YouTube -->
     <div class="pt-sec">
       <div class="pt-sec-head">
@@ -3144,6 +3136,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
      ═══════════════════════════════════════════════════════════ -->
 <div id="terminalRoot" class="rv">
 <div class="app">
+<button id="sbReopen" class="sb-reopen" onclick="toggleSb()" title="Menüyü aç">»</button>
 <div class="sidebar" id="sidebar">
   <div class="brand">
     <div class="brand-top">
@@ -3154,9 +3147,12 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
           <path d="M11 26.5 L17 20.5 L21.5 23.5 L29 14.5" stroke="#c2ad84" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
           <text x="20" y="26.5" font-family="'Playfair Display',Georgia,serif" font-weight="700" font-size="22" fill="#c2ad84" text-anchor="middle">B</text>
         </svg>
-        <div><div class="brand-tag">Barış Investing</div><div class="brand-name">Analiz <span>Merkezi</span></div><div class="brand-sub">Buffett · Lynch · Dalio</div></div>
+        <div><div class="brand-tag">Barış Investing</div><div class="brand-name">Analiz <span>Merkezi</span></div><div class="brand-sub">Buffett · Lynch</div></div>
       </div>
-      <button class="s-close" onclick="closeSidebar()">✕</button>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="sb-collapse-btn" onclick="toggleSb()" title="Menüyü daralt">«</button>
+        <button class="s-close" onclick="closeSidebar()">✕</button>
+      </div>
     </div>
     <div class="brand-socials">
       <a href="https://x.com/barisinvesting" target="_blank" class="soc-link"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
@@ -3169,6 +3165,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   <div class="main-nav">
     <div class="mnav-tab active" id="tab-analiz" onclick="switchTab('analiz')">Analiz</div>
     <div class="mnav-tab" id="tab-portfoy" onclick="switchTab('portfoy')">Portföy</div>
+    <div class="mnav-tab" id="tab-takip" onclick="switchTab('takip')">Takip</div>
   </div>
 
   <!-- ANALIZ TAB -->
@@ -3192,7 +3189,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div class="fw-row">
         <button class="fw-btn active" id="fw-b" onclick="selFW('buffett')">Buffett</button>
         <button class="fw-btn" id="fw-l" onclick="selFW('lynch')">P. Lynch</button>
-        <button class="fw-btn" id="fw-d" onclick="selFW('dalio')" style="font-size:9px">Dalio</button><button class="fw-btn fw-graham" id="fw-g" onclick="selFW('graham')" style="font-size:9px">Graham</button>
       </div>
       <button class="ana-btn" id="anaBtn" onclick="doAnalyze()">ANALİZ ET →</button>
       <div class="data-badge" id="dataBadge">✓ Yahoo Finance verisi yüklendi</div>
@@ -3234,6 +3230,15 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:7px">Portföy Özeti</div>
       <div id="ptSbSummary" style="font-size:10px;color:var(--muted2)">Henüz hisse eklenmedi.</div>
       <button class="pt-sb-btn" onclick="showPage('portfolio');closeSidebar()">PORTFÖYÜ GÖR →</button>
+    </div>
+  </div>
+
+  <!-- TAKIP TAB -->
+  <div class="tab-content" id="tab-takip-content">
+    <div class="pt-sb">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:7px">Takip & Alarm</div>
+      <div id="wlSbSummary" style="font-size:10px;color:var(--muted2)">İzleme listene hisse ekle, hedef fiyat alarmı kur.</div>
+      <button class="pt-sb-btn" onclick="showPage('watchlist');closeSidebar()">TAKİBİ GÖR →</button>
     </div>
   </div>
 
@@ -3304,15 +3309,13 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <!-- Sol: arama -->
       <div class="hero-left">
         <div class="hero-tag">Barış Investing · Yatırım Analiz Merkezi</div>
-        <div class="hero-title">Hisseyi <span>Buffett, Lynch<br>veya Dalio</span> çerçevesinden geçir</div>
+        <div class="hero-title">Hisseyi <span>Buffett veya<br>Lynch</span> çerçevesinden geçir</div>
         <div class="hero-sub">Yahoo Finance verileriyle 7 kriterde AI destekli hisse analizi.</div>
         <div class="hero-search-row">
           <input class="hero-ticker-in" id="heroIn" placeholder="THYAO, AAPL..." autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
           <select class="hero-fw-select" id="heroFwSel">
             <option value="buffett">Buffett</option>
             <option value="lynch">Lynch</option>
-            <option value="dalio">Dalio</option>
-<option value="graham">Graham</option>
           </select>
           <button class="hero-search-btn" onclick="heroSearch()">ANALİZ ET →</button>
           <div class="hero-ac" id="heroAc"></div>
@@ -3511,7 +3514,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
         </div>
 
         <!-- Graham Defensive PE -->
-        <div class="fv-model" id="fvModelGraham" data-fw="graham">
+        <div class="fv-model" id="fvModelGraham" data-fw="graham" style="display:none">
           <div class="fv-m-name">Graham · Defensive</div>
           <div class="fv-m-value" id="fvGrahamValue">—</div>
           <div class="fv-m-delta na" id="fvGrahamDelta">—</div>
@@ -3566,7 +3569,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 <!-- PORTFOLIO PAGE -->
 <div class="page" id="page-portfolio">
 <div class="page-body">
-  <div class="pt-hdr"><div class="pt-title">Portföy<span>üm</span></div><span id="ptCloudSync" style="font-size:9px;color:var(--muted2);font-family:'JetBrains Mono',monospace;margin-right:auto;margin-left:10px"></span><button class="pt-ana-btn" onclick="analyzeAllPt()" id="ptAnaBtn">▶ Buffett + Lynch + Dalio</button></div>
+  <div class="pt-hdr"><div class="pt-title">Portföy<span>üm</span></div><span id="ptCloudSync" style="font-size:9px;color:var(--muted2);font-family:'JetBrains Mono',monospace;margin-right:auto;margin-left:10px"></span><button class="pt-ana-btn" onclick="analyzeAllPt()" id="ptAnaBtn">▶ Buffett + Lynch</button></div>
   <div class="pt-notifs" id="ptNotifs"></div>
   <div class="pt-add">
     <div class="pt-add-t">Hisse Ekle</div>
@@ -3586,14 +3589,33 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div class="ps-card"><div class="ps-lbl">Toplam Maliyet</div><div class="ps-vtl" id="psTL" style="display:none">—</div><div class="ps-vusd" id="psUSD" style="display:none">—</div><div class="ps-sub" id="psCurS">—</div></div>
       <div class="ps-card"><div class="ps-lbl">Hisse Sayısı</div><div class="ps-v" id="psCount">—</div><div class="ps-sub">Farklı sembol</div></div>
       <div class="ps-card"><div class="ps-lbl">En Büyük Pozisyon</div><div class="ps-v" id="psBig">—</div><div class="ps-sub" id="psBigT">—</div></div>
-      <div class="ps-card"><div class="ps-lbl">Ort. Buffett / Lynch</div><div class="ps-v" id="psAvgB">—</div><div class="ps-sub" id="psAvgL">Lynch: — · Dalio: <span id="psAvgD">—</span></div></div>
+      <div class="ps-card"><div class="ps-lbl">Ort. Buffett / Lynch</div><div class="ps-v" id="psAvgB">—</div><div class="ps-sub" id="psAvgL">Lynch: —</div></div>
     </div>
     <div class="pt-mix"><div class="mix-t"><div class="cdot"></div>Portföy Dağılımı (Yüzdesel)</div><div id="mixBars"></div></div>
-    <div class="pt-tw"><table class="pt-table"><thead><tr><th>Hisse</th><th>Borsa</th><th>Alış</th><th>Adet</th><th>Toplam</th><th>Ağırlık</th><th>B / L / D</th><th>İşlem</th></tr></thead><tbody id="ptTBody"></tbody></table></div>
+    <div class="pt-tw"><table class="pt-table"><thead><tr><th>Hisse</th><th>Borsa</th><th>Alış</th><th>Adet</th><th>Toplam</th><th>Ağırlık</th><th>B / L</th><th>İşlem</th></tr></thead><tbody id="ptTBody"></tbody></table></div>
     <div class="pt-charts"><div class="pc-card"><div class="pc-t"><div class="cdot"></div>Ağırlık</div><div class="pc-wrap"><canvas id="ptPie"></canvas></div></div><div class="pc-card"><div class="pc-t"><div class="cdot"></div>Buffett & Lynch Skorları</div><div class="pc-wrap"><canvas id="ptScore"></canvas></div></div></div>
     <div class="risk-card"><div class="risk-t">Risk Analizi<span class="rl" id="riskLv">—</span></div><div class="risk-items"><div class="ri"><div class="ri-l">Konsantrasyon</div><div class="ri-v" id="riskConc">—</div></div><div class="ri"><div class="ri-l">En Büyük Pozisyon</div><div class="ri-v" id="riskBig">—</div></div><div class="ri"><div class="ri-l">Ort. Buffett Skoru</div><div class="ri-v" id="riskAvgB">—</div></div><div class="ri"><div class="ri-l">Analiz Edilmemiş</div><div class="ri-v" id="riskUn">—</div></div></div></div>
   </div>
 </div><!-- /page-body -->
+</div>
+
+<!-- TAKIP PAGE -->
+<div class="page" id="page-watchlist">
+<div class="page-body">
+  <div class="pt-hdr"><div class="pt-title">Takip <span>Listem</span></div><span id="wlCount" style="font-size:9px;color:var(--muted2);font-family:'JetBrains Mono',monospace;margin-left:10px"></span></div>
+  <div class="wl-intro">İzlemek istediğin hisseleri ekle — canlı fiyat, günlük değişim ve <strong>hedef fiyat alarmı</strong> burada. Hedefe ulaşınca satır işaretlenir.</div>
+  <div class="wl-add">
+    <div class="wl-search-wrap">
+      <input class="wl-in" id="wlTicker" placeholder="Hisse ara veya kod gir (örn. THYAO, AAPL)" autocomplete="off" spellcheck="false" oninput="wlSearch()" onkeydown="if(event.key==='Enter')wlAdd()"/>
+      <div class="wl-suggest" id="wlSuggest"></div>
+    </div>
+    <select class="wl-ex" id="wlExchange"><option value="BIST">BIST</option><option value="US">ABD</option></select>
+    <input class="wl-in wl-target" id="wlTarget" type="number" placeholder="Hedef fiyat · alarm (ops.)" step="any" onkeydown="if(event.key==='Enter')wlAdd()"/>
+    <button class="wl-btn" id="wlAddBtn" onclick="wlAdd()">+ Ekle</button>
+  </div>
+  <div class="wl-list" id="wlList"></div>
+  <div class="wl-foot" id="wlFoot"></div>
+</div>
 </div>
 
 <!-- FORUM PAGE -->
@@ -3671,7 +3693,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
               Tezler ilham, <span class="accent">analiz</span> karar verdirir.
             </div>
             <div class="tez-cta-banner-desc">
-              Buffett, Lynch, Graham ve Dalio çerçeveleriyle istediğin BIST, NYSE veya NASDAQ hissesini 7 kriterli AI destekli analizden geçir.
+              Buffett ve Lynch çerçeveleriyle istediğin BIST, NYSE veya NASDAQ hissesini 7 kriterli AI destekli analizden geçir.
             </div>
           </div>
           <button type="button" class="tez-cta-banner-btn" onclick="ctaTezlerToAnaliz('banner')">
@@ -3994,10 +4016,11 @@ function closeSidebar(){
 
 // TABS
 function switchTab(t){
-  ['analiz','portfoy'].forEach(x=>{
+  ['analiz','portfoy','takip'].forEach(x=>{
     const b=document.getElementById('tab-'+x);if(b)b.className='mnav-tab'+(x===t?' active':'');
     const c=document.getElementById('tab-'+x+'-content');if(c)c.className='tab-content'+(x===t?' active':'');
   });
+  if(t==='takip')showPage('watchlist');
 }
 
 // FW MODAL
@@ -4019,16 +4042,11 @@ function selHeroEx(ex){
 
 // FRAMEWORK
 function selFW(fw){
-  if(!FW[fw])fw='buffett'; // bilinmeyen framework fallback
+  if(fw!=='buffett'&&fw!=='lynch')fw='buffett';
+  if(!FW[fw])fw='buffett';
   curFW=fw;
-  document.getElementById('fw-b').className='fw-btn'+(fw==='buffett'?' active':'');
-  document.getElementById('fw-l').className='fw-btn'+(fw==='lynch'?' active':'');
-  document.getElementById('fw-d').className='fw-btn'+(fw==='dalio'?' active':'')+' fw-dalio';
-  const _fwg=document.getElementById('fw-g');if(_fwg)_fwg.className='fw-btn fw-graham'+(fw==='graham'?' active':'');
-  if(fw==='dalio'){document.getElementById('fw-d').style.cssText='font-size:9px;background:rgba(138,126,148,0.15);border-color:#8a7e94;color:#8a7e94';}
-  else{document.getElementById('fw-d').style.cssText='font-size:9px';}
-  if(fw==='graham'){const _fwgEl=document.getElementById('fw-g');if(_fwgEl)_fwgEl.style.cssText='font-size:9px;background:rgba(139,115,85,0.15);border-color:#8b7355;color:#8b7355';}
-  else{const _fwgEl=document.getElementById('fw-g');if(_fwgEl)_fwgEl.style.cssText='font-size:9px';}
+  const _b=document.getElementById('fw-b');if(_b)_b.className='fw-btn'+(fw==='buffett'?' active':'');
+  const _l=document.getElementById('fw-l');if(_l)_l.className='fw-btn'+(fw==='lynch'?' active':'');
   const heroSel=document.getElementById('heroFwSel');if(heroSel)heroSel.value=fw;
   buildNav();
   if(hasAnalyzed&&curTicker)doAnalyze();
@@ -4188,13 +4206,14 @@ function qFill(t,c,ex){selEx(ex);document.getElementById('tickerIn').value=t;doc
 
 // PAGES
 function showPage(type,idx){
-  ['overview','crit','portfolio','forum','tezler'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
+  ['overview','crit','portfolio','forum','tezler','watchlist'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const e=document.getElementById('page-'+type);if(e)e.classList.add('active');
   if(type==='overview'){const n=document.getElementById('nav-overview');if(n)n.classList.add('active');}
   else if(type==='crit'){const n=document.getElementById('nav-'+idx);if(n)n.classList.add('active');renderCritDetail(idx);}
   else if(type==='portfolio')renderPt();
   else if(type==='forum')loadPosts();
+  else if(type==='watchlist'){if(window.renderWatchlist)window.renderWatchlist();}
   else if(type==='tezler'){const n=document.getElementById('nav-tezler');if(n)n.classList.add('active');renderTezler();}
 }
 
@@ -4705,7 +4724,7 @@ async function analyzeAllPt(){
   const nc=document.getElementById('ptNotifs');
   const estMin=Math.ceil(portfolio.length*0.4); // 3x hızlı — paralel
   const tn=document.createElement('div');tn.className='pt-tnote';
-  tn.innerHTML=`⏱ <strong>${portfolio.length} hisse</strong> için Buffett + Lynch + Dalio analizi. Tahmini süre: <strong>~${estMin+1} dakika</strong> (paralel).`;
+  tn.innerHTML=`⏱ <strong>${portfolio.length} hisse</strong> için Buffett + Lynch analizi. Tahmini süre: <strong>~${estMin+1} dakika</strong> (paralel).`;
   nc.appendChild(tn);
 
   // Her hisse için 3 framework'ü paralel çalıştıran helper
@@ -4714,7 +4733,7 @@ async function analyzeAllPt(){
     let notif=document.getElementById(nid);
     if(!notif){
       notif=document.createElement('div');notif.id=nid;notif.className='pt-notif analyzing';
-      notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span class="pt-nt">${esc(p.ticker)}</span><span class="pt-nc">${esc(p.company||'—')} · ${esc(p.exchange)}</span></div><div style="font-size:10px;color:var(--muted2)" id="pstat-${p.ticker}">⏳ Buffett · Lynch · Dalio paralel...</div><div class="pt-prog"><div class="pt-pf" id="pf-${p.ticker}" style="width:5%"></div></div>`;
+      notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span class="pt-nt">${esc(p.ticker)}</span><span class="pt-nc">${esc(p.company||'—')} · ${esc(p.exchange)}</span></div><div style="font-size:10px;color:var(--muted2)" id="pstat-${p.ticker}">⏳ Buffett · Lynch paralel...</div><div class="pt-prog"><div class="pt-pf" id="pf-${p.ticker}" style="width:5%"></div></div>`;
       nc.appendChild(notif);
     }
     notif.scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -4735,18 +4754,17 @@ async function analyzeAllPt(){
     // 3 çağrı PARALEL
     const pf=document.getElementById('pf-'+p.ticker);
     if(pf)pf.style.width='30%';
-    const [bRes,lRes,dRes] = await Promise.all([doFetch('buffett'),doFetch('lynch'),doFetch('dalio')]);
+    const [bRes,lRes] = await Promise.all([doFetch('buffett'),doFetch('lynch')]);
     p.bS=bRes.score; p.bV=bRes.verdict;
     p.lS=lRes.score; p.lV=lRes.verdict;
-    p.dS=dRes.score; p.dV=dRes.verdict;
     if(pf)pf.style.width='100%';
 
     const gc=v=>v==='AL'?'var(--success)':v==='UZAK_DUR'?'var(--danger)':'var(--warn)';
     const sc2=s=>s>=5?'var(--success)':s>=3?'var(--warn)':'var(--danger)';
-    const scores=[p.bS,p.lS,p.dS].filter(x=>x!=null);
+    const scores=[p.bS,p.lS].filter(x=>x!=null);
     const avg=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;
     notif.className='pt-notif '+(avg>=4.5?'done-good':avg<3?'done-bad':'done-mid');
-    notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span class="pt-nt">${esc(p.ticker)}</span><span class="pt-nc">${esc(p.company||'—')} · ${esc(p.exchange)}</span></div><div class="pt-scrs"><div class="pt-sb2 b"><span class="ptsl">BUFFETT</span><span class="ptsv" style="color:${p.bS!=null?sc2(p.bS):'var(--muted2)'}">${p.bS!=null?p.bS+'/7':'—'}</span>${p.bV?`<span class="ptvt" style="color:${gc(p.bV)};border-color:${gc(p.bV)}40">${p.bV}</span>`:''}</div><div class="pt-sb2 l"><span class="ptsl">LYNCH</span><span class="ptsv" style="color:${p.lS!=null?sc2(p.lS):'var(--muted2)'}">${p.lS!=null?p.lS+'/7':'—'}</span>${p.lV?`<span class="ptvt" style="color:${gc(p.lV)};border-color:${gc(p.lV)}40">${p.lV}</span>`:''}</div><div class="pt-sb2" style="border-left:2px solid var(--dalio)"><span class="ptsl" style="color:var(--dalio)">DALIO</span><span class="ptsv" style="color:${p.dS!=null?sc2(p.dS):'var(--muted2)'}">${p.dS!=null?p.dS+'/7':'—'}</span>${p.dV?`<span class="ptvt" style="color:${gc(p.dV)};border-color:${gc(p.dV)}40">${p.dV}</span>`:''}</div></div>`;
+    notif.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span class="pt-nt">${esc(p.ticker)}</span><span class="pt-nc">${esc(p.company||'—')} · ${esc(p.exchange)}</span></div><div class="pt-scrs"><div class="pt-sb2 b"><span class="ptsl">BUFFETT</span><span class="ptsv" style="color:${p.bS!=null?sc2(p.bS):'var(--muted2)'}">${p.bS!=null?p.bS+'/7':'—'}</span>${p.bV?`<span class="ptvt" style="color:${gc(p.bV)};border-color:${gc(p.bV)}40">${p.bV}</span>`:''}</div><div class="pt-sb2 l"><span class="ptsl">LYNCH</span><span class="ptsv" style="color:${p.lS!=null?sc2(p.lS):'var(--muted2)'}">${p.lS!=null?p.lS+'/7':'—'}</span>${p.lV?`<span class="ptvt" style="color:${gc(p.lV)};border-color:${gc(p.lV)}40">${p.lV}</span>`:''}</div></div>`;
     renderPt();updateSbSummary();
   }
 
@@ -4758,7 +4776,7 @@ async function analyzeAllPt(){
     if(i+BATCH<portfolio.length)await new Promise(r=>setTimeout(r,300));
   }
 
-  btn.disabled=false;btn.textContent='▶ Buffett + Lynch + Dalio';
+  btn.disabled=false;btn.textContent='▶ Buffett + Lynch';
   triggerPortfolioSave();
 }
 
@@ -4801,13 +4819,13 @@ function renderPt(){
     const lC=p.lS!=null?(p.lS>=5?'var(--success)':p.lS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';
     const dC=p.dS!=null?(p.dS>=5?'var(--success)':p.dS>=3?'var(--warn)':'var(--danger)'):'var(--muted2)';
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><div class="pt-tk">${p.ticker}</div><div class="pt-co">${p.company||'—'}</div></td><td><span class="badge badge-ex">${p.exchange}</span></td><td style="font-family:'JetBrains Mono',monospace">${p.buyPrice.toFixed(2)} <span style="font-size:8px;color:${p.currency==='₺'?'var(--warn)':'var(--success)'}">${p.currency}</span></td><td>${p.qty}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:500">${cost.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="font-size:8px;color:${p.currency==='₺'?'var(--warn)':'var(--success)'}">${p.currency}</span></td><td><div style="font-size:10px;color:${cols[i%cols.length]};font-weight:600;font-family:'JetBrains Mono',monospace">%${wt}</div><div class="pt-wbar" style="background:${cols[i%cols.length]};width:${wt}%"></div></td><td><div class="ptscr"><div class="psr"><span class="psrl">B:</span><span class="psrv" style="color:${bC}">${p.bS!=null?p.bS+'/7':'—'}</span>${p.bV?`<span style="font-size:8px;color:${bC}">${p.bV}</span>`:''}</div><div class="psr"><span class="psrl" style="color:var(--lynch)">L:</span><span class="psrv" style="color:${lC}">${p.lS!=null?p.lS+'/7':'—'}</span>${p.lV?`<span style="font-size:8px;color:${lC}">${p.lV}</span>`:''}</div><div class="psr"><span class="psrl" style="color:var(--dalio)">D:</span><span class="psrv" style="color:${dC}">${p.dS!=null?p.dS+'/7':'—'}</span>${p.dV?`<span style="font-size:8px;color:${dC}">${p.dV}</span>`:''}</div></div></td><td style="display:flex;gap:3px;flex-wrap:wrap"><button class="pt-act analyze" onclick="anaFromPt('${p.ticker}','${p.company}','${p.exchange}')">Analiz</button><button class="pt-act remove" onclick="removeFromPt('${p.ticker}','${p.exchange}')">✕</button></td>`;
+    tr.innerHTML=`<td><div class="pt-tk">${p.ticker}</div><div class="pt-co">${p.company||'—'}</div></td><td><span class="badge badge-ex">${p.exchange}</span></td><td style="font-family:'JetBrains Mono',monospace">${p.buyPrice.toFixed(2)} <span style="font-size:8px;color:${p.currency==='₺'?'var(--warn)':'var(--success)'}">${p.currency}</span></td><td>${p.qty}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:500">${cost.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="font-size:8px;color:${p.currency==='₺'?'var(--warn)':'var(--success)'}">${p.currency}</span></td><td><div style="font-size:10px;color:${cols[i%cols.length]};font-weight:600;font-family:'JetBrains Mono',monospace">%${wt}</div><div class="pt-wbar" style="background:${cols[i%cols.length]};width:${wt}%"></div></td><td><div class="ptscr"><div class="psr"><span class="psrl">B:</span><span class="psrv" style="color:${bC}">${p.bS!=null?p.bS+'/7':'—'}</span>${p.bV?`<span style="font-size:8px;color:${bC}">${p.bV}</span>`:''}</div><div class="psr"><span class="psrl" style="color:var(--lynch)">L:</span><span class="psrv" style="color:${lC}">${p.lS!=null?p.lS+'/7':'—'}</span>${p.lV?`<span style="font-size:8px;color:${lC}">${p.lV}</span>`:''}</div></div></td><td style="display:flex;gap:3px;flex-wrap:wrap"><button class="pt-act analyze" onclick="anaFromPt('${p.ticker}','${p.company}','${p.exchange}')">Analiz</button><button class="pt-act remove" onclick="removeFromPt('${p.ticker}','${p.exchange}')">✕</button></td>`;
     tb.appendChild(tr);
   });
   if(ptPie)ptPie.destroy();if(ptScore)ptScore.destroy();
   ptPie=new Chart(document.getElementById('ptPie').getContext('2d'),{type:'doughnut',data:{labels:portfolio.map(p=>`${p.ticker}(${p.currency})`),datasets:[{data:portfolio.map(p=>(p.buyPrice*p.qty*(p.currency==='$'?USD_TRY:1)/total*100)),backgroundColor:cols.slice(0,portfolio.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#6b6560',font:{family:'JetBrains Mono',size:9},boxWidth:9}}}}});
   const an=portfolio.filter(p=>p.bS!=null||p.lS!=null||p.dS!=null);
-  if(an.length>0){ptScore=new Chart(document.getElementById('ptScore').getContext('2d'),{type:'bar',data:{labels:an.map(p=>p.ticker),datasets:[{label:'Buffett',data:an.map(p=>p.bS||0),backgroundColor:'rgba(168,148,107,0.7)',borderWidth:0,borderRadius:2},{label:'Lynch',data:an.map(p=>p.lS||0),backgroundColor:'rgba(139,69,19,0.7)',borderWidth:0,borderRadius:2},{label:'Dalio',data:an.map(p=>p.dS||0),backgroundColor:'rgba(91,45,142,0.7)',borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:7,ticks:{color:'#6b6560',font:{family:'JetBrains Mono',size:9}},grid:{color:'#f4f1ec'}},x:{ticks:{color:'#6b6560',font:{family:'JetBrains Mono',size:9}},grid:{display:false}}},plugins:{legend:{labels:{color:'#6b6560',font:{family:'JetBrains Mono',size:9},boxWidth:8}}}}});}
+  if(an.length>0){ptScore=new Chart(document.getElementById('ptScore').getContext('2d'),{type:'bar',data:{labels:an.map(p=>p.ticker),datasets:[{label:'Buffett',data:an.map(p=>p.bS||0),backgroundColor:'rgba(168,148,107,0.7)',borderWidth:0,borderRadius:2},{label:'Lynch',data:an.map(p=>p.lS||0),backgroundColor:'rgba(139,69,19,0.7)',borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:7,ticks:{color:'#6b6560',font:{family:'JetBrains Mono',size:9}},grid:{color:'#f4f1ec'}},x:{ticks:{color:'#6b6560',font:{family:'JetBrains Mono',size:9}},grid:{display:false}}},plugins:{legend:{labels:{color:'#6b6560',font:{family:'JetBrains Mono',size:9},boxWidth:8}}}}});}
   const cr=parseFloat(bigPct);let rTxt,rCls;if(cr>50||portfolio.length<3){rTxt='YÜKSEK';rCls='high';}else if(cr>30||portfolio.length<5){rTxt='ORTA';rCls='mid';}else{rTxt='DÜŞÜK';rCls='low';}
   const rl=document.getElementById('riskLv');rl.textContent=rTxt;rl.className='rl '+rCls;
   document.getElementById('riskConc').textContent=cr>50?'Kritik ✗':cr>30?'Orta ⚠️':'İyi ✓';
@@ -5689,27 +5707,13 @@ document.addEventListener('keydown', e => {
   }
 });
 function mobileNav(tab) {
-  // Update active tab
-  ['analiz','portfoy','tezler','forum'].forEach(t => {
+  ['analiz','portfoy','takip'].forEach(t => {
     const el = document.getElementById('bn-' + t);
     if(el) el.className = 'bn-tab' + (t === tab ? ' active' : '');
   });
-  // Navigate
-  if(tab === 'analiz') {
-    showPage('overview');
-    // Also scroll to top
-    window.scrollTo(0,0);
-  } else if(tab === 'portfoy') {
-    showPage('portfolio');
-    window.scrollTo(0,0);
-  } else if(tab === 'tezler') {
-    showPage('tezler');
-    window.scrollTo(0,0);
-  } else if(tab === 'forum') {
-    showPage('forum');
-    loadPosts();
-    window.scrollTo(0,0);
-  }
+  if(tab === 'analiz') { showPage('overview'); window.scrollTo(0,0); }
+  else if(tab === 'portfoy') { showPage('portfolio'); window.scrollTo(0,0); }
+  else if(tab === 'takip') { showPage('watchlist'); window.scrollTo(0,0); }
 }
 
 // ===== MOBILE HESAP =====
@@ -5957,13 +5961,9 @@ if (!localStorage.getItem('baris_fw_seen')) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
     <span>Portföy</span>
   </button>
-  <button class="bn-tab" id="bn-tezler" onclick="mobileNav('tezler')" style="color:var(--gold)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-    <span>Tezler</span>
-  </button>
-  <button class="bn-tab" id="bn-forum" onclick="mobileNav('forum')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    <span>Forum</span>
+  <button class="bn-tab" id="bn-takip" onclick="mobileNav('takip')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    <span>Takip</span>
   </button>
   <button class="bn-tab" id="bn-hesap" onclick="openMobileAccount()">
     <div id="bnAccountIcon" style="width:22px;height:22px;border-radius:50%;background:var(--border-s);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:11px;font-weight:700;color:#7a8493">?</div>
@@ -6916,7 +6916,6 @@ function garpAnalizAc(ticker) {
     renderSpotlight();
     loadTrackRecord();
     renderMarket();
-    renderWatchlist();
     renderVideos();
     renderTweets();
   }
@@ -7234,9 +7233,9 @@ function garpAnalizAc(ticker) {
   };
   function curOf(ex){ return ex==='BIST' ? '₺' : (ex==='KRX'||ex==='KS') ? '₩' : '$'; }
   window.wlGoLogin = function(){
-    navigate('/terminal');
-    setTimeout(()=>{ if (typeof window.showAuthModal==='function') window.showAuthModal(); }, 140);
+    if (typeof window.showAuthModal==='function') window.showAuthModal();
   };
+  window.renderWatchlist = function(){ return renderWatchlist(); };
 
   async function renderWatchlist(){
     const wrap = document.getElementById('wlList');
@@ -7292,7 +7291,7 @@ function garpAnalizAc(ticker) {
       if (subEl) subEl.innerHTML = parts.length ? parts.join(' · ') : '—';
     });
     if (!_wlTimer){
-      _wlTimer = setInterval(()=>{ if (document.body.classList.contains('route-portal') && wlGet().length){ Object.keys(_px).forEach(k=>delete _px[k]); renderWatchlist(); renderMarket(); } }, 60000);
+      _wlTimer = setInterval(()=>{ if (document.body.classList.contains('route-terminal') && document.getElementById('page-watchlist') && document.getElementById('page-watchlist').classList.contains('active') && wlGet().length){ Object.keys(_px).forEach(k=>delete _px[k]); renderWatchlist(); } }, 60000);
     }
   }
 
@@ -7466,6 +7465,15 @@ function garpAnalizAc(ticker) {
       if (msg){ msg.textContent='Bir şeyler ters gitti — birazdan tekrar dene.'; msg.className='news-msg err'; }
     }
   };
+
+  /* Sidebar daralt/aç (terminal) */
+  window.toggleSb = function(){
+    const app = document.querySelector('.app');
+    if (!app) return;
+    app.classList.toggle('sb-collapsed');
+    try{ localStorage.setItem('bi_sb_collapsed', app.classList.contains('sb-collapsed')?'1':'0'); }catch(e){}
+  };
+  try{ if(localStorage.getItem('bi_sb_collapsed')==='1'){ const _app=document.querySelector('.app'); if(_app)_app.classList.add('sb-collapsed'); } }catch(e){}
 
   /* ───────── INIT ───────── */
   applyRoute(location.pathname, true);
