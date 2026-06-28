@@ -43,7 +43,7 @@
       letter-spacing: 1.5px;
       text-transform: uppercase;
       color: var(--muted);
-      font-family: 'IBM Plex Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
     }
     .sg-badge {
       font-size: 8px;
@@ -51,20 +51,20 @@
       letter-spacing: 1.5px;
       padding: 3px 8px;
       border: 1px solid;
-      font-family: 'IBM Plex Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       text-transform: uppercase;
       opacity: 0;
       animation: sgFade .6s ease .9s forwards;
     }
     .sg-badge.weak {
       color: var(--danger);
-      border-color: rgba(239,68,68,.3);
-      background: var(--danger-dim, rgba(239,68,68,.08));
+      border-color: rgba(168,116,106,.3);
+      background: var(--danger-dim, rgba(168,116,106,.08));
     }
     .sg-badge.moderate {
       color: var(--warn);
-      border-color: rgba(245,158,11,.3);
-      background: var(--warn-dim, rgba(245,158,11,.08));
+      border-color: rgba(184,155,106,.3);
+      background: var(--warn-dim, rgba(184,155,106,.08));
     }
     .sg-badge.strong {
       color: var(--accent);
@@ -102,7 +102,7 @@
       text-align: center;
     }
     .sg-num {
-      font-family: 'IBM Plex Serif', serif;
+      font-family: 'Playfair Display', serif;
       font-weight: 700;
       line-height: 1;
       color: var(--text);
@@ -121,7 +121,7 @@
     .sg-num .sg-max {
       color: var(--muted);
       font-size: 16px;
-      font-family: 'IBM Plex Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-weight: 500;
       opacity: 0;
       animation: sgFade .5s ease .7s forwards;
@@ -132,7 +132,7 @@
       letter-spacing: 2px;
       text-transform: uppercase;
       color: var(--muted);
-      font-family: 'IBM Plex Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       margin-top: 4px;
       opacity: 0;
       animation: sgFade .5s ease .9s forwards;
@@ -175,8 +175,8 @@
 
   // Gradient stops — terminal palet
   const STRENGTH_STOPS = {
-    weak:     ['#fca5a5', '#ef4444', '#7f1d1d'],
-    moderate: ['#fcd34d', '#f59e0b', '#78350f'],
+    weak:     ['#d0a89f', '#c08274', '#7f1d1d'],
+    moderate: ['#cdbb95', '#b89b6a', '#78350f'],
     strong:   ['#f0d997', '#d4a843', '#8a6a25'],
   };
 
