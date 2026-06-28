@@ -2319,15 +2319,16 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 }
 
 /* Route view toggling */
-.rv{display:block;}
-body.route-terminal #portalRoot{display:none;}
-body.route-portal   #terminalRoot{display:none;}
-body.route-portal   .mobile-toggle{display:none !important;}
-/* Portal'da terminal onboarding modallarını gizle */
-body.route-portal #fwModal,
-body.route-portal #authModal,
-body.route-portal #adminModal,
-body.route-portal #loadingOv{display:none !important;}
+.rv{display:none;}
+body.route-portal   #portalRoot{display:block;}
+body.route-tezler   #tezlerRoot{display:block;}
+body.route-terminal #terminalRoot{display:block;}
+body:not(.route-terminal) .mobile-toggle{display:none !important;}
+/* Terminal onboarding modallarını portal/tezler'de gizle */
+body:not(.route-terminal) #fwModal,
+body:not(.route-terminal) #authModal,
+body:not(.route-terminal) #adminModal,
+body:not(.route-terminal) #loadingOv{display:none !important;}
 
 /* Portal shell */
 #portalRoot{
@@ -2480,23 +2481,24 @@ body.route-portal #loadingOv{display:none !important;}
 .ptz-getiri{font-family:var(--font-mono);font-size:11px;font-weight:600;}
 .ptz-getiri.pos{color:var(--success);} .ptz-getiri.neg{color:var(--danger);} .ptz-getiri.neu{color:var(--cream2);}
 
-/* Sektörel analiz */
-.sect-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:16px;}
-.sect-card{border:1px solid var(--portal-border);border-radius:12px;background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);padding:20px 20px 18px;cursor:pointer;display:flex;flex-direction:column;min-height:158px;transition:transform .25s,border-color .25s,box-shadow .25s;position:relative;overflow:hidden;}
-.sect-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent);opacity:.0;transition:opacity .25s;}
-.sect-card:hover{transform:translateY(-3px);border-color:rgba(194,173,132,0.30);box-shadow:0 16px 44px rgba(0,0,0,0.42);}
-.sect-card:hover::before{opacity:.7;}
-.sect-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
-.sect-name{font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--cream);line-height:1.2;}
-.sect-trend{font-family:var(--font-mono);font-size:12px;font-weight:700;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;}
-.sect-trend.up{color:var(--success);background:var(--success-dim);}
-.sect-trend.down{color:var(--danger);background:var(--danger-dim);}
-.sect-trend.flat{color:var(--cream2);background:var(--glass);}
-.sect-note{font-size:13px;line-height:1.55;color:var(--cream2);flex:1;margin-bottom:14px;}
-.sect-foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
-.sect-ticker{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:1px;color:var(--cream);border:1px solid var(--portal-border-s);padding:3px 9px;border-radius:2px;}
-.sect-cta{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:var(--accent);text-transform:uppercase;}
-.sect-note-foot{font-family:var(--font-mono);font-size:9px;letter-spacing:.5px;color:var(--cream2);opacity:.5;margin-top:14px;}
+/* Tek satır tez teaser */
+.pt-tez-row{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+@media(max-width:980px){.pt-tez-row{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:640px){.pt-tez-row{grid-template-columns:1fr;}}
+
+/* Piyasa Nabzı */
+.mkt-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+.mkt-skel{grid-column:1/-1;text-align:center;padding:30px;color:var(--cream2);font-family:var(--font-mono);font-size:11px;letter-spacing:2px;opacity:.5;}
+.mkt-card{position:relative;border:1px solid var(--portal-border);border-radius:12px;background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);padding:18px 18px 16px;overflow:hidden;transition:border-color .25s,transform .2s;}
+.mkt-card:hover{transform:translateY(-2px);border-color:var(--portal-border-s);}
+.mkt-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;}
+.mkt-card.up::before{background:var(--success);} .mkt-card.down::before{background:var(--danger);} .mkt-card.flat::before{background:var(--cream2);opacity:.4;}
+.mkt-label{font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;color:var(--cream2);text-transform:uppercase;margin-bottom:12px;}
+.mkt-price{font-family:var(--font-mono);font-size:21px;font-weight:600;color:var(--cream);letter-spacing:-.5px;font-variant-numeric:tabular-nums;margin-bottom:8px;}
+.mkt-chg{font-family:var(--font-mono);font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:3px;}
+.mkt-chg.up{color:var(--success);background:var(--success-dim);} .mkt-chg.down{color:var(--danger);background:var(--danger-dim);} .mkt-chg.flat{color:var(--cream2);background:var(--glass);}
+@media(max-width:980px){.mkt-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:560px){.mkt-grid{grid-template-columns:repeat(2,1fr);}}
 
 /* X embeds (official widgets) */
 .x-embed{display:flex;justify-content:center;min-height:60px;}
@@ -2874,25 +2876,26 @@ body.route-portal #loadingOv{display:none !important;}
       </div>
     </div>
 
-    <!-- Araştırma Tezleri -->
+    <!-- Araştırma Tezleri (tek satır teaser) -->
     <div class="pt-sec">
       <div class="pt-sec-head">
         <div class="pt-sec-title"><span class="k">◈ Araştırma</span>Yatırım Tezleri</div>
-        <span class="pt-sec-link" id="ptTezCount"></span>
+        <a class="pt-sec-link" data-route="/tezler" href="/tezler">Tümünü Gör →</a>
       </div>
-      <div class="pt-tez-grid" id="tezGridPortal">
+      <div class="pt-tez-row" id="tezGridPortal">
         <div class="pt-tez-skel">Tezler yükleniyor…</div>
       </div>
     </div>
 
-    <!-- Sektörel Analiz -->
+    <!-- Piyasa Nabzı (canlı endeksler) -->
     <div class="pt-sec">
       <div class="pt-sec-head">
-        <div class="pt-sec-title"><span class="k">◳ Sektörel</span>Sektörel Analiz</div>
-        <span class="pt-sec-link" style="cursor:default;pointer-events:none">Görünüm · BIST</span>
+        <div class="pt-sec-title"><span class="k">◈ Canlı</span>Piyasa Nabzı</div>
+        <span class="pt-sec-link" id="mktUpdated" style="cursor:default;pointer-events:none"></span>
       </div>
-      <div class="sect-grid" id="sectGrid"></div>
-      <div class="sect-note-foot">Sektör görünümleri editöryeldir; kartlara tıklayınca ilgili öncü hisse terminalde analiz edilir.</div>
+      <div class="mkt-grid" id="mktGrid">
+        <div class="mkt-skel">Piyasa verisi yükleniyor…</div>
+      </div>
     </div>
 
     <!-- YouTube -->
@@ -2922,6 +2925,52 @@ body.route-portal #loadingOv{display:none !important;}
   </div>
 </div>
 <!-- /portalRoot -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     TEZLER ARŞİVİ  (route: "/tezler")  — tüm tezler
+     ═══════════════════════════════════════════════════════════ -->
+<div id="tezlerRoot" class="rv">
+  <div class="pt-wrap">
+    <div class="pt-topbar">
+      <div class="pt-brand-lockup" data-route="/" style="cursor:pointer">
+        <svg class="brand-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="bmTile2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2433"/><stop offset="1" stop-color="#0c1017"/></linearGradient>
+            <linearGradient id="bmGold2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ecd9af"/><stop offset="0.5" stop-color="#c2ad84"/><stop offset="1" stop-color="#a8946b"/></linearGradient>
+          </defs>
+          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="url(#bmTile2)"/>
+          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="none" stroke="url(#bmGold2)" stroke-opacity="0.7" stroke-width="1.1"/>
+          <path d="M11.5 30 L19 22.5 L24 26 L33 16.5" fill="none" stroke="url(#bmGold2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.42"/>
+          <text x="22" y="30" font-family="'Playfair Display',Georgia,serif" font-weight="700" font-size="26" fill="url(#bmGold2)" text-anchor="middle">B</text>
+        </svg>
+        <div class="pt-brand">
+          <div class="pt-brand-tag">Finansal Araştırma & Medya</div>
+          <div class="pt-brand-name">Barış <span>Investing</span></div>
+        </div>
+      </div>
+      <div class="pt-topnav">
+        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">← Ana Sayfa</a>
+        <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
+      </div>
+    </div>
+
+    <div class="pt-hero" style="padding:46px 0 26px">
+      <div class="pt-eyebrow">◈ Arşiv</div>
+      <h1 class="pt-h1" style="font-size:clamp(30px,4vw,44px)">Yatırım <em>Tezleri</em></h1>
+      <p class="pt-lede">BIST ve global piyasalar üzerine tüm derin araştırma tezleri. Bir teze tıkla, tamamını oku.</p>
+    </div>
+
+    <div class="pt-tez-grid" id="tezlerGridFull">
+      <div class="pt-tez-skel">Tezler yükleniyor…</div>
+    </div>
+
+    <div class="pt-foot">
+      <div class="pt-foot-l">© <span id="ptYear2"></span> Barış Investing · Araştırma & bilgi amaçlıdır, yatırım tavsiyesi değildir.</div>
+      <a class="pt-enter" data-route="/" href="/">← Ana Sayfa</a>
+    </div>
+  </div>
+</div>
+<!-- /tezlerRoot -->
 
 <!-- ═══════════════════════════════════════════════════════════
      TERMINAL  (route: "/terminal")  — mevcut analiz aracı
@@ -6615,15 +6664,6 @@ function garpAnalizAc(ticker) {
     tweets: [
       '2070563096955957403',
       '2070833771549425678',
-    ],
-    // Sektörel görünüm (editöryel) — öncü hisse terminalde analiz edilir:
-    sectors: [
-      { name:'Bankacılık',   ticker:'GARAN', exchange:'BIST', trend:'up',   note:'Net faiz marjı ve TL mevduat maliyeti odakta; çarpanlar tarihsel ortalamanın altında.' },
-      { name:'Havacılık',    ticker:'THYAO', exchange:'BIST', trend:'up',   note:'Yolcu trafiği ve filo genişlemesi güçlü; döviz bazlı gelir yapısı destekleyici.' },
-      { name:'Perakende',    ticker:'BIMAS', exchange:'BIST', trend:'up',   note:'Enflasyonist ortamda defansif büyüme; hard-discount modeli avantaj sağlıyor.' },
-      { name:'Holding',      ticker:'KCHOL', exchange:'BIST', trend:'flat', note:'NAV iskontosu tarihsel bandın altında; iştirak değerlemeleri kilit.' },
-      { name:'Sanayi & Çelik',ticker:'EREGL',exchange:'BIST', trend:'down', note:'İhracat talebi ve emtia fiyatlarındaki zayıflık marjlar üzerinde baskı yaratıyor.' },
-      { name:'Enerji & Rafineri',ticker:'TUPRS',exchange:'BIST',trend:'flat',note:'Rafineri marjları normalleşirken kur etkisi nakit akışını destekliyor.' },
     ]
   };
 
@@ -6631,19 +6671,23 @@ function garpAnalizAc(ticker) {
   const portal   = document.getElementById('portalRoot');
   const terminal = document.getElementById('terminalRoot');
   const TITLE = { portal:'Barış Investing — Finansal Araştırma & Medya',
+                  tezler:'Yatırım Tezleri — Barış Investing',
                   terminal:'Terminal — Barış Investing' };
 
   function applyRoute(path, replace){
-    const isTerminal = /^\/terminal(\/|$)/.test(path);
-    document.body.classList.toggle('route-terminal', isTerminal);
-    document.body.classList.toggle('route-portal', !isTerminal);
-    document.title = isTerminal ? TITLE.terminal : TITLE.portal;
-    const norm = isTerminal ? '/terminal' : '/';
+    let view = 'portal';
+    if (/^\/terminal(\/|$)/.test(path)) view = 'terminal';
+    else if (/^\/tezler(\/|$)/.test(path)) view = 'tezler';
+    document.body.classList.toggle('route-terminal', view==='terminal');
+    document.body.classList.toggle('route-tezler',   view==='tezler');
+    document.body.classList.toggle('route-portal',   view==='portal');
+    document.title = view==='terminal' ? TITLE.terminal : view==='tezler' ? TITLE.tezler : TITLE.portal;
+    const norm = view==='terminal' ? '/terminal' : view==='tezler' ? '/tezler' : '/';
     if (replace) history.replaceState({route:norm}, '', norm);
-    if (isTerminal){ window.scrollTo(0,0); }
+    if (view==='terminal'){ window.scrollTo(0,0); }
+    else if (view==='tezler'){ window.scrollTo(0,0); loadTezlerPage(); }
     else { if (!portalLoaded) loadPortal(); }
-    if (typeof window.trackEvent === 'function')
-      window.trackEvent('route_view', { route: isTerminal ? 'terminal' : 'portal' });
+    if (typeof window.trackEvent === 'function') window.trackEvent('route_view', { route: view });
   }
 
   function navigate(path){
@@ -6677,7 +6721,7 @@ function garpAnalizAc(ticker) {
     if(yt) yt.href=CONFIG.youtubeChannel; if(ytA) ytA.href=CONFIG.youtubeChannel;
     if(x)  x.href =CONFIG.xProfile;       if(xA)  xA.href =CONFIG.xProfile;
     loadTezler();
-    renderSectors();
+    renderMarket();
     renderVideos();
     renderTweets();
   }
@@ -6685,51 +6729,73 @@ function garpAnalizAc(ticker) {
   const sigMap = { AL:['al','AL'], IZLE:['izle','İZLE'], KACIN:['uzak','UZAK DUR'], NOTR:['notr','NÖTR'] };
   function trDate(s){ return s ? new Date(s).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : ''; }
   function openTez(id){ if (typeof window.openTezSupabase === 'function') window.openTezSupabase(id); }
+  window.__openTez = openTez;
 
-  /* Sektörel görünüm */
-  function renderSectors(){
-    const grid = document.getElementById('sectGrid');
-    if (!grid) return;
-    if (!CONFIG.sectors || !CONFIG.sectors.length){
-      const sec = grid.closest('.pt-sec'); if (sec) sec.style.display='none';
-      return;
-    }
-    const ic = { up:'▲', down:'▼', flat:'—' };
-    grid.innerHTML = CONFIG.sectors.map((s,i)=>{
-      const tr = s.trend || 'flat';
-      return `<div class="sect-card" onclick="window.__sectAnalyze(${i})">
-        <div class="sect-top"><span class="sect-name">${esc(s.name)}</span><span class="sect-trend ${tr}">${ic[tr]||'—'}</span></div>
-        <div class="sect-note">${esc(s.note||'')}</div>
-        <div class="sect-foot"><span class="sect-ticker">${esc(s.ticker)}</span><span class="sect-cta">Analiz et →</span></div>
-      </div>`;
-    }).join('');
+  /* ── TEZLER (tek fetch cache) ── */
+  let _tezCache = null;
+  async function getTezler(){
+    if (_tezCache) return _tezCache;
+    const r = await fetch('/api/tez-admin?pub=1');
+    _tezCache = await r.json();
+    return _tezCache;
   }
-  window.__sectAnalyze = function(i){
-    const s = CONFIG.sectors[i]; if (!s) return;
-    navigate('/terminal');
-    setTimeout(()=>{
-      if (typeof window.anaFromPt === 'function') window.anaFromPt(s.ticker, s.name, s.exchange||'BIST');
-      else if (typeof window.qFill === 'function') window.qFill(s.ticker, s.name, s.exchange||'BIST');
-    }, 90);
-    if (typeof window.trackEvent === 'function') window.trackEvent('sector_analyze', { sector:s.name, ticker:s.ticker });
-  };
+  function tezCardHTML(t){
+    const sig = sigMap[t.sinyal] || sigMap.NOTR;
+    return `<div class="pt-tez-card" onclick="window.__openTez(${t.id})">
+      ${t.kapak_gorseli ? `<div class="ptz-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+      <div class="ptz-body">
+        <div class="ptz-meta">
+          ${t.ticker ? `<span class="ptz-ticker">${esc(t.ticker)}</span>` : ''}
+          <span class="ptz-sig ${sig[0]}">${sig[1]}</span>
+          ${t.olusturma ? `<span class="ptz-date">${esc(trDate(t.olusturma))}</span>` : ''}
+        </div>
+        <div class="ptz-title">${esc(t.baslik||'')}</div>
+        ${t.ozet ? `<div class="ptz-sum">${esc(t.ozet)}</div>` : ''}
+        <div class="ptz-foot">
+          <span class="ptz-read">Tezi Oku →</span>
+          <span class="ptz-getiri" id="ptz-get-${t.id}"></span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /* Portal: Haftanın Seçimi + tek satır teaser (ilk 3) */
   async function loadTezler(){
     const host = document.getElementById('featTez');
-    const grid = document.getElementById('tezGridPortal');
+    const row  = document.getElementById('tezGridPortal');
     try{
-      const r = await fetch('/api/tez-admin?pub=1');
-      const list = await r.json();
+      const list = await getTezler();
       if (!Array.isArray(list) || !list.length){
         if (host){ host.classList.remove('clickable'); host.innerHTML = '<div class="feat-inner"><div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div><div class="feat-title">İlk tez yakında geliyor</div><div class="feat-summary">Yeni araştırma tezleri burada yayınlanacak.</div></div>'; }
-        if (grid) grid.innerHTML = '<div class="pt-tez-skel">Henüz tez yayınlanmadı.</div>';
+        if (row) row.innerHTML = '<div class="pt-tez-skel">Henüz tez yayınlanmadı.</div>';
         return;
       }
       renderFeatured(list[0]);
-      renderTezGrid(list);
+      const teaser = list.slice(0, 3);
+      if (row){
+        row.innerHTML = teaser.map(tezCardHTML).join('');
+        teaser.filter(t=>t.maliyet_fiyat && t.ticker).forEach(portalTezGetiri);
+      }
     }catch(e){
       if (host){ host.classList.remove('clickable'); host.innerHTML = '<div class="feat-inner"><div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div><div class="feat-title">Tez yüklenemedi</div></div>'; }
-      if (grid) grid.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Tezler yüklenemedi.</div>';
+      if (row) row.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Tezler yüklenemedi.</div>';
     }
+  }
+
+  /* /tezler sayfası: tüm tezler */
+  async function loadTezlerPage(){
+    const grid = document.getElementById('tezlerGridFull');
+    const y = document.getElementById('ptYear2'); if (y) y.textContent = new Date().getFullYear();
+    if (!grid) return;
+    if (grid.dataset.loaded === '1') return;
+    grid.innerHTML = '<div class="pt-tez-skel">Tezler yükleniyor…</div>';
+    try{
+      const list = await getTezler();
+      if (!Array.isArray(list) || !list.length){ grid.innerHTML = '<div class="pt-tez-skel">Henüz tez yayınlanmadı.</div>'; return; }
+      grid.innerHTML = list.map(tezCardHTML).join('');
+      grid.dataset.loaded = '1';
+      list.filter(t=>t.maliyet_fiyat && t.ticker).forEach(portalTezGetiri);
+    }catch(e){ grid.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Tezler yüklenemedi.</div>'; }
   }
 
   function renderFeatured(t){
@@ -6752,35 +6818,6 @@ function garpAnalizAc(ticker) {
     host.onclick = function(){ openTez(t.id); };
   }
 
-  function renderTezGrid(list){
-    const grid = document.getElementById('tezGridPortal');
-    const cnt  = document.getElementById('ptTezCount');
-    if (!grid) return;
-    if (cnt) cnt.textContent = list.length + ' tez';
-    grid.innerHTML = list.map(t=>{
-      const sig = sigMap[t.sinyal] || sigMap.NOTR;
-      return `<div class="pt-tez-card" onclick="window.__openTez(${t.id})">
-        ${t.kapak_gorseli ? `<div class="ptz-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
-        <div class="ptz-body">
-          <div class="ptz-meta">
-            ${t.ticker ? `<span class="ptz-ticker">${esc(t.ticker)}</span>` : ''}
-            <span class="ptz-sig ${sig[0]}">${sig[1]}</span>
-            ${t.olusturma ? `<span class="ptz-date">${esc(trDate(t.olusturma))}</span>` : ''}
-          </div>
-          <div class="ptz-title">${esc(t.baslik||'')}</div>
-          ${t.ozet ? `<div class="ptz-sum">${esc(t.ozet)}</div>` : ''}
-          <div class="ptz-foot">
-            <span class="ptz-read">Tezi Oku →</span>
-            <span class="ptz-getiri" id="ptz-get-${t.id}"></span>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-    // maliyet_fiyat olan tezler için getiri
-    list.filter(t=>t.maliyet_fiyat && t.ticker).forEach(portalTezGetiri);
-  }
-  window.__openTez = openTez;
-
   async function portalTezGetiri(t){
     const el = document.getElementById('ptz-get-' + t.id);
     if (!el) return;
@@ -6795,6 +6832,48 @@ function garpAnalizAc(ticker) {
       el.className = 'ptz-getiri ' + (g > 0.5 ? 'pos' : g < -0.5 ? 'neg' : 'neu');
       el.textContent = (g > 0 ? '+' : '') + g.toFixed(1) + '%';
     }catch(e){}
+  }
+
+  /* ── PIYASA NABZI (canlı endeksler — /api/market) ── */
+  const MKT = [
+    { key:'bist100', label:'BIST 100', cur:'',  dp:0 },
+    { key:'sp500',   label:'S&P 500',  cur:'',  dp:0 },
+    { key:'nasdaq',  label:'NASDAQ',   cur:'',  dp:0 },
+    { key:'gold',    label:'Altın (ons)', cur:'$', dp:0 },
+    { key:'btc',     label:'Bitcoin',  cur:'$', dp:0 },
+  ];
+  let _mktTimer = null;
+  function fmtNum(v,dp){
+    if (v==null || !isFinite(v)) return '—';
+    return Number(v).toLocaleString('en-US',{ minimumFractionDigits:dp, maximumFractionDigits:dp });
+  }
+  async function renderMarket(){
+    const grid = document.getElementById('mktGrid');
+    if (!grid) return;
+    try{
+      const r = await fetch('/api/market?type=market');
+      const j = await r.json();
+      const m = (j && j.market) || {};
+      const has = MKT.filter(d => m[d.key] && isFinite(m[d.key].price));
+      if (!has.length){ grid.innerHTML = '<div class="mkt-skel">Piyasa verisi alınamadı.</div>'; return; }
+      grid.innerHTML = has.map(d=>{
+        const o = m[d.key]; const ch = +o.change || 0;
+        const dir = ch>0.04 ? 'up' : ch<-0.04 ? 'down' : 'flat';
+        const arr = dir==='up' ? '▲' : dir==='down' ? '▼' : '—';
+        return `<div class="mkt-card ${dir}">
+          <div class="mkt-label">${esc(d.label)}</div>
+          <div class="mkt-price">${d.cur}${fmtNum(o.price,d.dp)}</div>
+          <div class="mkt-chg ${dir}">${arr} ${ch>0?'+':''}${ch.toFixed(2)}%</div>
+        </div>`;
+      }).join('');
+      const u = document.getElementById('mktUpdated');
+      if (u) u.textContent = new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}) + ' · canlı';
+    }catch(e){
+      grid.innerHTML = '<div class="mkt-skel" style="color:var(--danger)">Piyasa verisi alınamadı.</div>';
+    }
+    if (!_mktTimer){
+      _mktTimer = setInterval(()=>{ if (document.body.classList.contains('route-portal')) renderMarket(); }, 60000);
+    }
   }
 
   /* YouTube grid — başlıklar oEmbed ile otomatik */
