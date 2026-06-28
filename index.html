@@ -5,8 +5,8 @@
 <meta name="description" content="Hisse senetlerini Warren Buffett, Peter Lynch ve Ray Dalio yatırım çerçeveleriyle analiz et. BIST, NYSE ve NASDAQ hisseleri için AI destekli 7 kriterli değerlendirme.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Yatırım Analiz Merkezi — Barış Investing</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230e1220'/%3E%3Crect x='0' y='0' width='4' height='32' fill='%234d8ef0'/%3E%3Ctext x='18' y='24' font-family='Georgia,serif' font-weight='700' font-size='22' fill='%23e8edf8' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
-<link rel="shortcut icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230e1220'/%3E%3Crect x='0' y='0' width='4' height='32' fill='%234d8ef0'/%3E%3Ctext x='18' y='24' font-family='Georgia,serif' font-weight='700' font-size='22' fill='%23e8edf8' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1220'/%3E%3Crect x='0.8' y='0.8' width='30.4' height='30.4' rx='6.2' fill='none' stroke='%23c2ad84' stroke-opacity='0.55'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-weight='700' font-size='21' fill='%23c2ad84' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+<link rel="shortcut icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1220'/%3E%3Crect x='0.8' y='0.8' width='30.4' height='30.4' rx='6.2' fill='none' stroke='%23c2ad84' stroke-opacity='0.55'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-weight='700' font-size='21' fill='%23c2ad84' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 <!-- ══ UMAMI ANALYTICS — Cookieless, GDPR/KVKK uyumlu ══ -->
@@ -2348,6 +2348,8 @@ body.route-portal #loadingOv{display:none !important;}
   background:linear-gradient(to bottom, var(--anthracite) 65%, rgba(11,15,21,0));
   backdrop-filter:blur(6px);
 }
+.pt-brand-lockup{display:flex;align-items:center;gap:13px;}
+.brand-mark{width:46px;height:46px;flex-shrink:0;display:block;filter:drop-shadow(0 4px 16px rgba(194,173,132,0.22));}
 .pt-brand{display:flex;flex-direction:column;line-height:1;}
 .pt-brand-tag{font-family:var(--font-mono);font-size:9px;letter-spacing:3.5px;color:var(--cream2);opacity:.7;text-transform:uppercase;margin-bottom:7px;}
 .pt-brand-name{font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--cream);}
@@ -2477,6 +2479,24 @@ body.route-portal #loadingOv{display:none !important;}
 .ptz-read{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:var(--accent);text-transform:uppercase;}
 .ptz-getiri{font-family:var(--font-mono);font-size:11px;font-weight:600;}
 .ptz-getiri.pos{color:var(--success);} .ptz-getiri.neg{color:var(--danger);} .ptz-getiri.neu{color:var(--cream2);}
+
+/* Sektörel analiz */
+.sect-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:16px;}
+.sect-card{border:1px solid var(--portal-border);border-radius:12px;background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);padding:20px 20px 18px;cursor:pointer;display:flex;flex-direction:column;min-height:158px;transition:transform .25s,border-color .25s,box-shadow .25s;position:relative;overflow:hidden;}
+.sect-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent);opacity:.0;transition:opacity .25s;}
+.sect-card:hover{transform:translateY(-3px);border-color:rgba(194,173,132,0.30);box-shadow:0 16px 44px rgba(0,0,0,0.42);}
+.sect-card:hover::before{opacity:.7;}
+.sect-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.sect-name{font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--cream);line-height:1.2;}
+.sect-trend{font-family:var(--font-mono);font-size:12px;font-weight:700;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;}
+.sect-trend.up{color:var(--success);background:var(--success-dim);}
+.sect-trend.down{color:var(--danger);background:var(--danger-dim);}
+.sect-trend.flat{color:var(--cream2);background:var(--glass);}
+.sect-note{font-size:13px;line-height:1.55;color:var(--cream2);flex:1;margin-bottom:14px;}
+.sect-foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
+.sect-ticker{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:1px;color:var(--cream);border:1px solid var(--portal-border-s);padding:3px 9px;border-radius:2px;}
+.sect-cta{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:var(--accent);text-transform:uppercase;}
+.sect-note-foot{font-family:var(--font-mono);font-size:9px;letter-spacing:.5px;color:var(--cream2);opacity:.5;margin-top:14px;}
 
 /* X embeds (official widgets) */
 .x-embed{display:flex;justify-content:center;min-height:60px;}
@@ -2780,9 +2800,25 @@ body.route-portal #loadingOv{display:none !important;}
 
     <!-- Top bar -->
     <div class="pt-topbar">
-      <div class="pt-brand">
-        <div class="pt-brand-tag">Finansal Araştırma & Medya</div>
-        <div class="pt-brand-name">Barış <span>Investing</span></div>
+      <div class="pt-brand-lockup">
+        <svg class="brand-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="bmTile" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#1d2433"/><stop offset="1" stop-color="#0c1017"/>
+            </linearGradient>
+            <linearGradient id="bmGold" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ecd9af"/><stop offset="0.5" stop-color="#c2ad84"/><stop offset="1" stop-color="#a8946b"/>
+            </linearGradient>
+          </defs>
+          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="url(#bmTile)"/>
+          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="none" stroke="url(#bmGold)" stroke-opacity="0.7" stroke-width="1.1"/>
+          <path d="M11.5 30 L19 22.5 L24 26 L33 16.5" fill="none" stroke="url(#bmGold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.42"/>
+          <text x="22" y="30" font-family="'Playfair Display',Georgia,serif" font-weight="700" font-size="26" fill="url(#bmGold)" text-anchor="middle">B</text>
+        </svg>
+        <div class="pt-brand">
+          <div class="pt-brand-tag">Finansal Araştırma & Medya</div>
+          <div class="pt-brand-name">Barış <span>Investing</span></div>
+        </div>
       </div>
       <div class="pt-topnav">
         <a class="pt-soc" id="ptYtLink" href="#" target="_blank" rel="noopener" title="YouTube">
@@ -2849,6 +2885,16 @@ body.route-portal #loadingOv{display:none !important;}
       </div>
     </div>
 
+    <!-- Sektörel Analiz -->
+    <div class="pt-sec">
+      <div class="pt-sec-head">
+        <div class="pt-sec-title"><span class="k">◳ Sektörel</span>Sektörel Analiz</div>
+        <span class="pt-sec-link" style="cursor:default;pointer-events:none">Görünüm · BIST</span>
+      </div>
+      <div class="sect-grid" id="sectGrid"></div>
+      <div class="sect-note-foot">Sektör görünümleri editöryeldir; kartlara tıklayınca ilgili öncü hisse terminalde analiz edilir.</div>
+    </div>
+
     <!-- YouTube -->
     <div class="pt-sec">
       <div class="pt-sec-head">
@@ -2885,7 +2931,15 @@ body.route-portal #loadingOv{display:none !important;}
 <div class="sidebar" id="sidebar">
   <div class="brand">
     <div class="brand-top">
-      <div><div class="brand-tag">Barış Investing</div><div class="brand-name">Analiz <span>Merkezi</span></div><div class="brand-sub">Buffett · Lynch · Dalio</div></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <svg style="width:30px;height:30px;flex-shrink:0;" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="1" y="1" width="38" height="38" rx="10" fill="#0c1018"/>
+          <rect x="1" y="1" width="38" height="38" rx="10" fill="none" stroke="#c2ad84" stroke-opacity="0.5"/>
+          <path d="M11 26.5 L17 20.5 L21.5 23.5 L29 14.5" stroke="#c2ad84" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+          <text x="20" y="26.5" font-family="'Playfair Display',Georgia,serif" font-weight="700" font-size="22" fill="#c2ad84" text-anchor="middle">B</text>
+        </svg>
+        <div><div class="brand-tag">Barış Investing</div><div class="brand-name">Analiz <span>Merkezi</span></div><div class="brand-sub">Buffett · Lynch · Dalio</div></div>
+      </div>
       <button class="s-close" onclick="closeSidebar()">✕</button>
     </div>
     <div class="brand-socials">
@@ -6561,6 +6615,15 @@ function garpAnalizAc(ticker) {
     tweets: [
       '2070563096955957403',
       '2070833771549425678',
+    ],
+    // Sektörel görünüm (editöryel) — öncü hisse terminalde analiz edilir:
+    sectors: [
+      { name:'Bankacılık',   ticker:'GARAN', exchange:'BIST', trend:'up',   note:'Net faiz marjı ve TL mevduat maliyeti odakta; çarpanlar tarihsel ortalamanın altında.' },
+      { name:'Havacılık',    ticker:'THYAO', exchange:'BIST', trend:'up',   note:'Yolcu trafiği ve filo genişlemesi güçlü; döviz bazlı gelir yapısı destekleyici.' },
+      { name:'Perakende',    ticker:'BIMAS', exchange:'BIST', trend:'up',   note:'Enflasyonist ortamda defansif büyüme; hard-discount modeli avantaj sağlıyor.' },
+      { name:'Holding',      ticker:'KCHOL', exchange:'BIST', trend:'flat', note:'NAV iskontosu tarihsel bandın altında; iştirak değerlemeleri kilit.' },
+      { name:'Sanayi & Çelik',ticker:'EREGL',exchange:'BIST', trend:'down', note:'İhracat talebi ve emtia fiyatlarındaki zayıflık marjlar üzerinde baskı yaratıyor.' },
+      { name:'Enerji & Rafineri',ticker:'TUPRS',exchange:'BIST',trend:'flat',note:'Rafineri marjları normalleşirken kur etkisi nakit akışını destekliyor.' },
     ]
   };
 
@@ -6614,6 +6677,7 @@ function garpAnalizAc(ticker) {
     if(yt) yt.href=CONFIG.youtubeChannel; if(ytA) ytA.href=CONFIG.youtubeChannel;
     if(x)  x.href =CONFIG.xProfile;       if(xA)  xA.href =CONFIG.xProfile;
     loadTezler();
+    renderSectors();
     renderVideos();
     renderTweets();
   }
@@ -6622,7 +6686,33 @@ function garpAnalizAc(ticker) {
   function trDate(s){ return s ? new Date(s).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : ''; }
   function openTez(id){ if (typeof window.openTezSupabase === 'function') window.openTezSupabase(id); }
 
-  /* Tüm tezleri tek seferde çek → Haftanın Seçimi + tez grid */
+  /* Sektörel görünüm */
+  function renderSectors(){
+    const grid = document.getElementById('sectGrid');
+    if (!grid) return;
+    if (!CONFIG.sectors || !CONFIG.sectors.length){
+      const sec = grid.closest('.pt-sec'); if (sec) sec.style.display='none';
+      return;
+    }
+    const ic = { up:'▲', down:'▼', flat:'—' };
+    grid.innerHTML = CONFIG.sectors.map((s,i)=>{
+      const tr = s.trend || 'flat';
+      return `<div class="sect-card" onclick="window.__sectAnalyze(${i})">
+        <div class="sect-top"><span class="sect-name">${esc(s.name)}</span><span class="sect-trend ${tr}">${ic[tr]||'—'}</span></div>
+        <div class="sect-note">${esc(s.note||'')}</div>
+        <div class="sect-foot"><span class="sect-ticker">${esc(s.ticker)}</span><span class="sect-cta">Analiz et →</span></div>
+      </div>`;
+    }).join('');
+  }
+  window.__sectAnalyze = function(i){
+    const s = CONFIG.sectors[i]; if (!s) return;
+    navigate('/terminal');
+    setTimeout(()=>{
+      if (typeof window.anaFromPt === 'function') window.anaFromPt(s.ticker, s.name, s.exchange||'BIST');
+      else if (typeof window.qFill === 'function') window.qFill(s.ticker, s.name, s.exchange||'BIST');
+    }, 90);
+    if (typeof window.trackEvent === 'function') window.trackEvent('sector_analyze', { sector:s.name, ticker:s.ticker });
+  };
   async function loadTezler(){
     const host = document.getElementById('featTez');
     const grid = document.getElementById('tezGridPortal');
