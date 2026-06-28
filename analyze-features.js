@@ -26,23 +26,23 @@
     }
     #snapshotCard .snap-col-lbl {
       font-size:8px;letter-spacing:2px;text-transform:uppercase;
-      color:var(--muted-s,#8892b0);font-family:'IBM Plex Mono',monospace;
+      color:var(--muted-s,#7a8493);font-family:'JetBrains Mono',monospace;
       margin-bottom:5px;
     }
     #snapshotCard .snap-col-val {
-      font-size:12px;color:#ccd6f6;font-weight:500;
-      font-family:'IBM Plex Sans',sans-serif;line-height:1.5;
+      font-size:12px;color:#e2e8f0;font-weight:500;
+      font-family:'Inter',sans-serif;line-height:1.5;
     }
     #snapshotCard .snap-peer {
       font-size:9px;padding:3px 8px;
-      background:rgba(168,184,216,0.08);
+      background:rgba(255,255,255,0.08);
       border:1px solid var(--border-s,#3a4260);
-      color:#a8b8d8;font-family:'IBM Plex Mono',monospace;
+      color:#9aa3b2;font-family:'JetBrains Mono',monospace;
       cursor:pointer;transition:all 0.15s;letter-spacing:0.5px;
     }
     #snapshotCard .snap-peer:hover {
-      background:rgba(168,184,216,0.18);color:#ccd6f6;
-      border-color:#a8b8d8;
+      background:rgba(255,255,255,0.18);color:#e2e8f0;
+      border-color:#9aa3b2;
     }
     #snapshotCard .snap-alert {
       background:rgba(192,57,43,0.08);
@@ -50,7 +50,7 @@
       border-left:3px solid rgba(192,57,43,0.6);
       padding:8px 12px;
       font-size:10px;color:#e07060;
-      font-family:'IBM Plex Sans',sans-serif;
+      font-family:'Inter',sans-serif;
       line-height:1.6;
     }
     .snap-logo-placeholder {
@@ -59,7 +59,7 @@
       border:1px solid var(--border-s,#3a4260);
       display:flex;align-items:center;justify-content:center;
       font-family:'Playfair Display',serif;
-      font-size:14px;font-weight:700;color:#a8b8d8;
+      font-size:14px;font-weight:700;color:#9aa3b2;
       flex-shrink:0;overflow:hidden;
     }
   `;
@@ -105,8 +105,8 @@ function checkMasterBadge(ticker, exchange) {
     badge.innerHTML = `
       <span style="font-size:18px">⭐</span>
       <div>
-        <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c8a951;font-family:'IBM Plex Mono',monospace">Master Selection</div>
-        <div style="font-size:9px;color:#9a7d3a;font-family:'IBM Plex Mono',monospace;margin-top:1px">Buffett ${b}/7 · Lynch ${l}/7 — Çift ekol konsensüsü</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c8a951;font-family:'JetBrains Mono',monospace">Master Selection</div>
+        <div style="font-size:9px;color:#9a7d3a;font-family:'JetBrains Mono',monospace;margin-top:1px">Buffett ${b}/7 · Lynch ${l}/7 — Çift ekol konsensüsü</div>
       </div>
     `;
   } else {
@@ -114,13 +114,13 @@ function checkMasterBadge(ticker, exchange) {
       display:inline-flex;align-items:center;gap:8px;
       padding:8px 16px;margin:10px 0 2px;
       background:rgba(36,81,163,0.1);
-      border:1px solid rgba(168,184,216,0.25);
+      border:1px solid rgba(255,255,255,0.25);
     `;
     badge.innerHTML = `
       <span style="font-size:18px">✦</span>
       <div>
-        <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#a8b8d8;font-family:'IBM Plex Mono',monospace">Strong Consensus</div>
-        <div style="font-size:9px;color:#8892b0;font-family:'IBM Plex Mono',monospace;margin-top:1px">Buffett ${b}/7 · Lynch ${l}/7 · Dalio ${d}/7</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#9aa3b2;font-family:'JetBrains Mono',monospace">Strong Consensus</div>
+        <div style="font-size:9px;color:#7a8493;font-family:'JetBrains Mono',monospace;margin-top:1px">Buffett ${b}/7 · Lynch ${l}/7 · Dalio ${d}/7</div>
       </div>
     `;
   }
@@ -135,7 +135,7 @@ function makeLogoEl(ticker, company, website, fmpLogoUrl) {
   const initial  = (company || ticker || '?')[0].toUpperCase();
 
   // Deterministik renk
-  const colors = ['#2451a3','#1a6b3a','#8b4513','#5b2d8e','#b8700a','#c0392b','#0f6e56','#1a5276'];
+  const colors = ['#c2ad84','#3f4a3c','#b08a5a','#8a7e94','#b08a5a','#c0392b','#46584a','#3c5560'];
   const colorIdx = ticker.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colors.length;
 
   const wrap = document.createElement('div');
@@ -180,9 +180,9 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
   if (stockHdr) stockHdr.style.display = 'none';
 
   // Framework config
-  const fwColors = { buffett: '#4d8ef0', lynch: '#e07b39', dalio: '#9b77cc' };
+  const fwColors = { buffett: '#c2ad84', lynch: '#b08a5a', dalio: '#8a7e94' };
   const fwNames  = { buffett: 'BUFFETT', lynch: 'LYNCH',   dalio: 'DALIO'   };
-  const fwC = fwColors[fwKey] || '#4d8ef0';
+  const fwC = fwColors[fwKey] || '#c2ad84';
   const fwN = fwNames[fwKey]  || 'BUFFETT';
 
   // Exchange flag emoji
@@ -211,7 +211,7 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
     border:1px solid rgba(212,168,67,0.25);
     border-radius:6px;overflow:hidden;
     display:flex;align-items:center;justify-content:center;
-    font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);
   `;
   const logoSrc = `/api/logo?ticker=${encodeURIComponent(ticker)}&sz=128`;
   const logoImg = document.createElement('img');
@@ -228,9 +228,9 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
   // Ticker + şirket adı + bayrak pill
   const titleCol = document.createElement('div');
   titleCol.innerHTML = `
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:#e8edf8;letter-spacing:2px;line-height:1">${ticker}</div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;font-family:'IBM Plex Sans',sans-serif;">${company || ''}</div>
-    <div style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;background:rgba(212,168,67,0.10);border:1px solid rgba(212,168,67,0.25);border-radius:3px;padding:2px 7px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--gold,#d4a843);letter-spacing:1px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:#e8edf8;letter-spacing:2px;line-height:1">${ticker}</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;font-family:'Inter',sans-serif;">${company || ''}</div>
+    <div style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;background:rgba(212,168,67,0.10);border:1px solid rgba(212,168,67,0.25);border-radius:3px;padding:2px 7px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--gold,#d4a843);letter-spacing:1px;">
       ${flag} ${exchange}
     </div>
   `;
@@ -266,7 +266,7 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
   body.id = 'snapshotBody';
   body.style.cssText = 'padding:0 0 14px;';
   body.innerHTML = `
-    <div style="font-size:10px;color:var(--muted-s,#8892b0);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;">
+    <div style="font-size:10px;color:var(--muted-s,#7a8493);font-family:'JetBrains Mono',monospace;letter-spacing:1px;">
       Profil yükleniyor<span id="snapDots">.</span>
     </div>
   `;
@@ -332,7 +332,7 @@ RISK: [En kritik 1 risk cümlesi]`;
 
     bodyEl.innerHTML = `
       <!-- İş açıklaması -->
-      <p style="font-size:12px;color:#ccd6f6;font-family:'IBM Plex Sans',sans-serif;line-height:1.8;margin:0 0 14px">${business}</p>
+      <p style="font-size:12px;color:#e2e8f0;font-family:'Inter',sans-serif;line-height:1.8;margin:0 0 14px">${business}</p>
 
       ${!isBIST ? `
       <!-- Sektör + Hendek grid -->
@@ -349,7 +349,7 @@ RISK: [En kritik 1 risk cümlesi]`;
       <!-- Rakipler -->
       ${peers.length ? `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <span style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted-s,#8892b0);font-family:'IBM Plex Mono',monospace">Rakipler</span>
+        <span style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted-s,#7a8493);font-family:'JetBrains Mono',monospace">Rakipler</span>
         ${peers.map(p => `<button class="snap-peer" onclick="qFill('${p}','','${exchange}')">${p}</button>`).join('')}
       </div>` : ''}
       ` : `
@@ -368,7 +368,7 @@ RISK: [En kritik 1 risk cümlesi]`;
   } catch(e) {
     clearInterval(dotTimer);
     const bodyEl = document.getElementById('snapshotBody');
-    if (bodyEl) bodyEl.innerHTML = `<div style="font-size:10px;color:var(--muted-s);font-family:'IBM Plex Mono',monospace">Profil yüklenemedi.</div>`;
+    if (bodyEl) bodyEl.innerHTML = `<div style="font-size:10px;color:var(--muted-s);font-family:'JetBrains Mono',monospace">Profil yüklenemedi.</div>`;
   }
 }
 
