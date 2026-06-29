@@ -2332,6 +2332,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .rv{display:none;}
 body.route-portal   #portalRoot{display:block;}
 body.route-tezler   #tezlerRoot{display:block;}
+body.route-arastirmalar #arastirmalarRoot{display:block;}
 body.route-terminal #terminalRoot{display:block;}
 body:not(.route-terminal) .mobile-toggle{display:none !important;}
 /* Terminal onboarding modallarını portal/tezler'de gizle */
@@ -2556,6 +2557,8 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .pt-tez-row{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
 @media(max-width:980px){.pt-tez-row{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:640px){.pt-tez-row{grid-template-columns:1fr;}}
+.ptz-cat{font-family:var(--font-mono);font-size:8px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:2px 7px;border-radius:2px;background:rgba(194,173,132,0.12);color:var(--accent);border:1px solid rgba(194,173,132,0.35);}
+.pt-share-hint{font-family:var(--font-mono);font-size:9px;letter-spacing:.3px;color:var(--cream2);opacity:.55;margin-top:10px;line-height:1.6;}
 
 /* Tez Sicili (track record) */
 .trk-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
@@ -3049,6 +3052,17 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       </div>
     </div>
 
+    <!-- Şirket Araştırmaları (tek satır teaser) -->
+    <div class="pt-sec">
+      <div class="pt-sec-head">
+        <div class="pt-sec-title"><span class="k">◈ Derinlemesine</span>Şirket Araştırmaları</div>
+        <a class="pt-sec-link" data-route="/arastirmalar" href="/arastirmalar">Tümünü Gör →</a>
+      </div>
+      <div class="pt-tez-row" id="arastirmaGridPortal">
+        <div class="pt-tez-skel">Araştırmalar yükleniyor…</div>
+      </div>
+    </div>
+
     <!-- Haber / Mercek — tıklanabilir video + kart serisi -->
     <div class="pt-sec" id="spotSec">
       <div class="news-card" id="newsCard">
@@ -3069,28 +3083,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       </div>
     </div>
 
-    <!-- Tez Sicili (Track Record) — açılır/kapanır -->
-    <div class="pt-sec">
-      <div class="pt-sec-head trk-head" onclick="toggleSicil()">
-        <div class="pt-sec-title"><span class="k">◈ Şeffaf</span>Tez Sicili</div>
-        <div class="trk-head-right">
-          <span class="trk-summary" id="trkSummary"></span>
-          <button class="news-toggle" id="trkToggle">Göster ▾</button>
-        </div>
-      </div>
-      <div class="trk-body" id="trkBody" style="display:none">
-        <div class="trk-kpis">
-          <div class="trk-kpi"><div class="trk-kpi-v" id="trkCount">—</div><div class="trk-kpi-l">Alım Çağrısı</div></div>
-          <div class="trk-kpi"><div class="trk-kpi-v" id="trkWin">—</div><div class="trk-kpi-l">İsabet Oranı</div></div>
-          <div class="trk-kpi"><div class="trk-kpi-v" id="trkAvg">—</div><div class="trk-kpi-l">Ort. Getiri</div></div>
-          <div class="trk-kpi"><div class="trk-kpi-v" id="trkBest">—</div><div class="trk-kpi-l">En İyi Seçim</div></div>
-        </div>
-        <div class="trk-table" id="trkTable">
-          <div class="trk-skel">Sicil hesaplanıyor…</div>
-        </div>
-        <div class="trk-note">İsabet oranı ve ortalama getiri yalnızca AL (alım) çağrıları üzerinden hesaplanır; tablo şeffaflık için tüm tezleri gösterir. Maliyet, tezin yayınlandığı andaki referans fiyattır; getiriler canlı fiyata göre hesaplanır. Geçmiş performans gelecek getiriyi garanti etmez, yatırım tavsiyesi değildir.</div>
-      </div>
-    </div>
+    <!-- Tez Sicili → artık Yatırım Tezleri (/tezler) sayfasında -->
 
     <!-- YouTube -->
     <div class="pt-sec">
@@ -3154,6 +3147,32 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <p class="pt-lede">BIST ve global piyasalar üzerine tüm derin araştırma tezleri. Bir teze tıkla, tamamını oku.</p>
     </div>
 
+    <!-- Tez Sicili (Track Record) — Yatırım Tezleri sayfasına taşındı -->
+    <div class="pt-sec" style="margin-top:0">
+      <div class="pt-sec-head trk-head" onclick="toggleSicil()">
+        <div class="pt-sec-title"><span class="k">◈ Şeffaf</span>Tez Sicili</div>
+        <div class="trk-head-right">
+          <span class="trk-summary" id="trkSummary"></span>
+          <button class="news-toggle" id="trkToggle">Gizle ▴</button>
+        </div>
+      </div>
+      <div class="trk-body" id="trkBody" style="display:block">
+        <div class="trk-kpis">
+          <div class="trk-kpi"><div class="trk-kpi-v" id="trkCount">—</div><div class="trk-kpi-l">Alım Çağrısı</div></div>
+          <div class="trk-kpi"><div class="trk-kpi-v" id="trkWin">—</div><div class="trk-kpi-l">İsabet Oranı</div></div>
+          <div class="trk-kpi"><div class="trk-kpi-v" id="trkAvg">—</div><div class="trk-kpi-l">Ort. Getiri</div></div>
+          <div class="trk-kpi"><div class="trk-kpi-v" id="trkBest">—</div><div class="trk-kpi-l">En İyi Seçim</div></div>
+        </div>
+        <div class="trk-table" id="trkTable">
+          <div class="trk-skel">Sicil hesaplanıyor…</div>
+        </div>
+        <div class="trk-note">İsabet oranı ve ortalama getiri yalnızca AL (alım) çağrıları üzerinden hesaplanır; tablo şeffaflık için tüm tezleri gösterir. Maliyet, tezin yayınlandığı andaki referans fiyattır; getiriler canlı fiyata göre hesaplanır. Geçmiş performans gelecek getiriyi garanti etmez, yatırım tavsiyesi değildir.</div>
+      </div>
+    </div>
+
+    <div class="pt-sec-head" style="margin-top:54px">
+      <div class="pt-sec-title"><span class="k">◈ Arşiv</span>Tüm Tezler</div>
+    </div>
     <div class="pt-tez-grid" id="tezlerGridFull">
       <div class="pt-tez-skel">Tezler yükleniyor…</div>
     </div>
@@ -3165,6 +3184,54 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   </div>
 </div>
 <!-- /tezlerRoot -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     ŞİRKET ARAŞTIRMALARI  (route: "/arastirmalar")  — tüm araştırmalar
+     ═══════════════════════════════════════════════════════════ -->
+<div id="arastirmalarRoot" class="rv">
+  <div class="pt-wrap">
+    <div class="pt-topbar">
+      <div class="pt-brand-lockup" data-route="/" style="cursor:pointer">
+        <svg class="brand-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="bmTile3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2433"/><stop offset="1" stop-color="#0c1017"/></linearGradient>
+            <linearGradient id="bmGold3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ecd9af"/><stop offset="0.5" stop-color="#c2ad84"/><stop offset="1" stop-color="#a8946b"/></linearGradient>
+          </defs>
+          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="url(#bmTile3)"/>
+          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="none" stroke="url(#bmGold3)" stroke-opacity="0.7" stroke-width="1.1"/>
+          <path d="M11.5 30 L19 22.5 L24 26 L33 16.5" fill="none" stroke="url(#bmGold3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.42"/>
+          <text x="22" y="30" font-family="'Playfair Display',Georgia,serif" font-weight="700" font-size="26" fill="url(#bmGold3)" text-anchor="middle">B</text>
+        </svg>
+        <div class="pt-brand">
+          <div class="pt-brand-tag">Finansal Araştırma & Medya</div>
+          <div class="pt-brand-name">Barış <span>Investing</span></div>
+        </div>
+      </div>
+      <div class="pt-topnav">
+        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">← Ana Sayfa</a>
+        <a class="pt-sec-link" data-route="/tezler" href="/tezler" style="margin-right:6px">Tezler</a>
+        <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
+      </div>
+    </div>
+
+    <div class="pt-hero" style="padding:46px 0 26px">
+      <div class="pt-eyebrow">◈ Derinlemesine Araştırma</div>
+      <h1 class="pt-h1" style="font-size:clamp(30px,4vw,44px)">Şirket <em>Araştırmaları</em></h1>
+      <p class="pt-lede">Sektörel ve şirket bazlı derin araştırmalar — videolarımdaki analizlerin yayınlanmış, okunabilir hali. Bir araştırmaya tıkla, tamamını oku.</p>
+      <div class="pt-share-hint">Her araştırmanın paylaşılabilir bağlantısı vardır → <span style="color:var(--accent)">barisinvesting.com/arastirmalar?arastirma=ID</span></div>
+    </div>
+
+    <div class="pt-tez-grid" id="arastirmalarGridFull">
+      <div class="pt-tez-skel">Araştırmalar yükleniyor…</div>
+    </div>
+
+    <div class="pt-foot">
+      <div class="pt-foot-l">© <span id="ptYear3"></span> Barış Investing · Araştırma & bilgi amaçlıdır, yatırım tavsiyesi değildir.</div>
+      <a class="pt-enter" data-route="/" href="/">← Ana Sayfa</a>
+    </div>
+  </div>
+</div>
+<!-- /arastirmalarRoot -->
 
 <!-- ═══════════════════════════════════════════════════════════
      TERMINAL  (route: "/terminal")  — mevcut analiz aracı
@@ -6899,22 +6966,38 @@ function garpAnalizAc(ticker) {
   const terminal = document.getElementById('terminalRoot');
   const TITLE = { portal:'Barış Investing — Finansal Araştırma & Medya',
                   tezler:'Yatırım Tezleri — Barış Investing',
+                  arastirmalar:'Şirket Araştırmaları — Barış Investing',
                   terminal:'Terminal — Barış Investing' };
 
   function applyRoute(path, replace){
     let view = 'portal';
     if (/^\/terminal(\/|$)/.test(path)) view = 'terminal';
     else if (/^\/tezler(\/|$)/.test(path)) view = 'tezler';
+    else if (/^\/arastirmalar(\/|$)/.test(path)) view = 'arastirmalar';
     document.body.classList.toggle('route-terminal', view==='terminal');
     document.body.classList.toggle('route-tezler',   view==='tezler');
+    document.body.classList.toggle('route-arastirmalar', view==='arastirmalar');
     document.body.classList.toggle('route-portal',   view==='portal');
-    document.title = view==='terminal' ? TITLE.terminal : view==='tezler' ? TITLE.tezler : TITLE.portal;
-    const norm = view==='terminal' ? '/terminal' : view==='tezler' ? '/tezler' : '/';
-    if (replace) history.replaceState({route:norm}, '', norm);
+    document.title = TITLE[view] || TITLE.portal;
+    const norm = view==='terminal' ? '/terminal' : view==='tezler' ? '/tezler' : view==='arastirmalar' ? '/arastirmalar' : '/';
+    if (replace) history.replaceState({route:norm}, '', norm + (location.search||''));
     if (view==='terminal'){ window.scrollTo(0,0); }
     else if (view==='tezler'){ window.scrollTo(0,0); loadTezlerPage(); }
+    else if (view==='arastirmalar'){ window.scrollTo(0,0); loadArastirmalarPage(); }
     else { if (!portalLoaded) loadPortal(); }
+    maybeOpenDeepTez();
     if (typeof window.trackEvent === 'function') window.trackEvent('route_view', { route: view });
+  }
+
+  /* Paylaşılabilir derin bağlantı: ?tez=ID veya ?arastirma=ID → modalı aç */
+  let _deepOpened = false;
+  function maybeOpenDeepTez(){
+    if (_deepOpened) return;
+    const p = new URLSearchParams(location.search);
+    const id = p.get('arastirma') || p.get('tez') || p.get('oku');
+    if (!id || !/^\d+$/.test(id)) return;
+    _deepOpened = true;
+    setTimeout(function(){ if (typeof window.openTezSupabase==='function') window.openTezSupabase(parseInt(id)); }, 350);
   }
 
   function navigate(path){
@@ -6948,8 +7031,8 @@ function garpAnalizAc(ticker) {
     if(yt) yt.href=CONFIG.youtubeChannel; if(ytA) ytA.href=CONFIG.youtubeChannel;
     if(x)  x.href =CONFIG.xProfile;       if(xA)  xA.href =CONFIG.xProfile;
     loadTezler();
+    loadArastirmaPortal();
     renderSpotlight();
-    loadTrackRecord();
     renderVideos();
     renderTweets();
   }
@@ -6986,13 +7069,35 @@ function garpAnalizAc(ticker) {
       </div>
     </div>`;
   }
+  function arastirmaCardHTML(t){
+    const hasSig = t.sinyal && sigMap[t.sinyal];
+    const sig = sigMap[t.sinyal] || sigMap.NOTR;
+    return `<div class="pt-tez-card" onclick="window.__openTez(${t.id})">
+      ${t.kapak_gorseli ? `<div class="ptz-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+      <div class="ptz-body">
+        <div class="ptz-meta">
+          ${t.ticker ? `<span class="ptz-ticker">${esc(t.ticker)}</span>` : ''}
+          <span class="ptz-cat">Araştırma</span>
+          ${hasSig ? `<span class="ptz-sig ${sig[0]}">${sig[1]}</span>` : ''}
+          ${t.olusturma ? `<span class="ptz-date">${esc(trDate(t.olusturma))}</span>` : ''}
+        </div>
+        <div class="ptz-title">${esc(t.baslik||'')}</div>
+        ${t.ozet ? `<div class="ptz-sum">${esc(t.ozet)}</div>` : ''}
+        <div class="ptz-foot">
+          <span class="ptz-read">Araştırmayı Oku →</span>
+          <span class="ptz-getiri" id="ptz-get-${t.id}"></span>
+        </div>
+      </div>
+    </div>`;
+  }
 
   /* Portal: Haftanın Seçimi + tek satır teaser (ilk 3) */
   async function loadTezler(){
     const host = document.getElementById('featTez');
     const row  = document.getElementById('tezGridPortal');
     try{
-      const list = await getTezler();
+      const all = await getTezler();
+      const list = (Array.isArray(all)?all:[]).filter(t=>(t.kategori||'tez')==='tez');
       if (!Array.isArray(list) || !list.length){
         if (host){ host.classList.remove('clickable'); host.innerHTML = '<div class="feat-inner"><div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div><div class="feat-title">İlk tez yakında geliyor</div><div class="feat-summary">Yeni araştırma tezleri burada yayınlanacak.</div></div>'; }
         if (row) row.innerHTML = '<div class="pt-tez-skel">Henüz tez yayınlanmadı.</div>';
@@ -7014,16 +7119,49 @@ function garpAnalizAc(ticker) {
   async function loadTezlerPage(){
     const grid = document.getElementById('tezlerGridFull');
     const y = document.getElementById('ptYear2'); if (y) y.textContent = new Date().getFullYear();
+    loadTrackRecord();
     if (!grid) return;
     if (grid.dataset.loaded === '1') return;
     grid.innerHTML = '<div class="pt-tez-skel">Tezler yükleniyor…</div>';
     try{
-      const list = await getTezler();
-      if (!Array.isArray(list) || !list.length){ grid.innerHTML = '<div class="pt-tez-skel">Henüz tez yayınlanmadı.</div>'; return; }
+      const all = await getTezler();
+      const list = (Array.isArray(all)?all:[]).filter(t=>(t.kategori||'tez')==='tez');
+      if (!list.length){ grid.innerHTML = '<div class="pt-tez-skel">Henüz tez yayınlanmadı.</div>'; return; }
       grid.innerHTML = list.map(tezCardHTML).join('');
       grid.dataset.loaded = '1';
       list.filter(t=>t.maliyet_fiyat && t.ticker).forEach(portalTezGetiri);
     }catch(e){ grid.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Tezler yüklenemedi.</div>'; }
+  }
+
+  /* Portal: Şirket Araştırmaları teaser (ilk 3) */
+  async function loadArastirmaPortal(){
+    const row = document.getElementById('arastirmaGridPortal');
+    if (!row) return;
+    try{
+      const all = await getTezler();
+      const list = (Array.isArray(all)?all:[]).filter(t=>t.kategori==='arastirma');
+      if (!list.length){ row.innerHTML = '<div class="pt-tez-skel">İlk araştırma yakında yayınlanacak.</div>'; return; }
+      const teaser = list.slice(0,3);
+      row.innerHTML = teaser.map(arastirmaCardHTML).join('');
+      teaser.filter(t=>t.maliyet_fiyat && t.ticker).forEach(portalTezGetiri);
+    }catch(e){ row.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Araştırmalar yüklenemedi.</div>'; }
+  }
+
+  /* /arastirmalar sayfası: tüm araştırmalar */
+  async function loadArastirmalarPage(){
+    const grid = document.getElementById('arastirmalarGridFull');
+    const y = document.getElementById('ptYear3'); if (y) y.textContent = new Date().getFullYear();
+    if (!grid) return;
+    if (grid.dataset.loaded === '1') return;
+    grid.innerHTML = '<div class="pt-tez-skel">Araştırmalar yükleniyor…</div>';
+    try{
+      const all = await getTezler();
+      const list = (Array.isArray(all)?all:[]).filter(t=>t.kategori==='arastirma');
+      if (!list.length){ grid.innerHTML = '<div class="pt-tez-skel">Henüz araştırma yayınlanmadı.</div>'; return; }
+      grid.innerHTML = list.map(arastirmaCardHTML).join('');
+      grid.dataset.loaded = '1';
+      list.filter(t=>t.maliyet_fiyat && t.ticker).forEach(portalTezGetiri);
+    }catch(e){ grid.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Araştırmalar yüklenemedi.</div>'; }
   }
 
   function renderFeatured(t){
@@ -7084,7 +7222,7 @@ function garpAnalizAc(ticker) {
     if (!table) return;
     try{
       const list = await getTezler();
-      const scored = (Array.isArray(list)?list:[]).filter(t=>t.maliyet_fiyat && t.ticker);
+      const scored = (Array.isArray(list)?list:[]).filter(t=>t.maliyet_fiyat && t.ticker && (t.kategori||'tez')==='tez');
       if (!scored.length){ table.innerHTML = '<div class="trk-skel">Henüz fiyatlı (maliyetli) tez yok.</div>'; return; }
       const rows = await Promise.all(scored.map(async t=>{
         const ex = t.exchange || 'BIST';
