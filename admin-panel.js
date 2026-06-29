@@ -204,6 +204,22 @@ async function openTezEditor() {
         </div>
         <input type="hidden" id="tezFormId"/>
 
+        <!-- İçerik türü: Yatırım Tezi mi, Şirket Araştırması mı -->
+        <div style="margin-bottom:14px;">
+          <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:6px;letter-spacing:1px;">İÇERİK TÜRÜ</label>
+          <div style="display:flex;gap:8px;">
+            <label style="flex:1;display:flex;align-items:center;gap:8px;background:#13182a;border:1px solid rgba(255,255,255,0.1);padding:9px 12px;border-radius:6px;cursor:pointer;">
+              <input type="radio" name="tezKategori" value="tez" checked style="accent-color:#c2ad84;"/>
+              <span style="font-size:12px;color:#ffffff;">📊 Yatırım Tezi</span>
+            </label>
+            <label style="flex:1;display:flex;align-items:center;gap:8px;background:#13182a;border:1px solid rgba(255,255,255,0.1);padding:9px 12px;border-radius:6px;cursor:pointer;">
+              <input type="radio" name="tezKategori" value="arastirma" style="accent-color:#c2ad84;"/>
+              <span style="font-size:12px;color:#ffffff;">🔬 Şirket Araştırması</span>
+            </label>
+          </div>
+          <div style="font-size:9px;color:#3a4150;margin-top:5px;">Tez → Yatırım Tezleri & Sicil · Araştırma → Şirket Araştırmaları bölümü (X'ten paylaşılabilir)</div>
+        </div>
+
         <!-- Satır 1: Başlık + Ticker -->
         <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px;">
           <div>
@@ -407,6 +423,7 @@ async function tezListeYukle() {
           <div style="font-size:13px;color:#ffffff;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${baslik}</div>
           <div style="margin-top:3px;display:flex;align-items:center;gap:6px;">
             ${t.ticker ? `<span style="font-size:10px;color:#c2ad84;font-family:'JetBrains Mono',monospace;">${ticker}</span>` : ''}
+            <span style="font-size:9px;color:#8a93a3;border:1px solid rgba(255,255,255,0.12);padding:1px 6px;border-radius:3px;">${t.kategori === 'arastirma' ? '🔬 Araştırma' : '📊 Tez'}</span>
             <span style="font-size:10px;color:${t.yayinda ? '#22c55e' : '#5d6675'};">${t.yayinda ? '● Yayında' : '○ Taslak'}</span>
           </div>
         </div>
@@ -451,6 +468,9 @@ function tezFormAc(tez) {
     document.getElementById('tezOzet').value      = tez.ozet || '';
     document.getElementById('tezIcerik').value    = tez.icerik || '';
     document.getElementById('tezYayinda').checked = tez.yayinda || false;
+    const _katE = tez.kategori || 'tez';
+    const _kElE = document.querySelector('input[name="tezKategori"][value="' + _katE + '"]');
+    if (_kElE) _kElE.checked = true;
     const _mEl = document.getElementById('tezMaliyet');
     if (_mEl) _mEl.value = tez.maliyet_fiyat != null ? tez.maliyet_fiyat : '';
     const _eEl = document.getElementById('tezExchange');
@@ -479,6 +499,8 @@ function tezFormAc(tez) {
     document.getElementById('tezOzet').value      = '';
     document.getElementById('tezIcerik').value    = '';
     document.getElementById('tezYayinda').checked = false;
+    const _kElN = document.querySelector('input[name="tezKategori"][value="tez"]');
+    if (_kElN) _kElN.checked = true;
     const _mElY = document.getElementById('tezMaliyet'); if(_mElY) _mElY.value = '';
     const _eElY = document.getElementById('tezExchange'); if(_eElY) _eElY.value = 'BIST';
     const _dElY = document.getElementById('tezOlusturma'); if(_dElY) _dElY.value = '';
@@ -522,6 +544,7 @@ async function tezKaydet() {
     yayinda:       document.getElementById('tezYayinda').checked,
     maliyet_fiyat: _maliyetVal !== '' ? parseFloat(_maliyetVal) : null,
     exchange:      _exchangeVal,
+    kategori:      document.querySelector('input[name="tezKategori"]:checked')?.value || 'tez',
   };
 
   if (!body.baslik) { showToast('Başlık zorunlu'); return; }
