@@ -154,6 +154,7 @@ export default async function handler(req, res) {
     const body = req.body;
     body.guncelleme = new Date().toISOString();
     if (!body.olusturma) body.olusturma = new Date().toISOString();
+    if (!body.kategori) body.kategori = 'tez'; // 'tez' | 'arastirma'
     if (!body.slug) body.slug = body.baslik.toLowerCase().replace(/[^a-z0-9ğüşıöç]+/gi, '-').replace(/(^-|-$)/g, '');
     const r = await fetch(`${SUPABASE_URL}/rest/v1/tezler`, { method: 'POST', headers, body: JSON.stringify(body) });
     return res.status(200).json(await r.json());
