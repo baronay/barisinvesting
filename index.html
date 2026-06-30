@@ -168,6 +168,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .mnav-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .tab-content{display:none;}.tab-content.active{display:block;}
 .s-input{padding:14px 20px;border-bottom:1px solid var(--border-s);}
+.s-input-hidden{display:none;}
 .s-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block;font-family:'JetBrains Mono',monospace;}
 .ex-row{display:flex;gap:4px;margin-bottom:10px;}
 .ex-btn{flex:1;background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:9px;padding:6px 2px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:3px;}
@@ -340,8 +341,8 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .fw-tag{font-size:8px;padding:2px 6px;border:1px solid var(--border-s);color:var(--muted);background:rgba(255,255,255,.03);}
 .fw-skip{width:100%;padding:11px;background:none;border:none;border-top:1px solid var(--rule);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;}
 .fw-skip:hover{color:var(--text);}
-.hero{background:var(--sidebar);position:relative;overflow:hidden;padding:0;margin-bottom:0;border:none;}
-.hero::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 90% at -5% 50%,rgba(168,148,107,.13) 0%,transparent 60%),radial-gradient(ellipse 60% 70% at 105% 50%,rgba(138,126,148,.08) 0%,transparent 55%);}
+.hero{background:linear-gradient(165deg,var(--sidebar3) 0%,var(--sidebar2) 45%,var(--sidebar) 100%);position:relative;overflow:hidden;padding:0;margin-bottom:0;border:none;}
+.hero::before{content:'';position:absolute;inset:0;pointer-events:none;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.035 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>"),radial-gradient(ellipse 80% 90% at -5% 50%,rgba(168,148,107,.13) 0%,transparent 60%),radial-gradient(ellipse 60% 70% at 105% 50%,rgba(138,126,148,.08) 0%,transparent 55%);}
 .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),var(--dalio),transparent);}
 .hero-inner{display:grid;grid-template-columns:1fr 280px;gap:0;align-items:stretch;min-height:220px;}
 .hero-left{padding:32px 36px 26px;position:relative;z-index:1;}
@@ -3272,14 +3273,17 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 
   <!-- ANALIZ TAB -->
   <div class="tab-content active" id="tab-analiz-content">
-    <div class="s-input">
-      <label class="s-lbl">Borsa</label>
+    <!-- Borsa/Ticker/Çerçeve/Analiz Et kontrolleri sol menüden kaldırıldı —
+         odak artık ortadaki hero arama kutusunda (heroIn/heroFwSel/hero-search-btn).
+         Bu elemanlar (tickerIn, coIn, anaBtn, ex-*, fw-*) site genelinde onlarca
+         yerden doğrudan okunup yazıldığı için DOM'dan silinmedi, sadece görsel
+         olarak gizlendi — hero, bunları arka planda programatik olarak sürüyor. -->
+    <div class="s-input-hidden" aria-hidden="true">
       <div class="ex-row">
         <button class="ex-btn active" id="ex-bist" onclick="selEx('BIST')"><svg class="flag-s"><use href="#f-tr"/></svg>BIST</button>
         <button class="ex-btn" id="ex-nyse" onclick="selEx('NYSE')"><svg class="flag-s"><use href="#f-us"/></svg>NYSE</button>
         <button class="ex-btn" id="ex-nasdaq" onclick="selEx('NASDAQ')"><svg class="flag-s"><use href="#f-us"/></svg>NAS</button>
       </div>
-      <label class="s-lbl">Ticker & Şirket</label>
       <div class="ac-wrap">
         <div class="ticker-row">
           <input class="t-input" id="tickerIn" placeholder="THYAO" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
@@ -3287,14 +3291,11 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
         </div>
         <div class="ac-drop" id="acDrop"></div>
       </div>
-      <label class="s-lbl" style="margin-top:7px">Çerçeve</label>
       <div class="fw-row">
         <button class="fw-btn active" id="fw-b" onclick="selFW('buffett')">Buffett</button>
         <button class="fw-btn" id="fw-l" onclick="selFW('lynch')">P. Lynch</button>
       </div>
       <button class="ana-btn" id="anaBtn" onclick="doAnalyze()">ANALİZ ET →</button>
-      <div class="data-badge" id="dataBadge">✓ Yahoo Finance verisi yüklendi</div>
-      <div class="err-bar" id="errBar"></div>
     </div>
     <div class="pop-sec">
       <div class="pop-lbl">Hızlı Erişim</div>
@@ -3406,7 +3407,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 
   <!-- HERO at top — 2 kolon: sol arama, sağ piyasa özeti -->
   <div class="hero">
-    <div data-tiles-bg data-tiles-size="32" style="position:absolute;inset:0;z-index:0;"></div>
     <div class="hero-inner" style="position:relative;z-index:2;">
       <!-- Sol: arama -->
       <div class="hero-left">
@@ -3427,6 +3427,8 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
           <button class="hero-ex-btn" id="hex-nyse" onclick="selHeroEx('NYSE')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-us"/></svg>NYSE</button>
           <button class="hero-ex-btn" id="hex-nasdaq" onclick="selHeroEx('NASDAQ')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-us"/></svg>NASDAQ</button>
         </div>
+        <div class="data-badge" id="dataBadge" style="margin-top:10px">✓ Yahoo Finance verisi yüklendi</div>
+        <div class="err-bar" id="errBar" style="margin-top:10px"></div>
       </div>
       <!-- Sağ: piyasa özeti -->
       <div class="hero-right" id="heroMarketPanel">
@@ -3436,6 +3438,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
         <div class="hmp-row" id="hmpBIST"><span class="hmp-lbl">BİST 100</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
         <div class="hmp-divider"></div>
         <div class="hmp-row" id="hmpBTC"><span class="hmp-lbl">BTC</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-row" id="hmpETH"><span class="hmp-lbl">ETH</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
         <div class="hmp-row" id="hmpGold"><span class="hmp-lbl">Altın</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
         <div class="hmp-row" id="hmpOil"><span class="hmp-lbl">Petrol</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
         <div class="hmp-time" id="hmpTime"></div>
@@ -3443,7 +3446,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     </div>
   </div>
 
-  <!-- MARKET STRIP (tam genişlik, hero altı) -->
+  <!-- MARKET STRIP kaldırıldı — aynı endeks verisi artık tek widget'ta (CANLI PİYASA, hero-right) -->
   <div class="page-body">
   <div class="home-two-col">
     <!-- SOL: Haberler -->
@@ -3451,14 +3454,9 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div class="sec-title">Son Dakika Piyasa Haberleri <span class="src-badge" id="srcBadge" style="margin-left:5px"></span></div>
       <div class="news-grid-v" id="newsGrid"><div class="news-loading">Haberler yükleniyor...</div></div>
     </div>
-    <!-- SAĞ: Dikkat çeken + piyasa şerit -->
+    <!-- SAĞ: Dikkat çeken hisseler -->
     <div class="home-col-right">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <div class="sec-title" style="margin:0;flex:1">Piyasa Genel Görünümü</div>
-        <span style="font-size:8px;color:var(--muted2)" id="mktTime"></span>
-      </div>
-      <div class="mkt-strip-v" id="mktStrip"><div style="text-align:center;padding:12px;color:var(--muted2);font-size:10px">Yükleniyor...</div></div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;margin-top:16px">
         <div class="sec-title" style="margin:0;flex:1">Dikkat Çeken Hisseler</div>
         <div style="display:flex;gap:4px">
           <button class="wl-tab active" id="wl-bist" onclick="loadWatchlist('BIST')"><svg style="width:11px;height:7px"><use href="#f-tr"/></svg> BIST</button>
@@ -3877,7 +3875,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 const BIST={'THYAO':'Türk Hava Yolları','EREGL':'Ereğli Demir Çelik','SAHOL':'Sabancı Holding','KCHOL':'Koç Holding','ASELS':'Aselsan','BIMAS':'BİM Mağazalar','TUPRS':'Tüpraş','AKBNK':'Akbank','ISCTR':'İş Bankası','FROTO':'Ford Otosan','TOASO':'Tofaş Otomobil','VAKBN':'Vakıfbank','PGSUS':'Pegasus','TAVHL':'TAV Havalimanları','SISE':'Şişecam','TURSG':'Türkiye Sigorta','GARAN':'Garanti BBVA','YKBNK':'Yapı Kredi','HALKB':'Halkbank','TCELL':'Turkcell','TTKOM':'Türk Telekom','ARCLK':'Arçelik','VESTL':'Vestel','ENKAI':'Enka İnşaat','PETKM':'Petkim','KOZAL':'Koza Altın','KRDMD':'Kardemir','SOKM':'Şok Marketler','MGROS':'Migros','ULKER':'Ülker','CCOLA':'Coca-Cola İçecek','MAVI':'Mavi Giyim','LOGO':'Logo Yazılım','EKGYO':'Emlak Konut','ENJSA':'Enerjisa','QNBTR':'QNB Finansbank','TSKB':'TSKB','ALBRK':'Albaraka Türk','SKBNK':'Şekerbank','DOAS':'Doğuş Otomotiv','OTKAR':'Otokar','TTRAK':'Türk Traktör','NETAS':'Netaş','AYEN':'Ayen Enerji','AKSEN':'Aksen Enerji','ZOREN':'Zorlu Enerji','ODAS':'Odaş Elektrik','KOZAA':'Koza Madencilik','IPEKE':'İpek Doğal Enerji','GUBRF':'Gübre Fabrikaları','ALKIM':'Alkim Kimya','SASA':'Sasa Polyester','BRISA':'Brisa Bridgestone','TKFEN':'Tekfen Holding','DOHOL':'Doğan Holding','GLYHO':'Global Yatırım Holding','IHLGM':'İHL Holding','AKCNS':'Akçansa','BOLUC':'Bolu Çimento','ADANA':'Adana Çimento','CIMSA':'Çimsa','GOLTS':'Göltaş Çimento','MRDIN':'Mardin Çimento','UNYEC':'Ünye Çimento','KONYA':'Konya Çimento','ISGYO':'İş GYO','VKGYO':'Vakıf GYO','RAYSG':'Ray Sigorta','ANSGR':'Anadolu Sigorta','ANHYT':'Anadolu Hayat','AVHOL':'Avivasa','HEPSI':'Hepsiburada','LCWGR':'LC Waikiki','ARENA':'Arena Bilgisayar','INDES':'İndes Bilgisayar','LINK':'Link Bilgisayar','RYSAS':'Reysaş Lojistik','CLEBI':'Çelebi Havacılık','NUHCM':'Nuh Çimento','CELHA':'Çelik Halat','PARSN':'Parsan Makine','AGHOL':'AG Anadolu Grubu','MERIT':'Merit Turizm'};
 const BIST_P=['THYAO','EREGL','SAHOL','ASELS','BIMAS','KCHOL'];
 const US_P=[{t:'AAPL',c:'Apple',e:'NASDAQ'},{t:'MSFT',c:'Microsoft',e:'NASDAQ'},{t:'NVDA',c:'NVIDIA',e:'NASDAQ'},{t:'GOOGL',c:'Alphabet',e:'NASDAQ'},{t:'META',c:'Meta',e:'NASDAQ'},{t:'TSLA',c:'Tesla',e:'NASDAQ'}];
-const MKT_CFG=[{k:'sp500',l:'S&P 500'},{k:'nasdaq',l:'NASDAQ'},{k:'bist100',l:'BIST 100'},{k:'btc',l:'BTC'},{k:'eth',l:'ETH'},{k:'gold',l:'Altın'},{k:'oil',l:'Petrol'}];
 const EX_CFG={BIST:{l:'BIST',fh:'#f-tr',cur:'₺',tv:(t)=>`BIST:${t}`},NYSE:{l:'NYSE',fh:'#f-us',cur:'$',tv:(t)=>`NYSE:${t}`},NASDAQ:{l:'NASDAQ',fh:'#f-us',cur:'$',tv:(t)=>`NASDAQ:${t}`}};
 const FW={
   buffett:{name:'Buffett',criteria:[{name:'ROE Sürdürülebilirliği',desc:'ROE %15+ ve son 5 yılda tutarlı mı?',ctx:'Buffett, ROE\'yi sermaye verimliliğinin en saf göstergesi olarak görür.'},{name:'Fiyatlama Gücü',desc:'Maliyet artışlarını müşteriye yansıtabiliyor mu?',ctx:'"Enflasyona karşı en iyi savunma, fiyat arttığında bile alınan ürünleri satmaktır."'},{name:'$1 → $1+ Testi',desc:'Her $1 alıkonulan sermaye $1+ piyasa değeri yarattı mı?',ctx:'Alıkonulan kazançların piyasa değerine katkısı.'},{name:'Ekonomik Hendek',desc:'Marka, ağ etkisi, maliyet avantajı var mı?',ctx:'ROIC\'in WACC\'tan sürekli yüksek olması hendek göstergesidir.'},{name:'Serbest Nakit Akışı',desc:'FCF tutarlı, büyüyor ve net gelirle uyumlu mu?',ctx:'Buffett muhasebe kârına değil gerçek nakde bakar.'},{name:'Yönetim Kalitesi',desc:'Sermaye tahsisi geçmişi ve hissedar dostu mu?',ctx:'Zor dönemlerdeki davranış kırmızı bayraktır.'},{name:'Değerleme Marjı',desc:'P/E, P/FCF, EV/EBITDA sektör ortalamasına göre?',ctx:'"Olağanüstü bir şirketi adil fiyatına almak çok daha iyidir."'}],keys:['ROE','PRICING','DOLLAR','MOAT','FCF','MGMT','VALUATION'],prompt:(t,c,ex)=>`Warren Buffett felsefesiyle ${ex} borsasındaki "${t}"${c?` (${c})`:''} hissesini analiz et.\n\nTICKER: ${t}\nTOTAL_SCORE: X\nVERDICT: AL|BEKLE|UZAK_DUR\nSUMMARY: [2-3 cümle]\nRISK: [en kritik risk]\n\nMULTIPLES_START\nPE: [sayı] | [ucuz/adil/pahalı]\nPB: [sayı] | [ucuz/adil/pahalı]\nEV_EBITDA: [sayı] | [ucuz/adil/pahalı]\nPEG: [sayı] | [ucuz/adil/pahalı]\nRSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]\nPRICE_52W: [düşük]-[yüksek] | [mevcut]\nANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]\nMULTIPLES_END\n\nCRITERIA_START\nROE: PASS|FAIL|NEUTRAL | [açıklama]\nPRICING: PASS|FAIL|NEUTRAL | [açıklama]\nDOLLAR: PASS|FAIL|NEUTRAL | [açıklama]\nMOAT: PASS|FAIL|NEUTRAL | [açıklama]\nFCF: PASS|FAIL|NEUTRAL | [açıklama]\nMGMT: PASS|FAIL|NEUTRAL | [açıklama]\nVALUATION: PASS|FAIL|NEUTRAL | [açıklama]\nCRITERIA_END`},
@@ -3997,9 +3994,9 @@ function renderFWTeaser(currentFW, ticker, company) {
     `;
     btn.onclick = () => {
       selFW(fwKey);
-      // Scroll up to analyze button
-      const btn2 = document.getElementById('anaBtn');
-      if (btn2) btn2.scrollIntoView({behavior:'smooth', block:'center'});
+      // Hero arama kutusuna scroll et (eski sidebar anaBtn artık gizli)
+      const heroRow = document.querySelector('.hero-search-row');
+      if (heroRow) heroRow.scrollIntoView({behavior:'smooth', block:'center'});
       setTimeout(() => doAnalyze(), 300);
     };
     row.appendChild(btn);
@@ -4185,23 +4182,15 @@ async function loadMkt(){
     const e=document.getElementById('mktTime');if(e)e.textContent=`● ${new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})} güncel`;
     const ht=document.getElementById('hmpTime');if(ht)ht.textContent=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})+' güncel';
   }catch{
-    const s=document.getElementById('mktStrip');
-    if(s)s.innerHTML='<div style="text-align:center;color:var(--muted2);font-size:10px;padding:12px">Piyasa verisi yüklenemedi</div>';
+    const ht=document.getElementById('hmpTime');
+    if(ht)ht.textContent='Piyasa verisi yüklenemedi';
   }
 }
 
 function renderMkt(m){
-  const g=document.getElementById('mktStrip');g.innerHTML='';
-  MKT_CFG.forEach(cfg=>{
-    const d=m[cfg.k];const card=document.createElement('div');
-    if(!d){card.className='mkt-card';card.innerHTML=`<div class="mkt-lbl">${cfg.l}</div><div class="mkt-price">—</div><div class="mkt-chg">—</div>`;g.appendChild(card);return;}
-    const pos=d.change>=0;card.className=`mkt-card ${pos?'pos':'neg'}`;
-    const ps=d.price>10000?d.price.toLocaleString('tr-TR',{maximumFractionDigits:0}):d.price.toFixed(2);
-    card.innerHTML=`<div class="mkt-lbl">${cfg.l}</div><div class="mkt-price">${ps}</div><div class="mkt-chg ${pos?'pos':'neg'}">${pos?'▲':'▼'}%${Math.abs(d.change).toFixed(2)}</div>`;
-    g.appendChild(card);
-  });
-  // Hero sağ panel
-  const hmpMap={sp500:'hmpSP500',nasdaq:'hmpNAS',bist100:'hmpBIST',btc:'hmpBTC',gold:'hmpGold',oil:'hmpOil'};
+  // Tek piyasa widget'ı — hero sağ panel (CANLI PİYASA). Önceden ayrıca
+  // "Piyasa Genel Görünümü" (#mktStrip) aynı veriyi tekrar gösteriyordu, kaldırıldı.
+  const hmpMap={sp500:'hmpSP500',nasdaq:'hmpNAS',bist100:'hmpBIST',btc:'hmpBTC',eth:'hmpETH',gold:'hmpGold',oil:'hmpOil'};
   Object.entries(hmpMap).forEach(([k,id])=>{
     const el=document.getElementById(id);if(!el)return;
     const d=m[k];if(!d)return;
@@ -6029,7 +6018,6 @@ if (!localStorage.getItem('baris_fw_seen')) {
 <script src="/admin-panel.js"></script>
 <script src="/analyze-features.js"></script>
 <script src="/score-gauge.js"></script>
-<script src="/tiles-bg.js"></script>
 
 <!-- MOBILE HESAP SHEET -->
 <div id="mobileAccountSheet" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.5)" onclick="closeMobileAccount()">
@@ -6535,9 +6523,10 @@ function garpAnalizAc(ticker) {
     if (typeof window.switchTab === 'function') window.switchTab('analiz');
     if (typeof window.showPage === 'function') window.showPage('overview');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    // Ticker input'una odaklan — kullanıcı direkt yazmaya başlasın
+    // Hero arama kutusuna odaklan — kullanıcı direkt yazmaya başlasın
+    // (sidebar'daki tickerIn artık gizli, görünür/odaklanabilir giriş heroIn)
     setTimeout(function() {
-      const inp = document.getElementById('tickerIn');
+      const inp = document.getElementById('heroIn');
       if (inp) inp.focus();
     }, 350);
   };
