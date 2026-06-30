@@ -168,6 +168,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .mnav-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .tab-content{display:none;}.tab-content.active{display:block;}
 .s-input{padding:14px 20px;border-bottom:1px solid var(--border-s);}
+.s-input-hidden{display:none;}
 .s-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block;font-family:'JetBrains Mono',monospace;}
 .ex-row{display:flex;gap:4px;margin-bottom:10px;}
 .ex-btn{flex:1;background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:9px;padding:6px 2px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:3px;}
@@ -3291,28 +3292,21 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     </div>
   </div>
 
-  <!-- 3 TABS -->
-  <div class="main-nav">
-    <div class="mnav-tab active" id="tab-analiz" onclick="switchTab('analiz')">Analiz</div>
-    <div class="mnav-tab" id="tab-portfoy" onclick="switchTab('portfoy')">Portföy</div>
-    <div class="mnav-tab" id="tab-takip" onclick="switchTab('takip')">Takip</div>
-  </div>
-
-  <!-- ANALIZ TAB -->
+  <!-- Üstteki Analiz/Portföy/Takip sekme şeridi kaldırıldı — Portföy ve Takip
+       sayfalarına artık doğrudan aşağıdaki MENÜ listesinden ulaşılıyor,
+       ayrı bir sekme/widget'a gerek kalmadı. -->
   <div class="tab-content active" id="tab-analiz-content">
-    <!-- Borsa/Ticker/Çerçeve/Analiz Et kontrolleri sol menüde tekrar görünür —
-         hero'daki hızlı arama (heroIn/heroFwSel/hero-search-btn) ile birlikte
-         ikinci bir giriş noktası olarak duruyor. Bu elemanlar (tickerIn, coIn,
-         anaBtn, ex-*, fw-*) site genelinde onlarca yerden doğrudan okunup
-         yazıldığı için ID'ler ve onclick'ler AYNEN korunmuştur. -->
-    <div class="s-input" id="sidebarInputBlock">
-      <label class="s-lbl">Borsa</label>
+    <!-- Borsa/Ticker/Çerçeve/Analiz Et kontrolleri sol menüden kaldırıldı —
+         tüm arama artık hero'daki kutuda (heroIn/heroFwSel/hero-search-btn).
+         Bu elemanlar (tickerIn, coIn, anaBtn, ex-*, fw-*) site genelinde
+         onlarca yerden doğrudan okunup yazıldığı için DOM'dan silinmedi,
+         sadece görsel olarak gizlendi. -->
+    <div class="s-input-hidden" aria-hidden="true">
       <div class="ex-row">
         <button class="ex-btn active" id="ex-bist" onclick="selEx('BIST')"><svg class="flag-s"><use href="#f-tr"/></svg>BIST</button>
         <button class="ex-btn" id="ex-nyse" onclick="selEx('NYSE')"><svg class="flag-s"><use href="#f-us"/></svg>NYSE</button>
         <button class="ex-btn" id="ex-nasdaq" onclick="selEx('NASDAQ')"><svg class="flag-s"><use href="#f-us"/></svg>NAS</button>
       </div>
-      <label class="s-lbl">Ticker &amp; Şirket</label>
       <div class="ac-wrap">
         <div class="ticker-row">
           <input class="t-input" id="tickerIn" placeholder="THYAO" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
@@ -3320,16 +3314,14 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
         </div>
         <div class="ac-drop" id="acDrop"></div>
       </div>
-      <label class="s-lbl">Çerçeve</label>
       <div class="fw-row">
         <button class="fw-btn active" id="fw-b" onclick="selFW('buffett')">Buffett</button>
         <button class="fw-btn" id="fw-l" onclick="selFW('lynch')">P. Lynch</button>
       </div>
-      <button class="ana-btn" id="anaBtn" onclick="doAnalyze()" style="display:none">ANALİZ ET →</button>
-      <div class="data-badge" id="dataBadge" style="margin-top:10px">✓ Yahoo Finance verisi yüklendi</div>
-      <div class="err-bar" id="errBar" style="margin-top:10px"></div>
+      <button class="ana-btn" id="anaBtn" onclick="doAnalyze()">ANALİZ ET →</button>
     </div>
-    <div class="pop-sec">
+    <!-- Hızlı Erişim (BIST30/MAG7) gizlendi — MENÜ sol panelde daha öne çıksın diye -->
+    <div class="pop-sec" style="display:none">
       <div class="pop-lbl">Hızlı Erişim</div>
       <div class="pop-grp"><div class="pop-grp-t">🇹🇷 BIST30</div><div class="pop-chips" id="bistChips"></div></div>
       <div class="pop-grp"><div class="pop-grp-t">🇺🇸 MAG7</div><div class="pop-chips" id="usChips"></div></div>
@@ -3395,24 +3387,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     </div>
   </div>
 
-  <!-- TEZ TAB SIDEBAR -->
-  <div class="tab-content" id="tab-tez-content">
-    <div style="padding:14px 20px;">
-      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-family:'JetBrains Mono',monospace">Yatırım Tezleri</div>
-      <div style="font-size:10px;color:var(--text2);line-height:1.7;margin-bottom:12px">Barış'ın detaylı araştırma ve analiz tezleri. Sadece kayıtlı kullanıcılar için.</div>
-      <button class="pt-sb-btn" style="margin-top:0" onclick="showPage('tezler');closeSidebar()">TEZLERİ GÖR →</button>
-    </div>
-  </div>
-
-  <!-- FORUM TAB -->
-  <div class="tab-content" id="tab-forum-content">
-    <div class="forum-sb">
-      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:7px">Forum</div>
-      <div style="font-size:10px;color:var(--muted2);line-height:1.6;margin-bottom:7px">Herkese açık. Analiz, görüş ve yorumlarını paylaş.</div>
-      <button class="forum-new-sb-btn" onclick="showPage('forum');openPostForm();closeSidebar()">+ Analiz / Yorum Yaz</button>
-      <button class="forum-new-sb-btn" style="border-color:var(--accent);color:var(--accent);margin-top:4px" onclick="showPage('forum');closeSidebar()">📋 Forum'u Gör</button>
-    </div>
-  </div>
 
   <!-- USER SECTION -->
   <div class="user-sec" id="sidebarUserSec" style="display:none">
@@ -3477,6 +3451,8 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
           <button class="hero-ex-btn" id="hex-nyse" onclick="selHeroEx('NYSE')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-us"/></svg>NYSE</button>
           <button class="hero-ex-btn" id="hex-nasdaq" onclick="selHeroEx('NASDAQ')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-us"/></svg>NASDAQ</button>
         </div>
+        <div class="data-badge" id="dataBadge" style="margin-top:10px">✓ Yahoo Finance verisi yüklendi</div>
+        <div class="err-bar" id="errBar" style="margin-top:10px"></div>
       </div>
       <!-- Sağ: piyasa özeti -->
       <div class="hero-right" id="heroMarketPanel">
