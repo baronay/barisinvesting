@@ -169,6 +169,11 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .tab-content{display:none;}.tab-content.active{display:block;}
 .s-input{padding:14px 20px;border-bottom:1px solid var(--border-s);}
 .s-input-hidden{display:none;}
+/* Kullanıcı isteğiyle kaldırılan bölümler — ilgili JS fonksiyonları (renderRealData,
+   renderMult) her analizde bu elementlere doğrudan style.display='block/grid/flex'
+   yazıyor, bu yüzden sade "display:none" inline stili JS tarafından eziliyordu.
+   !important ile kalıcı gizliyoruz. */
+#priceStrip,#multGrid,#rsiCard,#rngCard,#anaCard{display:none!important;}
 .s-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block;font-family:'JetBrains Mono',monospace;}
 .ex-row{display:flex;gap:4px;margin-bottom:10px;}
 .ex-btn{flex:1;background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:9px;padding:6px 2px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:3px;}
@@ -466,8 +471,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .cb{background:var(--success);}.ch{background:var(--warn);}.cs{background:var(--danger);}
 .cons-lbls{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
 .ana-note{font-size:10px;color:var(--text2);padding:8px 10px;background:var(--surface2);border:1px solid var(--glass);border-left:2px solid var(--accent);line-height:1.7;margin-top:8px;}
-.enrich-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:1px;margin-bottom:1px;background:var(--border);}
-.crit-checklist{background:var(--surface);border:1px solid var(--glass);padding:10px 12px;min-width:0;overflow:hidden;}
+.crit-checklist{background:var(--surface);border:1px solid var(--glass);padding:10px 12px;min-width:0;overflow:hidden;margin-bottom:10px;}
 .cklist-row{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--rule);min-width:0;cursor:pointer;transition:background .15s;}
 .cklist-row:last-child{border-bottom:none;}
 .cklist-row:hover{background:var(--surface2);}
@@ -486,12 +490,9 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .ai-summary-risk{font-size:10px;color:var(--text2);line-height:1.6;padding:7px 9px;background:var(--surface2);border-left:2px solid var(--danger);margin-bottom:8px;}
 .ai-summary-verdict{font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;}
 /* Hero altı 3'lü satır: Analiz Sonuçları | Yapay Zeka Özeti | Son Dakika Haberleri */
-.result-news-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:24px;align-items:start;}
+.result-news-grid{display:grid;grid-template-columns:1.8fr 1.1fr 1fr;gap:24px;align-items:start;}
 .result-col{min-width:0;}
 .result-card{background:var(--surface);border:1px solid var(--border);padding:14px;}
-.result-mini-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
-.result-mini-ticker{font-family:'Playfair Display',serif;font-weight:700;font-size:15px;color:var(--text);}
-.result-mini-fw{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent);padding:2px 8px;}
 @media(max-width:1100px){.result-news-grid{grid-template-columns:1fr;}}
 .chart-card{background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:1px;}
 .chart-wrap{position:relative;height:145px;}
@@ -3473,18 +3474,33 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   <div class="page-body">
   <!-- HERO ALTI 3'LÜ SATIR: Analiz Sonuçları | Yapay Zeka Özeti | Son Dakika Haberleri -->
   <div class="result-news-grid">
-    <!-- Analiz yapılana kadar gizli (parseAndRender içinde açılıyor) -->
+    <!-- Analiz yapılana kadar gizli (parseAndRender içinde açılıyor). Tek akış:
+         şirket kartı → skor halkası → 7 madde checklist → topluluk duyarlılığı. -->
     <div class="result-col result-card" id="resultAnalysisCol" style="display:none">
-      <div class="result-mini-hdr"><span class="result-mini-ticker" id="resultMiniTicker">—</span><span class="result-mini-fw" id="resultMiniFw">—</span></div>
+      <div class="stock-hdr" id="stockHdr" style="margin:-14px -14px 14px;">
+        <div class="stock-logo" id="stockLogo">—</div>
+        <svg class="hflag"><use id="hflagUse" href="#f-tr"/></svg>
+        <div><div class="sticker" id="stockTicker">—</div><div class="sco" id="stockCo">—</div></div>
+        <div class="sbadges"><span class="badge badge-ex" id="badgeEx">—</span><span class="badge badge-fw" id="badgeFw">—</span><span class="badge badge-live" id="badgeLive" style="display:none">● Canlı</span></div>
+        <button class="x-shr-btn" onclick="openShr()"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X'te Paylaş</button><button class="x-shr-btn" onclick="copyShareLink()" style="margin-left:6px;background:var(--surface2);border-color:var(--border-s);color:var(--text2)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Link Kopyala</button>
+      </div>
+      <div class="rd-grid" id="rdGrid" style="display:none">
+        <div class="rd-card"><div class="rd-lbl">Güncel Fiyat</div><div class="rd-val" id="rdPrice">—</div><div class="rd-live">● Yahoo Finance</div></div>
+        <div class="rd-card"><div class="rd-lbl">Piyasa Değeri</div><div class="rd-val" id="rdMcap">—</div><div class="rd-sub" id="rdMcapS">—</div></div>
+        <div class="rd-card"><div class="rd-lbl">Serbest Nakit</div><div class="rd-val" id="rdFCF">—</div><div class="rd-sub" id="rdFCFS">—</div></div>
+        <div class="rd-card"><div class="rd-lbl">Net Nakit</div><div class="rd-val" id="rdNC">—</div><div class="rd-sub" id="rdNCS">—</div></div>
+        <div class="rd-card"><div class="rd-lbl">ROE</div><div class="rd-val" id="rdROE">—</div><div class="rd-sub">Özsermaye Kârlılığı</div></div>
+        <div class="rd-card"><div class="rd-lbl">Borç/Özsermaye</div><div class="rd-val" id="rdDE">—</div><div class="rd-sub" id="rdDES">—</div></div>
+        <div class="rd-card"><div class="rd-lbl">Gelir Büyümesi</div><div class="rd-val" id="rdRevG">—</div><div class="rd-sub">YoY</div></div>
+        <div class="rd-card"><div class="rd-lbl">Kurumsal Sahiplik</div><div class="rd-val" id="rdInst">—</div><div class="rd-sub" id="rdInstS">—</div></div>
+      </div>
       <div id="scoreGaugeBox" style="margin-bottom:1px;"></div>
-      <div class="enrich-grid">
-        <div id="critChecklist" class="crit-checklist"></div>
-        <div class="sentiment-card">
-          <div class="card-t"><div class="cdot"></div>Topluluk Duyarlılığı</div>
-          <div class="sentiment-sub">(Analist konsensüsüne dayalı)</div>
-          <div class="cons-bar"><div class="cb" id="cBuy2" style="width:60%"></div><div class="ch" id="cHold2" style="width:25%"></div><div class="cs" id="cSell2" style="width:15%"></div></div>
-          <div class="cons-lbls"><span id="cBuyL2" style="color:var(--success)">AL</span><span id="cHoldL2" style="color:var(--warn)">TUT</span><span id="cSellL2" style="color:var(--danger)">SAT</span></div>
-        </div>
+      <div id="critChecklist" class="crit-checklist"></div>
+      <div class="sentiment-card">
+        <div class="card-t"><div class="cdot"></div>Topluluk Duyarlılığı</div>
+        <div class="sentiment-sub">(Analist konsensüsüne dayalı)</div>
+        <div class="cons-bar"><div class="cb" id="cBuy2" style="width:60%"></div><div class="ch" id="cHold2" style="width:25%"></div><div class="cs" id="cSell2" style="width:15%"></div></div>
+        <div class="cons-lbls"><span id="cBuyL2" style="color:var(--success)">AL</span><span id="cHoldL2" style="color:var(--warn)">TUT</span><span id="cSellL2" style="color:var(--danger)">SAT</span></div>
       </div>
     </div>
     <div class="result-col result-card" id="resultAiCol" style="display:none">
@@ -3498,105 +3514,22 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     </div>
   </div>
 
-  <!-- Dikkat çeken hisseler (eskiden haberlerin yanındaydı, artık tek başına) -->
-  <div class="home-col-right" style="margin-top:24px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <div class="sec-title" style="margin:0;flex:1">Dikkat Çeken Hisseler</div>
-        <div style="display:flex;gap:4px">
-          <button class="wl-tab active" id="wl-bist" onclick="loadWatchlist('BIST')"><svg style="width:11px;height:7px"><use href="#f-tr"/></svg> BIST</button>
-          <button class="wl-tab" id="wl-us" onclick="loadWatchlist('US')"><svg style="width:11px;height:7px"><use href="#f-us"/></svg> ABD</button>
-        </div>
-        <span style="font-size:8px;color:var(--muted2)" id="wlTime"></span>
-      </div>
-      <div class="wl-grid-v" id="wlGrid"><div class="news-loading">Yükleniyor...</div></div>
-
-      <!-- ══ X (TWITTER) FEED KARTI — Adım 3 ══ -->
-      <div class="x-card" id="xFeedCard">
-        <div class="x-card-header">
-          <div class="x-card-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-          </div>
-          <div class="x-card-meta">
-            <div class="x-card-handle">
-              @barisinvesting
-              <svg class="verified" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.25 1.336.25 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.354-.643.366-.012.001-.024.001-.037.001-.247 0-.484-.092-.665-.26l-3.337-3.5c-.205-.218-.288-.51-.226-.785.063-.273.252-.51.51-.622.255-.114.55-.094.79.054l2.65 2.78 3.7-5.55c.187-.28.518-.43.83-.4.31.03.586.236.71.516s.075.6-.13.86z"/></svg>
-            </div>
-            <div class="x-card-name">Barış Investing · X</div>
-          </div>
-          <a class="x-card-follow"
-             href="https://x.com/barisinvesting"
-             target="_blank"
-             rel="noopener noreferrer"
-             onclick="trackXClick('follow')">
-            Takip Et
-          </a>
-        </div>
-
-        <div class="x-card-body">
-          <div class="x-card-desc">
-            BIST, NYSE ve NASDAQ üzerine günlük piyasa yorumları, hızlı analizler ve makro takvim. Tezler yayınlanmadan önce X'te paylaşılıyor.
-          </div>
-
-          <button type="button" class="x-card-load-btn" id="xLoadBtn" onclick="loadXFeed()">
-            <span class="spin"></span>
-            <svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-            <span class="lbl">Tweet'leri Göster</span>
-            <span class="arr">→</span>
-          </button>
-
-          <!-- Lazy-loaded embed buraya gelir -->
-          <div class="x-embed-container" id="xEmbedContainer" aria-live="polite"></div>
-        </div>
-      </div>
-  </div>
-
   <!-- ANALYSIS RESULTS (hidden until analyzed) -->
+  <!-- analysisSection: stockHdr + rdGrid "Analiz Sonuçları" kartına taşındı.
+       Geri kalanlar (eski RSI/Radar/52H Aralık/Master Selection/Analist
+       Konsensüsü/çoklu çarpanlar) kullanıcı isteğiyle kaldırıldı — ilgili JS
+       fonksiyonları (renderRealData, renderMult) başka yerlerden de
+       null-check'siz bu ID'lere yazdığı için elementler DOM'da kalıyor,
+       sadece kalıcı olarak gizli (display:none). -->
   <div id="analysisSection" style="display:none">
-    <div class="stock-hdr" id="stockHdr">
-      <div class="stock-logo" id="stockLogo">—</div>
-      <svg class="hflag"><use id="hflagUse" href="#f-tr"/></svg>
-      <div><div class="sticker" id="stockTicker">—</div><div class="sco" id="stockCo">—</div></div>
-      <div class="sbadges"><span class="badge badge-ex" id="badgeEx">—</span><span class="badge badge-fw" id="badgeFw">—</span><span class="badge badge-live" id="badgeLive" style="display:none">● Canlı</span></div>
-      <button class="x-shr-btn" onclick="openShr()"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X'te Paylaş</button><button class="x-shr-btn" onclick="copyShareLink()" style="margin-left:6px;background:var(--surface2);border-color:var(--border-s);color:var(--text2)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Link Kopyala</button>
-    </div>
-    <div class="rd-grid" id="rdGrid" style="display:none">
-      <div class="rd-card"><div class="rd-lbl">Güncel Fiyat</div><div class="rd-val" id="rdPrice">—</div><div class="rd-live">● Yahoo Finance</div></div>
-      <div class="rd-card"><div class="rd-lbl">Piyasa Değeri</div><div class="rd-val" id="rdMcap">—</div><div class="rd-sub" id="rdMcapS">—</div></div>
-      <div class="rd-card"><div class="rd-lbl">Serbest Nakit</div><div class="rd-val" id="rdFCF">—</div><div class="rd-sub" id="rdFCFS">—</div></div>
-      <div class="rd-card"><div class="rd-lbl">Net Nakit</div><div class="rd-val" id="rdNC">—</div><div class="rd-sub" id="rdNCS">—</div></div>
-      <div class="rd-card"><div class="rd-lbl">ROE</div><div class="rd-val" id="rdROE">—</div><div class="rd-sub">Özsermaye Kârlılığı</div></div>
-      <div class="rd-card"><div class="rd-lbl">Borç/Özsermaye</div><div class="rd-val" id="rdDE">—</div><div class="rd-sub" id="rdDES">—</div></div>
-      <div class="rd-card"><div class="rd-lbl">Gelir Büyümesi</div><div class="rd-val" id="rdRevG">—</div><div class="rd-sub">YoY</div></div>
-      <div class="rd-card"><div class="rd-lbl">Kurumsal Sahiplik</div><div class="rd-val" id="rdInst">—</div><div class="rd-sub" id="rdInstS">—</div></div>
-    </div>
-    <div class="ov-grid">
+    <div class="ov-grid" style="display:none">
       <div class="stat-card"><div class="stat-lbl">Geçen Kriter</div><div class="stat-val" id="statPass" style="color:var(--success)">—</div><div class="stat-sub" id="statPassS">—</div></div>
       <div class="stat-card"><div class="stat-lbl">Analiz Skoru</div><div class="stat-val" id="statScore">—</div><div class="stat-sub">kriter üzerinden</div></div>
     </div>
-    <!-- Live price strip above multiples -->
-    <div id="priceStrip" style="display:none;background:#000;border:1px solid var(--border2);padding:11px 14px;margin-bottom:10px;display:none;align-items:center;gap:20px;flex-wrap:wrap;">
-      <div>
-        <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:3px">Anlık Fiyat</div>
-        <div id="livePriceBig" style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--accent)">—</div>
-        <div id="livePriceSub" style="font-size:9px;color:var(--muted2);margin-top:2px">— ● Yahoo Finance</div>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-left:auto">
-        <div style="text-align:center">
-          <div style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-bottom:2px">52H Düşük</div>
-          <div id="price52Low" style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--danger)">—</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-bottom:2px">52H Yüksek</div>
-          <div id="price52High" style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--success)">—</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-bottom:2px">Piyasa Değeri</div>
-          <div id="priceMcap" style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text)">—</div>
-        </div>
-        <a id="tvLink" href="#" target="_blank" style="display:flex;align-items:center;gap:5px;background:#000;border:1px solid var(--border2);color:var(--muted2);font-family:'DM Mono',monospace;font-size:9px;padding:7px 11px;text-decoration:none;transition:all 0.2s;align-self:center" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted2)'">
-          📈 TradingView'da Gör →
-        </a>
-      </div>
+    <div id="priceStrip" style="display:none !important;">
+      <div id="livePriceBig"></div><div id="livePriceSub"></div>
+      <div id="price52Low"></div><div id="price52High"></div><div id="priceMcap"></div>
+      <a id="tvLink" href="#"></a>
     </div>
     <div class="mult-grid" id="multGrid" style="display:none">
       <div class="mult-card"><div class="mult-lbl">F/K (P/E)</div><div class="mult-val" id="mPE">—</div><div class="mult-sub" id="mPES">—</div><div class="mult-sig sn" id="mPESig">—</div></div>
@@ -3605,87 +3538,26 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div class="mult-card"><div class="mult-lbl">PEG Oranı</div><div class="mult-val" id="mPEG">—</div><div class="mult-sub" id="mPEGS">—</div><div class="mult-sig sn" id="mPEGSig">—</div></div>
     </div>
     <div class="rsi-card" id="rsiCard" style="display:none">
-      <div class="card-t"><div class="cdot"></div>RSI Göstergesi</div>
-      <div class="rsi-wrap"><div class="rsi-gauge"><div class="rsi-bg"><div class="rsi-fill" id="rsiFill" style="width:0%"></div></div><div class="rsi-zones"><span>Satım(30)</span><span>Nötr(50)</span><span>Alım(70)</span></div></div><div class="rsi-vbox"><div class="rsi-v" id="rsiVal">—</div><div style="font-size:8px;color:var(--muted2)">RSI-14</div><div class="rsi-sig" id="rsiSig">—</div></div></div>
+      <div class="rsi-fill" id="rsiFill"></div><div class="rsi-v" id="rsiVal">—</div><div class="rsi-sig" id="rsiSig">—</div>
     </div>
     <div class="rng-card" id="rngCard" style="display:none">
-      <div class="card-t"><div class="cdot"></div>52 Haftalık Fiyat Aralığı <span id="rngLive" style="font-size:8px;color:var(--success);margin-left:4px"></span></div>
-      <div class="rng-labels"><span id="rngLow">—</span><span>Güncel</span><span id="rngHigh">—</span></div>
-      <div class="rng-bwrap"><div class="rng-bfill"></div><div class="rng-marker" id="rngM" style="left:50%"></div></div>
-      <div class="rng-meta"><span style="color:var(--accent);font-family:'Syne',sans-serif;font-weight:700" id="rngCur">—</span><span style="color:var(--muted2);font-size:9px" id="rngPct">—</span></div>
+      <span id="rngLive"></span><span id="rngLow">—</span><span id="rngHigh">—</span>
+      <div class="rng-marker" id="rngM" style="left:50%"></div>
+      <span id="rngCur">—</span><span id="rngPct">—</span>
     </div>
     <div class="ana-card" id="anaCard" style="display:none">
-      <div class="card-t"><div class="cdot"></div>Analist Konsensüsü <span id="anaLive" style="font-size:8px;color:var(--success);margin-left:4px"></span></div>
-      <div class="ana-grid"><div class="ana-s"><div class="ana-sl">Konsensüs</div><div class="ana-sv" id="anaCons" style="color:var(--success)">—</div></div><div class="ana-s"><div class="ana-sl">Hedef Fiyat</div><div class="ana-sv" id="anaTarget" style="color:var(--accent)">—</div></div><div class="ana-s"><div class="ana-sl">Yukarı Potansiyel</div><div class="ana-sv" id="anaUp" style="color:var(--success)">—</div></div></div>
+      <span id="anaLive"></span>
+      <span id="anaCons">—</span><span id="anaTarget">—</span><span id="anaUp">—</span>
       <div class="cons-bar"><div class="cb" id="cBuy" style="width:60%"></div><div class="ch" id="cHold" style="width:25%"></div><div class="cs" id="cSell" style="width:15%"></div></div>
       <div class="cons-lbls"><span id="cBuyL" style="color:var(--success)">AL</span><span id="cHoldL" style="color:var(--warn)">TUT</span><span id="cSellL" style="color:var(--danger)">SAT</span></div>
       <div class="ana-note" id="anaNote">—</div>
     </div>
-
-    <!-- ══ FAIR VALUE CARD — Adil Değer (3 model) ══ -->
     <div class="fv-card" id="fvCard" style="display:none">
-      <div class="fv-head">
-        <div class="fv-head-icon">◈</div>
-        <div class="fv-head-text">
-          <div class="fv-head-title">Adil Değer Analizi</div>
-          <div class="fv-head-sub">3 EFSANE · 3 PERSPEKTİF</div>
-        </div>
-        <div class="fv-current-price">
-          ANLIK FİYAT
-          <b id="fvCurrentPrice">—</b>
-        </div>
-      </div>
-
-      <div class="fv-models">
-        <!-- Buffett Multiple (EPS × 12) -->
-        <div class="fv-model" id="fvModelBuffett" data-fw="buffett">
-          <div class="fv-m-name">Buffett · 12x Earnings</div>
-          <div class="fv-m-value" id="fvBuffettValue">—</div>
-          <div class="fv-m-delta na" id="fvBuffettDelta">—</div>
-          <div class="fv-m-bar"><div class="fv-m-bar-fill" id="fvBuffettBar"></div></div>
-          <div class="fv-m-formula">EPS × 12</div>
-        </div>
-
-        <!-- Lynch PEG=1 -->
-        <div class="fv-model" id="fvModelLynch" data-fw="lynch">
-          <div class="fv-m-name">Lynch · PEG=1</div>
-          <div class="fv-m-value" id="fvLynchValue">—</div>
-          <div class="fv-m-delta na" id="fvLynchDelta">—</div>
-          <div class="fv-m-bar"><div class="fv-m-bar-fill" id="fvLynchBar"></div></div>
-          <div class="fv-m-formula">EPS × Büyüme%</div>
-        </div>
-
-        <!-- Graham Defensive PE -->
-        <div class="fv-model" id="fvModelGraham" data-fw="graham" style="display:none">
-          <div class="fv-m-name">Graham · Defensive</div>
-          <div class="fv-m-value" id="fvGrahamValue">—</div>
-          <div class="fv-m-delta na" id="fvGrahamDelta">—</div>
-          <div class="fv-m-bar"><div class="fv-m-bar-fill" id="fvGrahamBar"></div></div>
-          <div class="fv-m-formula">EPS × 15</div>
-        </div>
-      </div>
-
-      <div class="fv-foot">
-        <div class="fv-foot-warns" id="fvWarnings"></div>
-        <div class="fv-foot-meta">
-          <span id="fvSource">—</span><br>
-          <span id="fvComputedAt">—</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="chart-card"><div class="card-t"><div class="cdot"></div>Radar Analizi</div><div class="radar-wrap"><canvas id="radarC"></canvas></div></div>
-    <div class="chart-card"><div class="card-t"><div class="cdot"></div>Kriter Skoru</div><div class="chart-wrap"><canvas id="barC"></canvas></div></div>
-
-    <!-- ŞİRKET PROFİLİ -->
-    <!-- ÇERÇEVe TEŞVİK KARTI -->
-    <div class="fw-teaser" id="fwTeaser">
-      <div class="fw-teaser-title">Bu hisseyi diğer yatırımcı gözüyle de değerlendir</div>
-      <div class="fw-teaser-row" id="fwTeaserRow"></div>
-    </div>
-    <div class="master-badge" id="masterBadge" style="margin-bottom:8px;">
-      <div class="mb-icon">⭐</div>
-      <div><div class="mb-title" id="masterTitle">MASTER SELECTION</div><div class="mb-sub" id="masterText">—</div></div>
+      <div class="fv-foot-warns" id="fvWarnings"></div>
+      <span id="fvSource">—</span><span id="fvComputedAt">—</span><b id="fvCurrentPrice">—</b>
+      <div class="fv-model" id="fvModelBuffett" data-fw="buffett"><div class="fv-m-value" id="fvBuffettValue">—</div><div class="fv-m-delta na" id="fvBuffettDelta">—</div><div class="fv-m-bar-fill" id="fvBuffettBar"></div></div>
+      <div class="fv-model" id="fvModelLynch" data-fw="lynch"><div class="fv-m-value" id="fvLynchValue">—</div><div class="fv-m-delta na" id="fvLynchDelta">—</div><div class="fv-m-bar-fill" id="fvLynchBar"></div></div>
+      <div class="fv-model" id="fvModelGraham" data-fw="graham"><div class="fv-m-value" id="fvGrahamValue">—</div><div class="fv-m-delta na" id="fvGrahamDelta">—</div><div class="fv-m-bar-fill" id="fvGrahamBar"></div></div>
     </div>
   </div>
   </div><!-- /page-body -->
@@ -4140,7 +4012,7 @@ function checkMasterBadge(ticker, score, maxScore, fwKey) {
 function renderCompanyProfile(fd, ticker, exchange) { /* kaldırıldı */ }
 
 // STATE
-let analysisData=null,radarChart=null,barChart=null,ptPie=null,ptScore=null;
+let analysisData=null,ptPie=null,ptScore=null;
 let curFW='buffett',curEX='BIST',curTicker='',curCo='';
 let heroEX='BIST';
 let hasAnalyzed=false,textGlobal='';
@@ -4571,14 +4443,6 @@ function renderMult(m){
   }
 }
 
-function renderCharts(data){
-  const fw=FW[curFW];const sc=data.statuses.map(s=>s==='pass'?100:s==='fail'?15:50);
-  const cl=data.statuses.map(s=>s==='pass'?'rgba(26,107,58,0.7)':s==='fail'?'rgba(165,90,82,0.7)':'rgba(176,138,90,0.6)');
-  const ac=curFW==='lynch'?'#b08a5a':curFW==='dalio'?'#8a7e94':'#c2ad84';
-  if(radarChart)radarChart.destroy();if(barChart)barChart.destroy();
-  radarChart=new Chart(document.getElementById('radarC').getContext('2d'),{type:'radar',data:{labels:fw.criteria.map(c=>c.name.split(' ')[0]),datasets:[{data:sc,backgroundColor:ac+'20',borderColor:ac,borderWidth:1.5,pointBackgroundColor:ac,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'#e8e4dc'},pointLabels:{color:'#6b6560',font:{family:'JetBrains Mono',size:9}},angleLines:{color:'#e8e4dc'}}},plugins:{legend:{display:false}}}});
-  barChart=new Chart(document.getElementById('barC').getContext('2d'),{type:'bar',data:{labels:fw.criteria.map((_,i)=>String(i+1).padStart(2,'0')),datasets:[{data:sc,backgroundColor:cl,borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100,ticks:{display:false},grid:{color:'#f4f1ec'},border:{color:'#d4cfc6'}},x:{ticks:{color:'#6b6560',font:{family:'JetBrains Mono',size:9}},grid:{display:false},border:{color:'#d4cfc6'}}},plugins:{legend:{display:false}}}});
-}
 
 let curCritIdx=0;
 
@@ -4858,14 +4722,11 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   const pc=statuses.filter(s=>s==='pass').length,fc=statuses.filter(s=>s==='fail').length;
   document.getElementById('statPass').textContent=pc;
   document.getElementById('statPassS').textContent=`${fc} kaldı, ${statuses.filter(s=>s==='neutral').length} belirsiz`;
-  const rmt=document.getElementById('resultMiniTicker');if(rmt)rmt.textContent=ticker;
-  const rmf=document.getElementById('resultMiniFw');if(rmf)rmf.textContent=fw.name;
   const rac=document.getElementById('resultAnalysisCol');if(rac)rac.style.display='block';
   const raic=document.getElementById('resultAiCol');if(raic)raic.style.display='block';
 
   if(fd)renderRealData(fd);
   const mults=parseMult(text);if(mults)renderMult(mults);
-  renderCharts(analysisData);
   document.getElementById('analysisSection').style.display='block';
   showPage('overview');switchTab('analiz');
   setTimeout(()=>{const rg=document.querySelector('.result-news-grid');if(rg)rg.scrollIntoView({behavior:'smooth',block:'start'});},300);
@@ -6094,7 +5955,6 @@ function renderWatchlist(stocks) {
 // AUTH STATE
 // ══════════════════════════════════════════════
 buildNav(); buildChips(); setupAC(); loadMkt(); loadNews(); renderHistory();
-loadWatchlist('BIST');
 
 // ── PAYLAŞILABILIR URL PARAMETRELERİ ──────────────────────────────
 // barisinvesting.com/?t=THYAO&fw=buffett&ex=BIST
