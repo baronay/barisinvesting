@@ -10,6 +10,9 @@ const SB_URL    = process.env.SUPABASE_URL;
 const SB_KEY    = process.env.SUPABASE_SERVICE_KEY;
 const TD_KEY    = process.env.TWELVE_DATA_API_KEY;
 
+const DEBUG_LOGS = process.env.DEBUG_LOGS === '1';
+function dlog(...args) { if (DEBUG_LOGS) console.log(...args); }
+
 const CACHE_TTL_MS    = 24 * 60 * 60 * 1000;   // 24 saat (DB cache)
 const HOT_CACHE_TTL   = 5 * 60 * 1000;          // 5 dakika (in-memory)
 const TIMEOUT_MS      = 12000;
@@ -56,7 +59,7 @@ async function getYahooCrumb() {
       }
     }
   } catch (e) {
-    console.log('[fv] Crumb failed:', e.message);
+    dlog('[fv] Crumb failed:', e.message);
   }
   return { crumb: _crumb, cookie: _cookie };
 }
@@ -379,7 +382,7 @@ async function readDbCache(ticker, exchange) {
 
     return row;
   } catch (e) {
-    console.log('[fv] cache read err:', e.message);
+    dlog('[fv] cache read err:', e.message);
     return null;
   }
 }
@@ -411,7 +414,7 @@ async function writeDbCache(ticker, exchange, payload) {
       signal: AbortSignal.timeout(8000),
     });
   } catch (e) {
-    console.log('[fv] cache write err:', e.message);
+    dlog('[fv] cache write err:', e.message);
   }
 }
 

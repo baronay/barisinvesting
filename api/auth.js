@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 // Admin brute force koruması
 const _adminAttempts = new Map();
 function checkAdminRateLimit(ip) {
@@ -69,18 +71,21 @@ function isToday(dateStr) {
     d.getDate() === now.getDate();
 }
 
-function makeRefCode(email) {
-  let hash = 0;
-  for (let i = 0; i < email.length; i++) {
-    hash = ((hash << 5) - hash) + email.charCodeAt(i);
-    hash |= 0;
-  }
-  return 'BI' + Math.abs(hash).toString(36).toUpperCase().slice(0, 6);
+function makeRefCode() {
+  return 'BI' + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 6);
 }
+
+const ALLOWED_ORIGINS = new Set([
+  'https://barisinvesting.com',
+  'https://www.barisinvesting.com',
+  'https://barisinvesting.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:5173',
+]);
 
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
-  const isAllowed = !origin || origin.includes('barisinvesting.com') || origin.includes('vercel.app') || origin.includes('localhost');
+  const isAllowed = !origin || ALLOWED_ORIGINS.has(origin);
   res.setHeader('Access-Control-Allow-Origin', isAllowed ? (origin || '*') : 'https://www.barisinvesting.com');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -98,7 +103,7 @@ export default async function handler(req, res) {
 
     const em = norm(email);
     const isAdminUser = ADMIN_EMAIL ? em === ADMIN_EMAIL : false;
-    const myRefCode = makeRefCode(em);
+    const myRefCode = makeRefCode();
 
     if (!SB_URL || !SB_KEY) {
       return res.status(200).json({
@@ -195,7 +200,10 @@ export default async function handler(req, res) {
       const user = await getUser(em);
       if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
       user.is_admin = ADMIN_EMAIL ? em === ADMIN_EMAIL : user.is_admin;
-      if (!user.ref_code) user.ref_code = makeRefCode(em);
+      if (!user.ref_code) {
+        user.ref_code = makeRefCode();
+        await sb('PATCH', 'users', { 'email': `eq.${em}` }, { ref_code: user.ref_code }).catch(() => null);
+      }
       return res.status(200).json({ user });
     } catch (e) {
       return res.status(500).json({ error: e.message });

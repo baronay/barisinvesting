@@ -3,6 +3,10 @@
 // BIST Fallback: Ham bilanço verisiyle PD/DD ve ROE formül hesabı
 // Son Çare: BIST site scraping (İş Yatırım / BigPara)
 
+// Geliştirme izleme logları — varsayılan kapalı, DEBUG_LOGS=1 ile açılır.
+const DEBUG_LOGS = process.env.DEBUG_LOGS === '1';
+function dlog(...args) { if (DEBUG_LOGS) console.log(...args); }
+
 // ── ÖNBELLEK ────────────────────────────────────────────────────
 const cache = new Map();
 const CACHE_TTL = 60 * 60 * 1000;
@@ -38,7 +42,7 @@ async function getYahooCrumb() {
       const txt = await r2.text();
       if (txt && txt.length > 0) { _crumb = txt.trim(); _cookie = cookieVal; _crumbTs = Date.now(); }
     }
-  } catch(e) { console.log('Crumb failed:', e.message); }
+  } catch(e) { dlog('Crumb failed:', e.message); }
   return { crumb: _crumb, cookie: _cookie };
 }
 
@@ -46,8 +50,8 @@ async function getYahooCrumb() {
 // Yahoo BIST bilançolarını bazen USD bazında saklar (özellikle büyük şirketler).
 // marketCap her zaman TRY bazında doğru geldiğinden onu referans kullanıyoruz.
 // Güncel kuru API'den çekmek yerine: marketCap / (price * shares) ile tespit ediyoruz.
-// Fallback: 38 TRY/USD (konservatif tahmini, gerçek ~40-42 arası)
-const APPROX_USD_TRY = 38;
+// USD_TRY env değişkeninden okunur (pipeline/bist_pipeline.py ile aynı yaklaşım), yoksa fallback kullanılır.
+const APPROX_USD_TRY = parseFloat(process.env.USD_TRY) || 38;
 
 // ── DEĞER BİRİMİ TESPİT MOTORU ───────────────────────────────────
 // val: test edilen değer
@@ -58,7 +62,7 @@ function detectAndNormalize(val, mktCap, minRatio, maxRatio, label) {
   if (val == null || mktCap == null || mktCap <= 0) return val;
   const ratio = Math.abs(val) / mktCap;
 
-  console.log(`[Birim Tespit] ${label}: val=${val.toExponential(2)} mktCap=${mktCap.toExponential(2)} ratio=${ratio.toFixed(4)} (beklenen: ${minRatio}–${maxRatio})`);
+  dlog(`[Birim Tespit] ${label}: val=${val.toExponential(2)} mktCap=${mktCap.toExponential(2)} ratio=${ratio.toFixed(4)} (beklenen: ${minRatio}–${maxRatio})`);
 
   if (ratio >= minRatio && ratio <= maxRatio) {
     // Makul aralıkta — değiştirme
@@ -70,24 +74,24 @@ function detectAndNormalize(val, mktCap, minRatio, maxRatio, label) {
     const asTRY = val * APPROX_USD_TRY;
     const ratioTRY = Math.abs(asTRY) / mktCap;
     if (ratioTRY >= minRatio && ratioTRY <= maxRatio) {
-      console.log(`[Birim] ${label}: USD→TRY ×${APPROX_USD_TRY}: ${val.toExponential(2)} → ${asTRY.toExponential(2)}`);
+      dlog(`[Birim] ${label}: USD→TRY ×${APPROX_USD_TRY}: ${val.toExponential(2)} → ${asTRY.toExponential(2)}`);
       return asTRY;
     }
     // Belki binlik (bin TL → USD olarak yanlış yüklenmiş)
     const asTRY_k = val * 1000;
     const ratioK = Math.abs(asTRY_k) / mktCap;
     if (ratioK >= minRatio && ratioK <= maxRatio) {
-      console.log(`[Birim] ${label}: ×1000: ${val.toExponential(2)} → ${asTRY_k.toExponential(2)}`);
+      dlog(`[Birim] ${label}: ×1000: ${val.toExponential(2)} → ${asTRY_k.toExponential(2)}`);
       return asTRY_k;
     }
     // Hem ×1000 hem USD
     const asTRY_kU = val * 1000 * APPROX_USD_TRY;
     const ratioKU = Math.abs(asTRY_kU) / mktCap;
     if (ratioKU >= minRatio && ratioKU <= maxRatio) {
-      console.log(`[Birim] ${label}: ×1000×USD: ${val.toExponential(2)} → ${asTRY_kU.toExponential(2)}`);
+      dlog(`[Birim] ${label}: ×1000×USD: ${val.toExponential(2)} → ${asTRY_kU.toExponential(2)}`);
       return asTRY_kU;
     }
-    console.log(`[Birim] ${label}: düzeltilemedi (ratio=${ratio.toFixed(6)} çok küçük)`);
+    dlog(`[Birim] ${label}: düzeltilemedi (ratio=${ratio.toFixed(6)} çok küçük)`);
     return val; // en azından ham değeri döndür
   }
 
@@ -96,16 +100,16 @@ function detectAndNormalize(val, mktCap, minRatio, maxRatio, label) {
     const div1k = val / 1000;
     const ratio1k = Math.abs(div1k) / mktCap;
     if (ratio1k >= minRatio && ratio1k <= maxRatio) {
-      console.log(`[Birim] ${label}: ÷1000: ${val.toExponential(2)} → ${div1k.toExponential(2)}`);
+      dlog(`[Birim] ${label}: ÷1000: ${val.toExponential(2)} → ${div1k.toExponential(2)}`);
       return div1k;
     }
     const div1m = val / 1e6;
     const ratio1m = Math.abs(div1m) / mktCap;
     if (ratio1m >= minRatio && ratio1m <= maxRatio) {
-      console.log(`[Birim] ${label}: ÷1M: ${val.toExponential(2)} → ${div1m.toExponential(2)}`);
+      dlog(`[Birim] ${label}: ÷1M: ${val.toExponential(2)} → ${div1m.toExponential(2)}`);
       return div1m;
     }
-    console.log(`[Birim] ${label}: düzeltilemedi (ratio=${ratio.toFixed(2)} çok büyük)`);
+    dlog(`[Birim] ${label}: düzeltilemedi (ratio=${ratio.toFixed(2)} çok büyük)`);
     return val;
   }
 
@@ -152,7 +156,7 @@ function computeFromRawData(result, isBIST = false) {
   if (result.computedEquity != null && result.computedEquity > 0) {
     equity = result.computedEquity;
     equitySource = 'totalStockholderEquity';
-    console.log(`[Equity] Doğrudan özsermaye: ${equity.toExponential(3)}`);
+    dlog(`[Equity] Doğrudan özsermaye: ${equity.toExponential(3)}`);
   }
 
   // 2. Varlıklar - Yükümlülükler
@@ -162,9 +166,9 @@ function computeFromRawData(result, isBIST = false) {
       equity = calc;
       result.computedEquity = equity;
       equitySource = 'assets-liabilities';
-      console.log(`[Equity] Assets(${result.totalAssets.toExponential(3)}) - Liab(${result.totalLiabilities.toExponential(3)}) = ${equity.toExponential(3)}`);
+      dlog(`[Equity] Assets(${result.totalAssets.toExponential(3)}) - Liab(${result.totalLiabilities.toExponential(3)}) = ${equity.toExponential(3)}`);
     } else {
-      console.log(`[Equity] Negatif özsermaye: ${calc.toExponential(3)} — muhtemelen birim hatası`);
+      dlog(`[Equity] Negatif özsermaye: ${calc.toExponential(3)} — muhtemelen birim hatası`);
       // Birim hatası ihtimali — assets normalizasyonu yanlış gitmişse tekrar dene
       // totalAssets × 38 (USD gelmiş) ile
       if (result.totalAssets && result.totalLiabilities) {
@@ -175,7 +179,7 @@ function computeFromRawData(result, isBIST = false) {
             equity = calcUSD;
             result.computedEquity = equity;
             equitySource = 'assets-liabilities-USD×kur';
-            console.log(`[Equity] USD düzeltme: ${equity.toExponential(3)}`);
+            dlog(`[Equity] USD düzeltme: ${equity.toExponential(3)}`);
           }
         }
       }
@@ -183,53 +187,53 @@ function computeFromRawData(result, isBIST = false) {
   }
 
   // ── DEBUG: kritik değerleri her zaman logla ──
-  console.log(`[DEBUG PD/DD] marketCap=${result.marketCap?.toExponential(3)} equity=${equity?.toExponential(3)} equitySrc=${equitySource} MC/EQ=${equity ? (result.marketCap/equity).toFixed(3) : 'N/A'}`);
+  dlog(`[DEBUG PD/DD] marketCap=${result.marketCap?.toExponential(3)} equity=${equity?.toExponential(3)} equitySrc=${equitySource} MC/EQ=${equity ? (result.marketCap/equity).toFixed(3) : 'N/A'}`);
 
   if (!equity || equity <= 0 || !result.marketCap) {
-    console.log('[PD/DD] Özsermaye bulunamadı, hesaplama atlandı');
+    dlog('[PD/DD] Özsermaye bulunamadı, hesaplama atlandı');
     return result;
   }
 
   // ── PD/DD ──
   if (isBIST) {
     const pbCalc = result.marketCap / equity;
-    console.log(`[PD/DD] Ham hesap: MC=${result.marketCap.toExponential(3)} / EQ=${equity.toExponential(3)} = ${pbCalc.toFixed(3)}`);
+    dlog(`[PD/DD] Ham hesap: MC=${result.marketCap.toExponential(3)} / EQ=${equity.toExponential(3)} = ${pbCalc.toFixed(3)}`);
 
     // BIST için makul aralık: 0.1 – 20
     if (pbCalc > 0.1 && pbCalc < 20) {
       result.pbRatio  = parseFloat(pbCalc.toFixed(2));
       result.pbSource = `formül (${equitySource})`;
-      console.log(`[PD/DD] ✓ ${result.pbRatio} — makul aralıkta`);
+      dlog(`[PD/DD] ✓ ${result.pbRatio} — makul aralıkta`);
     } else if (pbCalc >= 20 && pbCalc < 1000) {
       // Büyük ihtimalle özsermaye USD, MC TRY → özsermayeyi TRY'ye çevir
       const equityTRY = equity * APPROX_USD_TRY;
       const pbTRY = result.marketCap / equityTRY;
-      console.log(`[PD/DD] Kur düzeltme denemesi: EQ×${APPROX_USD_TRY}=${equityTRY.toExponential(3)} → PD/DD=${pbTRY.toFixed(3)}`);
+      dlog(`[PD/DD] Kur düzeltme denemesi: EQ×${APPROX_USD_TRY}=${equityTRY.toExponential(3)} → PD/DD=${pbTRY.toFixed(3)}`);
       if (pbTRY > 0.1 && pbTRY < 20) {
         result.pbRatio  = parseFloat(pbTRY.toFixed(2));
         result.computedEquity = equityTRY;
         result.pbSource = `formül-kur (${equitySource}×${APPROX_USD_TRY})`;
-        console.log(`[PD/DD] ✓ ${result.pbRatio} — kur düzeltmesiyle makul`);
+        dlog(`[PD/DD] ✓ ${result.pbRatio} — kur düzeltmesiyle makul`);
       } else {
         // Özsermaye 1000 ile çarpılmış mı dene (bin TL)
         const equity1k = equity * 1000;
         const pb1k = result.marketCap / equity1k;
-        console.log(`[PD/DD] ×1000 denemesi: EQ×1000=${equity1k.toExponential(3)} → PD/DD=${pb1k.toFixed(3)}`);
+        dlog(`[PD/DD] ×1000 denemesi: EQ×1000=${equity1k.toExponential(3)} → PD/DD=${pb1k.toFixed(3)}`);
         if (pb1k > 0.1 && pb1k < 20) {
           result.pbRatio  = parseFloat(pb1k.toFixed(2));
           result.computedEquity = equity1k;
           result.pbSource = `formül-1k (${equitySource}×1000)`;
-          console.log(`[PD/DD] ✓ ${result.pbRatio} — ×1000 düzeltmesiyle makul`);
+          dlog(`[PD/DD] ✓ ${result.pbRatio} — ×1000 düzeltmesiyle makul`);
         } else {
           result.pbRatio  = null;
           result.pbSource = 'hesaplanamadi';
-          console.log(`[PD/DD] ✗ Tüm denemeler başarısız. pbCalc=${pbCalc.toFixed(2)} pbTRY=${pbTRY.toFixed(2)} pb1k=${pb1k.toFixed(2)}`);
+          dlog(`[PD/DD] ✗ Tüm denemeler başarısız. pbCalc=${pbCalc.toFixed(2)} pbTRY=${pbTRY.toFixed(2)} pb1k=${pb1k.toFixed(2)}`);
         }
       }
     } else {
       result.pbRatio  = null;
       result.pbSource = 'hesaplanamadi';
-      console.log(`[PD/DD] ✗ Aralık dışı: ${pbCalc.toFixed(3)}`);
+      dlog(`[PD/DD] ✗ Aralık dışı: ${pbCalc.toFixed(3)}`);
     }
   } else {
     const pbBad = result.pbRatio == null || result.pbRatio <= 0 || result.pbRatio > 30;
@@ -246,9 +250,9 @@ function computeFromRawData(result, isBIST = false) {
     if (Math.abs(roeCalc) <= 3) { // sanity: max ±300%
       result.roe       = parseFloat(roeCalc.toFixed(4));
       result.roeSource = `formül (${equitySource})`;
-      console.log(`[ROE] %${(result.roe*100).toFixed(1)}`);
+      dlog(`[ROE] %${(result.roe*100).toFixed(1)}`);
     } else {
-      console.log(`[ROE] Aralık dışı: ${(roeCalc*100).toFixed(1)}% — atlandı`);
+      dlog(`[ROE] Aralık dışı: ${(roeCalc*100).toFixed(1)}% — atlandı`);
     }
   }
 
@@ -281,7 +285,7 @@ async function scrapeBISTFallback(ticker) {
       if (roe) out.roe     = parseFloat(roe[1].replace(',','.')) / 100;
       if (out.peRatio || out.pbRatio) { out.source = 'IsYatirim'; return out; }
     }
-  } catch(e) { console.log('İş Yatırım scrape:', e.message); }
+  } catch(e) { dlog('İş Yatırım scrape:', e.message); }
 
   // Deneme 2: BigPara
   try {
@@ -300,21 +304,124 @@ async function scrapeBISTFallback(ticker) {
       if (roe) out.roe     = parseFloat(roe[1].replace(',','.')) / 100;
       if (out.peRatio || out.pbRatio) { out.source = 'BigPara'; return out; }
     }
-  } catch(e) { console.log('BigPara scrape:', e.message); }
+  } catch(e) { dlog('BigPara scrape:', e.message); }
 
-  console.log('Tüm BIST fallback başarısız');
+  dlog('Tüm BIST fallback başarısız');
   return out;
+}
+
+// ── VERİ DOĞRULAMA KATMANI ────────────────────────────────────────
+// Yahoo (veya BIST yedek kaynakları) bazen NaN, Infinity, yanlış tip ya da
+// saçma büyüklükte değer döndürebiliyor. Bu katman onları sessizce ayıklar;
+// hiçbir koşulda exception fırlatmaz — sadece ilgili alanı null'a çevirir.
+const NUMERIC_BOUNDS = {
+  currentPrice:            [0.0001, 1e7],
+  marketCap:               [0, 1e16],
+  fiftyTwoWeekLow:         [0.0001, 1e7],
+  fiftyTwoWeekHigh:        [0.0001, 1e7],
+  peRatio:                 [-1000, 1000],
+  forwardPE:               [-1000, 1000],
+  pbRatio:                 [-1000, 1000],
+  pegRatio:                [-100, 100],
+  evEbitda:                [-1000, 1000],
+  grossMargin:             [-10, 10],
+  operatingMargin:         [-10, 10],
+  profitMargin:            [-10, 10],
+  roe:                     [-10, 10],
+  roa:                     [-10, 10],
+  debtToEquity:            [-100, 1000],
+  currentRatio:            [0, 100],
+  revenueGrowth:           [-10, 100],
+  earningsGrowth:          [-10, 100],
+  institutionOwnership:    [0, 1],
+  targetMeanPrice:         [0.0001, 1e7],
+  numberOfAnalystOpinions: [0, 1000],
+  totalAssets:             [0, 1e16],
+  totalLiabilities:        [0, 1e16],
+  netIncome:               [-1e15, 1e15],
+  computedEquity:          [-1e15, 1e15],
+  freeCashflow:            [-1e15, 1e15],
+  operatingCashflow:       [-1e15, 1e15],
+  totalCash:               [0, 1e16],
+  totalDebt:               [0, 1e16],
+};
+
+const STRING_FIELDS = [
+  'currency', 'shortName', 'website', 'sector', 'industry',
+  'recommendationKey', 'dataSource', 'pbSource', 'roeSource', 'peSource', 'pegSource',
+];
+
+function safeNumOrNull(v, bounds) {
+  if (v == null) return null;
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;          // NaN / Infinity / -Infinity
+  if (bounds && (n < bounds[0] || n > bounds[1])) return null; // mantıksız büyüklük
+  return n;
+}
+
+// raw: fetchYahooData'nın oluşturduğu ham result nesnesi.
+// Dönen: { data: temizlenmiş nesne veya null, warnings: string[] }
+function sanitizeFinancialData(raw) {
+  const warnings = [];
+  if (!raw || typeof raw !== 'object') {
+    return { data: null, warnings: ['Yahoo verisi geçersiz formatta döndü (object değil).'] };
+  }
+
+  const out = { ...raw };
+
+  for (const [field, bounds] of Object.entries(NUMERIC_BOUNDS)) {
+    const original = out[field];
+    if (original == null) continue;
+    const cleaned = safeNumOrNull(original, bounds);
+    if (cleaned == null) warnings.push(`${field} geçersiz/aralık dışı (${original}) → atlandı`);
+    out[field] = cleaned;
+  }
+
+  for (const field of STRING_FIELDS) {
+    if (out[field] != null && typeof out[field] !== 'string') {
+      warnings.push(`${field} beklenmeyen tipte (${typeof out[field]}) → atlandı`);
+      out[field] = null;
+    }
+  }
+
+  if (out.peers != null && !Array.isArray(out.peers)) out.peers = [];
+
+  // 52 hafta aralığı ters geldiyse (Yahoo'da nadiren olur) ikisini de güvensiz say
+  if (out.fiftyTwoWeekLow != null && out.fiftyTwoWeekHigh != null && out.fiftyTwoWeekLow > out.fiftyTwoWeekHigh) {
+    warnings.push('52 haftalık düşük/yüksek aralığı ters görünüyor → ikisi de atlandı');
+    out.fiftyTwoWeekLow = null;
+    out.fiftyTwoWeekHigh = null;
+  }
+
+  // Fiyat olmadan analiz anlamsız — tüm veriyi geçersiz say (üst katman "veri yok" yoluna düşer)
+  if (out.currentPrice == null) {
+    return { data: null, warnings: [...warnings, 'Geçerli/makul bir fiyat verisi yok.'] };
+  }
+
+  return { data: out, warnings };
 }
 
 // ── ANA VERİ ÇEKME ──────────────────────────────────────────────
 async function fetchYahooData(yahooTicker) {
   const cacheKey = `yahoo:${yahooTicker}`;
   const cached = getCached(cacheKey);
-  if (cached) { console.log(`Cache hit: ${yahooTicker}`); return cached; }
+  if (cached) { dlog(`Cache hit: ${yahooTicker}`); return cached; }
 
   const { crumb, cookie } = await getYahooCrumb();
   const cs = crumb ? `&crumb=${encodeURIComponent(crumb)}` : '';
   const isBIST = yahooTicker.endsWith('.IS');
+
+  // BIST rasyo kaynağımız (kendi /api/bist-ratios uç noktamız) Yahoo'nun
+  // sonucuna bağlı değil — bekletmeden hemen başlatıp Yahoo çağrılarıyla
+  // PARALEL ilerlemesini sağlıyoruz (önceden sıralıydı, gereksiz gecikme yaratıyordu).
+  const bistRatiosPromise = isBIST
+    ? fetch(
+        `${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/bist-ratios?ticker=${yahooTicker.replace('.IS', '')}`,
+        { signal: AbortSignal.timeout(12000), headers: { 'Accept': 'application/json' } }
+      )
+        .then(r => (r.ok ? r.json() : null))
+        .catch(e => { dlog(`[BIST API] Çağrı başarısız: ${e.message} — fallback pipeline devam ediyor`); return null; })
+    : null;
 
   const makeHeaders = () => ({
     'User-Agent': UA,
@@ -391,9 +498,9 @@ async function fetchYahooData(yahooTicker) {
       result.targetMeanPrice   = q.targetMeanPrice ?? null;
       result.recommendationKey = q.recommendationKey ?? null;
       result.numberOfAnalystOpinions = q.numberOfAnalystOpinions ?? null;
-      console.log(`v7 OK: price=${result.currentPrice} pe=${result.peRatio} pb=${result.pbRatio} roe=${result.roe}`);
+      dlog(`v7 OK: price=${result.currentPrice} pe=${result.peRatio} pb=${result.pbRatio} roe=${result.roe}`);
       break;
-    } catch(e) { console.log(`v7 error: ${e.message}`); }
+    } catch(e) { dlog(`v7 error: ${e.message}`); }
   }
 
   // ── 2. v10 quoteSummary + ham bilanço ──
@@ -428,7 +535,7 @@ async function fetchYahooData(yahooTicker) {
         // Anormal PE → null yap, sonradan MarketCap/NetIncome ile hesaplanacak
         if (isBIST && result.peRatio != null) {
           if (result.peRatio <= 0 || result.peRatio > 200) {
-            console.log(`[BIST] Yahoo PE=${result.peRatio} anormal → null, formülle hesaplanacak`);
+            dlog(`[BIST] Yahoo PE=${result.peRatio} anormal → null, formülle hesaplanacak`);
             result.peRatio = null;
           }
         }
@@ -472,11 +579,11 @@ async function fetchYahooData(yahooTicker) {
             if (tl != null) result.totalLiabilities = tl;
             if (se != null) {
               result.computedEquity = se; // normalize edilmemiş ham değer — BIST pipeline'da normalize edilecek
-              console.log(`[Bilanço Ham] Assets=${ta?.toExponential(3)} Liab=${tl?.toExponential(3)} StockholderEquity=${se?.toExponential(3)}`);
+              dlog(`[Bilanço Ham] Assets=${ta?.toExponential(3)} Liab=${tl?.toExponential(3)} StockholderEquity=${se?.toExponential(3)}`);
             }
             // Ham oranı logla — debug için kritik
             if (result.marketCap && se) {
-              console.log(`[Ham PD/DD] MC/SE = ${result.marketCap.toExponential(3)} / ${se.toExponential(3)} = ${(result.marketCap/se).toFixed(2)} (normalize öncesi)`);
+              dlog(`[Ham PD/DD] MC/SE = ${result.marketCap.toExponential(3)} / ${se.toExponential(3)} = ${(result.marketCap/se).toFixed(2)} (normalize öncesi)`);
             }
           }
         }
@@ -487,13 +594,13 @@ async function fetchYahooData(yahooTicker) {
           if (stmts.length > 0) {
             const ni = stmts[0].netIncome?.raw ?? null;
             if (ni != null) result.netIncome = ni;
-            console.log(`[Gelir] NetIncome=${ni}`);
+            dlog(`[Gelir] NetIncome=${ni}`);
           }
         }
 
-        console.log(`v10 OK: roe=${result.roe} pb=${result.pbRatio} assets=${result.totalAssets} ni=${result.netIncome}`);
+        dlog(`v10 OK: roe=${result.roe} pb=${result.pbRatio} assets=${result.totalAssets} ni=${result.netIncome}`);
         break;
-      } catch(e) { console.log(`v10 error: ${e.message}`); }
+      } catch(e) { dlog(`v10 error: ${e.message}`); }
     }
   }
 
@@ -520,25 +627,11 @@ async function fetchYahooData(yahooTicker) {
   // ── BIST DÜZELTME PIPELINE ────────────────────────────────────
   if (isBIST) {
 
-    // ADIM 0: Çoklu kaynak rasyo API'sini çağır (Google Finance öncelikli)
-    // Bu endpoint Google Finance + İşYatırım + BigPara + Yahoo normalize sıralamasıyla çalışır
-    let bistRatios = null;
-    try {
-      // Vercel'de kendi endpoint'imizi çağırıyoruz (relative URL)
-      const bistUrl = `${process.env.VERCEL_URL
-        ? 'https://' + process.env.VERCEL_URL
-        : 'http://localhost:3000'}/api/bist-ratios?ticker=${yahooTicker.replace('.IS', '')}`;
-
-      const bistRes = await fetch(bistUrl, {
-        signal: AbortSignal.timeout(12000), // çoklu kaynak — daha uzun timeout
-        headers: { 'Accept': 'application/json' }
-      });
-      if (bistRes.ok) {
-        bistRatios = await bistRes.json();
-        console.log(`[BIST API] Rasyo sonuçları: PE=${bistRatios.pe}(${bistRatios.source_pe}) PD/DD=${bistRatios.pb}(${bistRatios.source_pb})`);
-      }
-    } catch(e) {
-      console.log(`[BIST API] Çağrı başarısız: ${e.message} — fallback pipeline devam ediyor`);
+    // ADIM 0: Çoklu kaynak rasyo API'sini bekle — yukarıda Yahoo çağrılarıyla
+    // PARALEL başlatılmıştı (bistRatiosPromise), burada sadece sonucu alıyoruz.
+    const bistRatios = await bistRatiosPromise;
+    if (bistRatios) {
+      dlog(`[BIST API] Rasyo sonuçları: PE=${bistRatios.pe}(${bistRatios.source_pe}) PD/DD=${bistRatios.pb}(${bistRatios.source_pb})`);
     }
 
     // BIST API'den gelen değerleri uygula
@@ -547,19 +640,19 @@ async function fetchYahooData(yahooTicker) {
       if (bistRatios.pe != null && bistRatios.pe > 0.3 && bistRatios.pe < 200) {
         result.peRatio  = bistRatios.pe;
         result.peSource = bistRatios.source_pe;
-        console.log(`[BIST API] PE override: ${result.peRatio} (${result.peSource})`);
+        dlog(`[BIST API] PE override: ${result.peRatio} (${result.peSource})`);
       }
       // PB — her zaman BIST API'yi tercih et
       if (bistRatios.pb != null && bistRatios.pb > 0.03 && bistRatios.pb < 30) {
         result.pbRatio  = bistRatios.pb;
         result.pbSource = bistRatios.source_pb;
-        console.log(`[BIST API] PD/DD override: ${result.pbRatio} (${result.pbSource})`);
+        dlog(`[BIST API] PD/DD override: ${result.pbRatio} (${result.pbSource})`);
       }
       // PEG — Google Finance'dan geliyorsa kullan
       if (bistRatios.peg != null && bistRatios.peg > 0.01 && bistRatios.peg < 20) {
         result.pegRatio  = bistRatios.peg;
         result.pegSource = bistRatios.source_peg;
-        console.log(`[BIST API] PEG override: ${result.pegRatio} (${result.pegSource})`);
+        dlog(`[BIST API] PEG override: ${result.pegRatio} (${result.pegSource})`);
       }
       // ROE
       if (bistRatios.roe != null && Math.abs(bistRatios.roe) < 3) {
@@ -578,7 +671,7 @@ async function fetchYahooData(yahooTicker) {
     if (!bistRatios?.pb) {
       // BIST API'den pb gelmediyse Yahoo'yu da sıfırla
       result.pbRatio = null;
-      if (yahooPB) console.log(`[BIST] Yahoo pb=${yahooPB?.toFixed(2)} yoksayıldı`);
+      if (yahooPB) dlog(`[BIST] Yahoo pb=${yahooPB?.toFixed(2)} yoksayıldı`);
     }
 
     // ADIM 2: Birim normalizasyonu
@@ -586,10 +679,10 @@ async function fetchYahooData(yahooTicker) {
 
     // ADIM 3: Anormal PE temizle
     if (result.peRatio && (result.peRatio > 200 || result.peRatio < 0)) {
-      console.log(`[BIST] PE anormal: ${result.peRatio} → null`); result.peRatio = null;
+      dlog(`[BIST] PE anormal: ${result.peRatio} → null`); result.peRatio = null;
     }
     if (result.roe && Math.abs(result.roe) > 5) {
-      console.log(`[BIST] ROE anormal: ${result.roe} → ${result.roe/100}`);
+      dlog(`[BIST] ROE anormal: ${result.roe} → ${result.roe/100}`);
       result.roe = result.roe / 100;
     }
 
@@ -604,7 +697,7 @@ async function fetchYahooData(yahooTicker) {
 
     // ADIM 5: Hâlâ kritik eksik varsa eski scraping dene
     if (result.pbRatio == null || result.peRatio == null) {
-      console.log('[BIST] Kritik veri eksik → legacy scraping...');
+      dlog('[BIST] Kritik veri eksik → legacy scraping...');
       const t = yahooTicker.replace('.IS', '');
       const sc = await scrapeBISTFallback(t);
       if (sc.source) {
@@ -624,7 +717,7 @@ async function fetchYahooData(yahooTicker) {
         if (peCalc > 0.5 && peCalc < 200) {
           result.peRatio  = parseFloat(peCalc.toFixed(2));
           result.peSource = 'formül(MC/NI)';
-          console.log(`[BIST PE Formül] MC=${result.marketCap.toExponential(3)} / NI=${niNorm.toExponential(3)} = ${result.peRatio}`);
+          dlog(`[BIST PE Formül] MC=${result.marketCap.toExponential(3)} / NI=${niNorm.toExponential(3)} = ${result.peRatio}`);
         }
       }
     }
@@ -639,12 +732,12 @@ async function fetchYahooData(yahooTicker) {
         if (peEps > 0.5 && peEps < 200) {
           result.peRatio  = parseFloat(peEps.toFixed(2));
           result.peSource = 'formül(Fiyat/EPS)';
-          console.log(`[BIST PE EPS] Fiyat=${result.currentPrice} / EPS=${epsNorm.toFixed(2)} = ${result.peRatio}`);
+          dlog(`[BIST PE EPS] Fiyat=${result.currentPrice} / EPS=${epsNorm.toFixed(2)} = ${result.peRatio}`);
         }
       }
     }
 
-    console.log(`[BIST Final] PE=${result.peRatio?.toFixed(2)}(${result.peSource||'?'}) PD/DD=${result.pbRatio?.toFixed(2)}(${result.pbSource}) ROE=${result.roe ? (result.roe*100).toFixed(1)+'%' : 'N/A'}`);
+    dlog(`[BIST Final] PE=${result.peRatio?.toFixed(2)}(${result.peSource||'?'}) PD/DD=${result.pbRatio?.toFixed(2)}(${result.pbSource}) ROE=${result.roe ? (result.roe*100).toFixed(1)+'%' : 'N/A'}`);
   }
 
   // Logo
@@ -655,8 +748,16 @@ async function fetchYahooData(yahooTicker) {
     } catch {}
   }
 
-  setCache(cacheKey, result);
-  return result;
+  // ── VERİ DOĞRULAMA ── cache'e veya çağırana asla ham/bozuk veri gitmesin
+  const { data: cleanResult, warnings } = sanitizeFinancialData(result);
+  if (warnings.length) dlog(`[Veri Doğrulama] ${yahooTicker}: ${warnings.join(' | ')}`);
+  if (!cleanResult) {
+    throw new Error(`Veri doğrulama başarısız (${yahooTicker}): ${warnings.join('; ') || 'bilinmeyen sebep'}`);
+  }
+  cleanResult._dataWarnings = warnings;
+
+  setCache(cacheKey, cleanResult);
+  return cleanResult;
 }
 
 // ── SIGNAL HELPERS ───────────────────────────────────────────────
@@ -840,7 +941,8 @@ CRITERIA_END`
   if (SB_URL && SB_KEY && em && !isAdmin) {
     try {
       const r = await fetch(`${SB_URL}/rest/v1/users?email=eq.${encodeURIComponent(em)}&select=credits,is_admin`, {
-        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` },
+        signal: AbortSignal.timeout(5000),
       });
       if (r.ok) {
         const rows = await r.json();
@@ -849,7 +951,7 @@ CRITERIA_END`
           return res.status(403).json({ error: 'Analiz hakkınız doldu.' });
         }
       }
-    } catch(e) { console.log('[Kredi kontrol] hata:', e.message); }
+    } catch(e) { dlog('[Kredi kontrol] hata:', e.message); }
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -858,7 +960,7 @@ CRITERIA_END`
   const yahooTicker = exchange === 'BIST' ? `${cleanTicker}.IS` : cleanTicker;
   let financialData = null;
   try { financialData = await fetchYahooData(yahooTicker); }
-  catch(e) { console.log('Fetch failed:', e.message); }
+  catch(e) { dlog('Fetch failed:', e.message); }
 
   const fd     = financialData;
   const isBIST = exchange === 'BIST';
@@ -945,6 +1047,9 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
   if (!fd) enrichedPrompt += '\n\nVERİ NOTU: Finansal veri alınamadı. Sektör bilgine göre tahmin yap. "Veri sınırlı" uyarısı ekle ama analizi tamamla.';
 
   try {
+    // Vercel'in bu fonksiyon için maxDuration'ı 30sn (vercel.json) — Anthropic
+    // çağrısı bu süreyi aşarsa fonksiyon sert şekilde kesiliyordu. 25sn'de kendi
+    // isteğimizi iptal edip kullanıcıya anlamlı bir hata dönüyoruz.
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
@@ -953,12 +1058,21 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
         max_tokens: 3000,
         system: systemPrompt,
         messages: [{ role: 'user', content: enrichedPrompt }]
-      })
+      }),
+      signal: AbortSignal.timeout(25000),
     });
-    const data = await response.json();
-    if (data.error) return res.status(500).json({ error: `${data.error.type}: ${data.error.message}` });
+
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      return res.status(502).json({ error: 'AI servisinden geçersiz yanıt alındı.' });
+    }
+    if (data.error) return res.status(502).json({ error: `${data.error.type}: ${data.error.message}` });
+    if (!response.ok) return res.status(502).json({ error: `AI servis hatası (HTTP ${response.status})` });
 
     let aiResult = data.content?.[0]?.text || '';
+    if (!aiResult) return res.status(502).json({ error: 'AI servisi boş yanıt döndü.' });
     aiResult = aiResult.replace(/TOTAL_SCORE:\s*(\d+)/i, (m, sc) =>
       `TOTAL_SCORE: ${Math.min(7, Math.max(0, parseInt(sc)))}`
     );
@@ -971,11 +1085,19 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       if (fd.evEbitda != null) aiResult = aiResult.replace(/EV_EBITDA:\s*[\d.N\/A]+\s*\|/, `EV_EBITDA: ${n2(fd.evEbitda)} |`);
     }
 
-    console.log(`✓ ${yahooTicker} | src:${fd?.dataSource} | roe:${fd?.roe} | pb:${fd?.pbRatio}(${fd?.pbSource||'yahoo'}) | len:${aiResult.length}`);
-    return res.status(200).json({ result: aiResult, financialData: fd, peers: fd?.peers || [] });
+    dlog(`✓ ${yahooTicker} | src:${fd?.dataSource} | roe:${fd?.roe} | pb:${fd?.pbRatio}(${fd?.pbSource||'yahoo'}) | len:${aiResult.length}`);
+    return res.status(200).json({
+      result: aiResult,
+      financialData: fd,
+      peers: fd?.peers || [],
+      dataWarnings: fd?._dataWarnings || [],
+    });
 
   } catch(err) {
+    const isTimeout = err.name === 'TimeoutError' || err.name === 'AbortError';
     console.error('Analyze error:', err.message);
-    return res.status(500).json({ error: err.message });
+    return res.status(isTimeout ? 504 : 500).json({
+      error: isTimeout ? 'AI servisi zaman aşımına uğradı. Lütfen tekrar deneyin.' : err.message,
+    });
   }
 }

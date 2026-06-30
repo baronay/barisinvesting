@@ -4,6 +4,9 @@
 // GET /api/logo?domain=apple.com&sz=128
 // Canvas'ta crossOrigin sorunu olmadan kullanılabilir
 
+const DEBUG_LOGS = process.env.DEBUG_LOGS === '1';
+function dlog(...args) { if (DEBUG_LOGS) console.log(...args); }
+
 const CACHE = new Map();
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 saat — logolar sık değişmez
 
@@ -116,11 +119,11 @@ export default async function handler(req, res) {
 
       res.setHeader('Content-Type', mime);
       res.setHeader('Cache-Control', 'public, max-age=86400');
-      console.log(`[Logo] ${domain} → ${url} (${buf.length} bytes)`);
+      dlog(`[Logo] ${domain} → ${url} (${buf.length} bytes)`);
       return res.status(200).send(buf);
 
     } catch (e) {
-      console.log(`[Logo] ${domain} ${url} hata: ${e.message}`);
+      dlog(`[Logo] ${domain} ${url} hata: ${e.message}`);
     }
   }
 

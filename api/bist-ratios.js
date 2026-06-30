@@ -2,6 +2,9 @@
 // FIX: Minimal kolon seti — sadece TradingView turkey/scan'da kesin çalışanlar
 // Sorunlu olanlar kaldırıldı: price_to_book_fq, revenue_growth_rate_5y, ev_ebitda, enterprise_value_ebitda_fq
 
+const DEBUG_LOGS = process.env.DEBUG_LOGS === '1';
+function dlog(...args) { if (DEBUG_LOGS) console.log(...args); }
+
 const CACHE     = new Map();
 const CACHE_TTL = 30 * 60 * 1000;
 
@@ -50,7 +53,7 @@ async function fetchTV(tickers) {
   const syms = tickers.map(t => `BIST:${t.replace('.IS','').replace('BIST:','').toUpperCase()}`);
   const body = { symbols: { tickers: syms, query: { types: [] } }, columns: TV_COLUMNS };
 
-  console.log(`[TV v6] POST — ${syms.join(', ')}`);
+  dlog(`[TV v6] POST — ${syms.join(', ')}`);
 
   const res = await fetch('https://scanner.tradingview.com/turkey/scan', {
     method: 'POST',
@@ -71,7 +74,7 @@ async function fetchTV(tickers) {
   }
 
   const json = await res.json();
-  console.log(`[TV v6] ${json?.data?.length ?? 0} satır — d[]:`, JSON.stringify(json?.data?.[0]?.d));
+  dlog(`[TV v6] ${json?.data?.length ?? 0} satır — d[]:`, JSON.stringify(json?.data?.[0]?.d));
   return json;
 }
 
@@ -98,12 +101,12 @@ function parseRow(ticker, row) {
   let fkFinal = fk;
   if (fkFinal == null && fiyat && eps && eps > 0) {
     fkFinal = safeNum(fiyat / eps);
-    console.log(`[TV v6] ${ticker} F/K EPS yedek: ${fiyat}/${eps}=${fkFinal}`);
+    dlog(`[TV v6] ${ticker} F/K EPS yedek: ${fiyat}/${eps}=${fkFinal}`);
   }
 
   const _raw = {};
   TV_COLUMNS.forEach((c, i) => { if (d[i] != null) _raw[c] = d[i]; });
-  console.log(`[TV v6] ${ticker}: FK=${fkFinal} PDDD=${pddd} FDFAVOK=${fdFavok} ROE%=${roe} D/E=${de}`);
+  dlog(`[TV v6] ${ticker}: FK=${fkFinal} PDDD=${pddd} FDFAVOK=${fdFavok} ROE%=${roe} D/E=${de}`);
 
   return {
     ticker,
