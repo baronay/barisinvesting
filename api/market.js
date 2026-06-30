@@ -21,7 +21,7 @@ async function getMarketOverview(res) {
   try {
     const results = await Promise.allSettled(
       symbols.map(s =>
-        fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?interval=1d&range=2d`, { headers })
+        fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?interval=1h&range=5d`, { headers })
           .then(r => r.json())
       )
     );
@@ -33,7 +33,11 @@ async function getMarketOverview(res) {
           const meta = chart.meta;
           const prev = meta.chartPreviousClose || meta.previousClose;
           const cur = meta.regularMarketPrice;
-          data[labels[i]] = { price: cur, change: prev ? ((cur - prev) / prev * 100) : 0, currency: meta.currency };
+          // Sparkline için son kapanış fiyatları — null/eksik değerleri temizle, en fazla son 24 noktayı tut
+          const rawCloses = chart.indicators?.quote?.[0]?.close || [];
+          const cleaned = rawCloses.filter(v => v != null && isFinite(v));
+          const history = cleaned.length >= 2 ? cleaned.slice(-24) : [];
+          data[labels[i]] = { price: cur, change: prev ? ((cur - prev) / prev * 100) : 0, currency: meta.currency, history };
         }
       }
     });

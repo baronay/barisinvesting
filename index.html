@@ -168,7 +168,6 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .mnav-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .tab-content{display:none;}.tab-content.active{display:block;}
 .s-input{padding:14px 20px;border-bottom:1px solid var(--border-s);}
-.s-input-hidden{display:none;}
 .s-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block;font-family:'JetBrains Mono',monospace;}
 .ex-row{display:flex;gap:4px;margin-bottom:10px;}
 .ex-btn{flex:1;background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:9px;padding:6px 2px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:3px;}
@@ -368,10 +367,11 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .hero-ex-btn{background:transparent;border:1px solid var(--border-s);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:9px;padding:5px 12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:4px;}
 .hero-ex-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
 .hmp-title{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--rule);}
-.hmp-row{display:flex;align-items:center;padding:5px 0;border-bottom:1px solid var(--rule);}
+.hmp-row{display:flex;align-items:center;padding:5px 0;border-bottom:1px solid var(--rule);gap:4px;}
 .hmp-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);width:68px;flex-shrink:0;}
 .hmp-val{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:var(--text);flex:1;}
-.hmp-chg{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;text-align:right;min-width:50px;}
+.hmp-spark{flex-shrink:0;width:36px;height:14px;display:block;}
+.hmp-chg{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;text-align:right;min-width:50px;flex-shrink:0;}
 .hmp-chg.pos{color:var(--success);}.hmp-chg.neg{color:var(--danger);}
 .hmp-divider{height:1px;background:var(--rule);margin:6px 0;}
 .hmp-time{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted2);margin-top:auto;padding-top:10px;}
@@ -465,6 +465,23 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .cb{background:var(--success);}.ch{background:var(--warn);}.cs{background:var(--danger);}
 .cons-lbls{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
 .ana-note{font-size:10px;color:var(--text2);padding:8px 10px;background:var(--surface2);border:1px solid var(--glass);border-left:2px solid var(--accent);line-height:1.7;margin-top:8px;}
+.enrich-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:1px;margin-bottom:1px;background:var(--border);}
+.crit-checklist{background:var(--surface);border:1px solid var(--glass);padding:10px 12px;}
+.cklist-row{display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid var(--rule);}
+.cklist-row:last-child{border-bottom:none;}
+.cklist-icon{flex:0 0 16px;font-size:12px;font-weight:700;text-align:center;}
+.cklist-icon.pass{color:var(--success);}
+.cklist-icon.fail{color:var(--danger);}
+.cklist-icon.neutral{color:var(--warn);}
+.cklist-name{flex:0 0 38%;font-size:10px;color:var(--text);font-weight:500;}
+.cklist-desc{flex:1;font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sentiment-card{background:var(--surface);border:1px solid var(--glass);padding:10px 12px;display:flex;flex-direction:column;justify-content:center;}
+.sentiment-sub{font-size:8px;color:var(--muted2);margin-bottom:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;}
+.ai-summary-card{background:var(--surface);border:1px solid var(--glass);padding:12px 14px;margin-bottom:1px;}
+.ai-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);background:rgba(194,173,132,.1);border:1px solid var(--accent);padding:3px 8px;margin-bottom:8px;}
+.ai-summary-text{font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:6px;}
+.ai-summary-risk{font-size:10px;color:var(--text2);line-height:1.6;padding:7px 9px;background:var(--surface2);border-left:2px solid var(--danger);margin-bottom:8px;}
+.ai-summary-verdict{font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;}
 .chart-card{background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:1px;}
 .chart-wrap{position:relative;height:145px;}
 .radar-wrap{position:relative;height:180px;max-width:220px;margin:0 auto;}
@@ -3273,17 +3290,19 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 
   <!-- ANALIZ TAB -->
   <div class="tab-content active" id="tab-analiz-content">
-    <!-- Borsa/Ticker/Çerçeve/Analiz Et kontrolleri sol menüden kaldırıldı —
-         odak artık ortadaki hero arama kutusunda (heroIn/heroFwSel/hero-search-btn).
-         Bu elemanlar (tickerIn, coIn, anaBtn, ex-*, fw-*) site genelinde onlarca
-         yerden doğrudan okunup yazıldığı için DOM'dan silinmedi, sadece görsel
-         olarak gizlendi — hero, bunları arka planda programatik olarak sürüyor. -->
-    <div class="s-input-hidden" aria-hidden="true">
+    <!-- Borsa/Ticker/Çerçeve/Analiz Et kontrolleri sol menüde tekrar görünür —
+         hero'daki hızlı arama (heroIn/heroFwSel/hero-search-btn) ile birlikte
+         ikinci bir giriş noktası olarak duruyor. Bu elemanlar (tickerIn, coIn,
+         anaBtn, ex-*, fw-*) site genelinde onlarca yerden doğrudan okunup
+         yazıldığı için ID'ler ve onclick'ler AYNEN korunmuştur. -->
+    <div class="s-input" id="sidebarInputBlock">
+      <label class="s-lbl">Borsa</label>
       <div class="ex-row">
         <button class="ex-btn active" id="ex-bist" onclick="selEx('BIST')"><svg class="flag-s"><use href="#f-tr"/></svg>BIST</button>
         <button class="ex-btn" id="ex-nyse" onclick="selEx('NYSE')"><svg class="flag-s"><use href="#f-us"/></svg>NYSE</button>
         <button class="ex-btn" id="ex-nasdaq" onclick="selEx('NASDAQ')"><svg class="flag-s"><use href="#f-us"/></svg>NAS</button>
       </div>
+      <label class="s-lbl">Ticker &amp; Şirket</label>
       <div class="ac-wrap">
         <div class="ticker-row">
           <input class="t-input" id="tickerIn" placeholder="THYAO" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
@@ -3291,11 +3310,14 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
         </div>
         <div class="ac-drop" id="acDrop"></div>
       </div>
+      <label class="s-lbl">Çerçeve</label>
       <div class="fw-row">
         <button class="fw-btn active" id="fw-b" onclick="selFW('buffett')">Buffett</button>
         <button class="fw-btn" id="fw-l" onclick="selFW('lynch')">P. Lynch</button>
       </div>
       <button class="ana-btn" id="anaBtn" onclick="doAnalyze()">ANALİZ ET →</button>
+      <div class="data-badge" id="dataBadge" style="margin-top:10px">✓ Yahoo Finance verisi yüklendi</div>
+      <div class="err-bar" id="errBar" style="margin-top:10px"></div>
     </div>
     <div class="pop-sec">
       <div class="pop-lbl">Hızlı Erişim</div>
@@ -3305,6 +3327,21 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <div class="nav-lbl">Menü</div>
     <div class="nav-item active" id="nav-overview" onclick="showPage('overview');closeSidebar();">
       <span class="nav-num">00</span>Dashboard<span class="nav-status">◎</span>
+    </div>
+    <div class="nav-item" id="nav-buffett-akademi" onclick="showPage('buffett-akademi');closeSidebar();">
+      <span class="nav-num">01</span>Buffett Akademi
+    </div>
+    <div class="nav-item" id="nav-lynch-dersleri" onclick="showPage('lynch-dersleri');closeSidebar();">
+      <span class="nav-num">02</span>Lynch Dersleri
+    </div>
+    <div class="nav-item" id="nav-watchlist-entry" onclick="showPage('watchlist');closeSidebar();">
+      <span class="nav-num">03</span>Gerçek Zamanlı İzleme
+    </div>
+    <div class="nav-item" id="nav-forum-entry" onclick="showPage('forum');closeSidebar();">
+      <span class="nav-num">04</span>Topluluk Görüşleri
+    </div>
+    <div class="nav-item" id="nav-portfolio-entry" onclick="showPage('portfolio');closeSidebar();">
+      <span class="nav-num">05</span>Portföy İzleyici
     </div>
     <div class="nav-lbl" id="navLabel">Kriterler</div>
     <div id="navList"></div>
@@ -3427,8 +3464,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
           <button class="hero-ex-btn" id="hex-nyse" onclick="selHeroEx('NYSE')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-us"/></svg>NYSE</button>
           <button class="hero-ex-btn" id="hex-nasdaq" onclick="selHeroEx('NASDAQ')"><svg class="chip-f" style="width:14px;height:9px"><use href="#f-us"/></svg>NASDAQ</button>
         </div>
-        <div class="data-badge" id="dataBadge" style="margin-top:10px">✓ Yahoo Finance verisi yüklendi</div>
-        <div class="err-bar" id="errBar" style="margin-top:10px"></div>
       </div>
       <!-- Sağ: piyasa özeti -->
       <div class="hero-right" id="heroMarketPanel">
@@ -3527,6 +3562,16 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div class="rd-card"><div class="rd-lbl">Kurumsal Sahiplik</div><div class="rd-val" id="rdInst">—</div><div class="rd-sub" id="rdInstS">—</div></div>
     </div>
     <div id="scoreGaugeBox" style="margin-bottom:1px;"></div>
+    <div class="enrich-grid">
+      <div id="critChecklist" class="crit-checklist"></div>
+      <div class="sentiment-card">
+        <div class="card-t"><div class="cdot"></div>Topluluk Duyarlılığı</div>
+        <div class="sentiment-sub">(Analist konsensüsüne dayalı)</div>
+        <div class="cons-bar"><div class="cb" id="cBuy2" style="width:60%"></div><div class="ch" id="cHold2" style="width:25%"></div><div class="cs" id="cSell2" style="width:15%"></div></div>
+        <div class="cons-lbls"><span id="cBuyL2" style="color:var(--success)">AL</span><span id="cHoldL2" style="color:var(--warn)">TUT</span><span id="cSellL2" style="color:var(--danger)">SAT</span></div>
+      </div>
+    </div>
+    <div id="aiSummaryCard" class="ai-summary-card"></div>
     <div class="ov-grid">
       <div class="stat-card"><div class="stat-lbl">Geçen Kriter</div><div class="stat-val" id="statPass" style="color:var(--success)">—</div><div class="stat-sub" id="statPassS">—</div></div>
       <div class="stat-card"><div class="stat-lbl">Analiz Skoru</div><div class="stat-val" id="statScore">—</div><div class="stat-sub">kriter üzerinden</div></div>
@@ -3667,6 +3712,38 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 </div>
 
 <!-- PORTFOLIO PAGE -->
+<!-- BUFFETT AKADEMI PAGE -->
+<div class="page" id="page-buffett-akademi">
+<div class="page-body">
+  <div class="sec-title"><span style="color:var(--accent);font-size:13px;">◈</span> BUFFETT AKADEMİ</div>
+  <div style="max-width:640px;">
+    <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);margin-bottom:14px;">Warren Buffett'ın <span style="color:var(--accent);">Yatırım Felsefesi</span></div>
+    <div style="font-size:13px;line-height:1.9;color:var(--text2);margin-bottom:16px;">
+      Warren Buffett, "değer yatırımcılığı" okulunun en bilinen ismi olarak; bir şirketin gerçek değerinin altında işlem gören, sürdürülebilir rekabet avantajına ("ekonomik hendek") sahip, yetkin yönetim tarafından idare edilen işletmelere uzun vadeli sahip olmayı savunur. Onun yaklaşımı, kısa vadeli fiyat hareketlerinden çok şirketin temel kazanç gücüne ve nakit yaratma kapasitesine odaklanır.
+    </div>
+    <div style="font-size:13px;line-height:1.9;color:var(--muted2);border-left:2px solid var(--accent);padding-left:16px;">
+      Yakında: Buffett'ın yatırım felsefesi üzerine video dersler ve vaka çalışmaları.
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- LYNCH DERSLERI PAGE -->
+<div class="page" id="page-lynch-dersleri">
+<div class="page-body">
+  <div class="sec-title"><span style="color:var(--accent);font-size:13px;">◈</span> LYNCH DERSLERİ</div>
+  <div style="max-width:640px;">
+    <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);margin-bottom:14px;">Peter Lynch'in <span style="color:var(--accent);">Büyüme Avı</span></div>
+    <div style="font-size:13px;line-height:1.9;color:var(--text2);margin-bottom:16px;">
+      Peter Lynch, Fidelity Magellan Fonu'ndaki efsanevi döneminde, "bildiğin şeye yatırım yap" ilkesiyle tanınır. Onun yaklaşımı; hızlı büyüyen, anlaşılması kolay iş modellerine sahip şirketleri erken keşfetmeyi, PEG oranı gibi büyüme-odaklı metriklerle değerlemeyi ve sıradan yatırımcının gözlem gücünü bir avantaja dönüştürmeyi hedefler.
+    </div>
+    <div style="font-size:13px;line-height:1.9;color:var(--muted2);border-left:2px solid var(--accent);padding-left:16px;">
+      Yakında: Peter Lynch'in büyüme hisseleri stratejisi üzerine video dersler ve vaka çalışmaları.
+    </div>
+  </div>
+</div>
+</div>
+
 <div class="page" id="page-portfolio">
 <div class="page-body">
   <div class="pt-hdr"><div class="pt-title">Portföy<span>üm</span></div><span id="ptCloudSync" style="font-size:9px;color:var(--muted2);font-family:'JetBrains Mono',monospace;margin-right:auto;margin-left:10px"></span><button class="pt-ana-btn" onclick="analyzeAllPt()" id="ptAnaBtn">▶ Buffett + Lynch</button></div>
@@ -4187,6 +4264,24 @@ async function loadMkt(){
   }
 }
 
+// Mini trend çizgisi — history dizisinden 0-14 aralığına normalize edilmiş SVG polyline üretir.
+// history boşsa veya 2'den az nokta varsa null döner (sparkline render edilmez).
+function renderSparkline(history, pos){
+  if(!Array.isArray(history))return null;
+  const vals=history.map(Number).filter(v=>isFinite(v));
+  if(vals.length<2)return null;
+  const w=36,h=14;
+  const min=Math.min(...vals),max=Math.max(...vals);
+  const range=(max-min)||1;
+  const pts=vals.map((v,i)=>{
+    const x=(i/(vals.length-1))*w;
+    const y=h-((v-min)/range)*h;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const color=pos?'var(--success)':'var(--danger)';
+  return `<svg class="hmp-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+
 function renderMkt(m){
   // Tek piyasa widget'ı — hero sağ panel (CANLI PİYASA). Önceden ayrıca
   // "Piyasa Genel Görünümü" (#mktStrip) aynı veriyi tekrar gösteriyordu, kaldırıldı.
@@ -4200,6 +4295,13 @@ function renderMkt(m){
     const chgEl=el.querySelector('.hmp-chg');
     chgEl.textContent=`${pos?'+':''}${d.change.toFixed(2)}%`;
     chgEl.className=`hmp-chg ${pos?'pos':'neg'}`;
+    // Sparkline — chg span'ından hemen önceki yere ekle/güncelle
+    let sparkEl=el.querySelector('.hmp-spark');
+    if(sparkEl)sparkEl.remove();
+    const sparkHtml=renderSparkline(d.history,pos);
+    if(sparkHtml){
+      chgEl.insertAdjacentHTML('beforebegin',sparkHtml);
+    }
   });
 }
 
@@ -4297,15 +4399,17 @@ function qFill(t,c,ex){selEx(ex);document.getElementById('tickerIn').value=t;doc
 
 // PAGES
 function showPage(type,idx){
-  ['overview','crit','portfolio','forum','tezler','watchlist'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
+  ['overview','crit','portfolio','forum','tezler','watchlist','buffett-akademi','lynch-dersleri'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const e=document.getElementById('page-'+type);if(e)e.classList.add('active');
   if(type==='overview'){const n=document.getElementById('nav-overview');if(n)n.classList.add('active');}
   else if(type==='crit'){const n=document.getElementById('nav-'+idx);if(n)n.classList.add('active');renderCritDetail(idx);}
-  else if(type==='portfolio')renderPt();
-  else if(type==='forum')loadPosts();
-  else if(type==='watchlist'){if(window.renderWatchlist)window.renderWatchlist();}
+  else if(type==='portfolio'){const n=document.getElementById('nav-portfolio-entry');if(n)n.classList.add('active');renderPt();}
+  else if(type==='forum'){const n=document.getElementById('nav-forum-entry');if(n)n.classList.add('active');loadPosts();}
+  else if(type==='watchlist'){const n=document.getElementById('nav-watchlist-entry');if(n)n.classList.add('active');if(window.renderWatchlist)window.renderWatchlist();}
   else if(type==='tezler'){const n=document.getElementById('nav-tezler');if(n)n.classList.add('active');renderTezler();}
+  else if(type==='buffett-akademi'){const n=document.getElementById('nav-buffett-akademi');if(n)n.classList.add('active');}
+  else if(type==='lynch-dersleri'){const n=document.getElementById('nav-lynch-dersleri');if(n)n.classList.add('active');}
 }
 
 // TV CHART
@@ -4372,6 +4476,11 @@ function renderRealData(fd){
     const bp=cons.includes('buy')?65:cons==='hold'?30:10,hp=25,sp=100-bp-hp;
     setTimeout(()=>{document.getElementById('cBuy').style.width=bp+'%';document.getElementById('cHold').style.width=hp+'%';document.getElementById('cSell').style.width=sp+'%';},300);
     document.getElementById('cBuyL').textContent=`AL %${bp}`;document.getElementById('cHoldL').textContent=`TUT %${hp}`;document.getElementById('cSellL').textContent=`SAT %${sp}`;
+    // Topluluk Duyarlılığı mini gauge — aynı analist konsensüsü verisiyle besleniyor (gerçek veri kaynağı yok, uydurma sentiment gösterilmiyor)
+    if(document.getElementById('cBuy2'))setTimeout(()=>{document.getElementById('cBuy2').style.width=bp+'%';document.getElementById('cHold2').style.width=hp+'%';document.getElementById('cSell2').style.width=sp+'%';},300);
+    if(document.getElementById('cBuyL2'))document.getElementById('cBuyL2').textContent=`AL %${bp}`;
+    if(document.getElementById('cHoldL2'))document.getElementById('cHoldL2').textContent=`TUT %${hp}`;
+    if(document.getElementById('cSellL2'))document.getElementById('cSellL2').textContent=`SAT %${sp}`;
     const sm=textGlobal.match(/SUMMARY:\s*([^\n]+)/);if(sm)document.getElementById('anaNote').textContent='📊 '+sm[1].trim();
   }
 }
@@ -4663,9 +4772,27 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   }
 
   statuses.forEach((s,i)=>{const e=document.getElementById('ns-'+i);if(e)e.textContent=icon(s);});
+  const cklistEl=document.getElementById('critChecklist');
+  if(cklistEl){
+    cklistEl.innerHTML=fw.criteria.map((c,i)=>{
+      const st=statuses[i]||'neutral';
+      const d=esc(details[i]||'—');
+      return `<div class="cklist-row"><div class="cklist-icon ${st}">${icon(st)}</div><div class="cklist-name">${esc(c.name)}</div><div class="cklist-desc" title="${d}">${d}</div></div>`;
+    }).join('');
+  }
   const vbox=document.getElementById('verdictBox');
   vbox.textContent=`${score}/${fw.criteria.length} — ${verdict}`;
   vbox.className='verdict-box '+(verdict==='AL'?'buy':verdict==='UZAK_DUR'?'avoid':'watch');
+  const aiCard=document.getElementById('aiSummaryCard');
+  if(aiCard){
+    const smX=text.match(/SUMMARY:\s*([^\n]+)/);
+    const rkX=text.match(/RISK:\s*([^\n]+)/);
+    const vColor=verdict==='AL'?'var(--success)':verdict==='UZAK_DUR'?'var(--danger)':'var(--warn)';
+    aiCard.innerHTML=`<div class="ai-tag">${esc(fw.name)} AI</div>`+
+      (smX?`<div class="ai-summary-text">${esc(smX[1].trim())}</div>`:'')+
+      (rkX?`<div class="ai-summary-risk">⚠ ${esc(rkX[1].trim())}</div>`:'')+
+      `<div class="ai-summary-verdict" style="color:${vColor}">Nihai Görüş: ${verdict}</div>`;
+  }
 
   // Logo sistemi: US=Clearbit+favicon fallback, BIST=renkli avatar
   const LOGOS={
