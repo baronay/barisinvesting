@@ -343,7 +343,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .hero{background:linear-gradient(165deg,var(--sidebar3) 0%,var(--sidebar2) 45%,var(--sidebar) 100%);position:relative;overflow:hidden;padding:0;margin-bottom:0;border:none;}
 .hero::before{content:'';position:absolute;inset:0;pointer-events:none;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.035 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>"),radial-gradient(ellipse 80% 90% at -5% 50%,rgba(168,148,107,.13) 0%,transparent 60%),radial-gradient(ellipse 60% 70% at 105% 50%,rgba(138,126,148,.08) 0%,transparent 55%);}
 .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),var(--dalio),transparent);}
-.hero-inner{display:grid;grid-template-columns:1fr 280px;gap:0;align-items:stretch;min-height:220px;}
+.hero-inner{display:grid;grid-template-columns:1fr 280px;gap:0;align-items:start;min-height:220px;}
 .hero-left{padding:32px 36px 26px;position:relative;z-index:1;}
 .hero-right{background:rgba(255,255,255,.025);border-left:1px solid var(--border-s);padding:20px 22px;display:flex;flex-direction:column;gap:0;position:relative;z-index:1;}
 .hero-tag{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;font-family:'JetBrains Mono',monospace;}
@@ -467,14 +467,16 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .ana-note{font-size:10px;color:var(--text2);padding:8px 10px;background:var(--surface2);border:1px solid var(--glass);border-left:2px solid var(--accent);line-height:1.7;margin-top:8px;}
 .enrich-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:1px;margin-bottom:1px;background:var(--border);}
 .crit-checklist{background:var(--surface);border:1px solid var(--glass);padding:10px 12px;min-width:0;overflow:hidden;}
-.cklist-row{display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid var(--rule);min-width:0;}
+.cklist-row{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--rule);min-width:0;cursor:pointer;transition:background .15s;}
 .cklist-row:last-child{border-bottom:none;}
+.cklist-row:hover{background:var(--surface2);}
+.cklist-row:hover .cklist-arrow{color:var(--accent);}
 .cklist-icon{flex:0 0 16px;font-size:12px;font-weight:700;text-align:center;}
 .cklist-icon.pass{color:var(--success);}
 .cklist-icon.fail{color:var(--danger);}
 .cklist-icon.neutral{color:var(--warn);}
-.cklist-name{flex:0 0 38%;font-size:10px;color:var(--text);font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.cklist-desc{flex:1;font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.cklist-name{flex:1;font-size:11px;color:var(--text);font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cklist-arrow{flex:0 0 auto;font-size:11px;color:var(--muted2);transition:color .15s;}
 .sentiment-card{background:var(--surface);border:1px solid var(--glass);padding:10px 12px;display:flex;flex-direction:column;justify-content:center;min-width:0;}
 .sentiment-sub{font-size:8px;color:var(--muted2);margin-bottom:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;}
 .ai-summary-card{background:var(--surface);border:1px solid var(--glass);padding:12px 14px;margin-bottom:1px;}
@@ -736,7 +738,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
   .ov-grid,.rd-grid,.mult-grid,.pt-sum{grid-template-columns:1fr 1fr;}
   .news-grid{grid-template-columns:1fr;}
 }
-.hero-inner{display:grid;grid-template-columns:1fr 280px;gap:0;align-items:stretch;min-height:220px;}
+.hero-inner{display:grid;grid-template-columns:1fr 280px;gap:0;align-items:start;min-height:220px;}
 .hero-left{padding:32px 36px 26px;}
 .hero-right{background:rgba(255,255,255,.025);border-left:1px solid var(--border-s);padding:20px 22px;display:flex;flex-direction:column;gap:0;}
 .home-two-col{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;}
@@ -3351,8 +3353,11 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <div class="nav-item" id="nav-portfolio-entry" onclick="showPage('portfolio');closeSidebar();">
       <span class="nav-num">05</span>Portföy İzleyici
     </div>
-    <div class="nav-lbl" id="navLabel">Kriterler</div>
-    <div id="navList"></div>
+    <!-- Kriter listesi sidebar'dan kaldırıldı — kriterlere artık "Analiz Sonuçları"
+         kartındaki checklist'ten tıklanarak ulaşılıyor. navList JS'te hâlâ
+         dolduruluyor (ns-i durum ikonları başka yerde okunuyor), sadece gizli. -->
+    <div class="nav-lbl" id="navLabel" style="display:none">Kriterler</div>
+    <div id="navList" style="display:none"></div>
     <div class="hist-section" id="histSection" style="display:none">
       <div class="hist-lbl"><span>Son Analizler</span><span onclick="clearHistory()" style="font-size:9px;color:var(--muted2);cursor:pointer;font-weight:400" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted2)'">temizle</span></div>
       <div id="histList"></div>
@@ -3642,7 +3647,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     </div>
 
     <!-- ══ FAIR VALUE CARD — Adil Değer (3 model) ══ -->
-    <div class="fv-card" id="fvCard">
+    <div class="fv-card" id="fvCard" style="display:none">
       <div class="fv-head">
         <div class="fv-head-icon">◈</div>
         <div class="fv-head-text">
@@ -3706,7 +3711,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div class="mb-icon">⭐</div>
       <div><div class="mb-title" id="masterTitle">MASTER SELECTION</div><div class="mb-sub" id="masterText">—</div></div>
     </div>
-    <table class="crit-table"><thead><tr><th>#</th><th>Kriter</th><th>Durum</th><th>Özet</th></tr></thead><tbody id="summaryBody"></tbody></table>
   </div>
   </div><!-- /page-body -->
 </div>
@@ -4600,11 +4604,6 @@ function renderCharts(data){
   barChart=new Chart(document.getElementById('barC').getContext('2d'),{type:'bar',data:{labels:fw.criteria.map((_,i)=>String(i+1).padStart(2,'0')),datasets:[{data:sc,backgroundColor:cl,borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100,ticks:{display:false},grid:{color:'#f4f1ec'},border:{color:'#d4cfc6'}},x:{ticks:{color:'#6b6560',font:{family:'JetBrains Mono',size:9}},grid:{display:false},border:{color:'#d4cfc6'}}},plugins:{legend:{display:false}}}});
 }
 
-function renderTable(data){
-  const fw=FW[curFW];const tb=document.getElementById('summaryBody');tb.innerHTML='';
-  fw.criteria.forEach((m,i)=>{const tr=document.createElement('tr');const _st=data.statuses[i];const _sc=(_st==='pass'||_st==='fail')?_st:((!_st||_st==='pending')?'pending':'neutral');tr.className='crit-row '+_sc;tr.onclick=()=>showPage('crit',i);tr.innerHTML=`<td><span class="cn">${String(i+1).padStart(2,'0')}</span></td><td><div class="cname">${m.name}</div><div class="cdesc">${m.desc}</div></td><td>${pill(data.statuses[i])}</td><td><div class="dtxt">${(data.details[i]||'—').substring(0,80)}${(data.details[i]||'').length>80?'...':''}</div></td>`;tb.appendChild(tr);});
-}
-
 let curCritIdx=0;
 
 function renderCritDetail(i){
@@ -4788,12 +4787,13 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   }
 
   statuses.forEach((s,i)=>{const e=document.getElementById('ns-'+i);if(e)e.textContent=icon(s);});
+  // Sade checklist: ikon + kriter adı. Detaylı AI açıklaması artık satıra
+  // tıklanınca mevcut "crit" detay sayfasında gösteriliyor (renderCritDetail).
   const cklistEl=document.getElementById('critChecklist');
   if(cklistEl){
     cklistEl.innerHTML=fw.criteria.map((c,i)=>{
       const st=statuses[i]||'neutral';
-      const d=esc(details[i]||'—');
-      return `<div class="cklist-row"><div class="cklist-icon ${st}">${icon(st)}</div><div class="cklist-name">${esc(c.name)}</div><div class="cklist-desc" title="${d}">${d}</div></div>`;
+      return `<div class="cklist-row" onclick="showPage('crit',${i})"><div class="cklist-icon ${st}">${icon(st)}</div><div class="cklist-name">${esc(c.name)}</div><div class="cklist-arrow">→</div></div>`;
     }).join('');
   }
   const vbox=document.getElementById('verdictBox');
@@ -4889,15 +4889,13 @@ function parseAndRender(ticker,company,text,fd,fwKey){
 
   if(fd)renderRealData(fd);
   const mults=parseMult(text);if(mults)renderMult(mults);
-  renderCharts(analysisData);renderTable(analysisData);
+  renderCharts(analysisData);
   document.getElementById('analysisSection').style.display='block';
   showPage('overview');switchTab('analiz');
   setTimeout(()=>{const rg=document.querySelector('.result-news-grid');if(rg)rg.scrollIntoView({behavior:'smooth',block:'start'});},300);
   tezBildirimKontrol(ticker);
-  // Fair Value hesaplamasını paralel başlat (analiz kullanıcı için akıyor olsun)
-  if (typeof window.loadFairValue === 'function') {
-    window.loadFairValue(ticker, curEX, fwKey || curFW);
-  }
+  // Adil Değer Analizi kaldırıldı — Twelve Data ücretsiz planında çoğu NASDAQ/NYSE
+  // ticker'ı için veri kaynağına ulaşamayıp ham hata mesajı gösteriyordu.
 }
 
 let _tezBildirimId = null;
