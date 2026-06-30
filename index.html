@@ -466,16 +466,16 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .cons-lbls{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
 .ana-note{font-size:10px;color:var(--text2);padding:8px 10px;background:var(--surface2);border:1px solid var(--glass);border-left:2px solid var(--accent);line-height:1.7;margin-top:8px;}
 .enrich-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:1px;margin-bottom:1px;background:var(--border);}
-.crit-checklist{background:var(--surface);border:1px solid var(--glass);padding:10px 12px;}
-.cklist-row{display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid var(--rule);}
+.crit-checklist{background:var(--surface);border:1px solid var(--glass);padding:10px 12px;min-width:0;overflow:hidden;}
+.cklist-row{display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid var(--rule);min-width:0;}
 .cklist-row:last-child{border-bottom:none;}
 .cklist-icon{flex:0 0 16px;font-size:12px;font-weight:700;text-align:center;}
 .cklist-icon.pass{color:var(--success);}
 .cklist-icon.fail{color:var(--danger);}
 .cklist-icon.neutral{color:var(--warn);}
-.cklist-name{flex:0 0 38%;font-size:10px;color:var(--text);font-weight:500;}
-.cklist-desc{flex:1;font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sentiment-card{background:var(--surface);border:1px solid var(--glass);padding:10px 12px;display:flex;flex-direction:column;justify-content:center;}
+.cklist-name{flex:0 0 38%;font-size:10px;color:var(--text);font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cklist-desc{flex:1;font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.sentiment-card{background:var(--surface);border:1px solid var(--glass);padding:10px 12px;display:flex;flex-direction:column;justify-content:center;min-width:0;}
 .sentiment-sub{font-size:8px;color:var(--muted2);margin-bottom:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;}
 .ai-summary-card{background:var(--surface);border:1px solid var(--glass);padding:12px 14px;margin-bottom:1px;}
 .ai-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);background:rgba(194,173,132,.1);border:1px solid var(--accent);padding:3px 8px;margin-bottom:8px;}
