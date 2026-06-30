@@ -482,6 +482,14 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .ai-summary-text{font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:6px;}
 .ai-summary-risk{font-size:10px;color:var(--text2);line-height:1.6;padding:7px 9px;background:var(--surface2);border-left:2px solid var(--danger);margin-bottom:8px;}
 .ai-summary-verdict{font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;}
+/* Hero altı 3'lü satır: Analiz Sonuçları | Yapay Zeka Özeti | Son Dakika Haberleri */
+.result-news-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:24px;align-items:start;}
+.result-col{min-width:0;}
+.result-card{background:var(--surface);border:1px solid var(--border);padding:14px;}
+.result-mini-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.result-mini-ticker{font-family:'Playfair Display',serif;font-weight:700;font-size:15px;color:var(--text);}
+.result-mini-fw{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent);padding:2px 8px;}
+@media(max-width:1100px){.result-news-grid{grid-template-columns:1fr;}}
 .chart-card{background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:1px;}
 .chart-wrap{position:relative;height:145px;}
 .radar-wrap{position:relative;height:180px;max-width:220px;margin:0 auto;}
@@ -3315,7 +3323,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
         <button class="fw-btn active" id="fw-b" onclick="selFW('buffett')">Buffett</button>
         <button class="fw-btn" id="fw-l" onclick="selFW('lynch')">P. Lynch</button>
       </div>
-      <button class="ana-btn" id="anaBtn" onclick="doAnalyze()">ANALİZ ET →</button>
+      <button class="ana-btn" id="anaBtn" onclick="doAnalyze()" style="display:none">ANALİZ ET →</button>
       <div class="data-badge" id="dataBadge" style="margin-top:10px">✓ Yahoo Finance verisi yüklendi</div>
       <div class="err-bar" id="errBar" style="margin-top:10px"></div>
     </div>
@@ -3473,7 +3481,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
         <div class="hmp-row" id="hmpBIST"><span class="hmp-lbl">BİST 100</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
         <div class="hmp-divider"></div>
         <div class="hmp-row" id="hmpBTC"><span class="hmp-lbl">BTC</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
-        <div class="hmp-row" id="hmpETH"><span class="hmp-lbl">ETH</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
         <div class="hmp-row" id="hmpGold"><span class="hmp-lbl">Altın</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
         <div class="hmp-row" id="hmpOil"><span class="hmp-lbl">Petrol</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
         <div class="hmp-time" id="hmpTime"></div>
@@ -3483,14 +3490,35 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 
   <!-- MARKET STRIP kaldırıldı — aynı endeks verisi artık tek widget'ta (CANLI PİYASA, hero-right) -->
   <div class="page-body">
-  <div class="home-two-col">
-    <!-- SOL: Haberler -->
-    <div class="home-col-news">
+  <!-- HERO ALTI 3'LÜ SATIR: Analiz Sonuçları | Yapay Zeka Özeti | Son Dakika Haberleri -->
+  <div class="result-news-grid">
+    <!-- Analiz yapılana kadar gizli (parseAndRender içinde açılıyor) -->
+    <div class="result-col result-card" id="resultAnalysisCol" style="display:none">
+      <div class="result-mini-hdr"><span class="result-mini-ticker" id="resultMiniTicker">—</span><span class="result-mini-fw" id="resultMiniFw">—</span></div>
+      <div id="scoreGaugeBox" style="margin-bottom:1px;"></div>
+      <div class="enrich-grid">
+        <div id="critChecklist" class="crit-checklist"></div>
+        <div class="sentiment-card">
+          <div class="card-t"><div class="cdot"></div>Topluluk Duyarlılığı</div>
+          <div class="sentiment-sub">(Analist konsensüsüne dayalı)</div>
+          <div class="cons-bar"><div class="cb" id="cBuy2" style="width:60%"></div><div class="ch" id="cHold2" style="width:25%"></div><div class="cs" id="cSell2" style="width:15%"></div></div>
+          <div class="cons-lbls"><span id="cBuyL2" style="color:var(--success)">AL</span><span id="cHoldL2" style="color:var(--warn)">TUT</span><span id="cSellL2" style="color:var(--danger)">SAT</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="result-col result-card" id="resultAiCol" style="display:none">
+      <div class="sec-title" style="margin-bottom:10px">Yapay Zeka Özeti</div>
+      <div id="aiSummaryCard" class="ai-summary-card" style="border:none;padding:0;"></div>
+    </div>
+    <!-- Haberler — her zaman görünür, analiz beklemez -->
+    <div class="result-col home-col-news">
       <div class="sec-title">Son Dakika Piyasa Haberleri <span class="src-badge" id="srcBadge" style="margin-left:5px"></span></div>
       <div class="news-grid-v" id="newsGrid"><div class="news-loading">Haberler yükleniyor...</div></div>
     </div>
-    <!-- SAĞ: Dikkat çeken hisseler -->
-    <div class="home-col-right">
+  </div>
+
+  <!-- Dikkat çeken hisseler (eskiden haberlerin yanındaydı, artık tek başına) -->
+  <div class="home-col-right" style="margin-top:24px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <div class="sec-title" style="margin:0;flex:1">Dikkat Çeken Hisseler</div>
         <div style="display:flex;gap:4px">
@@ -3539,7 +3567,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
           <div class="x-embed-container" id="xEmbedContainer" aria-live="polite"></div>
         </div>
       </div>
-    </div>
   </div>
 
   <!-- ANALYSIS RESULTS (hidden until analyzed) -->
@@ -3561,17 +3588,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div class="rd-card"><div class="rd-lbl">Gelir Büyümesi</div><div class="rd-val" id="rdRevG">—</div><div class="rd-sub">YoY</div></div>
       <div class="rd-card"><div class="rd-lbl">Kurumsal Sahiplik</div><div class="rd-val" id="rdInst">—</div><div class="rd-sub" id="rdInstS">—</div></div>
     </div>
-    <div id="scoreGaugeBox" style="margin-bottom:1px;"></div>
-    <div class="enrich-grid">
-      <div id="critChecklist" class="crit-checklist"></div>
-      <div class="sentiment-card">
-        <div class="card-t"><div class="cdot"></div>Topluluk Duyarlılığı</div>
-        <div class="sentiment-sub">(Analist konsensüsüne dayalı)</div>
-        <div class="cons-bar"><div class="cb" id="cBuy2" style="width:60%"></div><div class="ch" id="cHold2" style="width:25%"></div><div class="cs" id="cSell2" style="width:15%"></div></div>
-        <div class="cons-lbls"><span id="cBuyL2" style="color:var(--success)">AL</span><span id="cHoldL2" style="color:var(--warn)">TUT</span><span id="cSellL2" style="color:var(--danger)">SAT</span></div>
-      </div>
-    </div>
-    <div id="aiSummaryCard" class="ai-summary-card"></div>
     <div class="ov-grid">
       <div class="stat-card"><div class="stat-lbl">Geçen Kriter</div><div class="stat-val" id="statPass" style="color:var(--success)">—</div><div class="stat-sub" id="statPassS">—</div></div>
       <div class="stat-card"><div class="stat-lbl">Analiz Skoru</div><div class="stat-val" id="statScore">—</div><div class="stat-sub">kriter üzerinden</div></div>
@@ -4285,7 +4301,7 @@ function renderSparkline(history, pos){
 function renderMkt(m){
   // Tek piyasa widget'ı — hero sağ panel (CANLI PİYASA). Önceden ayrıca
   // "Piyasa Genel Görünümü" (#mktStrip) aynı veriyi tekrar gösteriyordu, kaldırıldı.
-  const hmpMap={sp500:'hmpSP500',nasdaq:'hmpNAS',bist100:'hmpBIST',btc:'hmpBTC',eth:'hmpETH',gold:'hmpGold',oil:'hmpOil'};
+  const hmpMap={sp500:'hmpSP500',nasdaq:'hmpNAS',bist100:'hmpBIST',btc:'hmpBTC',gold:'hmpGold',oil:'hmpOil'};
   Object.entries(hmpMap).forEach(([k,id])=>{
     const el=document.getElementById(id);if(!el)return;
     const d=m[k];if(!d)return;
@@ -4866,13 +4882,17 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   const pc=statuses.filter(s=>s==='pass').length,fc=statuses.filter(s=>s==='fail').length;
   document.getElementById('statPass').textContent=pc;
   document.getElementById('statPassS').textContent=`${fc} kaldı, ${statuses.filter(s=>s==='neutral').length} belirsiz`;
+  const rmt=document.getElementById('resultMiniTicker');if(rmt)rmt.textContent=ticker;
+  const rmf=document.getElementById('resultMiniFw');if(rmf)rmf.textContent=fw.name;
+  const rac=document.getElementById('resultAnalysisCol');if(rac)rac.style.display='block';
+  const raic=document.getElementById('resultAiCol');if(raic)raic.style.display='block';
 
   if(fd)renderRealData(fd);
   const mults=parseMult(text);if(mults)renderMult(mults);
   renderCharts(analysisData);renderTable(analysisData);
   document.getElementById('analysisSection').style.display='block';
   showPage('overview');switchTab('analiz');
-  setTimeout(()=>document.getElementById('analysisSection').scrollIntoView({behavior:'smooth',block:'start'}),300);
+  setTimeout(()=>{const rg=document.querySelector('.result-news-grid');if(rg)rg.scrollIntoView({behavior:'smooth',block:'start'});},300);
   tezBildirimKontrol(ticker);
   // Fair Value hesaplamasını paralel başlat (analiz kullanıcı için akıyor olsun)
   if (typeof window.loadFairValue === 'function') {
