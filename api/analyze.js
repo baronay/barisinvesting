@@ -764,35 +764,53 @@ async function fetchBISTFast(ticker) {
   const cached = getCached(cacheKey);
   if (cached) { dlog(`Cache hit (bistfast): ${ticker}`); return cached; }
 
-  const base = process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000';
-  const r = await fetch(`${base}/api/bist-ratios?ticker=${encodeURIComponent(ticker)}`, {
-    signal: AbortSignal.timeout(7000), headers: { 'Accept': 'application/json' }
+  // TradingView scanner'ı DOĞRUDAN çağır — kendi API'mize HTTP self-call yok
+  // (ekstra fonksiyon çağrısı, gecikme ve Vercel URL koruma riski kalkıyor).
+  const TV_COLS = ['close','price_earnings_ttm','price_book_ratio','market_cap_basic',
+                   'enterprise_value_ebitda_ttm','return_on_equity','debt_to_equity',
+                   'earnings_per_share_basic_ttm'];
+  const r = await fetch('https://scanner.tradingview.com/turkey/scan', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json', 'Accept': 'application/json',
+      'Origin': 'https://www.tradingview.com', 'Referer': 'https://www.tradingview.com/',
+      'User-Agent': UA,
+    },
+    body: JSON.stringify({ symbols: { tickers: [`BIST:${ticker}`], query: { types: [] } }, columns: TV_COLS }),
+    signal: AbortSignal.timeout(5000),
   });
-  if (!r.ok) throw new Error(`bist-ratios HTTP ${r.status}`);
-  const d = await r.json();
-  if (!d || d.GuncelFiyat == null) throw new Error('BIST fiyat verisi yok');
+  if (!r.ok) throw new Error(`TradingView HTTP ${r.status}`);
+  const json = await r.json();
+  const row = json?.data?.[0]?.d;
+  if (!row) throw new Error('TradingView veri yok');
 
   const num = v => (v != null && isFinite(v)) ? Number(v) : null;
+  const fiyat = num(row[0]), fk = num(row[1]), pddd = num(row[2]), mc = num(row[3]);
+  const fdFavok = num(row[4]), roePct = num(row[5]), de = num(row[6]), eps = num(row[7]);
+  if (fiyat == null) throw new Error('BIST fiyat verisi yok');
+  // F/K yedeği: TV bazen price_earnings_ttm'i boş döner — fiyat/EPS'den hesapla
+  const fkFinal = (fk && fk > 0) ? fk : (eps && eps > 0 ? fiyat / eps : null);
+
   const result = {
-    currentPrice: num(d.GuncelFiyat), currency: 'TRY',
-    marketCap: num(d.PiyasaDegeri),
-    peRatio: (num(d.FK) && d.FK > 0) ? num(d.FK) : null, peSource: d.kaynak || 'TradingView',
+    currentPrice: fiyat, currency: 'TRY',
+    marketCap: mc,
+    peRatio: fkFinal, peSource: 'TradingView',
     forwardPE: null,
-    pbRatio: (num(d.PDDD) && d.PDDD > 0) ? num(d.PDDD) : null, pbSource: d.kaynak || 'TradingView',
+    pbRatio: (pddd && pddd > 0) ? pddd : null, pbSource: 'TradingView',
     pegRatio: null,
-    evEbitda: num(d.FD_FAVOK),
-    roe: (d.ROE != null && isFinite(d.ROE)) ? Number(d.ROE) / 100 : null, roeSource: d.kaynak || 'TradingView',
+    evEbitda: fdFavok,
+    roe: roePct != null ? roePct / 100 : null, roeSource: 'TradingView',
     roa: null,
     grossMargin: null, operatingMargin: null, profitMargin: null,
     freeCashflow: null, operatingCashflow: null, totalCash: null, totalDebt: null,
-    debtToEquity: num(d.DebtEquity), currentRatio: null,
+    debtToEquity: de, currentRatio: null,
     revenueGrowth: null, earningsGrowth: null,
     institutionOwnership: null, recommendationKey: null, targetMeanPrice: null,
     numberOfAnalystOpinions: null,
     fiftyTwoWeekLow: null, fiftyTwoWeekHigh: null,
     shortName: null, website: null, sector: null, industry: null,
     totalAssets: null, totalLiabilities: null, netIncome: null, computedEquity: null,
-    peers: [], dataSource: d.kaynak || 'TradingView',
+    peers: [], dataSource: 'TradingView',
   };
 
   const { data: clean, warnings } = sanitizeFinancialData(result);
@@ -1009,7 +1027,7 @@ CRITERIA_END`
       : fetchYahooData(yahooTicker);    // US → Yahoo
     financialData = await Promise.race([
       dataFetch,
-      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), isBIST ? 8000 : 6000)),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), isBIST ? 5500 : 6000)),
     ]);
   } catch(e) { dlog('Fetch failed/timeout:', e.message); }
 
@@ -1096,10 +1114,11 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // env ile yükseltilebilir — ama Hobby'de yavaş modeller timeout riski taşır.
     // Prompt iyileştirmesi her modelde geçerli, haiku bile eskisinden çok daha iyi.
     const FALLBACK_MODEL = 'claude-haiku-4-5-20251001';
-    // Claude 3.5 Sonnet: Sonnet 5'ten hızlı, haiku'dan cok daha kaliteli, her
-    // hesapta erisilebilir. Hobby'nin 30sn butcesine rahat sigar (~15sn uretim).
-    // ANALYZE_MODEL env ile degistirilebilir. Hata donerse haiku'ya fallback.
-    const primaryModel = process.env.ANALYZE_MODEL || 'claude-3-5-sonnet-20241022';
+    // Claude Sonnet 4.5: eski nesil Sonnet (Sonnet 5 degil) ama 3.5 Sonnet'ten
+    // hem KALITELI hem ~1.5x HIZLI (~85 tok/sn). 3.5 Sonnet cok yavasti: 1500
+    // token Turkce ~25sn suruyor, 23sn abort'a takiliyordu (SAHOL kisa ciktiyla
+    // yetisti, THYAO uzun ciktiyla kesildi). ANALYZE_MODEL env ile degistirilebilir.
+    const primaryModel = process.env.ANALYZE_MODEL || 'claude-sonnet-4-5';
 
     const callModel = async (model, timeoutMs) => {
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1107,7 +1126,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model,
-          max_tokens: 1500,
+          max_tokens: 1200,
           system: systemPrompt,
           messages: [{ role: 'user', content: enrichedPrompt }]
         }),
@@ -1118,7 +1137,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       return { resp, d };
     };
 
-    let { resp: response, d: data } = await callModel(primaryModel, 23000);
+    let { resp: response, d: data } = await callModel(primaryModel, 21000);
 
     // Birincil model HATA döndürdüyse (ör. API anahtarında Sonnet erişimi yok /
     // geçersiz model ID) hemen bilinen-çalışan haiku'ya düş — analiz komple
@@ -1126,7 +1145,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // düşmez (dış catch yakalar), o yüzden çift-timeout riski yok.
     if ((!data || data.error || !response.ok) && primaryModel !== FALLBACK_MODEL) {
       dlog(`[AI] ${primaryModel} başarısız (${data?.error?.message || response?.status}) → ${FALLBACK_MODEL}`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 19000));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 15000));
     }
 
     if (!data) return res.status(502).json({ error: 'AI servisinden geçersiz yanıt alındı.' });
