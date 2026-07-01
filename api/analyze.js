@@ -695,18 +695,11 @@ async function fetchYahooData(yahooTicker) {
       result = computeFromRawData(result, false);
     }
 
-    // ADIM 5: Hâlâ kritik eksik varsa eski scraping dene
-    if (result.pbRatio == null || result.peRatio == null) {
-      dlog('[BIST] Kritik veri eksik → legacy scraping...');
-      const t = yahooTicker.replace('.IS', '');
-      const sc = await scrapeBISTFallback(t);
-      if (sc.source) {
-        if (result.peRatio == null && sc.peRatio) result.peRatio = sc.peRatio;
-        if (result.pbRatio == null && sc.pbRatio) { result.pbRatio = sc.pbRatio; result.pbSource = sc.source; }
-        if (result.roe     == null && sc.roe)     { result.roe     = sc.roe;     result.roeSource = sc.source; }
-        result.dataSource = sc.source;
-      }
-    }
+    // ADIM 5 (KAPATILDI): Eski İşYatırım/BigPara scraping'i (her biri ~6sn, arka
+    // planda AI çağrısıyla yarışıp timeout'a sebep oluyordu) devre dışı. Doğru
+    // BIST rasyoları zaten TradingView'den (bist-ratios) geliyor; eksik kalırsa
+    // formül (MC/NetIncome, Fiyat/EPS) devreye giriyor (ADIM 6-7). Scraping'e
+    // ihtiyaç yok — hız ve güvenilirlik için tamamen atlanıyor.
 
     // ADIM 6: PE hâlâ null → MarketCap / NetIncome formülü (son çare ama güvenilir)
     // THYAO örneği: MC=408.48B TRY, NetIncome=~3.4B USD × 38 = 129.2B TRY → PE=3.15 ✓
