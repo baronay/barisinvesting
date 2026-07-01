@@ -1098,8 +1098,20 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     }
 
     if (!data) return res.status(502).json({ error: 'AI servisinden geçersiz yanıt alındı.' });
-    if (data.error) return res.status(502).json({ error: `AI servis hatası: ${data.error.message || data.error.type}` });
-    if (!response.ok) return res.status(502).json({ error: `AI servis hatası (HTTP ${response.status})` });
+    if (data.error || !response.ok) {
+      const et = (data.error?.type || '').toLowerCase();
+      const em = (data.error?.message || '').toLowerCase();
+      const status = response?.status;
+      // Anthropic hata tiplerini teşhis edilebilir mesajlara çevir
+      if (status === 401 || et.includes('authentication') || em.includes('x-api-key') || em.includes('api key') || em.includes('api-key'))
+        return res.status(502).json({ error: 'AI_AUTH: Anthropic API anahtarı geçersiz/eksik.' });
+      if (em.includes('credit balance') || em.includes('billing') || em.includes('quota') || em.includes('insufficient'))
+        return res.status(502).json({ error: 'AI_CREDIT: Anthropic hesabında bakiye/kredi yetersiz.' });
+      if (status === 429 || et.includes('rate_limit') || et.includes('overloaded') || status === 529)
+        return res.status(503).json({ error: 'AI_BUSY: AI servisi şu an meşgul, birkaç saniye sonra tekrar deneyin.' });
+      // Bilinmeyen — ham Anthropic mesajını göster (teşhis için)
+      return res.status(502).json({ error: `AI_HATA (${status||'?'}/${et||'?'}): ${data.error?.message || 'bilinmeyen'}` });
+    }
 
     let aiResult = data.content?.[0]?.text || '';
     if (!aiResult) return res.status(502).json({ error: 'AI servisi boş yanıt döndü.' });
