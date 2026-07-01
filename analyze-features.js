@@ -327,8 +327,7 @@ RISK: [En kritik 1 risk cümlesi]`;
     const bodyEl = document.getElementById('snapshotBody');
     if (!bodyEl) return;
 
-    bodyEl.innerHTML = `
-      const isBIST = ex === 'BIST';
+    const isBIST = exchange === 'BIST';
 
     bodyEl.innerHTML = `
       <!-- İş açıklaması -->

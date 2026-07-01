@@ -965,7 +965,7 @@ CRITERIA_END`
     // pes edip elimizdeki veriyle (veya veri yoksa "sınırlı" modda) AI'ya geçiyoruz.
     financialData = await Promise.race([
       fetchYahooData(yahooTicker),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 9000)),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 8000)),
     ]);
   } catch(e) { dlog('Fetch failed/timeout:', e.message); }
 
@@ -1082,7 +1082,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model,
-          max_tokens: 2200,
+          max_tokens: 2000,
           system: systemPrompt,
           messages: [{ role: 'user', content: enrichedPrompt }]
         }),
@@ -1093,7 +1093,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       return { resp, d };
     };
 
-    let { resp: response, d: data } = await callModel(primaryModel, 18000);
+    let { resp: response, d: data } = await callModel(primaryModel, 16000);
 
     // Birincil model HATA döndürdüyse (ör. API anahtarında Sonnet erişimi yok /
     // geçersiz model ID) hemen bilinen-çalışan haiku'ya düş — analiz komple
