@@ -472,6 +472,11 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .cons-lbls{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
 .ana-note{font-size:10px;color:var(--text2);padding:8px 10px;background:var(--surface2);border:1px solid var(--glass);border-left:2px solid var(--accent);line-height:1.7;margin-top:8px;}
 .crit-checklist{background:var(--surface);border:1px solid var(--glass);padding:10px 12px;min-width:0;overflow:hidden;margin-bottom:10px;}
+/* Skor halkası artık kendi geniş satırında — score-gauge.js'in varsayılan
+   240px sınırını burada büyütüyoruz (halka artık checklist'in üzerine binmiyor,
+   çünkü checklist artık aynı kartta YANINDA değil ALTINDA, ayrı blok). */
+#scoreGaugeBox .sg-arc{max-width:340px;}
+#scoreGaugeBox .sg-num{font-size:42px;height:46px;}
 .cklist-row{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--rule);min-width:0;cursor:pointer;transition:background .15s;}
 .cklist-row:last-child{border-bottom:none;}
 .cklist-row:hover{background:var(--surface2);}
@@ -489,11 +494,18 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .ai-summary-text{font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:6px;}
 .ai-summary-risk{font-size:10px;color:var(--text2);line-height:1.6;padding:7px 9px;background:var(--surface2);border-left:2px solid var(--danger);margin-bottom:8px;}
 .ai-summary-verdict{font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;}
-/* Hero altı 3'lü satır: Analiz Sonuçları | Yapay Zeka Özeti | Son Dakika Haberleri */
-.result-news-grid{display:grid;grid-template-columns:1.8fr 1.1fr 1fr;gap:24px;align-items:start;}
+/* Hero altı düzen: 1.satır Şirket Kartı + AI Özeti yan yana, 2.satır Skor
+   Halkası+7 Madde ikisinin toplam genişliğinde tek satır, 3.satır Haberler tam genişlik */
+.result-news-grid{display:grid;grid-template-columns:1.7fr 1fr;gap:24px;align-items:start;
+  grid-template-areas:"company ai" "gauge gauge" "news news";}
+#resultAnalysisCol{grid-area:company;}
+#resultAiCol{grid-area:ai;}
+#resultGaugeCol{grid-area:gauge;}
+.home-col-news{grid-area:news;}
 .result-col{min-width:0;}
 .result-card{background:var(--surface);border:1px solid var(--border);padding:14px;}
-@media(max-width:1100px){.result-news-grid{grid-template-columns:1fr;}}
+.result-gauge-row{display:block;}
+@media(max-width:1100px){.result-news-grid{grid-template-columns:1fr;grid-template-areas:"company" "ai" "gauge" "news";}}
 .chart-card{background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:1px;}
 .chart-wrap{position:relative;height:145px;}
 .radar-wrap{position:relative;height:180px;max-width:220px;margin:0 auto;}
@@ -3472,10 +3484,11 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 
   <!-- MARKET STRIP kaldırıldı — aynı endeks verisi artık tek widget'ta (CANLI PİYASA, hero-right) -->
   <div class="page-body">
-  <!-- HERO ALTI 3'LÜ SATIR: Analiz Sonuçları | Yapay Zeka Özeti | Son Dakika Haberleri -->
+  <!-- HERO ALTI DÜZEN: 1.satır Şirket Kartı + Yapay Zeka Özeti yan yana,
+       2.satır Skor Halkası + 7 Madde (ikisinin toplam genişliğinde, büyük),
+       3.satır Son Dakika Haberleri (tam genişlik) -->
   <div class="result-news-grid">
-    <!-- Analiz yapılana kadar gizli (parseAndRender içinde açılıyor). Tek akış:
-         şirket kartı → skor halkası → 7 madde checklist → topluluk duyarlılığı. -->
+    <!-- Analiz yapılana kadar gizli (parseAndRender içinde açılıyor) -->
     <div class="result-col result-card" id="resultAnalysisCol" style="display:none">
       <div class="stock-hdr" id="stockHdr" style="margin:-14px -14px 14px;">
         <div class="stock-logo" id="stockLogo">—</div>
@@ -3494,7 +3507,14 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
         <div class="rd-card"><div class="rd-lbl">Gelir Büyümesi</div><div class="rd-val" id="rdRevG">—</div><div class="rd-sub">YoY</div></div>
         <div class="rd-card"><div class="rd-lbl">Kurumsal Sahiplik</div><div class="rd-val" id="rdInst">—</div><div class="rd-sub" id="rdInstS">—</div></div>
       </div>
-      <div id="scoreGaugeBox" style="margin-bottom:1px;"></div>
+    </div>
+    <div class="result-col result-card" id="resultAiCol" style="display:none">
+      <div class="sec-title" style="margin-bottom:10px">Yapay Zeka Özeti</div>
+      <div id="aiSummaryCard" class="ai-summary-card" style="border:none;padding:0;"></div>
+    </div>
+    <!-- Skor halkası + 7 madde — şirket kartı+AI özeti satırının TAM GENİŞLİĞİNDE, kendi satırında -->
+    <div class="result-col result-card result-gauge-row" id="resultGaugeCol" style="display:none">
+      <div id="scoreGaugeBox" style="margin-bottom:14px;"></div>
       <div id="critChecklist" class="crit-checklist"></div>
       <div class="sentiment-card">
         <div class="card-t"><div class="cdot"></div>Topluluk Duyarlılığı</div>
@@ -3503,11 +3523,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
         <div class="cons-lbls"><span id="cBuyL2" style="color:var(--success)">AL</span><span id="cHoldL2" style="color:var(--warn)">TUT</span><span id="cSellL2" style="color:var(--danger)">SAT</span></div>
       </div>
     </div>
-    <div class="result-col result-card" id="resultAiCol" style="display:none">
-      <div class="sec-title" style="margin-bottom:10px">Yapay Zeka Özeti</div>
-      <div id="aiSummaryCard" class="ai-summary-card" style="border:none;padding:0;"></div>
-    </div>
-    <!-- Haberler — her zaman görünür, analiz beklemez -->
+    <!-- Haberler — her zaman görünür, analiz beklemez, en altta tam genişlik -->
     <div class="result-col home-col-news">
       <div class="sec-title">Son Dakika Piyasa Haberleri <span class="src-badge" id="srcBadge" style="margin-left:5px"></span></div>
       <div class="news-grid-v" id="newsGrid"><div class="news-loading">Haberler yükleniyor...</div></div>
@@ -4724,6 +4740,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   document.getElementById('statPassS').textContent=`${fc} kaldı, ${statuses.filter(s=>s==='neutral').length} belirsiz`;
   const rac=document.getElementById('resultAnalysisCol');if(rac)rac.style.display='block';
   const raic=document.getElementById('resultAiCol');if(raic)raic.style.display='block';
+  const rgc=document.getElementById('resultGaugeCol');if(rgc)rgc.style.display='block';
 
   if(fd)renderRealData(fd);
   const mults=parseMult(text);if(mults)renderMult(mults);
