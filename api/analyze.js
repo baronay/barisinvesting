@@ -754,6 +754,45 @@ async function fetchYahooData(yahooTicker) {
   return cleanResult;
 }
 
+// ── BIST YAHOO TAKVİYESİ (sadece birim-güvenli alanlar) ──────────
+// Yahoo'nun BIST bilanço kalemleri USD/TRY karışıklığı yüzünden güvenilmez,
+// ama YÜZDE ve FİYAT alanları (kurumsal sahiplik, analist hedefi, tavsiye)
+// bu sorundan etkilenmez. TradingView'de bu alanlar hiç yok — buradan
+// best-effort tamamlıyoruz; başarısız olursa null döner, analiz aksamaz.
+async function fetchBISTExtrasFromYahoo(yahooTicker) {
+  const cacheKey = `bistextra:${yahooTicker}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  const { crumb, cookie } = await getYahooCrumb();
+  const cs = crumb ? `&crumb=${encodeURIComponent(crumb)}` : '';
+  const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(yahooTicker)}?modules=financialData,defaultKeyStatistics,assetProfile${cs}`;
+  const r = await fetch(url, {
+    headers: {
+      'User-Agent': UA, 'Accept': 'application/json',
+      'Referer': 'https://finance.yahoo.com/', 'Origin': 'https://finance.yahoo.com',
+      ...(cookie ? { 'Cookie': cookie } : {}),
+    },
+    signal: AbortSignal.timeout(4000),
+  });
+  if (!r.ok) return null;
+  const j = await r.json();
+  const raw = j?.quoteSummary?.result?.[0];
+  if (!raw) return null;
+
+  const fd = raw.financialData || {}, ks = raw.defaultKeyStatistics || {}, ap = raw.assetProfile || {};
+  const f = v => v?.raw ?? null;
+  const out = {
+    institutionOwnership:    f(ks.heldPercentInstitutions),
+    targetMeanPrice:         f(fd.targetMeanPrice),
+    recommendationKey:       fd.recommendationKey ?? null,
+    numberOfAnalystOpinions: f(ks.numberOfAnalystOpinions) ?? f(fd.numberOfAnalystOpinions),
+    website:                 ap.website ?? null,
+  };
+  setCache(cacheKey, out);
+  return out;
+}
+
 // ── BIST HIZLI VERİ (sadece TradingView) ─────────────────────────
 // Yahoo BIST verisi kökten bozuk (USD/TRY karışıklığı → F/K 33 yerine 3.3).
 // Doğru rasyolar TradingView'de (api/bist-ratios). Tek çağrı, doğru veri,
@@ -764,6 +803,11 @@ async function fetchBISTFast(ticker) {
   const cacheKey = `bistfast:${ticker}`;
   const cached = getCached(cacheKey);
   if (cached) { dlog(`Cache hit (bistfast): ${ticker}`); return cached; }
+
+  // Yahoo takviyesini TV çağrısıyla PARALEL başlat — kritik yol TV'dir,
+  // Yahoo gecikirse aşağıda kısa bir süre bekleyip onsuz devam ederiz.
+  const extrasPromise = fetchBISTExtrasFromYahoo(`${ticker}.IS`)
+    .catch(e => { dlog(`[BIST Extras] Yahoo takviyesi başarısız: ${e.message}`); return null; });
 
   // TradingView scanner'ı DOĞRUDAN çağır — kendi API'mize HTTP self-call yok
   // (ekstra fonksiyon çağrısı, gecikme ve Vercel URL koruma riski kalkıyor).
@@ -835,6 +879,25 @@ async function fetchBISTFast(ticker) {
     totalAssets: null, totalLiabilities: null, netIncome: null, computedEquity: null,
     peers: [], dataSource: 'TradingView',
   };
+
+  // Yahoo takviyesini en fazla 2.5sn bekle — gelmezse bu alanlar null kalır.
+  const extras = await Promise.race([
+    extrasPromise,
+    new Promise(resolve => setTimeout(() => resolve(null), 2500)),
+  ]);
+  if (extras) {
+    result.institutionOwnership    = extras.institutionOwnership;
+    result.recommendationKey       = extras.recommendationKey;
+    result.numberOfAnalystOpinions = extras.numberOfAnalystOpinions;
+    result.website                 = extras.website ?? result.website;
+    // Analist hedefi TRY olmalı — USD gelmişse (fiyatın çok altında) alma
+    if (extras.targetMeanPrice != null && fiyat > 0) {
+      const tRatio = extras.targetMeanPrice / fiyat;
+      if (tRatio > 0.3 && tRatio < 8) result.targetMeanPrice = extras.targetMeanPrice;
+      else dlog(`[BIST Extras] targetMeanPrice=${extras.targetMeanPrice} fiyata (${fiyat}) göre anormal → atlandı`);
+    }
+    dlog(`[BIST Extras] inst=${extras.institutionOwnership} hedef=${result.targetMeanPrice} tavsiye=${extras.recommendationKey}`);
+  }
 
   const { data: clean, warnings } = sanitizeFinancialData(result);
   if (!clean) throw new Error('BIST veri doğrulama başarısız');
@@ -1044,13 +1107,14 @@ CRITERIA_END`
   const yahooTicker = isBIST ? `${cleanTicker}.IS` : cleanTicker;
   let financialData = null;
   try {
-    // Veri çekmeye kesin üst süre (Hobby'nin dar bütçesinde AI'ya yer kalsın).
+    // Veri çekmeye kesin üst süre. Bütçe: veri 8sn + AI 30sn + haiku yedeği
+    // 15sn = ~53sn < maxDuration 60sn. BIST: TV (5sn) + Yahoo takviye (2.5sn).
     const dataFetch = isBIST
-      ? fetchBISTFast(cleanTicker)      // BIST → sadece TradingView (doğru + hızlı)
+      ? fetchBISTFast(cleanTicker)      // BIST → rasyolar TV + sahiplik/analist Yahoo
       : fetchYahooData(yahooTicker);    // US → Yahoo
     financialData = await Promise.race([
       dataFetch,
-      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), isBIST ? 5500 : 6000)),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 8000)),
     ]);
   } catch(e) { dlog('Fetch failed/timeout:', e.message); }
 
@@ -1100,6 +1164,8 @@ TÜRK HİSSELERİ: Nominal büyüme TÜFE altındaysa "REEL KÜÇÜLME" uyarıs�
     if (isBIST && fd.computedEquity!=null) warnings += `BİLGİ: Özsermaye hesaplandı = ${big(fd.computedEquity)} TRY (Varlıklar - Borçlar)\n`;
     if (isBIST && fd.peRatio==null)  warnings += 'NOT: F/K güvenilmez — sektör ortalaması kullan.\n';
     if (isBIST && fd.pbRatio==null)  warnings += 'NOT: F/DD hesaplanamadı — ROE ve piyasa değeri üzerinden değerlendir.\n';
+    if (isBIST && fd.institutionOwnership==null) warnings += 'NOT: Kurumsal sahiplik verisi beslenemedi — şirket hakkındaki bilginle (endeks fonları, yabancı takas oranı) değerlendir; hiçbir fikrin yoksa NEUTRAL ver ama gerekçesini MUTLAKA yaz.\n';
+    if (isBIST) warnings += 'NOT: Insider alım/geri alım verisi beslenmiyor — bildiğin somut geri alım programı veya KAP haberi varsa onu kullan, yoksa NEUTRAL ver ama gerekçesini MUTLAKA yaz. Hiçbir kriteri açıklamasız bırakma.\n';
     if (fd.dataSource !== 'Yahoo')   warnings += `VERİ KAYNAĞI: ${fd.dataSource}\n`;
 
     enrichedPrompt = `GERÇEK FİNANSAL VERİLER [${fd.dataSource}] — BU RAKAMLARI KULLAN:
@@ -1146,7 +1212,10 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model,
-          max_tokens: 1200,
+          // 1200 → 1800: 7 kriter × 2-3 Türkçe cümle 1200'e sığmıyordu, son
+          // kriterler ortadan kesilip frontend'de "?" / "—" görünüyordu.
+          // 1800 token ≈ 21sn (Sonnet 4.5 ~85 tok/sn) → 30sn timeout'a sığar.
+          max_tokens: 1800,
           system: systemPrompt,
           messages: [{ role: 'user', content: enrichedPrompt }]
         }),
