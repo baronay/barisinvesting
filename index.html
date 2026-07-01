@@ -504,10 +504,11 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .home-col-news{grid-area:news;}
 .result-col{min-width:0;}
 .result-card{background:var(--surface);border:1px solid var(--border);padding:14px;}
-.result-gauge-row{display:grid;grid-template-columns:280px 1fr;gap:28px;align-items:center;}
+.result-gauge-row{display:grid;grid-template-columns:260px 1fr;gap:28px;align-items:start;}
 .rgr-left{min-width:0;}
-#resultGaugeCol #scoreGaugeBox .sg-arc{max-width:220px;}
-#resultGaugeCol .sentiment-card{border:none;padding:12px 0 0;margin-top:12px;border-top:1px solid var(--rule);}
+#resultGaugeCol #scoreGaugeBox{margin-bottom:26px;}
+#resultGaugeCol #scoreGaugeBox .sg-arc{max-width:190px;}
+#resultGaugeCol .sentiment-card{border:none;padding:14px 0 0;margin-top:0;border-top:1px solid var(--rule);}
 #resultGaugeCol .crit-checklist{margin-bottom:0;}
 @media(max-width:1100px){.result-news-grid{grid-template-columns:1fr;grid-template-areas:"company" "ai" "gauge" "news";}}
 @media(max-width:640px){.result-gauge-row{grid-template-columns:1fr;}}
