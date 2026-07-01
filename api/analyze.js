@@ -417,7 +417,7 @@ async function fetchYahooData(yahooTicker) {
   const bistRatiosPromise = isBIST
     ? fetch(
         `${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/bist-ratios?ticker=${yahooTicker.replace('.IS', '')}`,
-        { signal: AbortSignal.timeout(4500), headers: { 'Accept': 'application/json' } }
+        { signal: AbortSignal.timeout(5500), headers: { 'Accept': 'application/json' } }
       )
         .then(r => (r.ok ? r.json() : null))
         .catch(e => { dlog(`[BIST API] Çağrı başarısız: ${e.message} — fallback pipeline devam ediyor`); return null; })
@@ -965,33 +965,33 @@ CRITERIA_END`
     // pes edip elimizdeki veriyle (veya veri yoksa "sınırlı" modda) AI'ya geçiyoruz.
     financialData = await Promise.race([
       fetchYahooData(yahooTicker),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 5000)),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 6500)),
     ]);
   } catch(e) { dlog('Fetch failed/timeout:', e.message); }
 
   const fd     = financialData;
   const isBIST = exchange === 'BIST';
 
-  const systemPrompt = `Sen "Barış Investing"in baş analistisin ve analiz ettiğin efsanenin (Buffett/Lynch/Graham/Dalio) ağzından, birinci tekil şahısla, sohbet eder gibi konuşuyorsun.
+  const systemPrompt = `Sen "Barış Investing"in baş analistisin. Analiz ettiğin efsanenin (Buffett/Lynch/Graham/Dalio) gözünden, birinci tekil şahısla, tecrübeli bir yatırımcının sohbet üslubuyla yazıyorsun.
 
 ÜSLUP:
-- KONUŞMA DİLİ, akıcı ve iddialı. Buffett sabırlı/alaycı, Lynch enerjik/atak, Graham temkinli, Dalio makrocu.
-- NET OL: "olabilir, belki" YASAK. Bir tarafı tut, beğenmediysen sert eleştir, beğendiysen fırsatı savun.
-- HER cümlede sana verilen GERÇEK rakamı kullan (ROE, FCF, PEG, net nakit vs). Rakamsız laf yok. Klişe/dolgu cümle yasak. KISA VE VURUCU yaz.
+- KONUŞMA DİLİ: akıcı, samimi, profesyonel. Zeki bir yatırımcı arkadaşına anlatır gibi. Buffett sabırlı ve temkinli, Lynch enerjik ve meraklı, Graham disiplinli, Dalio makro bakışlı.
+- FİKRİN NET OLSUN ama KABA OLMA. "Çöp", "aptalca", "berbat" gibi küçümseyici/argo kelimeler KULLANMA. Beğenmediğinde nedenini olgun ve gerekçeli anlat ("bu fiyat çok iddialı çünkü...", "burada işler ters gidebilir çünkü..."). Beğendiğinde fırsatı ikna edici savun. Net bir taraf tut, ortada kalma.
+- HER yargıyı sana verilen GERÇEK rakamla destekle (ROE %X, FCF Y, PEG Z, net nakit W). Rakamsız iddia yok. Mümkünse sektör ortalamasıyla kıyasla. Klişe/dolgu cümle ("uzun vadede sabır önemli" gibi) yasak.
 
 FORMAT (ASLA BOZMA):
 - Düz metin, markdown YOK (#, *, - kullanma). Tüm alan ve anahtar isimlerini şablonla birebir aynı yaz.
 - TOTAL_SCORE: 0-7 tam sayı (PASS sayısıyla tutarlı).
-- Her kriter: "KEY: PASS|FAIL|NEUTRAL | açıklama" — açıklama 1-2 KISA vurucu cümle, rakamlı, net karar. NEUTRAL'ı sadece veri yoksa kullan.
-- SUMMARY: 2 cümle, net tez. RISK: en can alıcı risk, tek cümle.
+- Her kriter: "KEY: PASS|FAIL|NEUTRAL | açıklama" — açıklama 2-3 dolu cümle, rakamlı, gerekçeli net karar. NEUTRAL'ı sadece veri gerçekten yoksa kullan.
+- SUMMARY: 2-3 cümle, tezin özü ve net duruş. RISK: en can alıcı risk, 1-2 cümle.
 
-KISA KİMLİK NOTLARI:
-- Buffett: Fiyatlama gücü=brüt marj istikrarı (F/K değil). Hissedar kazancı=FCF. Hendek yoksa ucuzluk kurtarmaz.
-- Lynch: Önce kategori koy (Yavaş/Hızlı Büyüyen/Döngüsel...). PEG<1 fırsat, >2 FAIL. Kurumsal sahiplik <%30 "gizli mücevher".
-- Graham: Güvenlik marjı, Borç/Özsermaye<0.5, F/K<15, F/DD<1.5.
-- Dalio: Borç döngüsü, faiz/döviz/enflasyon duyarlılığı.
+KİMLİK NOTLARI:
+- Buffett: Fiyatlama gücü=brüt marj istikrarı (F/K değil). Hissedar kazancı=FCF. Ekonomik hendek yoksa ucuzluk kurtarmaz. "Harika şirketi adil fiyata almak, vasat şirketi ucuza almaktan iyidir."
+- Lynch: Önce kategori koy (Yavaş/Orta/Hızlı Büyüyen, Döngüsel, Varlık Zengini, Dönüşümde). PEG<1 fırsat, >2 pahalı/FAIL. Kurumsal sahiplik <%30 = Wall Street keşfetmemiş "gizli mücevher". Büyüme hikâyesi somut mu?
+- Graham: Güvenlik marjı, Borç/Özsermaye<0.5, Cari Oran>2, F/K<15, F/DD<1.5.
+- Dalio: Borç döngüsü, faiz/döviz/enflasyon duyarlılığı, makro şok direnci.
 
-TÜRK HİSSELERİ: Nominal büyüme TÜFE altındaysa "REEL KÜÇÜLME" uyar. BIST F/K/F/DD güvenilmezse tek başına PASS/FAIL yapma, ROE ve FCF'e bak.`;
+TÜRK HİSSELERİ: Nominal büyüme TÜFE altındaysa "REEL KÜÇÜLME" uyarısı ver. BIST F/K/F/DD güvenilmezse tek başına PASS/FAIL yapma, ROE ve FCF üzerinden değerlendir.`;
 
   let enrichedPrompt = '';
   if (fd) {
@@ -1041,7 +1041,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
   }
 
   enrichedPrompt += prompt;
-  enrichedPrompt += '\n\nKRİTİK KURAL: Yukarıdaki gerçek rakamları kullan, uydurma. Her PASS/FAIL/NEUTRAL satırı pipe (|) ile açıklama içermeli, CRITERIA_START/CRITERIA_END eksiksiz olmalı. Her açıklama 1-2 KISA vurucu cümle, en az bir rakam, NET karar — uzatma. Efsanenin ağzından, iddialı yaz.';
+  enrichedPrompt += '\n\nKRİTİK KURAL: Yukarıdaki gerçek rakamları kullan, uydurma. Her PASS/FAIL/NEUTRAL satırı pipe (|) ile açıklama içermeli, CRITERIA_START/CRITERIA_END eksiksiz olmalı. Her açıklama 2-3 dolu cümle, en az bir rakam, gerekçeli NET karar. Efsanenin ağzından, akıcı ve olgun bir üslupla yaz — küçümseyici/argo kelime kullanma.';
   if (!fd) enrichedPrompt += '\n\nVERİ NOTU: Finansal veri alınamadı. Sektör bilgine göre dürüstçe tahmin yürüt, "veri sınırlı" olduğunu açıkça söyle ama yine de net bir görüş ver, analizi yarım bırakma.';
 
   try {
@@ -1053,7 +1053,10 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // env ile yükseltilebilir — ama Hobby'de yavaş modeller timeout riski taşır.
     // Prompt iyileştirmesi her modelde geçerli, haiku bile eskisinden çok daha iyi.
     const FALLBACK_MODEL = 'claude-haiku-4-5-20251001';
-    const primaryModel = process.env.ANALYZE_MODEL || FALLBACK_MODEL;
+    // Varsayılan Sonnet 5: daha derin muhakeme + akıcı Türkçe. Lean prompt/output
+    // ile Hobby'nin 30sn bütçesine sığar. Sonnet HATA dönerse otomatik haiku'ya
+    // düşer (aşağıdaki fallback); timeout olursa dış catch 504 döner.
+    const primaryModel = process.env.ANALYZE_MODEL || 'claude-sonnet-5';
 
     const callModel = async (model, timeoutMs) => {
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1072,7 +1075,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       return { resp, d };
     };
 
-    let { resp: response, d: data } = await callModel(primaryModel, 23000);
+    let { resp: response, d: data } = await callModel(primaryModel, 22000);
 
     // Birincil model HATA döndürdüyse (ör. API anahtarında Sonnet erişimi yok /
     // geçersiz model ID) hemen bilinen-çalışan haiku'ya düş — analiz komple
