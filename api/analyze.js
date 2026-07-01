@@ -331,6 +331,7 @@ const NUMERIC_BOUNDS = {
   roa:                     [-10, 10],
   debtToEquity:            [-100, 1000],
   currentRatio:            [0, 100],
+  rsi:                     [0, 100],
   revenueGrowth:           [-10, 100],
   earningsGrowth:          [-10, 100],
   institutionOwnership:    [0, 1],
@@ -766,9 +767,17 @@ async function fetchBISTFast(ticker) {
 
   // TradingView scanner'ı DOĞRUDAN çağır — kendi API'mize HTTP self-call yok
   // (ekstra fonksiyon çağrısı, gecikme ve Vercel URL koruma riski kalkıyor).
+  // GENİŞ KOLON SETİ: PEG, marjlar, 52H aralığı, RSI, FCF, nakit vb. TV'de
+  // mevcut — bunlar boş kalınca AI çarpanları uydurup ekrana basıyordu.
+  // Tüm kolonlar 2026-07 itibarıyla turkey/scan'da test edildi ve çalışıyor.
   const TV_COLS = ['close','price_earnings_ttm','price_book_ratio','market_cap_basic',
                    'enterprise_value_ebitda_ttm','return_on_equity','debt_to_equity',
-                   'earnings_per_share_basic_ttm'];
+                   'earnings_per_share_basic_ttm',
+                   'price_52_week_low','price_52_week_high','price_earnings_growth_ttm',
+                   'gross_margin','operating_margin','after_tax_margin','return_on_assets',
+                   'current_ratio','free_cash_flow','total_debt','cash_n_short_term_invest_fq',
+                   'total_revenue_yoy_growth_ttm','net_income_yoy_growth_ttm','RSI',
+                   'sector','industry','description'];
   const r = await fetch('https://scanner.tradingview.com/turkey/scan', {
     method: 'POST',
     headers: {
@@ -784,9 +793,14 @@ async function fetchBISTFast(ticker) {
   const row = json?.data?.[0]?.d;
   if (!row) throw new Error('TradingView veri yok');
 
+  const IX  = Object.fromEntries(TV_COLS.map((c, i) => [c, i]));
   const num = v => (v != null && isFinite(v)) ? Number(v) : null;
-  const fiyat = num(row[0]), fk = num(row[1]), pddd = num(row[2]), mc = num(row[3]);
-  const fdFavok = num(row[4]), roePct = num(row[5]), de = num(row[6]), eps = num(row[7]);
+  const g   = c => num(row[IX[c]]);
+  const str = c => (typeof row[IX[c]] === 'string' && row[IX[c]]) ? row[IX[c]] : null;
+  const pct = v => v != null ? v / 100 : null; // TV yüzde döner → Yahoo kesir formatına çevir
+
+  const fiyat = g('close'), fk = g('price_earnings_ttm'), pddd = g('price_book_ratio');
+  const mc = g('market_cap_basic'), eps = g('earnings_per_share_basic_ttm');
   if (fiyat == null) throw new Error('BIST fiyat verisi yok');
   // F/K yedeği: TV bazen price_earnings_ttm'i boş döner — fiyat/EPS'den hesapla
   const fkFinal = (fk && fk > 0) ? fk : (eps && eps > 0 ? fiyat / eps : null);
@@ -797,18 +811,27 @@ async function fetchBISTFast(ticker) {
     peRatio: fkFinal, peSource: 'TradingView',
     forwardPE: null,
     pbRatio: (pddd && pddd > 0) ? pddd : null, pbSource: 'TradingView',
-    pegRatio: null,
-    evEbitda: fdFavok,
-    roe: roePct != null ? roePct / 100 : null, roeSource: 'TradingView',
-    roa: null,
-    grossMargin: null, operatingMargin: null, profitMargin: null,
-    freeCashflow: null, operatingCashflow: null, totalCash: null, totalDebt: null,
-    debtToEquity: de, currentRatio: null,
-    revenueGrowth: null, earningsGrowth: null,
+    pegRatio: g('price_earnings_growth_ttm'), pegSource: 'TradingView',
+    evEbitda: g('enterprise_value_ebitda_ttm'),
+    roe: pct(g('return_on_equity')), roeSource: 'TradingView',
+    roa: pct(g('return_on_assets')),
+    grossMargin: pct(g('gross_margin')),
+    operatingMargin: pct(g('operating_margin')),
+    profitMargin: pct(g('after_tax_margin')),
+    freeCashflow: g('free_cash_flow'), operatingCashflow: null,
+    totalCash: g('cash_n_short_term_invest_fq'), totalDebt: g('total_debt'),
+    // TV debt_to_equity ORAN döner (0.84), Yahoo ise YÜZDE (84) — frontend ve
+    // prompt Yahoo formatını beklediği için yüzdeye çeviriyoruz.
+    debtToEquity: g('debt_to_equity') != null ? g('debt_to_equity') * 100 : null,
+    currentRatio: g('current_ratio'),
+    revenueGrowth: pct(g('total_revenue_yoy_growth_ttm')),
+    earningsGrowth: pct(g('net_income_yoy_growth_ttm')),
+    rsi: g('RSI'),
     institutionOwnership: null, recommendationKey: null, targetMeanPrice: null,
     numberOfAnalystOpinions: null,
-    fiftyTwoWeekLow: null, fiftyTwoWeekHigh: null,
-    shortName: null, website: null, sector: null, industry: null,
+    fiftyTwoWeekLow: g('price_52_week_low'), fiftyTwoWeekHigh: g('price_52_week_high'),
+    shortName: str('description'), website: null,
+    sector: str('sector'), industry: str('industry'),
     totalAssets: null, totalLiabilities: null, netIncome: null, computedEquity: null,
     peers: [], dataSource: 'TradingView',
   };
@@ -1077,7 +1100,7 @@ TÜRK HİSSELERİ: Nominal büyüme TÜFE altındaysa "REEL KÜÇÜLME" uyarıs�
     if (isBIST && fd.computedEquity!=null) warnings += `BİLGİ: Özsermaye hesaplandı = ${big(fd.computedEquity)} TRY (Varlıklar - Borçlar)\n`;
     if (isBIST && fd.peRatio==null)  warnings += 'NOT: F/K güvenilmez — sektör ortalaması kullan.\n';
     if (isBIST && fd.pbRatio==null)  warnings += 'NOT: F/DD hesaplanamadı — ROE ve piyasa değeri üzerinden değerlendir.\n';
-    if (fd.dataSource !== 'Yahoo')   warnings += `VERİ KAYNAĞI: ${fd.dataSource} (Yahoo yedeği)\n`;
+    if (fd.dataSource !== 'Yahoo')   warnings += `VERİ KAYNAĞI: ${fd.dataSource}\n`;
 
     enrichedPrompt = `GERÇEK FİNANSAL VERİLER [${fd.dataSource}] — BU RAKAMLARI KULLAN:
 Fiyat: ${fd.currentPrice ? `${Number(fd.currentPrice).toFixed(2)} ${fd.currency}` : 'N/A'}
@@ -1092,7 +1115,7 @@ Nakit: ${big(fd.totalCash)} | Borç: ${big(fd.totalDebt)} | Net Nakit: ${big(nc)
 Borç/Özsermaye: ${n(fd.debtToEquity)} | Cari Oran: ${n(fd.currentRatio)}
 Gelir Büyümesi: ${p(fd.revenueGrowth)} | Kazanç Büyümesi: ${p(fd.earningsGrowth)}
 Kurumsal Sahiplik: ${p(fd.institutionOwnership)}
-Analist: ${fd.recommendationKey||'N/A'} | Hedef: ${n(fd.targetMeanPrice,2)} | Potansiyel: ${upside ? `%${upside}` : 'N/A'}
+${fd.rsi != null ? `RSI(14): ${Number(fd.rsi).toFixed(0)} — MULTIPLES bölümündeki RSI satırında BU değeri kullan\n` : ''}Analist: ${fd.recommendationKey||'N/A'} | Hedef: ${n(fd.targetMeanPrice,2)} | Potansiyel: ${upside ? `%${upside}` : 'N/A'}
 ${fd.sector ? `Sektör: ${fd.sector}${fd.industry ? ' / '+fd.industry : ''}` : ''}
 ${fd.totalAssets ? `Ham Bilanço: Varlıklar=${big(fd.totalAssets)} | Borçlar=${big(fd.totalLiabilities)} | NetKar=${big(fd.netIncome)}` : ''}
 ${warnings ? '\nUYARILAR:\n'+warnings : ''}
@@ -1106,13 +1129,10 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
   if (!fd) enrichedPrompt += '\n\nVERİ NOTU: Finansal veri alınamadı. Sektör bilgine göre dürüstçe tahmin yürüt, "veri sınırlı" olduğunu açıkça söyle ama yine de net bir görüş ver, analizi yarım bırakma.';
 
   try {
-    // Vercel'in bu fonksiyon için maxDuration'ı 30sn (vercel.json) — Anthropic
-    // çağrısı bu süreyi aşarsa fonksiyon sert şekilde kesiliyordu. 25sn'de kendi
-    // isteğimizi iptal edip kullanıcıya anlamlı bir hata dönüyoruz.
-    // Varsayılan haiku: Vercel Hobby planının dar süre bütçesinde (30sn) hızlı
-    // ve güvenilir. Kalite için ANALYZE_MODEL=claude-sonnet-5 (veya opus-4-8)
-    // env ile yükseltilebilir — ama Hobby'de yavaş modeller timeout riski taşır.
-    // Prompt iyileştirmesi her modelde geçerli, haiku bile eskisinden çok daha iyi.
+    // Süre bütçesi: vercel.json maxDuration=60sn (Hobby planı 60sn'e izin verir).
+    // Veri çekme ≤6sn + birincil model 30sn + haiku yedeği 15sn = ~51sn < 60sn.
+    // Birincil model 30sn'de yetişemezse ARTIK 504 dönmüyoruz — hızlı haiku'ya
+    // düşüp analizi yine de teslim ediyoruz (eski davranış: direkt hata).
     const FALLBACK_MODEL = 'claude-haiku-4-5-20251001';
     // Claude Sonnet 4.5: eski nesil Sonnet (Sonnet 5 degil) ama 3.5 Sonnet'ten
     // hem KALITELI hem ~1.5x HIZLI (~85 tok/sn). 3.5 Sonnet cok yavasti: 1500
@@ -1137,13 +1157,22 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       return { resp, d };
     };
 
-    let { resp: response, d: data } = await callModel(primaryModel, 21000);
+    let response, data, usedFallback = false;
+    try {
+      ({ resp: response, d: data } = await callModel(primaryModel, 30000));
+    } catch (e) {
+      // Birincil model ZAMAN AŞIMINA uğradıysa 504 dönme — hızlı haiku'yla kurtar.
+      const isTimeout = e.name === 'TimeoutError' || e.name === 'AbortError';
+      if (!isTimeout || primaryModel === FALLBACK_MODEL) throw e;
+      dlog(`[AI] ${primaryModel} zaman aşımı → ${FALLBACK_MODEL} ile tekrar deneniyor`);
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 15000));
+      usedFallback = true;
+    }
 
     // Birincil model HATA döndürdüyse (ör. API anahtarında Sonnet erişimi yok /
     // geçersiz model ID) hemen bilinen-çalışan haiku'ya düş — analiz komple
-    // patlamasın. Not: timeout durumunda callModel exception atar ve buraya
-    // düşmez (dış catch yakalar), o yüzden çift-timeout riski yok.
-    if ((!data || data.error || !response.ok) && primaryModel !== FALLBACK_MODEL) {
+    // patlamasın.
+    if ((!data || data.error || !response.ok) && !usedFallback && primaryModel !== FALLBACK_MODEL) {
       dlog(`[AI] ${primaryModel} başarısız (${data?.error?.message || response?.status}) → ${FALLBACK_MODEL}`);
       ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 15000));
     }
@@ -1176,6 +1205,9 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       if (fd.pbRatio  != null) aiResult = aiResult.replace(/PB:\s*[\d.N\/A]+\s*\|/, `PB: ${n2(fd.pbRatio)} |`);
       if (fd.pegRatio != null) aiResult = aiResult.replace(/PEG:\s*[\d.N\/A]+\s*\|/, `PEG: ${n2(fd.pegRatio)} |`);
       if (fd.evEbitda != null) aiResult = aiResult.replace(/EV_EBITDA:\s*[\d.N\/A]+\s*\|/, `EV_EBITDA: ${n2(fd.evEbitda)} |`);
+      if (fd.rsi      != null) aiResult = aiResult.replace(/RSI:\s*[\d.N\/A]+\s*\|/, `RSI: ${Number(fd.rsi).toFixed(0)} |`);
+      if (fd.fiftyTwoWeekLow != null && fd.fiftyTwoWeekHigh != null && fd.currentPrice != null)
+        aiResult = aiResult.replace(/PRICE_52W:\s*[^\n|]+\|[^\n]*/, `PRICE_52W: ${n2(fd.fiftyTwoWeekLow,2)}-${n2(fd.fiftyTwoWeekHigh,2)} | ${n2(fd.currentPrice,2)}`);
     }
 
     dlog(`✓ ${yahooTicker} | src:${fd?.dataSource} | roe:${fd?.roe} | pb:${fd?.pbRatio}(${fd?.pbSource||'yahoo'}) | len:${aiResult.length}`);

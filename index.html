@@ -3858,8 +3858,11 @@ const FW={
 const HIST_KEY='bi_history';
 
 // ── ANALİZ ONBELLEGİ (3 gun) ────────────────────────────────────
-const CACHE_KEY = 'bi_analysis_cache';
+// v2: BIST carpan verisi genisletildi (PEG/marj/52H/RSI TradingView'den geliyor).
+// Eski anahtardaki bozuk carpanli analizler gosterilmesin diye anahtar degisti.
+const CACHE_KEY = 'bi_analysis_cache_v2';
 const CACHE_TTL = 3 * 24 * 60 * 60 * 1000;
+try { localStorage.removeItem('bi_analysis_cache'); } catch(e) {}
 
 function getCacheKey(ticker, exchange, fw) { return ticker+':'+exchange+':'+fw; }
 
@@ -4355,7 +4358,7 @@ function renderRealData(fd){
     const lo=fd.fiftyTwoWeekLow,hi=fd.fiftyTwoWeekHigh,cu=fd.currentPrice;
     const pp=Math.min(100,Math.max(0,((cu-lo)/(hi-lo))*100));
     document.getElementById('rngCard').style.display='block';
-    document.getElementById('rngLive').textContent='● Yahoo Finance';
+    document.getElementById('rngLive').textContent='● '+(fd.dataSource||'Yahoo Finance');
     document.getElementById('rngLow').textContent=`${lo.toFixed(2)} ${fd.currency}`;
     document.getElementById('rngHigh').textContent=`${hi.toFixed(2)} ${fd.currency}`;
     document.getElementById('rngCur').textContent=`${cu.toFixed(2)} ${fd.currency}`;
@@ -4580,11 +4583,11 @@ async function doAnalyze(){
         try { localStorage.setItem('guest_credits', guestCredits); } catch{}
       }
     }
-    // Backend fonksiyonu en fazla 30sn calisiyor (vercel.json maxDuration, Hobby) —
+    // Backend fonksiyonu en fazla 60sn calisiyor (vercel.json maxDuration) —
     // istek o sureyi asip sunucu tarafindan sert kesilirse arayuz sonsuza dek
-    // "yukleniyor" halinde kalmasin diye 35sn'de kendi tarafimizdan iptal ediyoruz.
+    // "yukleniyor" halinde kalmasin diye 65sn'de kendi tarafimizdan iptal ediyoruz.
     const _ac=new AbortController();
-    const _to=setTimeout(()=>_ac.abort(),35000);
+    const _to=setTimeout(()=>_ac.abort(),65000);
     let r;
     try{
       r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,exchange:curEX,framework:curFW,email:getEmail?.()||null}),signal:_ac.signal});
