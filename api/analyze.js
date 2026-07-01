@@ -417,7 +417,7 @@ async function fetchYahooData(yahooTicker) {
   const bistRatiosPromise = isBIST
     ? fetch(
         `${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/bist-ratios?ticker=${yahooTicker.replace('.IS', '')}`,
-        { signal: AbortSignal.timeout(7000), headers: { 'Accept': 'application/json' } }
+        { signal: AbortSignal.timeout(4500), headers: { 'Accept': 'application/json' } }
       )
         .then(r => (r.ok ? r.json() : null))
         .catch(e => { dlog(`[BIST API] Çağrı başarısız: ${e.message} — fallback pipeline devam ediyor`); return null; })
@@ -965,7 +965,7 @@ CRITERIA_END`
     // pes edip elimizdeki veriyle (veya veri yoksa "sınırlı" modda) AI'ya geçiyoruz.
     financialData = await Promise.race([
       fetchYahooData(yahooTicker),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 6000)),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 5000)),
     ]);
   } catch(e) { dlog('Fetch failed/timeout:', e.message); }
 
@@ -1072,7 +1072,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       return { resp, d };
     };
 
-    let { resp: response, d: data } = await callModel(primaryModel, 19000);
+    let { resp: response, d: data } = await callModel(primaryModel, 23000);
 
     // Birincil model HATA döndürdüyse (ör. API anahtarında Sonnet erişimi yok /
     // geçersiz model ID) hemen bilinen-çalışan haiku'ya düş — analiz komple
