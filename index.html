@@ -3988,6 +3988,7 @@ function friendlyError(err) {
   if (msg.includes('not valid json') || msg.includes('json')) return 'Sunucudan beklenmedik yanit. Tekrar deneyin.';
   if (msg.includes('ticker') || msg.includes('gecersiz')) return 'Gecersiz hisse kodu. Ornek: THYAO, AAPL';
   if (msg.includes('api key')) return 'Yapilandirma hatasi. Bizimle iletisime gecin.';
+  if (msg.includes('502') || msg.includes('ai servis') || msg.includes('model') || msg.includes('overloaded')) return 'AI servisi su an yanit vermiyor. Birkac saniye sonra tekrar deneyin.';
   return 'Beklenmedik hata olustu. Tekrar deneyin.';
 }
 
@@ -4575,11 +4576,11 @@ async function doAnalyze(){
         try { localStorage.setItem('guest_credits', guestCredits); } catch{}
       }
     }
-    // Backend fonksiyonu en fazla 30sn calisiyor (vercel.json maxDuration) — istek
+    // Backend fonksiyonu en fazla 60sn calisiyor (vercel.json maxDuration) — istek
     // o sureyi asip sunucu tarafindan sert kesilirse arayuz sonsuza dek "yukleniyor"
-    // halinde kilitli kalmasin diye 32sn'de kendi tarafimizdan iptal ediyoruz.
+    // halinde kilitli kalmasin diye 62sn'de kendi tarafimizdan iptal ediyoruz.
     const _ac=new AbortController();
-    const _to=setTimeout(()=>_ac.abort(),32000);
+    const _to=setTimeout(()=>_ac.abort(),62000);
     let r;
     try{
       r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,exchange:curEX,framework:curFW,email:getEmail?.()||null}),signal:_ac.signal});
@@ -4810,7 +4811,7 @@ async function analyzeAllPt(){
 
     const doFetch = async (fw) => {
       const _ac=new AbortController();
-      const _to=setTimeout(()=>_ac.abort(),32000);
+      const _to=setTimeout(()=>_ac.abort(),62000);
       try{
         const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,exchange:p.exchange,framework:fw,email:getEmail?.()||null}),signal:_ac.signal});
         const d=await r.json();

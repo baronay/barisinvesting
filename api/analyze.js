@@ -1062,28 +1062,42 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // Vercel'in bu fonksiyon için maxDuration'ı 30sn (vercel.json) — Anthropic
     // çağrısı bu süreyi aşarsa fonksiyon sert şekilde kesiliyordu. 25sn'de kendi
     // isteğimizi iptal edip kullanıcıya anlamlı bir hata dönüyoruz.
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        // Analiz kalitesi doğrudan modele bağlı. Varsayılan Sonnet 5 (daha derin
-        // muhakeme + daha iyi Türkçe anlatım). Maliyet/hız için ANALYZE_MODEL env
-        // ile değiştirilebilir (örn. 'claude-haiku-4-5-20251001').
-        model: process.env.ANALYZE_MODEL || 'claude-sonnet-5',
-        max_tokens: 3500,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: enrichedPrompt }]
-      }),
-      signal: AbortSignal.timeout(25000),
-    });
+    // Analiz kalitesi doğrudan modele bağlı. Varsayılan Sonnet 5 (daha derin
+    // muhakeme + daha iyi Türkçe anlatım). Maliyet/hız için ANALYZE_MODEL env
+    // ile değiştirilebilir (örn. 'claude-haiku-4-5-20251001').
+    const FALLBACK_MODEL = 'claude-haiku-4-5-20251001';
+    const primaryModel = process.env.ANALYZE_MODEL || 'claude-sonnet-5';
 
-    let data;
-    try {
-      data = await response.json();
-    } catch {
-      return res.status(502).json({ error: 'AI servisinden geçersiz yanıt alındı.' });
+    const callModel = async (model, timeoutMs) => {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model,
+          max_tokens: 3500,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: enrichedPrompt }]
+        }),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      let d = null;
+      try { d = await resp.json(); } catch {}
+      return { resp, d };
+    };
+
+    let { resp: response, d: data } = await callModel(primaryModel, 22000);
+
+    // Birincil model HATA döndürdüyse (ör. API anahtarında Sonnet erişimi yok /
+    // geçersiz model ID) hemen bilinen-çalışan haiku'ya düş — analiz komple
+    // patlamasın. Not: timeout durumunda callModel exception atar ve buraya
+    // düşmez (dış catch yakalar), o yüzden çift-timeout riski yok.
+    if ((!data || data.error || !response.ok) && primaryModel !== FALLBACK_MODEL) {
+      dlog(`[AI] ${primaryModel} başarısız (${data?.error?.message || response?.status}) → ${FALLBACK_MODEL}`);
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 20000));
     }
-    if (data.error) return res.status(502).json({ error: `${data.error.type}: ${data.error.message}` });
+
+    if (!data) return res.status(502).json({ error: 'AI servisinden geçersiz yanıt alındı.' });
+    if (data.error) return res.status(502).json({ error: `AI servis hatası: ${data.error.message || data.error.type}` });
     if (!response.ok) return res.status(502).json({ error: `AI servis hatası (HTTP ${response.status})` });
 
     let aiResult = data.content?.[0]?.text || '';
