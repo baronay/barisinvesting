@@ -753,6 +753,55 @@ async function fetchYahooData(yahooTicker) {
   return cleanResult;
 }
 
+// ── BIST HIZLI VERİ (sadece TradingView) ─────────────────────────
+// Yahoo BIST verisi kökten bozuk (USD/TRY karışıklığı → F/K 33 yerine 3.3).
+// Doğru rasyolar TradingView'de (api/bist-ratios). Tek çağrı, doğru veri,
+// ~2-3sn → Yahoo dansı ve timeout derdi yok. bist-ratios FK/PDDD/FD_FAVOK
+// alan isimleriyle döner; burada financialData yapısına doğru eşliyoruz
+// (eski kodda bu eşleme yanlıştı: pe/pb okuyordu, hiç uygulanmıyordu).
+async function fetchBISTFast(ticker) {
+  const cacheKey = `bistfast:${ticker}`;
+  const cached = getCached(cacheKey);
+  if (cached) { dlog(`Cache hit (bistfast): ${ticker}`); return cached; }
+
+  const base = process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000';
+  const r = await fetch(`${base}/api/bist-ratios?ticker=${encodeURIComponent(ticker)}`, {
+    signal: AbortSignal.timeout(7000), headers: { 'Accept': 'application/json' }
+  });
+  if (!r.ok) throw new Error(`bist-ratios HTTP ${r.status}`);
+  const d = await r.json();
+  if (!d || d.GuncelFiyat == null) throw new Error('BIST fiyat verisi yok');
+
+  const num = v => (v != null && isFinite(v)) ? Number(v) : null;
+  const result = {
+    currentPrice: num(d.GuncelFiyat), currency: 'TRY',
+    marketCap: num(d.PiyasaDegeri),
+    peRatio: (num(d.FK) && d.FK > 0) ? num(d.FK) : null, peSource: d.kaynak || 'TradingView',
+    forwardPE: null,
+    pbRatio: (num(d.PDDD) && d.PDDD > 0) ? num(d.PDDD) : null, pbSource: d.kaynak || 'TradingView',
+    pegRatio: null,
+    evEbitda: num(d.FD_FAVOK),
+    roe: (d.ROE != null && isFinite(d.ROE)) ? Number(d.ROE) / 100 : null, roeSource: d.kaynak || 'TradingView',
+    roa: null,
+    grossMargin: null, operatingMargin: null, profitMargin: null,
+    freeCashflow: null, operatingCashflow: null, totalCash: null, totalDebt: null,
+    debtToEquity: num(d.DebtEquity), currentRatio: null,
+    revenueGrowth: null, earningsGrowth: null,
+    institutionOwnership: null, recommendationKey: null, targetMeanPrice: null,
+    numberOfAnalystOpinions: null,
+    fiftyTwoWeekLow: null, fiftyTwoWeekHigh: null,
+    shortName: null, website: null, sector: null, industry: null,
+    totalAssets: null, totalLiabilities: null, netIncome: null, computedEquity: null,
+    peers: [], dataSource: d.kaynak || 'TradingView',
+  };
+
+  const { data: clean, warnings } = sanitizeFinancialData(result);
+  if (!clean) throw new Error('BIST veri doğrulama başarısız');
+  clean._dataWarnings = warnings;
+  setCache(cacheKey, clean);
+  return clean;
+}
+
 // ── SIGNAL HELPERS ───────────────────────────────────────────────
 function sigPE(v)  { if(v==null)return'N/A'; if(v<12)return'ucuz'; if(v<22)return'adil'; return'pahalı'; }
 function sigPB(v)  { if(v==null)return'N/A'; if(v<1.5)return'ucuz'; if(v<3)return'adil'; return'pahalı'; }
@@ -950,20 +999,21 @@ CRITERIA_END`
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'API key eksik' });
 
-  const yahooTicker = exchange === 'BIST' ? `${cleanTicker}.IS` : cleanTicker;
+  const isBIST = exchange === 'BIST';
+  const yahooTicker = isBIST ? `${cleanTicker}.IS` : cleanTicker;
   let financialData = null;
   try {
     // Veri çekmeye kesin üst süre (Hobby'nin dar bütçesinde AI'ya yer kalsın).
-    // Yahoo Vercel IP'lerini yavaşlattığında BIST çekimi çok uzuyordu; 9sn'de
-    // pes edip elimizdeki veriyle (veya veri yoksa "sınırlı" modda) AI'ya geçiyoruz.
+    const dataFetch = isBIST
+      ? fetchBISTFast(cleanTicker)      // BIST → sadece TradingView (doğru + hızlı)
+      : fetchYahooData(yahooTicker);    // US → Yahoo
     financialData = await Promise.race([
-      fetchYahooData(yahooTicker),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 6000)),
+      dataFetch,
+      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), isBIST ? 8000 : 6000)),
     ]);
   } catch(e) { dlog('Fetch failed/timeout:', e.message); }
 
   const fd     = financialData;
-  const isBIST = exchange === 'BIST';
 
   const systemPrompt = `Sen "Barış Investing"in baş analistisin. Analiz ettiğin efsanenin (Buffett/Lynch/Graham/Dalio) gözünden, birinci tekil şahısla, tecrübeli bir yatırımcının sohbet üslubuyla yazıyorsun.
 
