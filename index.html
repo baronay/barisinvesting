@@ -504,8 +504,13 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .home-col-news{grid-area:news;}
 .result-col{min-width:0;}
 .result-card{background:var(--surface);border:1px solid var(--border);padding:14px;}
-.result-gauge-row{display:block;}
+.result-gauge-row{display:grid;grid-template-columns:280px 1fr;gap:28px;align-items:center;}
+.rgr-left{min-width:0;}
+#resultGaugeCol #scoreGaugeBox .sg-arc{max-width:220px;}
+#resultGaugeCol .sentiment-card{border:none;padding:12px 0 0;margin-top:12px;border-top:1px solid var(--rule);}
+#resultGaugeCol .crit-checklist{margin-bottom:0;}
 @media(max-width:1100px){.result-news-grid{grid-template-columns:1fr;grid-template-areas:"company" "ai" "gauge" "news";}}
+@media(max-width:640px){.result-gauge-row{grid-template-columns:1fr;}}
 .chart-card{background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:1px;}
 .chart-wrap{position:relative;height:145px;}
 .radar-wrap{position:relative;height:180px;max-width:220px;margin:0 auto;}
@@ -3512,16 +3517,18 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div class="sec-title" style="margin-bottom:10px">Yapay Zeka Özeti</div>
       <div id="aiSummaryCard" class="ai-summary-card" style="border:none;padding:0;"></div>
     </div>
-    <!-- Skor halkası + 7 madde — şirket kartı+AI özeti satırının TAM GENİŞLİĞİNDE, kendi satırında -->
+    <!-- Skor halkası (sol) + 7 madde (sağ) — kendi satırında, kompakt 2 sütun -->
     <div class="result-col result-card result-gauge-row" id="resultGaugeCol" style="display:none">
-      <div id="scoreGaugeBox" style="margin-bottom:14px;"></div>
-      <div id="critChecklist" class="crit-checklist"></div>
-      <div class="sentiment-card">
-        <div class="card-t"><div class="cdot"></div>Topluluk Duyarlılığı</div>
-        <div class="sentiment-sub">(Analist konsensüsüne dayalı)</div>
-        <div class="cons-bar"><div class="cb" id="cBuy2" style="width:60%"></div><div class="ch" id="cHold2" style="width:25%"></div><div class="cs" id="cSell2" style="width:15%"></div></div>
-        <div class="cons-lbls"><span id="cBuyL2" style="color:var(--success)">AL</span><span id="cHoldL2" style="color:var(--warn)">TUT</span><span id="cSellL2" style="color:var(--danger)">SAT</span></div>
+      <div class="rgr-left">
+        <div id="scoreGaugeBox"></div>
+        <div class="sentiment-card">
+          <div class="card-t"><div class="cdot"></div>Topluluk Duyarlılığı</div>
+          <div class="sentiment-sub">(Analist konsensüsüne dayalı)</div>
+          <div class="cons-bar"><div class="cb" id="cBuy2" style="width:60%"></div><div class="ch" id="cHold2" style="width:25%"></div><div class="cs" id="cSell2" style="width:15%"></div></div>
+          <div class="cons-lbls"><span id="cBuyL2" style="color:var(--success)">AL</span><span id="cHoldL2" style="color:var(--warn)">TUT</span><span id="cSellL2" style="color:var(--danger)">SAT</span></div>
+        </div>
       </div>
+      <div id="critChecklist" class="crit-checklist"></div>
     </div>
     <!-- Haberler — her zaman görünür, analiz beklemez, en altta tam genişlik -->
     <div class="result-col home-col-news">
@@ -4740,7 +4747,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   document.getElementById('statPassS').textContent=`${fc} kaldı, ${statuses.filter(s=>s==='neutral').length} belirsiz`;
   const rac=document.getElementById('resultAnalysisCol');if(rac)rac.style.display='block';
   const raic=document.getElementById('resultAiCol');if(raic)raic.style.display='block';
-  const rgc=document.getElementById('resultGaugeCol');if(rgc)rgc.style.display='block';
+  const rgc=document.getElementById('resultGaugeCol');if(rgc)rgc.style.display='grid';
 
   if(fd)renderRealData(fd);
   const mults=parseMult(text);if(mults)renderMult(mults);
