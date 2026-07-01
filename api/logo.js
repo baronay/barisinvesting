@@ -12,36 +12,101 @@ const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 saat — logolar sık değişmez
 
 // Bilinen şirketler için fallback domain haritası
 const DOMAIN_MAP = {
-  // BIST
-  'THYAO': 'thy.com',
-  'TUPRS': 'tupras.com.tr',
-  'EREGL': 'erdemir.com.tr',
-  'SAHOL': 'sabancı.com',
-  'KCHOL': 'koc.com.tr',
-  'ASELS': 'aselsan.com.tr',
-  'BIMAS': 'bim.com.tr',
+  // ── BIST — Bankalar & Holdingler ──
   'AKBNK': 'akbank.com',
   'GARAN': 'garantibbva.com.tr',
   'ISCTR': 'isbank.com.tr',
   'YKBNK': 'yapikredi.com.tr',
-  'TCELL': 'turkcell.com.tr',
-  'FROTO': 'ford.com.tr',
+  'HALKB': 'halkbank.com.tr',
+  'VAKBN': 'vakifbank.com.tr',
+  'TSKB':  'tskb.com.tr',
+  'SKBNK': 'sekerbank.com.tr',
+  'ALBRK': 'albaraka.com.tr',
+  'ICBCT': 'icbc.com.tr',
+  'KCHOL': 'koc.com.tr',
+  'SAHOL': 'sabanci.com',
+  'AGHOL': 'anadolugrubu.com.tr',
+  'DOHOL': 'doganholding.com.tr',
+  'GLYHO': 'globalyatirim.com.tr',
+  'ALARK': 'alarko.com.tr',
+  'TKFEN': 'tekfen.com.tr',
+  'ENKAI': 'enka.com',
+  'SISE':  'sisecam.com',
+  // ── BIST — Sanayi & Enerji ──
+  'EREGL': 'erdemir.com.tr',
+  'ISDMR': 'isdemir.com.tr',
+  'KRDMD': 'kardemir.com.tr',
+  'TUPRS': 'tupras.com.tr',
+  'PETKM': 'petkim.com.tr',
+  'SASA':  'sasa.com.tr',
+  'AKSA':  'aksa.com',
+  'ALKIM': 'alkim.com.tr',
+  'BAGFS': 'bagfas.com.tr',
+  'GUBRF': 'gubretas.com.tr',
+  'HEKTS': 'hektas.com.tr',
+  'KORDS': 'kordsa.com',
+  'BRISA': 'brisa.com.tr',
+  'CIMSA': 'cimsa.com.tr',
+  'AKCNS': 'akcansa.com.tr',
+  'OYAKC': 'oyakcimento.com',
+  'BRSAN': 'borusanboru.com',
+  'EGEEN': 'egeendustri.com.tr',
+  'PARSN': 'parsan.com.tr',
+  'KARTN': 'kartonsan.com.tr',
+  'ECILC': 'eczacibasi.com.tr',
+  // Enerji
+  'ENJSA': 'enerjisa.com.tr',
+  'AKSEN': 'aksaenerji.com.tr',
+  'ZOREN': 'zorluenerji.com.tr',
+  'AYDEM': 'aydemenerji.com.tr',
+  'GWIND': 'galatawind.com',
+  'ASTOR': 'astor.com.tr',
+  'KONTR': 'kontrolmatik.com',
+  // ── BIST — Otomotiv & Ulaştırma ──
+  'FROTO': 'fordotosan.com.tr',
   'TOASO': 'tofas.com.tr',
+  'OTKAR': 'otokar.com.tr',
+  'KARSN': 'karsan.com.tr',
+  'TTRAK': 'turktraktor.com.tr',
+  'TMSN':  'tumosan.com.tr',
+  'DOAS':  'doas.com.tr',
+  'THYAO': 'thy.com',
   'PGSUS': 'flypgs.com',
   'TAVHL': 'tav.aero',
-  'SISE':  'sisecam.com',
-  'ENKAI': 'enka.com',
-  'PETKM': 'petkim.com.tr',
-  'KOZAL': 'koza-altin.com.tr',
-  'KRDMD': 'kardemir.com.tr',
-  'SOKM':  'sok.com.tr',
+  'CLEBI': 'celebi.com',
+  // ── BIST — Perakende & Tüketim ──
+  'BIMAS': 'bim.com.tr',
   'MGROS': 'migros.com.tr',
-  'LOGO':  'logo.com.tr',
-  'EKGYO': 'emlakkonut.com.tr',
-  'TTKOM': 'turktelekom.com.tr',
+  'SOKM':  'sok.com.tr',
+  'BIZIM': 'bizimtoptan.com.tr',
+  'CRFSA': 'carrefoursa.com',
+  'MAVI':  'mavicompany.com',
+  'YATAS': 'yatas.com.tr',
+  'ULKER': 'ulker.com.tr',
+  'AEFES': 'anadoluefes.com',
+  'CCOLA': 'coca-colaic.com',
+  'BANVT': 'banvit.com',
+  'PNSUT': 'pinar.com.tr',
+  'TATGD': 'tatgida.com',
+  'SELEC': 'selcukecza.com.tr',
+  'MPARK': 'mlpcare.com',
   'ARCLK': 'arcelik.com',
   'VESTL': 'vestel.com.tr',
-  // NYSE/NASDAQ
+  'VESBE': 'vestel.com.tr',
+  // ── BIST — Telekom & Teknoloji ──
+  'TCELL': 'turkcell.com.tr',
+  'TTKOM': 'turktelekom.com.tr',
+  'ASELS': 'aselsan.com.tr',
+  'LOGO':  'logo.com.tr',
+  'KAREL': 'karel.com.tr',
+  'NETAS': 'netas.com.tr',
+  'ARENA': 'arena.com.tr',
+  // ── BIST — GYO & Madencilik ──
+  'EKGYO': 'emlakkonut.com.tr',
+  'ISGYO': 'isgyo.com.tr',
+  'TRGYO': 'torunlargyo.com.tr',
+  'KOZAL': 'koza-altin.com.tr',
+  // ── NYSE / NASDAQ ──
   'AAPL':  'apple.com',
   'MSFT':  'microsoft.com',
   'NVDA':  'nvidia.com',
@@ -77,8 +142,8 @@ export default async function handler(req, res) {
     .toLowerCase();
 
   if (!domain) {
-    // 1x1 şeffaf PNG döndür
-    return sendPlaceholder(res);
+    // Domain bilinmiyor → 404 ki <img> onerror tetiklensin, çağıran avatar/baş harf göstersin
+    return res.status(404).json({ error: 'domain bilinmiyor' });
   }
 
   const cacheKey = `logo:${domain}:${sz}`;
@@ -127,17 +192,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // Hiçbiri çalışmadı → şeffaf placeholder
-  return sendPlaceholder(res);
-}
-
-function sendPlaceholder(res) {
-  // 1x1 şeffaf PNG (base64)
-  const PNG = Buffer.from(
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-    'base64'
-  );
-  res.setHeader('Content-Type', 'image/png');
-  res.setHeader('Cache-Control', 'public, max-age=3600');
-  return res.status(200).send(PNG);
+  // Hiçbiri çalışmadı → 404 (çağıran <img> onerror ile avatar/baş harf gösterir)
+  return res.status(404).json({ error: 'logo bulunamadı' });
 }
