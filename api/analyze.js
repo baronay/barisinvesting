@@ -417,7 +417,7 @@ async function fetchYahooData(yahooTicker) {
   const bistRatiosPromise = isBIST
     ? fetch(
         `${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/bist-ratios?ticker=${yahooTicker.replace('.IS', '')}`,
-        { signal: AbortSignal.timeout(12000), headers: { 'Accept': 'application/json' } }
+        { signal: AbortSignal.timeout(7000), headers: { 'Accept': 'application/json' } }
       )
         .then(r => (r.ok ? r.json() : null))
         .catch(e => { dlog(`[BIST API] Çağrı başarısız: ${e.message} — fallback pipeline devam ediyor`); return null; })
@@ -1062,11 +1062,12 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // Vercel'in bu fonksiyon için maxDuration'ı 30sn (vercel.json) — Anthropic
     // çağrısı bu süreyi aşarsa fonksiyon sert şekilde kesiliyordu. 25sn'de kendi
     // isteğimizi iptal edip kullanıcıya anlamlı bir hata dönüyoruz.
-    // Analiz kalitesi doğrudan modele bağlı. Varsayılan Sonnet 5 (daha derin
-    // muhakeme + daha iyi Türkçe anlatım). Maliyet/hız için ANALYZE_MODEL env
-    // ile değiştirilebilir (örn. 'claude-haiku-4-5-20251001').
+    // Varsayılan haiku: Vercel Hobby planının dar süre bütçesinde (30sn) hızlı
+    // ve güvenilir. Kalite için ANALYZE_MODEL=claude-sonnet-5 (veya opus-4-8)
+    // env ile yükseltilebilir — ama Hobby'de yavaş modeller timeout riski taşır.
+    // Prompt iyileştirmesi her modelde geçerli, haiku bile eskisinden çok daha iyi.
     const FALLBACK_MODEL = 'claude-haiku-4-5-20251001';
-    const primaryModel = process.env.ANALYZE_MODEL || 'claude-sonnet-5';
+    const primaryModel = process.env.ANALYZE_MODEL || FALLBACK_MODEL;
 
     const callModel = async (model, timeoutMs) => {
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1085,7 +1086,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       return { resp, d };
     };
 
-    let { resp: response, d: data } = await callModel(primaryModel, 22000);
+    let { resp: response, d: data } = await callModel(primaryModel, 18000);
 
     // Birincil model HATA döndürdüyse (ör. API anahtarında Sonnet erişimi yok /
     // geçersiz model ID) hemen bilinen-çalışan haiku'ya düş — analiz komple
@@ -1093,7 +1094,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // düşmez (dış catch yakalar), o yüzden çift-timeout riski yok.
     if ((!data || data.error || !response.ok) && primaryModel !== FALLBACK_MODEL) {
       dlog(`[AI] ${primaryModel} başarısız (${data?.error?.message || response?.status}) → ${FALLBACK_MODEL}`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 20000));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 15000));
     }
 
     if (!data) return res.status(502).json({ error: 'AI servisinden geçersiz yanıt alındı.' });
