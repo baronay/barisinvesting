@@ -965,7 +965,7 @@ CRITERIA_END`
     // pes edip elimizdeki veriyle (veya veri yoksa "sınırlı" modda) AI'ya geçiyoruz.
     financialData = await Promise.race([
       fetchYahooData(yahooTicker),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 6500)),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 6000)),
     ]);
   } catch(e) { dlog('Fetch failed/timeout:', e.message); }
 
@@ -1053,10 +1053,10 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // env ile yükseltilebilir — ama Hobby'de yavaş modeller timeout riski taşır.
     // Prompt iyileştirmesi her modelde geçerli, haiku bile eskisinden çok daha iyi.
     const FALLBACK_MODEL = 'claude-haiku-4-5-20251001';
-    // Varsayılan Sonnet 5: daha derin muhakeme + akıcı Türkçe. Lean prompt/output
-    // ile Hobby'nin 30sn bütçesine sığar. Sonnet HATA dönerse otomatik haiku'ya
-    // düşer (aşağıdaki fallback); timeout olursa dış catch 504 döner.
-    const primaryModel = process.env.ANALYZE_MODEL || 'claude-sonnet-5';
+    // Claude 3.5 Sonnet: Sonnet 5'ten hızlı, haiku'dan cok daha kaliteli, her
+    // hesapta erisilebilir. Hobby'nin 30sn butcesine rahat sigar (~15sn uretim).
+    // ANALYZE_MODEL env ile degistirilebilir. Hata donerse haiku'ya fallback.
+    const primaryModel = process.env.ANALYZE_MODEL || 'claude-3-5-sonnet-20241022';
 
     const callModel = async (model, timeoutMs) => {
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1075,7 +1075,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       return { resp, d };
     };
 
-    let { resp: response, d: data } = await callModel(primaryModel, 22000);
+    let { resp: response, d: data } = await callModel(primaryModel, 23000);
 
     // Birincil model HATA döndürdüyse (ör. API anahtarında Sonnet erişimi yok /
     // geçersiz model ID) hemen bilinen-çalışan haiku'ya düş — analiz komple
@@ -1083,7 +1083,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // düşmez (dış catch yakalar), o yüzden çift-timeout riski yok.
     if ((!data || data.error || !response.ok) && primaryModel !== FALLBACK_MODEL) {
       dlog(`[AI] ${primaryModel} başarısız (${data?.error?.message || response?.status}) → ${FALLBACK_MODEL}`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 15000));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 19000));
     }
 
     if (!data) return res.status(502).json({ error: 'AI servisinden geçersiz yanıt alındı.' });
