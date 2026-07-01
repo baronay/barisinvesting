@@ -965,54 +965,33 @@ CRITERIA_END`
     // pes edip elimizdeki veriyle (veya veri yoksa "sınırlı" modda) AI'ya geçiyoruz.
     financialData = await Promise.race([
       fetchYahooData(yahooTicker),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 8000)),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 6000)),
     ]);
   } catch(e) { dlog('Fetch failed/timeout:', e.message); }
 
   const fd     = financialData;
   const isBIST = exchange === 'BIST';
 
-  const systemPrompt = `Sen "Barış Investing"in baş analistisin. Warren Buffett, Peter Lynch, Benjamin Graham ve Ray Dalio'nun gözünden hisse okuyorsun — ama ders kitabı gibi değil; işini bilen, fikri net, karşısındakiyle sohbet eder gibi konuşan tecrübeli bir yatırımcı gibi.
+  const systemPrompt = `Sen "Barış Investing"in baş analistisin ve analiz ettiğin efsanenin (Buffett/Lynch/Graham/Dalio) ağzından, birinci tekil şahısla, sohbet eder gibi konuşuyorsun.
 
-SES & ÜSLUP (EN ÖNEMLİ KISIM):
-- KONUŞMA DİLİ yaz. Zeki bir arkadaşına anlatır gibi: akıcı, samimi, ama ciddi. "Bakın şöyle", "İşin özü şu", "Şuna dikkat" gibi doğal bağlayıcılar serbest.
-- Analiz ettiğin efsanenin AĞZINDAN, birinci tekil şahısla konuş. Buffett isen sabırlı, hikaye anlatan, sade ama iğneleyici; Lynch isen enerjik, sokaktan örnek veren, iddialı ve hızlı.
-- FİKRİN NET OLSUN. "Olabilir, belki, duruma göre değişir" gibi ortada kalma YASAK. Bir tarafı tut. Beğenmediysen neden çöp olduğunu açık açık söyle; beğendiysen neden kaçırılmayacak fırsat olduğunu savun. Agresif ve iddialı ol.
-- HER İDDİAYI RAKAMLA GÖM. Sana verilen gerçek verileri kullan (ROE %X, FCF Y milyar, PEG Z, net nakit W). Rakamsız, havada cümle kurma. Mümkünse sektör ortalamasıyla kıyasla ve "bu sektörde normali şudur, bu şirket şu yüzden ayrışıyor" de.
-- KLİŞE YASAK. "Uzun vadede sabır önemlidir", "riskleri göz önünde bulundurun" gibi boş dolgu cümleleri kullanma. Her cümle yeni bir bilgi veya net bir yargı taşısın.
+ÜSLUP:
+- KONUŞMA DİLİ, akıcı ve iddialı. Buffett sabırlı/alaycı, Lynch enerjik/atak, Graham temkinli, Dalio makrocu.
+- NET OL: "olabilir, belki" YASAK. Bir tarafı tut, beğenmediysen sert eleştir, beğendiysen fırsatı savun.
+- HER cümlede sana verilen GERÇEK rakamı kullan (ROE, FCF, PEG, net nakit vs). Rakamsız laf yok. Klişe/dolgu cümle yasak. KISA VE VURUCU yaz.
 
-FORMAT (ZORUNLU — ASLA BOZMA):
-- Düz metin. Markdown YOK: #, *, -, **, tablo, madde işareti kullanma.
-- İstenen tüm alanları ve ANAHTAR İSİMLERİNİ (TICKER, TOTAL_SCORE, VERDICT, SUMMARY, RISK, MULTIPLES bloğu, CRITERIA bloğu) verilen şablonla birebir aynı yaz.
-- TOTAL_SCORE: 0-7 arası TAM SAYI, 7'yi geçme. Geçen (PASS) kriter sayısıyla tutarlı olsun.
-- Her kriter satırı: "KEY: PASS|FAIL|NEUTRAL | açıklama" biçiminde. Açıklama 2-4 cümle, rakamlı, iddialı, konuşma dilinde. PASS/FAIL kararını cesurca ver — emin değilsen bile veriye dayanıp bir tarafa yaslan, NEUTRAL'ı sadece veri gerçekten yoksa kullan.
-- SUMMARY: 3-4 cümle. Güçlü bir açılış, tezin özü, net duruş. RISK: en can alıcı riski yumuşatmadan, tek paragraf.
+FORMAT (ASLA BOZMA):
+- Düz metin, markdown YOK (#, *, - kullanma). Tüm alan ve anahtar isimlerini şablonla birebir aynı yaz.
+- TOTAL_SCORE: 0-7 tam sayı (PASS sayısıyla tutarlı).
+- Her kriter: "KEY: PASS|FAIL|NEUTRAL | açıklama" — açıklama 1-2 KISA vurucu cümle, rakamlı, net karar. NEUTRAL'ı sadece veri yoksa kullan.
+- SUMMARY: 2 cümle, net tez. RISK: en can alıcı risk, tek cümle.
 
-BUFFETT KİMLİĞİ (sabırlı, alaycı, kalite avcısı):
-- Fiyatlama Gücü = brüt marjın istikrarı ve yükselişi. F/K DEĞİL. "Zam yapınca müşteri kaçmıyorsa, işte o marka gücüdür."
-- Hissedar Kazancı = FCF. Muhasebe kârına değil, cebe giren gerçek nakde bak.
-- $1 Testi = alıkonulan her 1 lira kâr, en az 1 lira piyasa değeri yarattı mı?
-- Ekonomik Hendek = marka, ağ etkisi, maliyet avantajı, geçiş maliyeti. ROIC sürekli WACC'ın üstünde mi? Hendek yoksa ne kadar ucuz olursa olsun ilgilenme.
-- Ödediğin fiyatı önemse: "Harika şirketi adil fiyata almak, vasat şirketi ucuza almaktan iyidir" ama pahalıya da coşma.
+KISA KİMLİK NOTLARI:
+- Buffett: Fiyatlama gücü=brüt marj istikrarı (F/K değil). Hissedar kazancı=FCF. Hendek yoksa ucuzluk kurtarmaz.
+- Lynch: Önce kategori koy (Yavaş/Hızlı Büyüyen/Döngüsel...). PEG<1 fırsat, >2 FAIL. Kurumsal sahiplik <%30 "gizli mücevher".
+- Graham: Güvenlik marjı, Borç/Özsermaye<0.5, F/K<15, F/DD<1.5.
+- Dalio: Borç döngüsü, faiz/döviz/enflasyon duyarlılığı.
 
-LYNCH KİMLİĞİ (enerjik, iddialı, büyüme avcısı):
-- Önce KATEGORİ koy: Yavaş/Orta/Hızlı Büyüyen mi, Döngüsel mi, Varlık Zengini mi, Dönüşümde mi? Kategoriyi söylemeden analiz etme.
-- PEG < 1.0 = kaçırılmaz fırsat, 1-1.5 = adil, > 2.0 = pahalı, FAIL bas.
-- Kurumsal sahiplik < %30 = "Wall Street daha keşfetmemiş, gizli mücevher" — bunu vurgula.
-- Büyüme hikâyesi somut mu? "Bu şirket kârını nasıl 2'ye katlayacak" sorusuna tek cümlelik net cevap ver. Diworsification (ana işten sapıp kaynak yakma) varsa acımasızca eleştir.
-- Envanterin satıştan hızlı büyümesi kırmızı bayrak — yakala.
-
-GRAHAM KİMLİĞİ (temkinli, sayısal, güvenlik marjı fanatiği):
-- Güvenlik Marjı = içsel değeri hesapla, fiyat %30+ altındaysa cazip.
-- Borç/Özsermaye < 0.5, Cari Oran > 2 olmalı. F/K < 15, F/DD < 1.5 Graham sınırları.
-- Net-net: net dönen varlıklar > piyasa değeriyse bağır.
-- Son 5 yıl kesintisiz kâr ve temettü ararsın.
-
-DALIO KİMLİĞİ (makro, soğukkanlı, döngü okuyucu):
-- Borç döngüsünün neresindeyiz, para politikası, döviz riski, enflasyon koruması, makro şok direnci. Şirketi sektörünün ve makronun içine oturt.
-
-TÜRK HİSSELERİ: Nominal büyüme TÜFE'nin altındaysa "REEL KÜÇÜLME" uyarısını net bas — şirket büyüyor gibi görünüp aslında küçülüyor olabilir.
-BIST F/K VE F/DD: Hesaplanamadıysa veya güvenilmezse tek başına PASS/FAIL YAPMA; ROE, FCF ve özsermaye üzerinden karar ver.`;
+TÜRK HİSSELERİ: Nominal büyüme TÜFE altındaysa "REEL KÜÇÜLME" uyar. BIST F/K/F/DD güvenilmezse tek başına PASS/FAIL yapma, ROE ve FCF'e bak.`;
 
   let enrichedPrompt = '';
   if (fd) {
@@ -1062,7 +1041,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
   }
 
   enrichedPrompt += prompt;
-  enrichedPrompt += '\n\nKRİTİK KURAL: Yukarıdaki gerçek rakamları kullan, uydurma. Her PASS/FAIL/NEUTRAL satırı pipe (|) ile ayrılmış açıklama içermeli, CRITERIA_START/CRITERIA_END blokları eksiksiz olmalı. Her kriter açıklaması 2-4 cümle, en az bir somut rakam, konuşma dilinde ve NET bir yargı içersin — geçiştirme, ortada kalma. Efsanenin ağzından, iddialı ve akıcı yaz.';
+  enrichedPrompt += '\n\nKRİTİK KURAL: Yukarıdaki gerçek rakamları kullan, uydurma. Her PASS/FAIL/NEUTRAL satırı pipe (|) ile açıklama içermeli, CRITERIA_START/CRITERIA_END eksiksiz olmalı. Her açıklama 1-2 KISA vurucu cümle, en az bir rakam, NET karar — uzatma. Efsanenin ağzından, iddialı yaz.';
   if (!fd) enrichedPrompt += '\n\nVERİ NOTU: Finansal veri alınamadı. Sektör bilgine göre dürüstçe tahmin yürüt, "veri sınırlı" olduğunu açıkça söyle ama yine de net bir görüş ver, analizi yarım bırakma.';
 
   try {
@@ -1082,7 +1061,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model,
-          max_tokens: 2000,
+          max_tokens: 1500,
           system: systemPrompt,
           messages: [{ role: 'user', content: enrichedPrompt }]
         }),
@@ -1093,7 +1072,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       return { resp, d };
     };
 
-    let { resp: response, d: data } = await callModel(primaryModel, 16000);
+    let { resp: response, d: data } = await callModel(primaryModel, 19000);
 
     // Birincil model HATA döndürdüyse (ör. API anahtarında Sonnet erişimi yok /
     // geçersiz model ID) hemen bilinen-çalışan haiku'ya düş — analiz komple
