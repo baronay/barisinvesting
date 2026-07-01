@@ -464,7 +464,7 @@ async function fetchYahooData(yahooTicker) {
         'recommendationKey','numberOfAnalystOpinions'
       ].join(',');
       const url = `https://${base}.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(yahooTicker)}&fields=${fields}${cs}`;
-      const r = await fetch(url, { headers: makeHeaders(), signal: AbortSignal.timeout(8000) });
+      const r = await fetch(url, { headers: makeHeaders(), signal: AbortSignal.timeout(4500) });
       if (!r.ok) continue;
       const j = await r.json();
       const q = j?.quoteResponse?.result?.[0];
@@ -514,7 +514,7 @@ async function fetchYahooData(yahooTicker) {
     for (const base of ['query2', 'query1']) {
       try {
         const url = `https://${base}.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(yahooTicker)}?modules=${modules}${cs}`;
-        const r = await fetch(url, { headers: makeHeaders(), signal: AbortSignal.timeout(10000) });
+        const r = await fetch(url, { headers: makeHeaders(), signal: AbortSignal.timeout(5500) });
         if (!r.ok) continue;
         const j = await r.json();
         const raw = j?.quoteSummary?.result?.[0];
@@ -608,7 +608,7 @@ async function fetchYahooData(yahooTicker) {
   if (!result.currentPrice) {
     try {
       const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooTicker)}?interval=1d&range=5d${cs}`;
-      const r = await fetch(url, { headers: makeHeaders(), signal: AbortSignal.timeout(5000) });
+      const r = await fetch(url, { headers: makeHeaders(), signal: AbortSignal.timeout(3000) });
       if (r.ok) {
         const j = await r.json();
         const meta = j?.chart?.result?.[0]?.meta;
@@ -959,8 +959,15 @@ CRITERIA_END`
 
   const yahooTicker = exchange === 'BIST' ? `${cleanTicker}.IS` : cleanTicker;
   let financialData = null;
-  try { financialData = await fetchYahooData(yahooTicker); }
-  catch(e) { dlog('Fetch failed:', e.message); }
+  try {
+    // Veri çekmeye kesin üst süre (Hobby'nin dar bütçesinde AI'ya yer kalsın).
+    // Yahoo Vercel IP'lerini yavaşlattığında BIST çekimi çok uzuyordu; 9sn'de
+    // pes edip elimizdeki veriyle (veya veri yoksa "sınırlı" modda) AI'ya geçiyoruz.
+    financialData = await Promise.race([
+      fetchYahooData(yahooTicker),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 9000)),
+    ]);
+  } catch(e) { dlog('Fetch failed/timeout:', e.message); }
 
   const fd     = financialData;
   const isBIST = exchange === 'BIST';
@@ -1075,7 +1082,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model,
-          max_tokens: 3500,
+          max_tokens: 2200,
           system: systemPrompt,
           messages: [{ role: 'user', content: enrichedPrompt }]
         }),
