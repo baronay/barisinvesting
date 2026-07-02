@@ -1130,8 +1130,9 @@ CRITERIA_END`
 FORMAT (ASLA BOZMA):
 - Düz metin, markdown YOK (#, *, - kullanma). Tüm alan ve anahtar isimlerini şablonla birebir aynı yaz.
 - TOTAL_SCORE: 0-7 tam sayı (PASS sayısıyla tutarlı).
-- Her kriter: "KEY: PASS|FAIL|NEUTRAL | açıklama" — açıklama 1-2 YOĞUN cümle: rakam + gerekçe + net karar, dolgu kelime yok. NEUTRAL'ı sadece veri gerçekten yoksa kullan, o zaman bile tek cümlelik gerekçe yaz. KISA YAZ: toplam çıktı 7 kriter + özet dahil kompakt olsun.
-- SUMMARY: 2-3 cümle, tezin özü ve net duruş. RISK: en can alıcı risk, 1-2 cümle.
+- Her kriter: "KEY: PASS|FAIL|NEUTRAL | açıklama" — açıklama EN FAZLA 25 KELİME: rakam + gerekçe + net karar, dolgu kelime yok. NEUTRAL'ı sadece veri gerçekten yoksa kullan, o zaman bile tek cümlelik gerekçe yaz.
+- SÜRE KISITI VAR: uzun yazarsan analiz kesilir. Kısa ve yoğun yaz, 7 kriterin tamamını bitir.
+- SUMMARY: 2 kısa cümle, tezin özü ve net duruş. RISK: en can alıcı risk, 1 cümle.
 
 KİMLİK NOTLARI:
 - Buffett: Fiyatlama gücü=brüt marj istikrarı (F/K değil). Hissedar kazancı=FCF. Ekonomik hendek yoksa ucuzluk kurtarmaz. "Harika şirketi adil fiyata almak, vasat şirketi ucuza almaktan iyidir."
@@ -1196,27 +1197,23 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
 
   try {
     // Süre bütçesi: vercel.json maxDuration=60sn (Hobby planı 60sn'e izin verir).
-    // Veri çekme ≤8sn + birincil model 30sn + haiku yedeği 18sn = ~56sn < 60sn.
-    // Birincil model 30sn'de yetişemezse ARTIK 504 dönmüyoruz — hızlı haiku'ya
-    // düşüp analizi yine de teslim ediyoruz (eski davranış: direkt hata).
+    // Veri çekme ≤8sn + birincil model 26sn + haiku yedeği 14sn = ~48sn < 60sn.
+    // ÜRETİM ÖLÇÜMÜ (2026-07): Sonnet 4.5 yük altında ~50 tok/sn'ye düşebiliyor,
+    // 30sn bile yetmeyebiliyor (THYAO). Bu yüzden yedek haiku GARANTİLİ sığacak
+    // şekilde ayarlandı: max_tokens 1100 (haiku ~130 tok/sn → ~9sn < 14sn).
+    // 1100 token yedekte nadiren kesilmeye yol açabilir ama BOŞ SONUÇTAN iyidir.
     const FALLBACK_MODEL = 'claude-haiku-4-5-20251001';
-    // Claude Sonnet 4.5: eski nesil Sonnet (Sonnet 5 degil) ama 3.5 Sonnet'ten
-    // hem KALITELI hem ~1.5x HIZLI (~85 tok/sn). 3.5 Sonnet cok yavasti: 1500
-    // token Turkce ~25sn suruyor, 23sn abort'a takiliyordu (SAHOL kisa ciktiyla
-    // yetisti, THYAO uzun ciktiyla kesildi). ANALYZE_MODEL env ile degistirilebilir.
     const primaryModel = process.env.ANALYZE_MODEL || 'claude-sonnet-4-5';
 
-    const callModel = async (model, timeoutMs) => {
+    const callModel = async (model, timeoutMs, maxTokens) => {
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model,
           // max_tokens bir TAVAN — üretimi yavaşlatmaz, sadece kesilmeyi önler.
-          // Süreyi belirleyen modelin gerçekten yazdığı uzunluk; o da system
-          // prompt'taki "1-2 yoğun cümle" talimatıyla ~1100-1300 token'a çekildi
-          // (~15-18sn). Tavanı 1800 tutuyoruz ki uzun analizler yine kesilmesin.
-          max_tokens: 1800,
+          // Birincilde 1800 (kesilme koruması), yedekte 1100 (süre garantisi).
+          max_tokens: maxTokens,
           system: systemPrompt,
           messages: [{ role: 'user', content: enrichedPrompt }]
         }),
@@ -1229,13 +1226,13 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
 
     let response, data, usedFallback = false;
     try {
-      ({ resp: response, d: data } = await callModel(primaryModel, 30000));
+      ({ resp: response, d: data } = await callModel(primaryModel, 26000, 1800));
     } catch (e) {
       // Birincil model ZAMAN AŞIMINA uğradıysa 504 dönme — hızlı haiku'yla kurtar.
       const isTimeout = e.name === 'TimeoutError' || e.name === 'AbortError';
       if (!isTimeout || primaryModel === FALLBACK_MODEL) throw e;
       dlog(`[AI] ${primaryModel} zaman aşımı → ${FALLBACK_MODEL} ile tekrar deneniyor`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 18000));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 14000, 1100));
       usedFallback = true;
     }
 
@@ -1244,7 +1241,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // patlamasın.
     if ((!data || data.error || !response.ok) && !usedFallback && primaryModel !== FALLBACK_MODEL) {
       dlog(`[AI] ${primaryModel} başarısız (${data?.error?.message || response?.status}) → ${FALLBACK_MODEL}`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 18000));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 14000, 1100));
     }
 
     if (!data) return res.status(502).json({ error: 'AI servisinden geçersiz yanıt alındı.' });
