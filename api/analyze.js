@@ -1130,7 +1130,7 @@ CRITERIA_END`
 FORMAT (ASLA BOZMA):
 - Düz metin, markdown YOK (#, *, - kullanma). Tüm alan ve anahtar isimlerini şablonla birebir aynı yaz.
 - TOTAL_SCORE: 0-7 tam sayı (PASS sayısıyla tutarlı).
-- Her kriter: "KEY: PASS|FAIL|NEUTRAL | açıklama" — açıklama 2-3 dolu cümle, rakamlı, gerekçeli net karar. NEUTRAL'ı sadece veri gerçekten yoksa kullan.
+- Her kriter: "KEY: PASS|FAIL|NEUTRAL | açıklama" — açıklama 1-2 YOĞUN cümle: rakam + gerekçe + net karar, dolgu kelime yok. NEUTRAL'ı sadece veri gerçekten yoksa kullan, o zaman bile tek cümlelik gerekçe yaz. KISA YAZ: toplam çıktı 7 kriter + özet dahil kompakt olsun.
 - SUMMARY: 2-3 cümle, tezin özü ve net duruş. RISK: en can alıcı risk, 1-2 cümle.
 
 KİMLİK NOTLARI:
@@ -1191,12 +1191,12 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
   }
 
   enrichedPrompt += prompt;
-  enrichedPrompt += '\n\nKRİTİK KURAL: Yukarıdaki gerçek rakamları kullan, uydurma. Her PASS/FAIL/NEUTRAL satırı pipe (|) ile açıklama içermeli, CRITERIA_START/CRITERIA_END eksiksiz olmalı. Her açıklama 2-3 dolu cümle, en az bir rakam, gerekçeli NET karar. Efsanenin ağzından, akıcı ve olgun bir üslupla yaz — küçümseyici/argo kelime kullanma.';
+  enrichedPrompt += '\n\nKRİTİK KURAL: Yukarıdaki gerçek rakamları kullan, uydurma. Her PASS/FAIL/NEUTRAL satırı pipe (|) ile açıklama içermeli, CRITERIA_START/CRITERIA_END eksiksiz olmalı. Her açıklama 1-2 YOĞUN cümle: en az bir rakam + gerekçeli NET karar, dolgu cümle yok. 7 kriterin TAMAMINI yaz, hiçbirini atlama. Efsanenin ağzından, akıcı ve olgun bir üslupla yaz — küçümseyici/argo kelime kullanma.';
   if (!fd) enrichedPrompt += '\n\nVERİ NOTU: Finansal veri alınamadı. Sektör bilgine göre dürüstçe tahmin yürüt, "veri sınırlı" olduğunu açıkça söyle ama yine de net bir görüş ver, analizi yarım bırakma.';
 
   try {
     // Süre bütçesi: vercel.json maxDuration=60sn (Hobby planı 60sn'e izin verir).
-    // Veri çekme ≤6sn + birincil model 30sn + haiku yedeği 15sn = ~51sn < 60sn.
+    // Veri çekme ≤8sn + birincil model 30sn + haiku yedeği 18sn = ~56sn < 60sn.
     // Birincil model 30sn'de yetişemezse ARTIK 504 dönmüyoruz — hızlı haiku'ya
     // düşüp analizi yine de teslim ediyoruz (eski davranış: direkt hata).
     const FALLBACK_MODEL = 'claude-haiku-4-5-20251001';
@@ -1212,9 +1212,10 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model,
-          // 1200 → 1800: 7 kriter × 2-3 Türkçe cümle 1200'e sığmıyordu, son
-          // kriterler ortadan kesilip frontend'de "?" / "—" görünüyordu.
-          // 1800 token ≈ 21sn (Sonnet 4.5 ~85 tok/sn) → 30sn timeout'a sığar.
+          // max_tokens bir TAVAN — üretimi yavaşlatmaz, sadece kesilmeyi önler.
+          // Süreyi belirleyen modelin gerçekten yazdığı uzunluk; o da system
+          // prompt'taki "1-2 yoğun cümle" talimatıyla ~1100-1300 token'a çekildi
+          // (~15-18sn). Tavanı 1800 tutuyoruz ki uzun analizler yine kesilmesin.
           max_tokens: 1800,
           system: systemPrompt,
           messages: [{ role: 'user', content: enrichedPrompt }]
@@ -1234,7 +1235,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       const isTimeout = e.name === 'TimeoutError' || e.name === 'AbortError';
       if (!isTimeout || primaryModel === FALLBACK_MODEL) throw e;
       dlog(`[AI] ${primaryModel} zaman aşımı → ${FALLBACK_MODEL} ile tekrar deneniyor`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 15000));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 18000));
       usedFallback = true;
     }
 
@@ -1243,7 +1244,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // patlamasın.
     if ((!data || data.error || !response.ok) && !usedFallback && primaryModel !== FALLBACK_MODEL) {
       dlog(`[AI] ${primaryModel} başarısız (${data?.error?.message || response?.status}) → ${FALLBACK_MODEL}`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 15000));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 18000));
     }
 
     if (!data) return res.status(502).json({ error: 'AI servisinden geçersiz yanıt alındı.' });
