@@ -1054,13 +1054,11 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
    YATIRIM TEZLERİ SAYFASI
 ══════════════════════════════════════════════════ */
 
-/* Sidebar nav tab */
-.mnav-tab.tez { }
 
 /* Tez kartı grid */
 .tez-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -1092,12 +1090,6 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
   padding: 16px 16px 12px;
   border-bottom: 1px solid var(--rule);
 }
-.tez-ticker-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
 .tez-ticker {
   font-family: 'JetBrains Mono', monospace;
   font-size: 20px;
@@ -1105,35 +1097,8 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
   color: var(--text);
   letter-spacing: 1px;
 }
-.tez-type-badge {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border: 1px solid;
-}
-.tez-type-badge.bull { color: var(--success); border-color: rgba(63,74,60,0.4); background: var(--success-dim); }
-.tez-type-badge.bear { color: var(--danger); border-color: rgba(168,116,106,0.4); background: var(--danger-dim); }
-.tez-type-badge.neutral-tez { color: var(--warn); border-color: rgba(184,155,106,0.4); background: var(--warn-dim); }
 
-.tez-company {
-  font-size: 11px;
-  color: var(--text2);
-  margin-bottom: 4px;
-}
-.tez-sector {
-  font-size: 9px;
-  color: var(--muted);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: 0.5px;
-}
 
-.tez-card-body {
-  padding: 12px 16px;
-  flex: 1;
-}
 .tez-title {
   font-family: 'Playfair Display', serif;
   font-size: 14px;
@@ -1177,167 +1142,6 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
   gap: 4px;
 }
 
-/* Tez Okuma Modalı */
-.tez-modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.8);
-  backdrop-filter: blur(6px);
-  z-index: 850;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 32px 20px;
-  overflow-y: auto;
-}
-.tez-modal.visible { display: flex; }
-
-.tez-modal-box {
-  background: var(--surface);
-  border: 1px solid var(--glass);
-  width: 100%;
-  max-width: 820px;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
-  animation: fadeIn 0.25s ease;
-}
-
-.tez-modal-header {
-  background: var(--sidebar);
-  padding: 24px 28px;
-  border-bottom: 1px solid var(--border-s);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-.tez-modal-meta { flex: 1; }
-.tez-modal-ticker {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: 2px;
-  margin-bottom: 4px;
-}
-.tez-modal-company {
-  font-size: 13px;
-  color: var(--text2);
-  margin-bottom: 8px;
-}
-.tez-modal-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.4;
-}
-.tez-modal-close {
-  background: none;
-  border: 1px solid var(--border-s);
-  color: var(--muted);
-  font-size: 16px;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.15s;
-}
-.tez-modal-close:hover { color: var(--text); border-color: var(--text2); }
-
-.tez-modal-keypoints {
-  padding: 20px 28px;
-  border-bottom: 1px solid var(--rule);
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 1px;
-  background: var(--border);
-}
-.tez-kp {
-  background: var(--surface2);
-  padding: 14px 16px;
-}
-.tez-kp-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 5px;
-}
-.tez-kp-val {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text);
-}
-.tez-kp-val.pos { color: var(--success); }
-.tez-kp-val.neg { color: var(--danger); }
-
-.tez-modal-body {
-  padding: 24px 28px;
-}
-.tez-section-title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 12px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--rule);
-}
-.tez-text {
-  font-size: 13px;
-  color: var(--text2);
-  line-height: 2;
-  margin-bottom: 20px;
-  white-space: pre-line;
-}
-.tez-bullets {
-  margin-bottom: 20px;
-}
-.tez-bullet {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--rule);
-  font-size: 12px;
-  color: var(--text2);
-  line-height: 1.6;
-}
-.tez-bullet:last-child { border-bottom: none; }
-.tez-bullet-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
-  margin-top: 6px;
-}
-.tez-bullet-dot.risk { background: var(--danger); }
-
-.tez-pdf-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, var(--accent2), var(--accent));
-  color: #fff;
-  border: none;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 10px 20px;
-  cursor: pointer;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  transition: all 0.3s;
-  text-decoration: none;
-}
-.tez-pdf-btn:hover { box-shadow: 0 4px 16px var(--accent-glow); }
 
 /* Auth koruması overlay */
 .tez-auth-gate {
@@ -1409,8 +1213,6 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 
 @media(max-width:768px) {
   .tez-grid { grid-template-columns: 1fr; }
-  .tez-modal-keypoints { grid-template-columns: 1fr; }
-  .tez-modal-box { max-width: 100%; }
 }
 
 /* ══ YATIRIM TEZLERİ ══ */
@@ -1500,7 +1302,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 /* Tez grid */
 .tez-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   gap: 16px;
 }
 @media(max-width: 768px) { .tez-grid { grid-template-columns: 1fr; } }
@@ -1550,11 +1352,6 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
   font-size: 13px; font-weight: 700;
   color: var(--accent); letter-spacing: 1px;
 }
-.tez-exchange {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8px; color: var(--muted);
-  border: 1px solid var(--border); padding: 1px 5px;
-}
 .tez-date {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px; color: var(--muted);
@@ -1593,80 +1390,6 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 }
 .tez-read-btn:hover { border-color: var(--gold); color: var(--gold); }
 
-/* Tez detay modal */
-.tez-modal {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
-  z-index: 850; align-items: flex-start; justify-content: center;
-  padding: 32px 20px; overflow-y: auto;
-}
-.tez-modal.visible { display: flex; }
-.tez-modal-box {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-top: 3px solid var(--gold);
-  width: 100%; max-width: 760px;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
-  animation: fadeIn 0.25s ease;
-}
-.tez-modal-hdr {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--rule);
-  display: flex; align-items: flex-start;
-  justify-content: space-between; gap: 12px;
-}
-.tez-modal-close {
-  background: none; border: 1px solid var(--border);
-  color: var(--muted); width: 30px; height: 30px;
-  cursor: pointer; font-size: 14px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; transition: all 0.2s;
-}
-.tez-modal-close:hover { color: var(--text); border-color: var(--text); }
-.tez-modal-body { padding: 24px; }
-.tez-modal-section { margin-bottom: 20px; }
-.tez-modal-section-title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px; font-weight: 600; letter-spacing: 2px;
-  text-transform: uppercase; color: var(--muted);
-  margin-bottom: 8px; padding-bottom: 6px;
-  border-bottom: 1px solid var(--rule);
-}
-.tez-modal-text {
-  font-size: 13px; color: var(--text2);
-  line-height: 2; white-space: pre-wrap;
-}
-.tez-modal-targets {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 1px; background: var(--border); margin-top: 12px;
-}
-.tez-target-card {
-  background: var(--surface2); padding: 12px 14px;
-}
-.tez-target-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 4px;
-}
-.tez-target-val {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 16px; font-weight: 700; color: var(--text);
-}
-.tez-target-sub { font-size: 9px; color: var(--muted); margin-top: 2px; }
-.tez-modal-footer {
-  padding: 14px 24px; border-top: 1px solid var(--rule);
-  display: flex; align-items: center; gap: 10px;
-  background: var(--surface2); flex-wrap: wrap;
-}
-.tez-pdf-btn {
-  display: flex; align-items: center; gap: 6px;
-  background: var(--gold-dim); border: 1px solid var(--gold);
-  color: var(--gold); font-family: 'JetBrains Mono', monospace;
-  font-size: 9px; font-weight: 700; padding: 7px 14px;
-  cursor: pointer; letter-spacing: 1px;
-  transition: all 0.2s; text-decoration: none;
-}
-.tez-pdf-btn:hover { background: rgba(194,173,132,0.25); }
 
 /* Boş durum */
 .tez-empty {
@@ -1682,23 +1405,8 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 }
 .tez-empty-sub { font-size: 11px; color: var(--muted); }
 
-/* ── TEZ METRİK SATIRI ── */
-.tez-metric-item{
-  background:var(--surface2);
-  padding:10px 12px;
-}
-.tez-metric-lbl{
-  font-family:'JetBrains Mono',monospace;
-  font-size:8px;letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--muted);margin-bottom:3px;
-}
-.tez-metric-val{
-  font-family:'JetBrains Mono',monospace;
-  font-size:13px;font-weight:600;color:var(--text);
-}
-/* Modal max-height scroll */
-.tez-modal-box{max-height:92vh;display:flex;flex-direction:column;}
-.tez-modal-body{overflow-y:auto;flex:1;}
+
+
 
 .hist-section{padding:10px 20px 6px;border-top:1px solid var(--border-s);margin-top:4px;}
 .hist-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:space-between;}
@@ -1736,35 +1444,6 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
    #d4a843 altın tonu, Bloomberg terminal estetiği
 ═══════════════════════════════════════════════════════ */
 
-/* CTA #1 — Tez modal footer'ında, "bu hisseyi analiz et" */
-.tez-cta-analyze{
-  display:flex;align-items:center;gap:10px;
-  background:linear-gradient(135deg,var(--gold-dim) 0%,rgba(194,173,132,0.05) 100%);
-  border:1px solid var(--gold);
-  color:var(--gold);
-  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;
-  padding:9px 16px;cursor:pointer;letter-spacing:1.5px;
-  text-transform:uppercase;text-decoration:none;
-  transition:all .25s ease;
-  position:relative;overflow:hidden;
-}
-.tez-cta-analyze:hover{
-  background:var(--gold);color:#15110a;
-  box-shadow:0 0 24px rgba(194,173,132,0.4);
-  transform:translateY(-1px);
-}
-.tez-cta-analyze:active{transform:translateY(0);}
-.tez-cta-analyze svg{flex-shrink:0;}
-.tez-cta-analyze .arr{transition:transform .25s;}
-.tez-cta-analyze:hover .arr{transform:translateX(4px);}
-.tez-cta-analyze .ticker-pill{
-  background:rgba(0,0,0,0.25);padding:2px 8px;
-  border:1px solid rgba(194,173,132,0.3);
-  font-weight:700;letter-spacing:1px;
-}
-.tez-cta-analyze:hover .ticker-pill{
-  background:rgba(255,255,255,0.15);border-color:rgba(0,0,0,0.2);
-}
 
 /* CTA #2 — Tezler grid altında banner */
 .tez-cta-banner{
@@ -2313,33 +1992,19 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .ref-copy-btn,
 .right-panel .mkt-strip-v .mkt-card .mkt-price,
 .tez-ticker,
-.tez-type-badge,
-.tez-sector,
 .tez-date,
 .tez-read-btn,
-.tez-modal-ticker,
-.tez-kp-label,
-.tez-kp-val,
-.tez-section-title,
-.tez-pdf-btn,
 .tez-auth-btn,
 .tez-page-sub,
 .tez-lock-hint,
 .tez-badge,
 .tez-disclaimer,
 .tez-getiri-badge,
-.tez-exchange,
 .tez-tag,
-.tez-modal-section-title,
-.tez-target-label,
-.tez-target-val,
-.tez-metric-lbl,
-.tez-metric-val,
 .hist-lbl,
 .hist-ticker,
 .hist-score,
 .fw-teaser-title,
-.tez-cta-analyze,
 .tez-cta-banner-eyebrow,
 .tez-cta-banner-btn,
 .tez-fab,
@@ -2380,6 +2045,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 body.route-portal   #portalRoot{display:block;}
 body.route-tezler   #tezlerRoot{display:block;}
 body.route-arastirmalar #arastirmalarRoot{display:block;}
+body.route-tezoku   #tezOkuRoot{display:block;}
 body.route-terminal #terminalRoot{display:block;}
 body:not(.route-terminal) .mobile-toggle{display:none !important;}
 /* Terminal onboarding modallarını portal/tezler'de gizle */
@@ -2523,7 +2189,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .news-ok{font-family:var(--font-mono);font-size:11px;color:var(--success);margin-top:12px;display:none;}
 
 /* Portal tez grid */
-.pt-tez-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;}
+.pt-tez-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:18px;}
 .pt-tez-skel{grid-column:1/-1;text-align:center;padding:40px;color:var(--cream2);font-family:var(--font-mono);font-size:11px;letter-spacing:2px;opacity:.5;}
 .pt-tez-card{position:relative;border:1px solid var(--portal-border);border-radius:12px;background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;min-height:200px;transition:transform .25s,border-color .25s,box-shadow .25s;}
 .pt-tez-card:hover{transform:translateY(-3px);border-color:rgba(194,173,132,0.30);box-shadow:0 16px 44px rgba(0,0,0,0.42);}
@@ -2546,6 +2212,40 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .ptz-read{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:var(--accent);text-transform:uppercase;}
 .ptz-getiri{font-family:var(--font-mono);font-size:11px;font-weight:600;}
 .ptz-getiri.pos{color:var(--success);} .ptz-getiri.neg{color:var(--danger);} .ptz-getiri.neu{color:var(--cream2);}
+
+/* ── TEZ OKUMA SAYFASI (/tez/:id) ── */
+#tezOkuRoot .pt-wrap{max-width:920px;}
+.tzo-back{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--cream2);cursor:pointer;margin:26px 0 20px;transition:color .2s;text-decoration:none;}
+.tzo-back:hover{color:var(--accent);}
+.tzo-cover{width:100%;max-height:340px;overflow:hidden;border-radius:14px;border:1px solid var(--portal-border);margin-bottom:26px;}
+.tzo-cover img{width:100%;height:100%;object-fit:cover;display:block;}
+.tzo-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.tzo-title{font-family:var(--font-head);font-size:clamp(26px,4.5vw,40px);font-weight:700;line-height:1.15;color:var(--cream);letter-spacing:-.5px;margin-bottom:16px;overflow-wrap:break-word;}
+.tzo-lede{font-size:16px;line-height:1.75;color:var(--cream2);border-left:3px solid var(--accent);padding-left:16px;margin-bottom:30px;}
+.tzo-content{color:#b9c0cc;font-size:15px;line-height:1.95;overflow-wrap:break-word;word-break:break-word;}
+.tzo-content p{margin:0 0 16px;}
+.tzo-content h1,.tzo-content h2,.tzo-content h3{font-family:var(--font-head);color:var(--cream);line-height:1.3;margin:28px 0 12px;}
+.tzo-content h1{font-size:24px;} .tzo-content h2{font-size:21px;} .tzo-content h3{font-size:17px;}
+.tzo-content a{color:var(--accent);}
+.tzo-content ul,.tzo-content ol{padding-left:22px;margin:0 0 16px;}
+.tzo-content li{margin-bottom:6px;}
+.tzo-content blockquote{border-left:3px solid var(--accent);margin:18px 0;padding:4px 0 4px 16px;color:var(--cream2);font-style:italic;}
+.tzo-content img,.tzo-content video,.tzo-content iframe{max-width:100%;height:auto;border-radius:10px;}
+.tzo-content pre{max-width:100%;overflow-x:auto;white-space:pre-wrap;}
+/* Tablolar: tam genişlik, ferah hücreler, mobilde yatay kaydırma */
+.tzo-tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:22px 0;border:1px solid var(--portal-border);border-radius:10px;background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);}
+.tzo-content table{width:max-content;min-width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;margin:0;}
+.tzo-content th{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--accent);text-align:left;padding:11px 14px;border-bottom:1px solid var(--portal-border-s);background:rgba(194,173,132,0.06);white-space:nowrap;}
+.tzo-content td{padding:11px 14px;border-bottom:1px solid var(--portal-border);color:var(--cream);line-height:1.55;vertical-align:top;}
+.tzo-content tr:last-child td{border-bottom:none;}
+.tzo-note{margin-top:34px;padding:12px 16px;border:1px solid var(--portal-border);border-left:3px solid var(--warn);background:rgba(0,0,0,0.2);border-radius:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.3px;line-height:1.7;color:var(--cream2);opacity:.8;}
+.tzo-ctas{margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+@media(max-width:768px){
+  .tzo-content{font-size:14px;line-height:1.85;}
+  .tzo-lede{font-size:14px;padding-left:12px;}
+  .tzo-content th,.tzo-content td{padding:9px 11px;}
+  .tzo-cover{max-height:220px;border-radius:10px;}
+}
 
 /* Haber / Mercek — tıklanabilir video + kart serisi */
 .news-card{border:1px solid var(--portal-border);border-radius:14px;background:linear-gradient(165deg,#13161d 0%,#0c0f15 100%);overflow:hidden;}
@@ -2638,6 +2338,16 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   .trk-kpis{grid-template-columns:repeat(2,1fr);}
   .trk-tt{white-space:normal;}
   .trk-sub{display:none;}
+}
+@media(max-width:560px){
+  .trk-kpis{gap:10px;}
+  .trk-kpi{padding:14px 10px;}
+  .trk-kpi-v{font-size:18px;}
+  .trk-kpi-l{font-size:8px;letter-spacing:1px;}
+  .trk-row{gap:10px;padding:11px 12px;}
+  .trk-tk{min-width:50px;font-size:12px;}
+  .trk-tt{font-size:12px;}
+  .trk-ret{min-width:58px;font-size:14px;}
 }
 
 /* Piyasa Nabzı */
@@ -2752,10 +2462,14 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 }
 @media(max-width:560px){
   .pt-topbar{flex-direction:row;flex-wrap:wrap;}
+  .pt-topnav{flex-wrap:wrap;}
   .pt-brand-name{font-size:18px;}
   .pt-enter{font-size:10px;padding:9px 14px;letter-spacing:1.5px;}
   .pt-soc{width:30px;height:30px;}
   .pt-hero{padding:36px 0 22px;}
+  .pt-lede{font-size:14px;}
+  .pt-sec-head{flex-wrap:wrap;}
+  .pt-sec-title{font-size:19px;}
   .yt-grid,.x-grid{grid-template-columns:1fr;}
 }
 </style>
@@ -2861,141 +2575,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   </div>
 </div>
 
-<!-- ══ TEZ DETAY MODAL ══ -->
-<div class="tez-modal" id="tezModal" onclick="if(event.target===this)closeTezModal()">
-  <div class="tez-modal-box">
 
-    <!-- Header -->
-    <div class="tez-modal-hdr">
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-          <span class="tez-ticker" id="tezModalTicker">—</span>
-          <span class="tez-exchange" id="tezModalExchange">—</span>
-          <span id="tezModalTag" class="tez-tag izle">İZLE</span>
-          <span class="tez-date" id="tezModalDate" style="margin-left:auto">—</span>
-        </div>
-        <div class="tez-title" id="tezModalTitle" style="font-size:20px;line-height:1.3">—</div>
-      </div>
-      <button class="tez-modal-close" onclick="closeTezModal()" style="margin-left:12px">✕</button>
-    </div>
-
-    <div class="tez-modal-body">
-
-      <!-- Buffett / Lynch skorları -->
-      <div id="tezModalScores"></div>
-
-      <!-- Temel metrikler grid -->
-      <div id="tezModalMetrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-bottom:16px"></div>
-
-      <!-- Hedef fiyat / getiri kartları -->
-      <div class="tez-modal-targets" style="margin-bottom:16px">
-        <div class="tez-target-card">
-          <div class="tez-target-label">Baz Hedef</div>
-          <div class="tez-target-val" id="tezTargetPrice">—</div>
-          <div class="tez-target-sub" id="tezHorizon">—</div>
-        </div>
-        <div class="tez-target-card">
-          <div class="tez-target-label">Güncel Fiyat</div>
-          <div class="tez-target-val" id="tezCurrentPrice">—</div>
-          <div class="tez-target-sub">Tez tarihi</div>
-        </div>
-        <div class="tez-target-card">
-          <div class="tez-target-label">Potansiyel</div>
-          <div class="tez-target-val" style="color:var(--success);font-size:13px" id="tezUpside">—</div>
-          <div class="tez-target-sub">Senaryo bazlı</div>
-        </div>
-      </div>
-
-      <!-- Senaryo analizi -->
-      <div class="tez-modal-section">
-        <div class="tez-modal-section-title">Senaryo Analizi (2026 Yıl Sonu)</div>
-        <div id="tezModalScenarios" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-      </div>
-
-      <!-- Yatırım tezi -->
-      <div class="tez-modal-section">
-        <div class="tez-modal-section-title">Yatırım Tezi</div>
-        <div class="tez-modal-text" id="tezModalThesis">—</div>
-      </div>
-
-      <!-- Katalizörler -->
-      <div class="tez-modal-section">
-        <div class="tez-modal-section-title">Katalizörler & Takvim</div>
-        <div class="tez-modal-text" id="tezModalCat">—</div>
-      </div>
-
-      <!-- Riskler -->
-      <div class="tez-modal-section">
-        <div class="tez-modal-section-title">Risk Matrisi</div>
-        <div class="tez-modal-text" id="tezModalRisk">—</div>
-      </div>
-
-      <!-- Sonuç / Genel Yargı -->
-      <div id="tezModalConclusion" style="display:none;background:var(--surface2);border:1px solid var(--border);border-left:4px solid var(--gold);padding:14px 16px;font-size:12px;color:var(--text2);line-height:1.8;font-family:'Inter',sans-serif;margin-top:4px"></div>
-
-    </div><!-- /body -->
-
-    <div class="tez-modal-footer">
-      <a class="tez-pdf-btn" id="tezPdfBtn" href="#" target="_blank" style="display:none">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        PDF İndir
-      </a>
-      <button onclick="openTezShare()" style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;padding:7px 14px;cursor:pointer;letter-spacing:1px;transition:all .2s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        X'te Paylaş
-      </button>
-
-      <!-- ══ CTA #1 — Bu hisseyi şimdi analiz et ══ -->
-      <button type="button" class="tez-cta-analyze" id="tezCtaAnalyze" onclick="ctaTezToAnaliz()">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
-        <span class="ticker-pill" id="tezCtaTicker">—</span>
-        Şimdi Analiz Et
-        <span class="arr">→</span>
-      </button>
-
-      <div style="font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.6">
-        Bu tez yatırım tavsiyesi değildir.<br>Tüm projeksiyonlar tahmin içermektedir.
-      </div>
-      <button onclick="closeTezModal()" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:9px;padding:6px 14px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Kapat</button>
-    </div>
-
-  </div>
-</div>
-
-<!-- ══ TEZ X PAYLAŞIM MODALI ══ -->
-<div id="tezShrModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);z-index:950;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeTezShrModal()" class="tez-modal">
-  <div style="background:var(--surface);border:1px solid var(--glass);border-top:3px solid #d4a843;max-width:660px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.6);animation:fadeIn .25s ease">
-    <!-- Header -->
-    <div style="padding:16px 20px;border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:8px">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:#d4a843"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--text);letter-spacing:1px">NETAŞ — X Paylaşım Görseli</span>
-      </div>
-      <button onclick="closeTezShrModal()" style="background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">✕</button>
-    </div>
-    <!-- Canvas preview -->
-    <div style="background:#0a0e1a;padding:12px;border-bottom:1px solid var(--rule)">
-      <canvas id="tezShrCanvas" style="display:block;width:100%;height:auto;image-rendering:crisp-edges"></canvas>
-    </div>
-    <!-- Hint -->
-    <div style="padding:10px 16px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--rule);line-height:1.7">
-      💡 "İndir & X'te Paylaş" butonuna tıkla — görsel indirilir, tweet penceresi açılır.
-    </div>
-    <!-- Buttons -->
-    <div style="padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap">
-      <button onclick="tweetTez()" style="flex:1;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;padding:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .3s;letter-spacing:.5px" onmouseover="this.style.boxShadow='0 4px 16px var(--accent-glow)'" onmouseout="this.style.boxShadow='none'">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        İndir & X'te Paylaş
-      </button>
-      <button onclick="dlTezShare()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:11px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--text)'" onmouseout="this.style.borderColor='var(--border)'">
-        💾 Sadece İndir
-      </button>
-      <button onclick="closeTezShrModal()" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:9px;padding:11px 16px;cursor:pointer;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
-        Kapat
-      </button>
-    </div>
-  </div>
-</div>
 
 <!-- ═══════════════════════════════════════════════════════════
      PORTAL  (route: "/")  — Finansal Araştırma & Medya vitrini
@@ -3231,6 +2811,46 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   </div>
 </div>
 <!-- /tezlerRoot -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     TEZ OKUMA SAYFASI  (route: "/tez/:id")  — tek tez / araştırma
+     ═══════════════════════════════════════════════════════════ -->
+<div id="tezOkuRoot" class="rv">
+  <div class="pt-wrap">
+    <div class="pt-topbar">
+      <div class="pt-brand-lockup" data-route="/" style="cursor:pointer">
+        <svg class="brand-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="bmTile4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2433"/><stop offset="1" stop-color="#0c1017"/></linearGradient>
+            <linearGradient id="bmGold4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ecd9af"/><stop offset="0.5" stop-color="#c2ad84"/><stop offset="1" stop-color="#a8946b"/></linearGradient>
+          </defs>
+          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="url(#bmTile4)"/>
+          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="none" stroke="url(#bmGold4)" stroke-opacity="0.7" stroke-width="1.1"/>
+          <path d="M11.5 30 L19 22.5 L24 26 L33 16.5" fill="none" stroke="url(#bmGold4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.42"/>
+          <text x="22" y="30" font-family="'Playfair Display',Georgia,serif" font-weight="700" font-size="26" fill="url(#bmGold4)" text-anchor="middle">B</text>
+        </svg>
+        <div class="pt-brand">
+          <div class="pt-brand-tag">Finansal Araştırma & Medya</div>
+          <div class="pt-brand-name">Barış <span>Investing</span></div>
+        </div>
+      </div>
+      <div class="pt-topnav">
+        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">← Ana Sayfa</a>
+        <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
+      </div>
+    </div>
+
+    <div id="tzoArticle">
+      <div class="pt-tez-skel">Yükleniyor…</div>
+    </div>
+
+    <div class="pt-foot">
+      <div class="pt-foot-l">© <span id="ptYear3"></span> Barış Investing · Araştırma & bilgi amaçlıdır, yatırım tavsiyesi değildir.</div>
+      <a class="pt-enter" data-route="/" href="/">← Ana Sayfa</a>
+    </div>
+  </div>
+</div>
+<!-- /tezOkuRoot -->
 
 <!-- ═══════════════════════════════════════════════════════════
      ŞİRKET ARAŞTIRMALARI  (route: "/arastirmalar")  — tüm araştırmalar
@@ -3779,68 +3399,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   </div>
 </div>
 
-<!-- ══ TEZ OKUMA MODALİ ══ -->
-<div class="tez-modal" id="tezModal" onclick="if(event.target===this)closeTezModal()">
-  <div class="tez-modal-box">
-    <div class="tez-modal-header">
-      <div class="tez-modal-meta">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
-          <span class="tez-modal-ticker" id="tezModalTicker">—</span>
-          <span class="tez-tag" id="tezModalTag">—</span>
-          <span style="font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace" id="tezModalExchange">—</span>
-          <span style="font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace" id="tezModalDate">—</span>
-        </div>
-        <div class="tez-modal-title" id="tezModalTitle">—</div>
-      </div>
-      <button class="tez-modal-close" onclick="closeTezModal()">✕</button>
-    </div>
-
-    <!-- Özet Metrikler -->
-    <div class="tez-modal-keypoints">
-      <div class="tez-kp">
-        <div class="tez-kp-label">Güncel Fiyat</div>
-        <div class="tez-kp-val" id="tezCurrentPrice">—</div>
-      </div>
-      <div class="tez-kp">
-        <div class="tez-kp-label">Hedef Fiyat</div>
-        <div class="tez-kp-val pos" id="tezTargetPrice">—</div>
-      </div>
-      <div class="tez-kp">
-        <div class="tez-kp-label">Beklenen Getiri</div>
-        <div class="tez-kp-val pos" id="tezUpside">—</div>
-      </div>
-      <div class="tez-kp">
-        <div class="tez-kp-label">Zaman Ufku</div>
-        <div class="tez-kp-val" id="tezHorizon">—</div>
-      </div>
-    </div>
-
-    <!-- Tez İçeriği -->
-    <div class="tez-modal-body">
-      <div class="tez-section-title">Yatırım Tezi</div>
-      <div class="tez-text" id="tezModalThesis">—</div>
-
-      <div class="tez-section-title">Temel Katalizörler</div>
-      <div class="tez-text" id="tezModalCat">—</div>
-
-      <div class="tez-section-title">Başlıca Riskler</div>
-      <div class="tez-text" id="tezModalRisk">—</div>
-
-      <!-- PDF İndir -->
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--rule)">
-        <a class="tez-pdf-btn" id="tezPdfBtn" href="#" target="_blank" style="display:none">
-          📄 Tam Tezi PDF İndir
-        </a>
-      </div>
-
-      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--rule)">
-        <div style="font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.8">
-          ⚠ Bu tez yatırım tavsiyesi değildir. Araştırma ve bilgi amaçlıdır.
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 </div><!-- /terminalRoot --><script>
 // ===== DATA =====
 const BIST={'THYAO':'Türk Hava Yolları','EREGL':'Ereğli Demir Çelik','SAHOL':'Sabancı Holding','KCHOL':'Koç Holding','ASELS':'Aselsan','BIMAS':'BİM Mağazalar','TUPRS':'Tüpraş','AKBNK':'Akbank','ISCTR':'İş Bankası','FROTO':'Ford Otosan','TOASO':'Tofaş Otomobil','VAKBN':'Vakıfbank','PGSUS':'Pegasus','TAVHL':'TAV Havalimanları','SISE':'Şişecam','TURSG':'Türkiye Sigorta','GARAN':'Garanti BBVA','YKBNK':'Yapı Kredi','HALKB':'Halkbank','TCELL':'Turkcell','TTKOM':'Türk Telekom','ARCLK':'Arçelik','VESTL':'Vestel','ENKAI':'Enka İnşaat','PETKM':'Petkim','KOZAL':'Koza Altın','KRDMD':'Kardemir','SOKM':'Şok Marketler','MGROS':'Migros','ULKER':'Ülker','CCOLA':'Coca-Cola İçecek','MAVI':'Mavi Giyim','LOGO':'Logo Yazılım','EKGYO':'Emlak Konut','ENJSA':'Enerjisa','QNBTR':'QNB Finansbank','TSKB':'TSKB','ALBRK':'Albaraka Türk','SKBNK':'Şekerbank','DOAS':'Doğuş Otomotiv','OTKAR':'Otokar','TTRAK':'Türk Traktör','NETAS':'Netaş','AYEN':'Ayen Enerji','AKSEN':'Aksen Enerji','ZOREN':'Zorlu Enerji','ODAS':'Odaş Elektrik','KOZAA':'Koza Madencilik','IPEKE':'İpek Doğal Enerji','GUBRF':'Gübre Fabrikaları','ALKIM':'Alkim Kimya','SASA':'Sasa Polyester','BRISA':'Brisa Bridgestone','TKFEN':'Tekfen Holding','DOHOL':'Doğan Holding','GLYHO':'Global Yatırım Holding','IHLGM':'İHL Holding','AKCNS':'Akçansa','BOLUC':'Bolu Çimento','ADANA':'Adana Çimento','CIMSA':'Çimsa','GOLTS':'Göltaş Çimento','MRDIN':'Mardin Çimento','UNYEC':'Ünye Çimento','KONYA':'Konya Çimento','ISGYO':'İş GYO','VKGYO':'Vakıf GYO','RAYSG':'Ray Sigorta','ANSGR':'Anadolu Sigorta','ANHYT':'Anadolu Hayat','AVHOL':'Avivasa','HEPSI':'Hepsiburada','LCWGR':'LC Waikiki','ARENA':'Arena Bilgisayar','INDES':'İndes Bilgisayar','LINK':'Link Bilgisayar','RYSAS':'Reysaş Lojistik','CLEBI':'Çelebi Havacılık','NUHCM':'Nuh Çimento','CELHA':'Çelik Halat','PARSN':'Parsan Makine','AGHOL':'AG Anadolu Grubu','MERIT':'Merit Turizm'};
@@ -5216,81 +4774,6 @@ ${getShareURL()}
 // YATIRIM TEZLERİ
 // ═══════════════════════════════════════════════════════════
 
-// Tez veritabanı — PDF entegrasyonu sonrası buraya eklenir
-const TEZLER = [
-  {
-    id: 'netas-2026-04',
-    ticker: 'NETAS',
-    exchange: 'BIST',
-    title: 'NETAŞ: 5G Fırsatı mı, Yoksa Tuzak mı?',
-    subtitle: 'Netaş Telekomünikasyon A.Ş. — Derinlemesine Yatırım Tezi',
-    date: 'Nisan 2026',
-    verdict: 'izle',
-    tags: ['Telekomünikasyon', '5G', 'Altyapı', 'BIST'],
-    currentPrice: '~60 TL',
-    priceRange: '43 – 99 TL',
-    marketCap: '~3,76 Milyar TL',
-    revenue2025: '12 Milyar TL (+%31 YoY)',
-    ebitda2025: '307 Milyon TL (+%143 YoY)',
-    netProfit: 'Negatif (-89M son çeyrek)',
-    buffettScore: 4,
-    lynchScore: 4,
-    maxScore: 7,
-    generalVerdict: 'BEKLE',
-    targetBear: '43–52 TL',
-    targetBase: '70–85 TL',
-    targetBull: '88–105 TL',
-    upside: 'Baz: %+25 | Boğa: %+57',
-    horizon: '12–18 ay',
-    summary: 'Turkcell Superbox anlaşması somut ve KAP\'a bildirilmiş. FAVÖK büyümesi gelir büyümesinin 4,5 katı — ölçek kaldıracı devrede. Ancak faiz yükü FAVÖK\'ü eritiyor, net kâr hâlâ negatif. Baz senaryo teyitlenene kadar izleme listesinde tutulmalı.',
-    thesis: `Netaş 2025 yılını güçlü bir operasyonel dönüşümle kapattı. Gelirlerin TL bazında %31 artması, dolar bazında ise %9 ilerlemesi, enflasyona rağmen reel büyümenin başladığına işaret ediyor. En kritik sinyal ise FAVÖK'ün %143 artarak 307 milyon TL'ye ulaşmasıdır — bu oran, gelir büyümesinin 4,5 katıdır ve ölçek kaldıracının devreye girdiğinin göstergesidir.
-
-Turkcell 2026 yatırım harcamalarını gelirlerine oranla yaklaşık %25 olarak hedeflediğini açıkladı. 241 milyar TL 2025 geliri üzerinden bu rakam yaklaşık 60 milyar TL CapEx anlamına geliyor. Netaş, FWA/Superbox cihaz tedariki, baz istasyonu entegrasyon hizmetleri ve kendi üretimi olan DC güç sistemleri aracılığıyla bu CapEx havuzundan %5–10 pay alabilir. Üç operatör toplamında 2026–2028 arası 5G altyapı harcaması 3–4 milyar dolar.
-
-Segment Bazında Brüt Marj Profili:
-• Yönetilen Hizmet/Yazılım: %30–40 (yüksek marjlı)
-• Kendi Üretimi (akü/DC): %25–35
-• Sistem Entegrasyonu: %15–25
-• Ekipman (ZTE dist.): %8–12 (düşük marjlı)
-
-Karışık ortalama brüt marj ~%15–18 seviyesinde. FAVÖK marji genel gider sonrası ~%2,5–4 bandında. Yönetilen hizmetler ve özel 5G ağ kurulumu yüksek marjlı segmentler — buraya doğru kayan miksleme tezin en kritik unsurudur.`,
-    catalysts: `• Turkcell Superbox anlaşması somut — KAP'a bildirildi, spekülatif değil
-• FAVÖK büyümesi gelir büyümesinin 4,5 katı — ölçek kaldıracı devrede
-• ZTE + yerlilik yükümlülüğü çift avantaj — yabancı rakipler engelde
-• PD/Gelir = 0,31x — ekipman/entegrasyon sektörü için düşük çarpan
-• Savunma + kamu + telecom üçlüsü — gelir çeşitlendirmesi sağlam
-• Turkcell CapEx 2026'da ~60 milyar TL — büyük potansiyel havuz
-
-Katalizör Takvimi:
-→ Nisan 2026: Türkiye 5G ticari başlangıcı — Turkcell Superbox aktif, Netaş cihazları sahada
-→ Mayıs 2026: Q1 2026 bilançosu — 5G gelirinin ilk izi, net zarar trendi kritik izlenecek
-→ H1 2026: Türk Telekom / Vodafone olası ek FWA anlaşması KAP duyurusu beklentisi
-→ Q3 2026: Net kâra yaklaşım — eşik aşılırsa kurumsal para akışı başlar
-→ 2027 başı: 5G-A / özel ağ ihaleleri — yüksek marjlı segment, asıl kârlılık burada`,
-    risks: `• Net kâr hâlâ negatif — faiz gideri FAVÖK'ü eritiyor, kurumsal para giremiyor [YÜKSEK]
-• FAVÖK marji %2,6 — ekipman dağıtımcısı marji, yazılım şirketi değil [YÜKSEK]
-• ZTE bağımlılık riski — ABD yaptırımı ihtimali, jeopolitik kırılganlık [ORTA]
-• 3 müşteriye konsantrasyon — Turkcell, Türk Telekom, Vodafone [ORTA]
-• Yönetimden rakamsal guidance yok — "hazır" retoriği, hedef yok [ORTA]
-• 2013'ten bu yana temettü yok — serbest nakit yatırımcıya dönmüyor [DÜŞÜK]
-• 5G CapEx beklentinin altında kalırsa büyüme hızı düşer [ORTA]
-• Yerlilik şartının kalkması durumunda yabancı rakip girişi kolaylaşır [DÜŞÜK]`,
-    scenarios: [
-      { label: 'Ayı', color: 'danger',  revenue: '~13,5 Milyar TL', ebitda: '~400M TL', price: '43–52 TL', desc: '5G CapEx yavaş geliyor, ek anlaşma yok. Net zarar devam eder.' },
-      { label: 'Baz', color: 'warn',    revenue: '~15 Milyar TL',   ebitda: '~525M TL', price: '70–85 TL', desc: 'Turkcell + 1 ek operatör anlaşması. Net zarar daralır ama pozitife geçemez.' },
-      { label: 'Boğa', color: 'success', revenue: '~17 Milyar TL', ebitda: '~680M TL', price: '88–105 TL', desc: '3 operatör de anlaşma + özel 5G ağ projeleri. Net kâr eşiği aşılır.' },
-    ],
-    valuation: {
-      pdGelir: '0,31x',
-      evFavok: '16–20x',
-      fairValue: 'Baz: 70–85 TL | Boğa: 88–105 TL',
-    },
-    conclusion: 'KOŞULLU FIRSAT — NET KÂR GÖRMEDEN GÜÇLÜ ALIM YOK. Netaş\'ın 5G hikayesi yapısal olarak sağlam: doğru müşteri, doğru teknoloji, doğru zamanlama. Ancak Buffett perspektifinden bakıldığında kritik engel ortada duruyor: serbest nakit üretilemiyor, faiz yükü kârı siliyor. Q1 2026 bilançosunda net zarar daralıyorsa ve telekom segmenti sipariş büyümesi %49 üzerinde kalıyorsa baz senaryoya geçiş teyitlenmiş sayılır. O an pozisyon zamanıdır.',
-    pdfUrl: null,
-  },
-];
-
-let activeTez = null;
 
 async function renderTezler() {
   const locked   = document.getElementById('tezler-locked');
@@ -5378,415 +4861,12 @@ async function tezGetiriHesapla(tez) {
 }
 
 function openTezSupabase(id) {
-  fetch('/api/tez-admin?pub=1&id=' + id)
-    .then(r => r.json())
-    .then(tez => {
-      if (!tez || !tez.icerik) return;
-      let icerik = tez.icerik;
-      if (icerik.includes('<')) {
-        icerik = icerik.replace(/\n\n/g, '').replace(/\n/g, '');
-      } else {
-        icerik = icerik.replace(/\n/g, '\n').replace(/\n/g, '<br>');
-      }
-      const sinyal = tez.sinyal || '';
-      const sinyalRenk = sinyal==='AL'?'#22c55e':sinyal==='IZLE'?'#b89b6a':sinyal==='KACIN'?'#f05252':'#9aa3b2';
-      const sinyalLabel = sinyal==='AL'?'AL':sinyal==='IZLE'?'İZLE':sinyal==='KACIN'?'UZAK DUR':sinyal||'';
-      const tarih = tez.olusturma ? new Date(tez.olusturma).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : '';
-      const eskiModal = document.getElementById('tezModal');
-      if (eskiModal) eskiModal.remove();
-      const modal = document.createElement('div');
-      modal.id = 'tezModal';
-      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;cursor:pointer;';
-      modal.innerHTML = `
-        <div onclick="event.stopPropagation()" style="cursor:default;background:#0e1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;width:100%;max-width:760px;overflow:hidden;margin:auto;">
-          ${tez.kapak_gorseli ? `<div style="width:100%;height:200px;overflow:hidden;"><img src="${tez.kapak_gorseli}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'"></div>` : ''}
-          <div style="padding:28px 32px 32px;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
-              <div style="flex:1;min-width:0;">
-                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
-                  ${tez.ticker ? `<span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#c2ad84;font-weight:600;background:rgba(194,173,132,0.1);padding:2px 8px;border-radius:4px;">${tez.ticker}</span>` : ''}
-                  ${sinyalLabel ? `<span style="font-size:11px;font-weight:700;color:${sinyalRenk};background:${sinyalRenk}18;border:1px solid ${sinyalRenk}44;padding:2px 8px;border-radius:4px;">${sinyalLabel}</span>` : ''}
-                  ${tarih ? `<span style="font-size:11px;color:#3a4150;font-family:'JetBrains Mono',monospace;">${tarih}</span>` : ''}
-                </div>
-                <h1 style="font-size:22px;font-weight:700;color:#ffffff;font-family:'Playfair Display',serif;line-height:1.3;">${tez.baslik}</h1>
-                ${tez.ozet ? `<p style="margin-top:8px;font-size:13px;color:#5d6675;line-height:1.6;">${tez.ozet}</p>` : ''}
-              </div>
-              <button onclick="document.getElementById('tezModal').remove()" style="background:none;border:none;color:#5d6675;cursor:pointer;font-size:24px;margin-left:16px;flex-shrink:0;line-height:1;">×</button>
-            </div>
-            <hr style="border:none;border-top:1px solid rgba(255,255,255,0.07);margin-bottom:24px;">
-            <div style="color:#9aa3b2;font-size:14px;line-height:1.9;">${icerik}</div>
-          </div>
-        </div>`;
-      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
-      document.body.appendChild(modal);
-    });
+  // Modal kaldırıldı: her tez/araştırma artık kendi sayfasında açılıyor (/tez/:id)
+  if (typeof window.__gotoTez === 'function') { window.__gotoTez(id); return; }
+  window.location.href = '/tez/' + id;
 }
 
-function openTez(id) {
-  const tez = TEZLER.find(t => t.id === id);
-  if (!tez) return;
-  activeTez = tez;
 
-  const modal = document.getElementById('tezModal');
-  const verdictLabel = tez.verdict === 'al' ? 'AL' : tez.verdict === 'izle' ? 'İZLE' : 'UZAK DUR';
-
-  // Header
-  document.getElementById('tezModalTicker').textContent   = tez.ticker;
-  document.getElementById('tezModalExchange').textContent = tez.exchange;
-  document.getElementById('tezModalDate').textContent     = tez.date;
-  document.getElementById('tezModalTitle').textContent    = tez.title;
-  const tagEl = document.getElementById('tezModalTag');
-  tagEl.textContent = verdictLabel;
-  tagEl.className   = `tez-tag ${tez.verdict}`;
-
-  // Hedef fiyat kartları
-  document.getElementById('tezTargetPrice').textContent  = tez.targetBase || '—';
-  document.getElementById('tezCurrentPrice').textContent = tez.currentPrice || '—';
-  document.getElementById('tezUpside').textContent       = tez.upside || '—';
-  document.getElementById('tezHorizon').textContent      = tez.horizon || '—';
-
-  // Temel metrikler satırı
-  const metricsEl = document.getElementById('tezModalMetrics');
-  if (metricsEl) {
-    metricsEl.innerHTML = `
-      <div class="tez-metric-item"><div class="tez-metric-lbl">52H Aralık</div><div class="tez-metric-val">${tez.priceRange||'—'}</div></div>
-      <div class="tez-metric-item"><div class="tez-metric-lbl">Piy. Değeri</div><div class="tez-metric-val">${tez.marketCap||'—'}</div></div>
-      <div class="tez-metric-item"><div class="tez-metric-lbl">2025 Gelir</div><div class="tez-metric-val">${tez.revenue2025||'—'}</div></div>
-      <div class="tez-metric-item"><div class="tez-metric-lbl">2025 FAVÖK</div><div class="tez-metric-val">${tez.ebitda2025||'—'}</div></div>
-      <div class="tez-metric-item"><div class="tez-metric-lbl">PD/Gelir</div><div class="tez-metric-val" style="color:var(--success)">${tez.valuation?.pdGelir||'—'}</div></div>
-      <div class="tez-metric-item"><div class="tez-metric-lbl">EV/FAVÖK</div><div class="tez-metric-val">${tez.valuation?.evFavok||'—'}</div></div>
-    `;
-  }
-
-  // Skor barları
-  const scoresEl = document.getElementById('tezModalScores');
-  if (scoresEl) {
-    const makeBar = (score, max, color, label) => {
-      const bars = Array.from({length: max}, (_,i) =>
-        `<div style="flex:1;height:8px;background:${i < score ? color : 'var(--rule)'};margin-right:2px;"></div>`
-      ).join('');
-      return `<div style="flex:1">
-        <div style="font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:4px">${label} <span style="color:${color};font-weight:700">${score}/${max}</span></div>
-        <div style="display:flex;gap:2px">${bars}</div>
-      </div>`;
-    };
-    scoresEl.innerHTML = `
-      <div style="display:flex;gap:16px;padding:14px 0">
-        ${makeBar(tez.buffettScore, tez.maxScore, '#c2ad84', 'BUFFETT')}
-        ${makeBar(tez.lynchScore,   tez.maxScore, '#b08a5a', 'LYNCH')}
-        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--surface2);padding:8px;border:1px solid var(--border)">
-          <div style="font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:4px">GENEL</div>
-          <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--warn)">${tez.generalVerdict}</div>
-        </div>
-      </div>`;
-  }
-
-  // Senaryo analizi
-  const scenEl = document.getElementById('tezModalScenarios');
-  if (scenEl && tez.scenarios) {
-    const colorMap = { danger: 'var(--danger)', warn: 'var(--warn)', success: 'var(--success)' };
-    scenEl.innerHTML = tez.scenarios.map(s => `
-      <div style="background:var(--surface2);border:1px solid var(--border);border-top:3px solid ${colorMap[s.color]};padding:14px;flex:1;min-width:180px">
-        <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:${colorMap[s.color]};font-family:'JetBrains Mono',monospace;margin-bottom:6px">${s.label.toUpperCase()} SENARYO</div>
-        <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:2px">${s.price}</div>
-        <div style="font-size:10px;color:${colorMap[s.color]};font-family:'JetBrains Mono',monospace;margin-bottom:6px">FAVÖK: ${s.ebitda}</div>
-        <div style="font-size:10px;color:var(--text2);line-height:1.6">${s.desc}</div>
-      </div>`).join('');
-  }
-
-  // Tez metni bölümleri
-  document.getElementById('tezModalThesis').textContent   = tez.thesis    || '—';
-  document.getElementById('tezModalCat').textContent      = tez.catalysts || '—';
-  document.getElementById('tezModalRisk').textContent     = tez.risks     || '—';
-
-  // Sonuç kutusu
-  const concEl = document.getElementById('tezModalConclusion');
-  if (concEl) {
-    concEl.textContent = tez.conclusion || '';
-    concEl.style.display = tez.conclusion ? 'block' : 'none';
-  }
-
-  // PDF butonu
-  const pdfBtn = document.getElementById('tezPdfBtn');
-  if (tez.pdfUrl) { pdfBtn.href = tez.pdfUrl; pdfBtn.style.display = 'flex'; }
-  else            { pdfBtn.style.display = 'none'; }
-
-  modal.classList.add('visible');
-  modal.scrollTop = 0;
-}
-
-function closeTezModal() {
-  document.getElementById('tezModal').classList.remove('visible');
-  activeTez = null;
-}
-
-// ═══════════════════════════════════════════════════════════
-// NETAŞ / TEZ X PAYLAŞIM CANVAS
-// ═══════════════════════════════════════════════════════════
-function openTezShare() {
-  if (!activeTez) return;
-  drawTezCanvas(activeTez);
-  document.getElementById('tezShrModal').classList.add('visible');
-}
-
-function closeTezShrModal() {
-  document.getElementById('tezShrModal').classList.remove('visible');
-}
-
-function drawTezCanvas(tez) {
-  const canvas = document.getElementById('tezShrCanvas');
-  const ctx    = canvas.getContext('2d');
-
-  // 2× çözünürlük — X'te keskin görünsün
-  const W = 1200, H = 675; // 16:9 Twitter card oranı
-  canvas.width = W; canvas.height = H;
-  canvas.style.width  = '600px';
-  canvas.style.height = '337px';
-
-  // ── ARKA PLAN ──
-  ctx.fillStyle = '#0e1220';
-  ctx.fillRect(0, 0, W, H);
-
-  // Hafif ızgara dokusu
-  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
-  ctx.lineWidth = 1;
-  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-  for (let x = 0; x < W; x += 80) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-
-  // Sol şerit — altın rengi (tez ayırt edici renk)
-  const sGrad = ctx.createLinearGradient(0, 0, 0, H);
-  sGrad.addColorStop(0, '#d4a843');
-  sGrad.addColorStop(1, 'rgba(194,173,132,0)');
-  ctx.fillStyle = sGrad;
-  ctx.fillRect(0, 0, 5, H);
-
-  // ── HEADER BAR ──
-  ctx.fillStyle = '#12192e';
-  ctx.fillRect(0, 0, W, 110);
-  ctx.fillStyle = '#d4a843';
-  ctx.fillRect(0, 110, W, 2);
-
-  // Brand etiket
-  ctx.fillStyle = 'rgba(255,255,255,0.32)';
-  ctx.font = `500 ${22}px "JetBrains Mono",monospace`;
-  ctx.fillText('BARIŞ INVESTING  ·  YATIRIM TEZİ', 48, 40);
-
-  // TICKER büyük
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `700 ${72}px "Playfair Display","Georgia",serif`;
-  ctx.fillText(tez.ticker, 48, 96);
-  const tkW = ctx.measureText(tez.ticker).width;
-
-  // Şirket adı
-  ctx.fillStyle = 'rgba(255,255,255,0.42)';
-  ctx.font = `400 ${22}px "JetBrains Mono",monospace`;
-  ctx.fillText('Netaş Telekomünikasyon A.Ş.', 48 + tkW + 18, 88);
-
-  // ── İZLE / KARAR KUTUSU ──
-  const WARN = '#b89b6a';
-  ctx.fillStyle = 'rgba(184,155,106,0.12)';
-  ctx.fillRect(W - 280, 16, 232, 76);
-  ctx.strokeStyle = WARN;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(W - 280, 16, 232, 76);
-  ctx.fillStyle = WARN;
-  ctx.fillRect(W - 280, 16, 6, 76);
-  ctx.fillStyle = WARN;
-  ctx.font = `700 ${36}px "Playfair Display","Georgia",serif`;
-  ctx.textAlign = 'center';
-  ctx.fillText('İZLE', W - 164, 60);
-  ctx.fillStyle = 'rgba(255,255,255,0.45)';
-  ctx.font = `500 ${18}px "JetBrains Mono",monospace`;
-  ctx.fillText('BEKLE — KOŞ. FIRSAT', W - 164, 82);
-  ctx.textAlign = 'left';
-
-  // ── BAŞLIK METNİ ──
-  ctx.fillStyle = '#d4a843';
-  ctx.font = `700 ${32}px "Playfair Display","Georgia",serif`;
-  ctx.fillText('5G Fırsatı mı, Yoksa Tuzak mı?', 48, 150);
-
-  // ── SOL KOLON: Temel Metrikler Tablosu ──
-  const leftX = 48, rightCol = W / 2 + 16;
-  const tY = 176, rowH = 54;
-
-  const metrics = [
-    ['Güncel Fiyat',  '~60 TL',      'rgba(255,255,255,0.9)'],
-    ['Piy. Değeri',   '~3,76 Milyar TL', 'rgba(255,255,255,0.9)'],
-    ['2025 Gelir',    '12B TL  (+%31 YoY)', '#22c55e'],
-    ['2025 FAVÖK',    '307M TL (+%143 YoY)', '#22c55e'],
-    ['Net Kâr',       'Negatif  (-89M TL)', '#f05252'],
-    ['PD/Gelir',      '0.31x  (düşük çarpan)', '#22c55e'],
-  ];
-
-  // Sol başlık
-  ctx.fillStyle = 'rgba(255,255,255,0.28)';
-  ctx.font = `600 ${17}px "JetBrains Mono",monospace`;
-  ctx.fillText('TEMEL FİNANSALLAR', leftX, tY - 10);
-
-  metrics.forEach(([lbl, val, clr], i) => {
-    const y = tY + i * rowH;
-    // Satır arka plan
-    ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.01)';
-    ctx.fillRect(leftX, y, rightCol - leftX - 20, rowH - 2);
-    // Label
-    ctx.fillStyle = 'rgba(255,255,255,0.38)';
-    ctx.font = `400 ${17}px "JetBrains Mono",monospace`;
-    ctx.fillText(lbl, leftX + 10, y + rowH / 2 - 2);
-    // Value
-    ctx.fillStyle = clr;
-    ctx.font = `600 ${20}px "JetBrains Mono",monospace`;
-    ctx.textAlign = 'right';
-    ctx.fillText(val, rightCol - 30, y + rowH / 2 + 10);
-    ctx.textAlign = 'left';
-    // Ayraç
-    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(leftX, y + rowH); ctx.lineTo(rightCol - 20, y + rowH); ctx.stroke();
-  });
-
-  // ── ORTA AYRAÇ ──
-  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(W / 2, 165); ctx.lineTo(W / 2, H - 56); ctx.stroke();
-
-  // ── SAĞ KOLON: Senaryo Analizi ──
-  const scenX = rightCol, scenTitleY = tY - 10;
-
-  ctx.fillStyle = 'rgba(255,255,255,0.28)';
-  ctx.font = `600 ${17}px "JetBrains Mono",monospace`;
-  ctx.fillText('SENARYO ANALİZİ (2026)', scenX, scenTitleY);
-
-  const scenarios = [
-    { label: 'AYI',   price: '43–52 TL',  ebitda: 'FAVÖK: ~400M TL',  clr: '#f05252', bg: 'rgba(168,116,106,0.10)' },
-    { label: 'BAZ',   price: '70–85 TL',  ebitda: 'FAVÖK: ~525M TL',  clr: '#b89b6a', bg: 'rgba(184,155,106,0.10)' },
-    { label: 'BOĞA',  price: '88–105 TL', ebitda: 'FAVÖK: ~680M TL',  clr: '#22c55e', bg: 'rgba(63,74,60,0.10)' },
-  ];
-
-  const scenW = (W - scenX - 48) / 3 - 6;
-  scenarios.forEach((s, i) => {
-    const bx = scenX + i * (scenW + 8);
-    const by = tY;
-    const bh = rowH * 3 + 2;
-
-    ctx.fillStyle = s.bg; ctx.fillRect(bx, by, scenW, bh);
-    ctx.strokeStyle = s.clr + '55'; ctx.lineWidth = 1; ctx.strokeRect(bx, by, scenW, bh);
-    // Top accent
-    ctx.fillStyle = s.clr; ctx.fillRect(bx, by, scenW, 4);
-
-    ctx.fillStyle = s.clr;
-    ctx.font = `700 ${16}px "JetBrains Mono",monospace`;
-    ctx.textAlign = 'center';
-    ctx.fillText(s.label, bx + scenW / 2, by + 26);
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `700 ${22}px "Playfair Display","Georgia",serif`;
-    ctx.fillText(s.price, bx + scenW / 2, by + 60);
-
-    ctx.fillStyle = s.clr;
-    ctx.font = `500 ${15}px "JetBrains Mono",monospace`;
-    ctx.fillText(s.ebitda, bx + scenW / 2, by + 84);
-    ctx.textAlign = 'left';
-  });
-
-  // ── SKOR BARLARI ──
-  const scoreY = tY + rowH * 3 + 18;
-
-  // Buffett bar
-  const barW = (W - scenX - 48 - 8) / 2 - 10;
-  const drawScoreBar = (x, y, score, max, clr, label) => {
-    ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    ctx.font = `500 ${16}px "JetBrains Mono",monospace`;
-    ctx.fillText(`${label}  ${score}/${max}`, x, y - 4);
-    const cellW = barW / max - 2;
-    for (let i = 0; i < max; i++) {
-      ctx.fillStyle = i < score ? clr : 'rgba(255,255,255,0.06)';
-      ctx.fillRect(x + i * (cellW + 2), y, cellW, 10);
-    }
-  };
-  drawScoreBar(scenX,          scoreY, 4, 7, '#c2ad84', 'BUFFETT');
-  drawScoreBar(scenX + barW + 16, scoreY, 4, 7, '#b08a5a', 'LYNCH');
-
-  // ── KATALIZÖR NOTLARI ──
-  const catY = scoreY + 32;
-  const cats = [
-    '✓ Turkcell Superbox — KAP\'a bildirildi',
-    '✓ 5G CapEx havuzu: 3–4 Milyar USD (2026–28)',
-    '⚠ Net kâr negatif — faiz yükü kritik engel',
-    '⚠ ZTE bağımlılığı — jeopolitik risk var',
-  ];
-  cats.forEach((c, i) => {
-    const isWarn = c.startsWith('⚠');
-    ctx.fillStyle = isWarn ? 'rgba(184,155,106,0.75)' : 'rgba(63,74,60,0.75)';
-    ctx.font = `400 ${16}px "JetBrains Mono",monospace`;
-    ctx.fillText(c, scenX, catY + i * 26);
-  });
-
-  // ── FOOTER ──
-  ctx.fillStyle = '#0a0e1a';
-  ctx.fillRect(0, H - 56, W, 56);
-  ctx.fillStyle = '#d4a843';
-  ctx.fillRect(0, H - 56, W, 2);
-
-  // Sol: handle
-  ctx.fillStyle = 'rgba(255,255,255,0.45)';
-  ctx.font = `500 ${20}px "JetBrains Mono",monospace`;
-  ctx.fillText('@barisinvesting', 48, H - 20);
-
-  // Orta: tarih
-  ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  ctx.textAlign = 'center';
-  ctx.font = `400 ${18}px "JetBrains Mono",monospace`;
-  ctx.fillText('Nisan 2026  ·  Yatırım tavsiyesi değildir', W / 2, H - 20);
-
-  // Sağ: site
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.textAlign = 'right';
-  ctx.fillText('barisinvesting.com', W - 48, H - 20);
-  ctx.textAlign = 'left';
-}
-
-function dlTezShare() {
-  if (!activeTez) return;
-  const c = document.getElementById('tezShrCanvas');
-  const l = document.createElement('a');
-  l.download = `NETAS_yatirim_tezi_${activeTez.date?.replace(/\s/g,'_') || '2026'}.png`;
-  l.href = c.toDataURL('image/png');
-  l.click();
-  if (typeof showToast === 'function') showToast('✓ Görsel indirildi!');
-}
-
-function tweetTez() {
-  if (!activeTez) return;
-  dlTezShare();
-  const t = activeTez;
-  const text =
-`📊 BIST: $${t.ticker} — Yatırım Tezi
-
-5G Fırsatı mı, Yoksa Tuzak mı?
-
-📈 2025 Gelir: 12B TL (+%31 YoY)
-💥 FAVÖK: 307M TL (+%143 YoY)
-⚠️ Net Kâr: Hâlâ negatif
-
-Karar: İZLE (Koşullu Fırsat)
-Baz Hedef: 70–85 TL
-
-Detaylı tez 👇
-barisinvesting.com
-
-#NETAS #BIST #5G #Yatırım`;
-  setTimeout(() => {
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
-    closeTezShrModal();
-  }, 800);
-}
-
-// ESC ile kapat
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    closeTezModal();
-  }
-});
 function mobileNav(tab) {
   ['analiz','portfoy','takip'].forEach(t => {
     const el = document.getElementById('bn-' + t);
@@ -6379,7 +5459,7 @@ function garpAnalizAc(ticker) {
     };
   }
 
-  // ── 2. TEZ AÇILDI ── hem openTez (statik) hem openTezSupabase (DB) sarmalanır
+  // ── 2. TEZ AÇILDI ── openTezSupabase (DB) sarmalanır
   function wrapOpener(fnName) {
     const orig = window[fnName];
     if (typeof orig !== 'function') return;
@@ -6393,9 +5473,7 @@ function garpAnalizAc(ticker) {
       return result;
     };
   }
-  wrapOpener('openTez');
   wrapOpener('openTezSupabase');
-  wrapOpener('openTezModal'); // herhangi bir varyant
 
   // CTA footer'ındaki ticker pill'i güncelle
   function updateTezCtaTicker() {
@@ -6945,29 +6023,34 @@ function garpAnalizAc(ticker) {
   const TITLE = { portal:'Barış Investing — Finansal Araştırma & Medya',
                   tezler:'Yatırım Tezleri — Barış Investing',
                   arastirmalar:'Şirket Araştırmaları — Barış Investing',
+                  tezoku:'Yatırım Tezi — Barış Investing',
                   terminal:'Terminal — Barış Investing' };
 
   function applyRoute(path, replace){
     let view = 'portal';
+    const tezMatch = path.match(/^\/tez\/(\d+)/);
     if (/^\/terminal(\/|$)/.test(path)) view = 'terminal';
+    else if (tezMatch) view = 'tezoku';
     else if (/^\/tezler(\/|$)/.test(path)) view = 'tezler';
     else if (/^\/arastirmalar(\/|$)/.test(path)) view = 'arastirmalar';
     document.body.classList.toggle('route-terminal', view==='terminal');
     document.body.classList.toggle('route-tezler',   view==='tezler');
     document.body.classList.toggle('route-arastirmalar', view==='arastirmalar');
+    document.body.classList.toggle('route-tezoku',   view==='tezoku');
     document.body.classList.toggle('route-portal',   view==='portal');
     document.title = TITLE[view] || TITLE.portal;
-    const norm = view==='terminal' ? '/terminal' : view==='tezler' ? '/tezler' : view==='arastirmalar' ? '/arastirmalar' : '/';
+    const norm = view==='terminal' ? '/terminal' : view==='tezler' ? '/tezler' : view==='arastirmalar' ? '/arastirmalar' : view==='tezoku' ? ('/tez/'+tezMatch[1]) : '/';
     if (replace) history.replaceState({route:norm}, '', norm + (location.search||''));
     if (view==='terminal'){ window.scrollTo(0,0); }
     else if (view==='tezler'){ window.scrollTo(0,0); loadTezlerPage(); }
     else if (view==='arastirmalar'){ window.scrollTo(0,0); loadArastirmalarPage(); }
+    else if (view==='tezoku'){ window.scrollTo(0,0); loadTezOku(parseInt(tezMatch[1],10)); }
     else { if (!portalLoaded) loadPortal(); }
     maybeOpenDeepTez();
     if (typeof window.trackEvent === 'function') window.trackEvent('route_view', { route: view });
   }
 
-  /* Paylaşılabilir derin bağlantı: ?tez=ID veya ?arastirma=ID → modalı aç */
+  /* Paylaşılabilir derin bağlantı: ?tez=ID veya ?arastirma=ID → okuma sayfasına yönlendir */
   let _deepOpened = false;
   function maybeOpenDeepTez(){
     if (_deepOpened) return;
@@ -6975,7 +6058,7 @@ function garpAnalizAc(ticker) {
     const id = p.get('arastirma') || p.get('tez') || p.get('oku');
     if (!id || !/^\d+$/.test(id)) return;
     _deepOpened = true;
-    setTimeout(function(){ if (typeof window.openTezSupabase==='function') window.openTezSupabase(parseInt(id)); }, 350);
+    setTimeout(function(){ navigate('/tez/' + parseInt(id, 10)); }, 50);
   }
 
   function navigate(path){
@@ -7017,8 +6100,61 @@ function garpAnalizAc(ticker) {
 
   const sigMap = { AL:['al','AL'], IZLE:['izle','İZLE'], KACIN:['uzak','UZAK DUR'], NOTR:['notr','NÖTR'] };
   function trDate(s){ return s ? new Date(s).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : ''; }
-  function openTez(id){ if (typeof window.openTezSupabase === 'function') window.openTezSupabase(id); }
+  function openTez(id){ navigate('/tez/' + id); }
   window.__openTez = openTez;
+  window.__gotoTez = openTez;
+
+  /* ── TEZ OKUMA SAYFASI (/tez/:id) ── */
+  let _tzoLast = 0;
+  async function loadTezOku(id){
+    const art = document.getElementById('tzoArticle');
+    if (!art) return;
+    _tzoLast = id;
+    const y = document.getElementById('ptYear3'); if (y) y.textContent = new Date().getFullYear();
+    art.innerHTML = '<div class="pt-tez-skel">Yükleniyor…</div>';
+    try{
+      const r = await fetch('/api/tez-admin?pub=1&id=' + id);
+      const tez = await r.json();
+      if (_tzoLast !== id) return; // bu arada başka içeriğe geçildi
+      if (!tez || !tez.baslik){ art.innerHTML = '<div class="pt-tez-skel">İçerik bulunamadı.</div>'; return; }
+      let icerik = tez.icerik || '';
+      if (icerik.includes('<')) icerik = icerik.replace(/\n\n/g,'').replace(/\n/g,'');
+      else icerik = esc(icerik).replace(/\n/g,'<br>');
+      const kat = (tez.kategori||'tez')==='arastirma' ? 'arastirma' : 'tez';
+      const backRoute = kat==='arastirma' ? '/arastirmalar' : '/tezler';
+      const backLabel = kat==='arastirma' ? 'Tüm Araştırmalar' : 'Tüm Tezler';
+      const sig = tez.sinyal && sigMap[tez.sinyal] ? sigMap[tez.sinyal] : null;
+      const tarih = trDate(tez.olusturma);
+      document.title = tez.baslik + ' — Barış Investing';
+      art.innerHTML = `
+        <span class="tzo-back" data-route="${backRoute}">← ${backLabel}</span>
+        ${tez.kapak_gorseli ? `<div class="tzo-cover"><img src="${esc(tez.kapak_gorseli)}" alt="" onerror="this.parentElement.style.display='none'"></div>` : ''}
+        <div class="tzo-meta">
+          ${tez.ticker ? `<span class="ptz-ticker">${esc(tez.ticker)}</span>` : ''}
+          ${kat==='arastirma' ? '<span class="ptz-cat">Araştırma</span>' : ''}
+          ${sig ? `<span class="ptz-sig ${sig[0]}">${sig[1]}</span>` : ''}
+          ${tarih ? `<span class="ptz-date" style="margin-left:0">${esc(tarih)}</span>` : ''}
+        </div>
+        <h1 class="tzo-title">${esc(tez.baslik)}</h1>
+        ${tez.ozet ? `<p class="tzo-lede">${esc(tez.ozet)}</p>` : ''}
+        <div class="tzo-content">${icerik}</div>
+        <div class="tzo-note">Bu içerik araştırma ve bilgi amaçlıdır; yatırım tavsiyesi değildir. Tüm projeksiyonlar tahmin içermektedir.</div>
+        <div class="tzo-ctas">
+          <span class="tzo-back" data-route="${backRoute}" style="margin:0">← ${backLabel}</span>
+          <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'de Analiz Et <span class="arr">→</span></a>
+        </div>`;
+      // İçerikteki tabloları ferah, mobilde yatay kaydırılabilir sarmalayıcıya al
+      art.querySelectorAll('.tzo-content table').forEach(tbl=>{
+        if (tbl.parentElement.classList.contains('tzo-tbl-scroll')) return;
+        const w = document.createElement('div');
+        w.className = 'tzo-tbl-scroll';
+        tbl.parentNode.insertBefore(w, tbl);
+        w.appendChild(tbl);
+      });
+    }catch(e){
+      if (_tzoLast === id) art.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">İçerik yüklenemedi.</div>';
+    }
+  }
 
   /* ── TEZLER (tek fetch cache) ── */
   let _tezCache = null;
