@@ -2048,20 +2048,65 @@ body.route-tezoku   #tezOkuRoot{display:block;}
 body.route-terminal #terminalRoot{display:block;}
 
 /* ── Premium giriş animasyonları (landing'den) ── */
-@keyframes pfxUp{from{opacity:0;transform:translateY(18px);filter:blur(6px);}to{opacity:1;transform:translateY(0);filter:blur(0);}}
-body.route-tezler #tezlerRoot,
-body.route-arastirmalar #arastirmalarRoot,
-body.route-tezoku #tezOkuRoot{animation:pfxUp .65s cubic-bezier(.4,0,.2,1) both;}
-body.route-terminal #terminalRoot{animation:pfxUp .45s cubic-bezier(.4,0,.2,1) both;}
+@keyframes pfxUp{from{opacity:0;transform:translateY(18px);filter:blur(6px);}to{opacity:1;transform:none;filter:none;}}
+@keyframes pfxLeft{from{opacity:0;transform:translateX(-18px);}to{opacity:1;transform:none;}}
+@keyframes pfxFade{from{opacity:0;}to{opacity:1;}}
+
+/* Tezler & Araştırmalar: üst bar + başlık öğeleri sırayla gelir */
+body.route-tezler #tezlerRoot .pt-topbar,
+body.route-arastirmalar #arastirmalarRoot .pt-topbar{animation:pfxFade .5s ease both;}
+body.route-tezler #tezlerRoot .pt-hero > *,
+body.route-arastirmalar #arastirmalarRoot .pt-hero > *{animation:pfxUp .6s cubic-bezier(.4,0,.2,1) both;}
+body.route-tezler #tezlerRoot .pt-hero > *:nth-child(1),
+body.route-arastirmalar #arastirmalarRoot .pt-hero > *:nth-child(1){animation-delay:.05s;}
+body.route-tezler #tezlerRoot .pt-hero > *:nth-child(2),
+body.route-arastirmalar #arastirmalarRoot .pt-hero > *:nth-child(2){animation-delay:.13s;}
+body.route-tezler #tezlerRoot .pt-hero > *:nth-child(3),
+body.route-arastirmalar #arastirmalarRoot .pt-hero > *:nth-child(3){animation-delay:.21s;}
+body.route-tezler #tezlerRoot .pt-sec,
+body.route-tezler #tezlerRoot .pt-sec-head,
+body.route-arastirmalar #arastirmalarRoot .pt-sec,
+body.route-arastirmalar #arastirmalarRoot .pt-sec-head{animation:pfxUp .6s .26s cubic-bezier(.4,0,.2,1) both;}
+
+/* Tez okuma: makale yükselerek gelir */
+body.route-tezoku #tezOkuRoot{animation:pfxUp .6s cubic-bezier(.4,0,.2,1) both;}
+
+/* Terminal: sidebar soldan, içerik alttan süzülür */
+body.route-terminal .sidebar{animation:pfxLeft .45s cubic-bezier(.4,0,.2,1) both;}
+body.route-terminal .main-content{animation:pfxUp .5s .06s cubic-bezier(.4,0,.2,1) both;}
+
 /* kart uçuşu — landing'deki savrulmuş giriş */
 .pfly{opacity:.001;transform:perspective(1200px) translate(var(--px,0px),var(--py,140px)) rotate(var(--pr,8deg)) scale(.7);will-change:transform,opacity;}
-.pfly.pland{opacity:1;transform:perspective(1200px) translate(0,0) rotate(0deg) scale(1);transition:transform .95s cubic-bezier(.22,1,.36,1) var(--pd,0s),opacity .65s ease var(--pd,0s);}
+.pfly.pland{opacity:1;transform:none;transition:transform .95s cubic-bezier(.22,1,.36,1) var(--pd,0s),opacity .65s ease var(--pd,0s);}
+
+/* mikro dokunuşlar */
+::selection{background:rgba(194,173,132,.28);color:#fff;}
+.pt-enter{transition:transform .2s ease,box-shadow .2s ease,background .2s ease,color .2s ease,border-color .2s ease;}
+.pt-enter:hover{transform:translateY(-1px) scale(1.03);}
+.pt-enter .arr{display:inline-block;transition:transform .2s ease;}
+.pt-enter:hover .arr{transform:translateX(3px);}
+.pt-brand-lockup{transition:transform .2s ease;}
+.pt-brand-lockup:hover{transform:scale(1.02);}
+.trk-kpi{transition:transform .25s ease,border-color .25s ease;}
+.trk-kpi:hover{transform:translateY(-2px);border-color:rgba(194,173,132,.3);}
+
+/* okuma ilerleme çubuğu (tez okuma sayfası) */
+#readBar{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--accent) 0%,#ecd9af 100%);box-shadow:0 0 10px rgba(194,173,132,.45);z-index:400;pointer-events:none;}
+body:not(.route-tezoku) #readBar{display:none;}
+
 @media (prefers-reduced-motion:reduce){
   .pfly{opacity:1;transform:none;}
-  body.route-tezler #tezlerRoot,
-  body.route-arastirmalar #arastirmalarRoot,
+  body.route-tezler #tezlerRoot .pt-topbar,
+  body.route-arastirmalar #arastirmalarRoot .pt-topbar,
+  body.route-tezler #tezlerRoot .pt-hero > *,
+  body.route-arastirmalar #arastirmalarRoot .pt-hero > *,
+  body.route-tezler #tezlerRoot .pt-sec,
+  body.route-tezler #tezlerRoot .pt-sec-head,
+  body.route-arastirmalar #arastirmalarRoot .pt-sec,
+  body.route-arastirmalar #arastirmalarRoot .pt-sec-head,
   body.route-tezoku #tezOkuRoot,
-  body.route-terminal #terminalRoot{animation:none;}
+  body.route-terminal .sidebar,
+  body.route-terminal .main-content{animation:none;}
 }
 body:not(.route-terminal) .mobile-toggle{display:none !important;}
 /* Terminal onboarding modallarını portal/tezler'de gizle */
@@ -5970,6 +6015,16 @@ function garpAnalizAc(ticker) {
     });
     setTimeout(()=>cards.forEach(el=>el.classList.add('pland')), 60);
   }
+
+  /* Okuma ilerleme çubuğu — yalnızca tez okuma sayfasında görünür */
+  const readBar = document.createElement('div');
+  readBar.id = 'readBar';
+  document.body.appendChild(readBar);
+  window.addEventListener('scroll', function(){
+    if (!document.body.classList.contains('route-tezoku')) return;
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    readBar.style.width = (max > 0 ? Math.min(100, (window.scrollY / max) * 100) : 0) + '%';
+  }, { passive: true });
   function openTez(id){ navigate('/tez/' + id); }
   window.__openTez = openTez;
   window.__gotoTez = openTez;
