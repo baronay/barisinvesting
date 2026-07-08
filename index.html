@@ -180,6 +180,11 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
 .tez-read{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--accent);}
 .skel{grid-column:1/-1;padding:40px 0;text-align:center;font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:var(--muted2);}
 
+/* kart uçuş animasyonu — orijinal şablondaki ilk açılış efekti */
+.fly{opacity:.001;transform:perspective(1200px) translate(var(--fx,0px),var(--fy,160px)) rotate(var(--fr,10deg)) scale(.6);will-change:transform,opacity;}
+.fly.land{opacity:1;transform:perspective(1200px) translate(0,0) rotate(0deg) scale(1);transition:transform 1s cubic-bezier(.22,1,.36,1) var(--fd,0s),opacity .7s ease var(--fd,0s);}
+@media (prefers-reduced-motion:reduce){.fly{opacity:1;transform:none;}}
+
 /* ═══════════════ ANALİZ ÇERÇEVELERİ (#services) ═══════════════ */
 #services{border-top:1px solid var(--rule);}
 .svc-top{display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:end;margin-bottom:56px;}
@@ -761,8 +766,19 @@ function metaHTML(t, opts = {}) {
   </div>`;
 }
 
-function tezCardHTML(t, opts = {}) {
-  return `<div class="tez-card rv in" onclick="location.href='/tez/${t.id}'">
+/* orijinal şablondaki savrulmuş başlangıç pozisyonları */
+const FLY = [
+  { x: 340, y: -180, r: 10 },
+  { x: 60,  y: -220, r: 15 },
+  { x: -300, y: -160, r: -6 }
+];
+function flyStyle(i) {
+  const f = FLY[i % FLY.length];
+  return `--fx:${f.x}px;--fy:${f.y}px;--fr:${f.r}deg;--fd:${(i * .09).toFixed(2)}s`;
+}
+
+function tezCardHTML(t, opts = {}, i = 0) {
+  return `<div class="tez-card fly" style="${flyStyle(i)}" onclick="location.href='/tez/${t.id}'">
     ${coverHTML(t)}
     <div class="tez-body">
       ${metaHTML(t, opts)}
@@ -778,7 +794,7 @@ function tezCardHTML(t, opts = {}) {
 function renderFeatured(t) {
   const host = document.getElementById('featTez');
   if (!host || !t) return;
-  host.innerHTML = `<a class="feat-card" href="/tez/${t.id}">
+  host.innerHTML = `<a class="feat-card fly" style="--fx:0px;--fy:200px;--fr:-3deg;--fd:0s" href="/tez/${t.id}">
     ${t.kapak_gorseli ? `<div class="feat-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
     <div class="feat-inner">
       <div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div>
@@ -788,6 +804,29 @@ function renderFeatured(t) {
       <div class="feat-cta">Tezi Oku <span class="arrow-ic"></span></div>
     </div>
   </a>`;
+}
+
+/* kartlar görünüme girince uçuşu tetikle (scroll + rect — her ortamda çalışır) */
+function armFly() {
+  const els = [...document.querySelectorAll('.fly:not(.land)')];
+  if (!els.length) return;
+  const land = () => {
+    const vh = innerHeight;
+    for (let i = els.length - 1; i >= 0; i--) {
+      const r = els[i].getBoundingClientRect();
+      if (r.top < vh * .9 && r.bottom > 0) {
+        els[i].classList.add('land');
+        els.splice(i, 1);
+      }
+    }
+    if (!els.length) {
+      removeEventListener('scroll', land);
+      removeEventListener('resize', land);
+    }
+  };
+  addEventListener('scroll', land, { passive: true });
+  addEventListener('resize', land, { passive: true });
+  setTimeout(land, 60);
 }
 
 async function loadContent() {
@@ -803,15 +842,17 @@ async function loadContent() {
     if (tezler.length) {
       renderFeatured(tezler[0]);
       const teaser = tezler.slice(1, 4).length ? tezler.slice(1, 4) : tezler.slice(0, 3);
-      tezGrid.innerHTML = teaser.map(t => tezCardHTML(t)).join('');
+      tezGrid.innerHTML = teaser.map((t, i) => tezCardHTML(t, {}, i)).join('');
     } else {
       feat.innerHTML = '<div class="feat-card"><div class="feat-inner"><div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div><div class="feat-title">İlk tez yakında geliyor</div><div class="feat-summary">Yeni araştırma tezleri burada yayınlanacak.</div></div></div>';
       tezGrid.innerHTML = '<div class="skel">HENÜZ TEZ YAYINLANMADI.</div>';
     }
 
     arGrid.innerHTML = arastirmalar.length
-      ? arastirmalar.slice(0, 3).map(t => tezCardHTML(t, { cat: true })).join('')
+      ? arastirmalar.slice(0, 3).map((t, i) => tezCardHTML(t, { cat: true }, i)).join('')
       : '<div class="skel">İLK ARAŞTIRMA YAKINDA YAYINLANACAK.</div>';
+
+    armFly();
   } catch (e) {
     feat.innerHTML = '<div class="feat-card"><div class="feat-inner"><div class="feat-title" style="font-size:20px">İçerik yüklenemedi</div><div class="feat-summary">Tezlere <a href="/tezler" style="color:var(--accent)">buradan</a> ulaşabilirsin.</div></div></div>';
     tezGrid.innerHTML = '<div class="skel" style="color:var(--danger)">TEZLER YÜKLENEMEDİ.</div>';
