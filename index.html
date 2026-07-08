@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Barış Investing — Sistematik Yatırımın Yeni Merkezi</title>
 <meta name="description" content="BIST ve global piyasalar üzerine derin yatırım tezleri, haftalık seçimler ve içerik. Tüm analiz araçları profesyonel Terminal'de.">
+<meta name="theme-color" content="#0b0f15">
+<link rel="icon" type="image/jpeg" href="/baris.jpg">
+<link rel="apple-touch-icon" href="/baris.jpg">
+<!-- Sosyal paylaşım kartları -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Barış Investing">
+<meta property="og:title" content="Barış Investing — Sistematik Yatırımın Yeni Merkezi">
+<meta property="og:description" content="BIST ve global piyasalar üzerine derin yatırım tezleri, haftalık seçimler ve içerik. Tüm analiz araçları profesyonel Terminal'de.">
+<meta property="og:url" content="https://barisinvesting.com/">
+<meta property="og:image" content="https://barisinvesting.com/baris.jpg">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Barış Investing — Sistematik Yatırımın Yeni Merkezi">
+<meta name="twitter:description" content="BIST ve global piyasalar üzerine derin yatırım tezleri, haftalık seçimler ve içerik.">
+<meta name="twitter:image" content="https://barisinvesting.com/baris.jpg">
 <link rel="preconnect" href="https://api.fontshare.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -127,6 +141,11 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
 
 /* ═══════════════ ORTAK BÖLÜM ═══════════════ */
 .sec{padding:96px 0;}
+@media(max-width:767px){
+  .sec{padding:64px 0;}
+  .hero{padding:118px 0 0;}
+  .hero-foot{margin-top:52px;}
+}
 .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:44px;flex-wrap:wrap;}
 .sec-head .kicker{display:block;margin-bottom:10px;}
 .view-all{display:inline-flex;align-items:center;gap:10px;font-size:16px;font-weight:500;color:var(--text2);position:relative;}
@@ -299,6 +318,17 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
 .foot-fit{position:absolute;left:50%;bottom:-1.6vw;transform:translateX(-50%);font-size:10.2vw;font-weight:600;letter-spacing:.01em;line-height:1;font-family:var(--font-head);color:transparent;-webkit-text-stroke:1px rgba(194,173,132,.34);pointer-events:none;user-select:none;white-space:nowrap;}
 .foot-fit b{font-weight:600;color:rgba(194,173,132,.30);-webkit-text-stroke:0;font-style:italic;}
 @media(max-width:767px){.foot-fit{font-size:11.5vw;bottom:-2vw;}}
+
+/* ═══════════════ MOBİL İNCE AYAR (en sonda — kart kurallarını ezer) ═══════════════ */
+@media(max-width:767px){
+  .price-card,.dark-hero-card{padding:26px 22px;}
+  .yt-card{padding:34px 22px;}
+  .feat-kicker{margin-bottom:12px;}
+}
+@media(max-width:400px){
+  .news-row{flex-direction:column;}
+  .news-btn{width:100%;}
+}
 </style>
 </head>
 <body>
