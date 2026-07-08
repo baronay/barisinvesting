@@ -2042,11 +2042,27 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 
 /* Route view toggling */
 .rv{display:none;}
-body.route-portal   #portalRoot{display:block;}
 body.route-tezler   #tezlerRoot{display:block;}
 body.route-arastirmalar #arastirmalarRoot{display:block;}
 body.route-tezoku   #tezOkuRoot{display:block;}
 body.route-terminal #terminalRoot{display:block;}
+
+/* ── Premium giriş animasyonları (landing'den) ── */
+@keyframes pfxUp{from{opacity:0;transform:translateY(18px);filter:blur(6px);}to{opacity:1;transform:translateY(0);filter:blur(0);}}
+body.route-tezler #tezlerRoot,
+body.route-arastirmalar #arastirmalarRoot,
+body.route-tezoku #tezOkuRoot{animation:pfxUp .65s cubic-bezier(.4,0,.2,1) both;}
+body.route-terminal #terminalRoot{animation:pfxUp .45s cubic-bezier(.4,0,.2,1) both;}
+/* kart uçuşu — landing'deki savrulmuş giriş */
+.pfly{opacity:.001;transform:perspective(1200px) translate(var(--px,0px),var(--py,140px)) rotate(var(--pr,8deg)) scale(.7);will-change:transform,opacity;}
+.pfly.pland{opacity:1;transform:perspective(1200px) translate(0,0) rotate(0deg) scale(1);transition:transform .95s cubic-bezier(.22,1,.36,1) var(--pd,0s),opacity .65s ease var(--pd,0s);}
+@media (prefers-reduced-motion:reduce){
+  .pfly{opacity:1;transform:none;}
+  body.route-tezler #tezlerRoot,
+  body.route-arastirmalar #arastirmalarRoot,
+  body.route-tezoku #tezOkuRoot,
+  body.route-terminal #terminalRoot{animation:none;}
+}
 body:not(.route-terminal) .mobile-toggle{display:none !important;}
 /* Terminal onboarding modallarını portal/tezler'de gizle */
 body:not(.route-terminal) #fwModal,
@@ -2577,168 +2593,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 
 
 
-<!-- ═══════════════════════════════════════════════════════════
-     PORTAL  (route: "/")  — Finansal Araştırma & Medya vitrini
-     ═══════════════════════════════════════════════════════════ -->
-<div id="portalRoot" class="rv">
-  <div class="pt-wrap">
-
-    <!-- Top bar -->
-    <div class="pt-topbar">
-      <div class="pt-brand-lockup">
-        <svg class="brand-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="bmTile" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#1d2433"/><stop offset="1" stop-color="#0c1017"/>
-            </linearGradient>
-            <linearGradient id="bmGold" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#ecd9af"/><stop offset="0.5" stop-color="#c2ad84"/><stop offset="1" stop-color="#a8946b"/>
-            </linearGradient>
-          </defs>
-          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="url(#bmTile)"/>
-          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="none" stroke="url(#bmGold)" stroke-opacity="0.7" stroke-width="1.1"/>
-          <path d="M11.5 30 L19 22.5 L24 26 L33 16.5" fill="none" stroke="url(#bmGold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.42"/>
-          <text x="22" y="30" font-family="'Playfair Display',Georgia,serif" font-weight="700" font-size="26" fill="url(#bmGold)" text-anchor="middle">B</text>
-        </svg>
-        <div class="pt-brand">
-          <div class="pt-brand-tag">Finansal Araştırma & Medya</div>
-          <div class="pt-brand-name">Barış <span>Investing</span></div>
-        </div>
-      </div>
-      <div class="pt-topnav">
-        <a class="pt-soc" id="ptYtLink" href="#" target="_blank" rel="noopener" title="YouTube">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 7.5a3 3 0 0 0-2.1-2.1C19 4.9 12 4.9 12 4.9s-7 0-8.9.5A3 3 0 0 0 1 7.5 31 31 0 0 0 .5 12 31 31 0 0 0 1 16.5a3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5A3 3 0 0 0 23 16.5 31 31 0 0 0 23.5 12 31 31 0 0 0 23 7.5zM9.8 15.3V8.7l5.7 3.3z"/></svg>
-        </a>
-        <a class="pt-soc" id="ptXLink" href="#" target="_blank" rel="noopener" title="X">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 2.3h3.3l-7.2 8.2 8.5 11.2h-6.7l-5.2-6.8-6 6.8H1.6l7.7-8.8L1.1 2.3H8l4.7 6.2zM17 19.9h1.8L7.1 4.2H5.1z"/></svg>
-        </a>
-        <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
-      </div>
-    </div>
-
-    <!-- Hero -->
-    <div class="pt-hero">
-      <div class="pt-eyebrow">◈ Haftalık Araştırma · Tezler · Medya</div>
-      <h1 class="pt-h1">Sistematik Yatırımın <em>Yeni Merkezi</em>.</h1>
-      <p class="pt-lede">BIST ve global piyasalar üzerine derin yatırım tezleri, haftalık seçimler ve içerik. Tüm analiz araçları profesyonel <strong style="color:var(--cream)">Terminal</strong>'de.</p>
-    </div>
-
-    <!-- BENTO: featured tez + side stack -->
-    <div class="bento">
-      <!-- Haftanın Seçimi (featured tez) -->
-      <div class="bento-card feat-tez b-span-8 b-row-2 clickable" id="featTez">
-        <div class="feat-skeleton">HAFTANIN SEÇİMİ YÜKLENİYOR…</div>
-      </div>
-
-      <!-- Newsletter (primary CTA) -->
-      <div class="bento-card side-card b-span-4">
-        <div>
-          <div class="sc-tag">◈ Haftalık Bülten</div>
-          <div class="sc-title">Hafta sonu özetini al</div>
-          <div class="sc-desc">Yeni tezler, haftalık seçimler ve piyasa notları doğrudan e-postana gelsin.</div>
-        </div>
-        <div class="sc-foot">
-          <div id="newsForm">
-            <div class="news-row">
-              <input class="news-in" id="newsEmail" type="email" placeholder="ornek@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')portalNewsletter()"/>
-              <button class="news-btn" id="newsBtn" onclick="portalNewsletter()">Abone Ol</button>
-            </div>
-            <div class="news-msg" id="newsMsg"></div>
-          </div>
-          <div class="news-done" id="newsDone" style="display:none">
-            <div class="news-done-ic">✓</div>
-            <div>
-              <div class="news-done-t">Abonelik onaylandı</div>
-              <div class="news-done-s" id="newsDoneSub"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Terminal entry (opsiyonel) -->
-      <div class="bento-card term-card side-card b-span-4 clickable" data-route="/terminal">
-        <div>
-          <div class="term-glyph">◢◤ TERMINAL · OPSİYONEL</div>
-          <div class="sc-title">Analiz & Tarama Merkezi</div>
-          <div class="sc-desc">Hisse analizi ve portföy takibi için profesyonel terminale geç.</div>
-        </div>
-        <div class="sc-foot">
-          <span class="pt-enter" style="pointer-events:none">Terminal'e Giriş <span class="arr">→</span></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Araştırma Tezleri (tek satır teaser) -->
-    <div class="pt-sec">
-      <div class="pt-sec-head">
-        <div class="pt-sec-title"><span class="k">◈ Araştırma</span>Yatırım Tezleri</div>
-        <a class="pt-sec-link" data-route="/tezler" href="/tezler">Tümünü Gör →</a>
-      </div>
-      <div class="pt-tez-row" id="tezGridPortal">
-        <div class="pt-tez-skel">Tezler yükleniyor…</div>
-      </div>
-    </div>
-
-    <!-- Şirket Araştırmaları (tek satır teaser) -->
-    <div class="pt-sec">
-      <div class="pt-sec-head">
-        <div class="pt-sec-title"><span class="k">◈ Derinlemesine</span>Şirket Araştırmaları</div>
-        <a class="pt-sec-link" data-route="/arastirmalar" href="/arastirmalar">Tümünü Gör →</a>
-      </div>
-      <div class="pt-tez-row" id="arastirmaGridPortal">
-        <div class="pt-tez-skel">Araştırmalar yükleniyor…</div>
-      </div>
-    </div>
-
-    <!-- Haber / Mercek — tıklanabilir video + kart serisi -->
-    <div class="pt-sec" id="spotSec">
-      <div class="news-card" id="newsCard">
-        <div class="news-head" onclick="toggleSpotlight()">
-          <div class="news-thumb" id="newsThumb"></div>
-          <div class="news-meta">
-            <div class="news-kicker" id="spotKicker">◈ Mercek · Son Dakika</div>
-            <div class="news-title" id="spotTitle">Tema</div>
-            <div class="news-sub" id="spotSub"></div>
-          </div>
-          <button class="news-toggle" id="spotToggle" aria-label="Aç/Kapat">İncele ▾</button>
-        </div>
-        <div class="news-body" id="newsBody" style="display:none">
-          <div class="news-video" id="newsVideo"></div>
-          <div class="news-cards-lbl">Bu temadaki oyuncular — takibe ekle, terminalde izle</div>
-          <div class="spot-grid" id="spotGrid"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tez Sicili → artık Yatırım Tezleri (/tezler) sayfasında -->
-
-    <!-- YouTube -->
-    <div class="pt-sec">
-      <div class="pt-sec-head">
-        <div class="pt-sec-title"><span class="k">▶ Video</span>YouTube</div>
-        <a class="pt-sec-link" id="ptYtAll" href="#" target="_blank" rel="noopener">Kanala git →</a>
-      </div>
-      <div class="yt-grid" id="ytGrid"></div>
-    </div>
-
-    <!-- X feed -->
-    <div class="pt-sec">
-      <div class="pt-sec-head">
-        <div class="pt-sec-title"><span class="k">𝕏 Akış</span>X / Twitter</div>
-        <a class="pt-sec-link" id="ptXAll" href="#" target="_blank" rel="noopener">Profili gör →</a>
-      </div>
-      <div class="x-grid" id="xGrid"></div>
-    </div>
-
-    <!-- Footer -->
-    <div class="pt-foot">
-      <div class="pt-foot-l">© <span id="ptYear"></span> Barış Investing · Araştırma & bilgi amaçlıdır, yatırım tavsiyesi değildir.</div>
-      <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
-    </div>
-
-  </div>
-</div>
-<!-- /portalRoot -->
+<!-- Eski portal ana sayfası kaldırıldı — "/" artık yeni landing (index.html) -->
 
 <!-- ═══════════════════════════════════════════════════════════
      TEZLER ARŞİVİ  (route: "/tezler")  — tüm tezler
@@ -6033,19 +5888,18 @@ function garpAnalizAc(ticker) {
     else if (tezMatch) view = 'tezoku';
     else if (/^\/tezler(\/|$)/.test(path)) view = 'tezler';
     else if (/^\/arastirmalar(\/|$)/.test(path)) view = 'arastirmalar';
+    if (view === 'portal'){ location.replace('/'); return; } // eski portal kaldırıldı → yeni landing'e tam yükleme
     document.body.classList.toggle('route-terminal', view==='terminal');
     document.body.classList.toggle('route-tezler',   view==='tezler');
     document.body.classList.toggle('route-arastirmalar', view==='arastirmalar');
     document.body.classList.toggle('route-tezoku',   view==='tezoku');
-    document.body.classList.toggle('route-portal',   view==='portal');
     document.title = TITLE[view] || TITLE.portal;
-    const norm = view==='terminal' ? '/terminal' : view==='tezler' ? '/tezler' : view==='arastirmalar' ? '/arastirmalar' : view==='tezoku' ? ('/tez/'+tezMatch[1]) : '/';
+    const norm = view==='terminal' ? '/terminal' : view==='tezler' ? '/tezler' : view==='arastirmalar' ? '/arastirmalar' : ('/tez/'+tezMatch[1]);
     if (replace) history.replaceState({route:norm}, '', norm + (location.search||''));
     if (view==='terminal'){ window.scrollTo(0,0); }
     else if (view==='tezler'){ window.scrollTo(0,0); loadTezlerPage(); }
     else if (view==='arastirmalar'){ window.scrollTo(0,0); loadArastirmalarPage(); }
     else if (view==='tezoku'){ window.scrollTo(0,0); loadTezOku(parseInt(tezMatch[1],10)); }
-    else { if (!portalLoaded) loadPortal(); }
     maybeOpenDeepTez();
     if (typeof window.trackEvent === 'function') window.trackEvent('route_view', { route: view });
   }
@@ -6067,7 +5921,7 @@ function garpAnalizAc(ticker) {
     applyRoute(path,false);
   }
   window.goTerminal = function(){ navigate('/terminal'); };
-  window.goPortal   = function(){ navigate('/'); };
+  window.goPortal   = function(){ location.href = '/'; };
 
   // data-route linklerini yakala (SPA geçiş)
   document.addEventListener('click', function(e){
@@ -6100,6 +5954,22 @@ function garpAnalizAc(ticker) {
 
   const sigMap = { AL:['al','AL'], IZLE:['izle','İZLE'], KACIN:['uzak','UZAK DUR'], NOTR:['notr','NÖTR'] };
   function trDate(s){ return s ? new Date(s).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : ''; }
+
+  /* Kart uçuş efekti — landing'deki savrulmuş girişin aynısı */
+  const PFLY = [ {x:320,y:-160,r:10}, {x:40,y:-200,r:14}, {x:-280,y:-140,r:-6} ];
+  function flyGrid(grid){
+    if (!grid) return;
+    const cards = [...grid.querySelectorAll('.pt-tez-card')];
+    cards.forEach((el,i)=>{
+      const f = PFLY[i % PFLY.length];
+      el.style.setProperty('--px', f.x + 'px');
+      el.style.setProperty('--py', f.y + 'px');
+      el.style.setProperty('--pr', f.r + 'deg');
+      el.style.setProperty('--pd', ((i % 6) * .08).toFixed(2) + 's');
+      el.classList.add('pfly');
+    });
+    setTimeout(()=>cards.forEach(el=>el.classList.add('pland')), 60);
+  }
   function openTez(id){ navigate('/tez/' + id); }
   window.__openTez = openTez;
   window.__gotoTez = openTez;
@@ -6243,6 +6113,7 @@ function garpAnalizAc(ticker) {
       if (!list.length){ grid.innerHTML = '<div class="pt-tez-skel">Henüz tez yayınlanmadı.</div>'; return; }
       grid.innerHTML = list.map(tezCardHTML).join('');
       grid.dataset.loaded = '1';
+      flyGrid(grid);
       list.filter(t=>t.maliyet_fiyat && t.ticker).forEach(portalTezGetiri);
     }catch(e){ grid.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Tezler yüklenemedi.</div>'; }
   }
@@ -6274,6 +6145,7 @@ function garpAnalizAc(ticker) {
       if (!list.length){ grid.innerHTML = '<div class="pt-tez-skel">Henüz araştırma yayınlanmadı.</div>'; return; }
       grid.innerHTML = list.map(arastirmaCardHTML).join('');
       grid.dataset.loaded = '1';
+      flyGrid(grid);
       list.filter(t=>t.maliyet_fiyat && t.ticker).forEach(portalTezGetiri);
     }catch(e){ grid.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Araştırmalar yüklenemedi.</div>'; }
   }
