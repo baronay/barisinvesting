@@ -243,7 +243,8 @@ export default async function handler(req, res) {
       }
 
       // Yeni kullanıcıya hoş geldin maili (mailini bırakan herkes ilk kez eklendiğinde)
-      if (isNew) { sendWelcomeEmail(em); }
+      // await şart: Vercel serverless, res dönünce fonksiyonu dondurur — await'siz fetch tamamlanmadan kesilir
+      if (isNew) { await sendWelcomeEmail(em); }
 
       return res.status(200).json({ user, isNew, dailyBonus, refBonus });
 
