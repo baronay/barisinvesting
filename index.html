@@ -14,11 +14,13 @@
 <meta property="og:title" content="Barış Investing — Sistematik Yatırımın Yeni Merkezi">
 <meta property="og:description" content="BIST ve global piyasalar üzerine derin yatırım tezleri, haftalık seçimler ve içerik. Tüm analiz araçları profesyonel Terminal'de.">
 <meta property="og:url" content="https://barisinvesting.com/">
-<meta property="og:image" content="https://barisinvesting.com/baris.jpg">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://barisinvesting.com/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Barış Investing — Sistematik Yatırımın Yeni Merkezi">
 <meta name="twitter:description" content="BIST ve global piyasalar üzerine derin yatırım tezleri, haftalık seçimler ve içerik.">
-<meta name="twitter:image" content="https://barisinvesting.com/baris.jpg">
+<meta name="twitter:image" content="https://barisinvesting.com/og.jpg">
 <link rel="preconnect" href="https://api.fontshare.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -134,9 +136,20 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
 /* hero footer: ticker */
 .hero-foot{margin-top:72px;border-top:1px solid var(--rule);padding:28px 0 34px;display:flex;align-items:center;gap:40px;flex-wrap:wrap;}
 .community .t-small{color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
-.ticker-wrap{flex:1;min-width:260px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 18%,#000 82%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0%,#000 18%,#000 82%,transparent 100%);opacity:.55;}
-.ticker{display:flex;gap:64px;width:max-content;animation:tick 28s linear infinite;}
-.ticker span{font-size:20px;font-weight:700;letter-spacing:.02em;color:var(--cream);white-space:nowrap;}
+.ticker-wrap{flex:1;min-width:260px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 12%,#000 88%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0%,#000 12%,#000 88%,transparent 100%);}
+.ticker{display:flex;gap:44px;width:max-content;animation:tick 34s linear infinite;}
+.ticker-wrap:hover .ticker{animation-play-state:paused;}
+/* statik metin fallback (canlı veri gelene kadar) */
+.ticker .tk-fb{font-size:20px;font-weight:700;letter-spacing:.02em;color:var(--cream);white-space:nowrap;opacity:.55;}
+/* canlı fiyat öğesi */
+.tk{display:inline-flex;align-items:baseline;gap:8px;white-space:nowrap;font-family:var(--font-mono);}
+.tk-name{font-size:12px;font-weight:600;letter-spacing:1px;color:var(--muted);text-transform:uppercase;}
+.tk-price{font-size:14px;font-weight:600;color:var(--cream);}
+.tk-chg{font-size:12px;font-weight:600;}
+.tk-chg.up{color:var(--success);}
+.tk-chg.down{color:var(--danger);}
+.tk-chg.flat{color:var(--muted2);}
+.tk-sep{width:4px;height:4px;border-radius:100%;background:var(--border-g);align-self:center;}
 @keyframes tick{from{transform:translateX(0);}to{transform:translateX(-50%);}}
 
 /* ═══════════════ ORTAK BÖLÜM ═══════════════ */
@@ -373,9 +386,9 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
         <div class="t-small">◈ Büyüyen Yatırımcı Topluluğu</div>
       </div>
       <div class="ticker-wrap">
-        <div class="ticker">
-          <span>BIST 100</span><span>NASDAQ</span><span>NYSE</span><span>S&amp;P 500</span><span>XU030</span><span>MSCI</span>
-          <span>BIST 100</span><span>NASDAQ</span><span>NYSE</span><span>S&amp;P 500</span><span>XU030</span><span>MSCI</span>
+        <div class="ticker" id="mktTicker">
+          <span class="tk-fb">BIST 100</span><span class="tk-fb">NASDAQ</span><span class="tk-fb">NYSE</span><span class="tk-fb">S&amp;P 500</span><span class="tk-fb">XU030</span><span class="tk-fb">MSCI</span>
+          <span class="tk-fb">BIST 100</span><span class="tk-fb">NASDAQ</span><span class="tk-fb">NYSE</span><span class="tk-fb">S&amp;P 500</span><span class="tk-fb">XU030</span><span class="tk-fb">MSCI</span>
         </div>
       </div>
     </div>
@@ -832,6 +845,45 @@ async function loadContent() {
   }
 }
 loadContent();
+
+/* ── Canlı piyasa şeridi — gerçek /api/market verisi ── */
+const MKT_DEFS = [
+  { key:'bist100', label:'BIST 100', cur:'',  dp:0 },
+  { key:'sp500',   label:'S&P 500',  cur:'',  dp:0 },
+  { key:'nasdaq',  label:'NASDAQ',   cur:'',  dp:0 },
+  { key:'gold',    label:'ALTIN',    cur:'$', dp:0 },
+  { key:'btc',     label:'BTC',      cur:'$', dp:0 }
+];
+const fmtMkt = (v, dp) => (v == null || !isFinite(v)) ? '—'
+  : Number(v).toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+
+function tkItem(d, o) {
+  const ch = +o.change || 0;
+  const dir = ch > 0.04 ? 'up' : ch < -0.04 ? 'down' : 'flat';
+  const arr = dir === 'up' ? '▲' : dir === 'down' ? '▼' : '—';
+  return `<span class="tk">
+    <span class="tk-name">${d.label}</span>
+    <span class="tk-price">${d.cur}${fmtMkt(o.price, d.dp)}</span>
+    <span class="tk-chg ${dir}">${arr} ${ch > 0 ? '+' : ''}${ch.toFixed(2)}%</span>
+  </span><span class="tk-sep"></span>`;
+}
+
+async function loadMarketTicker() {
+  const host = document.getElementById('mktTicker');
+  if (!host) return;
+  try {
+    const r = await fetch('/api/market?type=market');
+    const j = await r.json();
+    const m = (j && j.market) || {};
+    const has = MKT_DEFS.filter(d => m[d.key] && isFinite(m[d.key].price));
+    if (!has.length) return; // statik fallback kalsın
+    const one = has.map(d => tkItem(d, m[d.key])).join('');
+    host.innerHTML = one + one; // kesintisiz döngü için iki kopya
+    document.querySelector('.ticker-wrap').style.opacity = '1';
+  } catch (e) { /* statik metin fallback kalır */ }
+}
+loadMarketTicker();
+setInterval(loadMarketTicker, 60000);
 </script>
 </body>
 </html>
