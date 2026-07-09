@@ -23,6 +23,70 @@ const REFERRED_BONUS = 1;   // davet edilen kazanır
 const DAILY_BONUS = 1;      // günlük ilk giriş bonusu
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim();
 
+// ── Resend (hoş geldin maili) ──
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const RESEND_FROM = process.env.RESEND_FROM || 'Barış Investing <bulten@barisinvesting.com>';
+const SITE_URL = process.env.SITE_URL || 'https://barisinvesting.com';
+
+function welcomeEmailHTML() {
+  return `<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light"></head>
+<body style="margin:0;padding:0;background:#080b10;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#080b10;padding:32px 12px;">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#0f141d;border:1px solid rgba(194,173,132,0.22);border-radius:16px;overflow:hidden;">
+  <tr><td style="padding:34px 34px 22px;border-bottom:1px solid rgba(255,255,255,0.06);">
+    <div style="font-family:Georgia,'Times New Roman',serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8a94a6;">Finansal Araştırma &amp; Medya</div>
+    <div style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:700;color:#ece4d4;margin-top:4px;">Barış <span style="color:#c2ad84;">Investing</span></div>
+  </td></tr>
+  <tr><td style="padding:34px;">
+    <h1 style="margin:0 0 14px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:1.3;color:#ffffff;font-weight:700;">Aramıza hoş geldin 👋</h1>
+    <p style="margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:#cbd5e1;">
+      Listeye eklendin. Bundan sonra <strong style="color:#ece4d4;">yeni yatırım tezleri</strong>, <strong style="color:#ece4d4;">haftalık seçimler</strong> ve piyasa notları doğrudan e-postana gelecek.
+    </p>
+    <p style="margin:0 0 26px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:#cbd5e1;">
+      Dilersen hemen Terminal'e geçip BIST, NYSE ve NASDAQ hisselerini Buffett ve Lynch çerçeveleriyle analiz etmeye başlayabilirsin.
+    </p>
+    <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+      <td style="border-radius:12px;background:#c2ad84;">
+        <a href="${SITE_URL}/terminal" style="display:inline-block;padding:13px 26px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#0b0f15;text-decoration:none;border-radius:12px;">Terminal'e Giriş →</a>
+      </td>
+    </tr></table>
+    <div style="margin-top:28px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.06);font-family:Arial,Helvetica,sans-serif;">
+      <a href="${SITE_URL}/tezler" style="color:#c2ad84;font-size:13px;text-decoration:none;margin-right:18px;">Yatırım Tezleri</a>
+      <a href="${SITE_URL}/arastirmalar" style="color:#c2ad84;font-size:13px;text-decoration:none;">Şirket Araştırmaları</a>
+    </div>
+  </td></tr>
+  <tr><td style="padding:20px 34px 30px;">
+    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:#5b6472;">
+      Bu e-postayı barisinvesting.com'a e-posta bıraktığın için aldın. İçerikler yalnızca araştırma ve bilgi amaçlıdır, yatırım tavsiyesi değildir. Listeden çıkmak için bu e-postayı yanıtlaman yeterli.
+    </p>
+  </td></tr>
+</table>
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b6472;margin-top:16px;">© Barış Investing</div>
+</td></tr></table></body></html>`;
+}
+
+// Fire-and-forget: mail hatası hiçbir zaman kaydı/girişi bozmaz
+async function sendWelcomeEmail(to) {
+  if (!RESEND_API_KEY) return;
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: RESEND_FROM,
+        to: [to],
+        subject: 'Barış Investing — Aramıza hoş geldin',
+        html: welcomeEmailHTML(),
+      }),
+    });
+  } catch (e) {
+    console.error('welcome email error:', e.message);
+  }
+}
+
 async function sb(method, table, params = {}, body = null) {
   if (!SB_URL || !SB_KEY) throw new Error('SUPABASE_KURULUM_BEKLIYOR');
   let url = `${SB_URL}/rest/v1/${table}`;
@@ -177,6 +241,9 @@ export default async function handler(req, res) {
         user.is_admin = isAdminUser;
         user.ref_code = updates.ref_code;
       }
+
+      // Yeni kullanıcıya hoş geldin maili (mailini bırakan herkes ilk kez eklendiğinde)
+      if (isNew) { sendWelcomeEmail(em); }
 
       return res.status(200).json({ user, isNew, dailyBonus, refBonus });
 
