@@ -193,6 +193,8 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
 .chip-sig.uzak{color:var(--danger);background:var(--danger-dim);border:1px solid rgba(240,82,82,.3);}
 .chip-sig.notr{color:var(--muted);background:var(--surface3);border:1px solid var(--border-s);}
 .chip-date{font-family:var(--font-mono);font-size:10px;color:var(--muted2);}
+.chip-upd{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:9px;letter-spacing:.6px;color:var(--gold,#c2ad84);border:1px solid rgba(194,173,132,.28);background:rgba(194,173,132,.08);padding:2px 7px;border-radius:20px;}
+.chip-upd i{width:4px;height:4px;border-radius:50%;background:currentColor;font-style:normal;}
 .chip-cat{font-family:var(--font-mono);font-size:9px;letter-spacing:1.5px;padding:3px 9px;border-radius:5px;color:var(--text2);background:var(--surface3);border:1px solid var(--border-s);}
 
 /* ═══════════════ TEZ / ARAŞTIRMA KARTLARI (API) ═══════════════ */
@@ -747,6 +749,7 @@ function metaHTML(t, opts = {}) {
     ${t.ticker ? `<span class="chip-ticker">${esc(t.ticker)}</span>` : ''}
     ${opts.cat ? `<span class="chip-cat">ARAŞTIRMA</span>` : ''}
     ${(opts.cat ? hasSig : true) ? `<span class="chip-sig ${sig[0]}">${sig[1]}</span>` : ''}
+    ${t.guncelleme_sayisi ? `<span class="chip-upd" title="Son güncelleme: ${esc(trDate(t.son_guncelleme))}"><i></i>${t.guncelleme_sayisi} güncelleme</span>` : ''}
     ${t.olusturma ? `<span class="chip-date">${esc(trDate(t.olusturma))}</span>` : ''}
   </div>`;
 }

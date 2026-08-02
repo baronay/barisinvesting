@@ -2267,6 +2267,8 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .ptz-sig.uzak{background:var(--danger-dim);color:var(--danger);border:1px solid var(--danger);}
 .ptz-sig.notr{background:var(--glass);color:var(--cream2);border:1px solid var(--portal-border-s);}
 .ptz-date{font-family:var(--font-mono);font-size:9px;color:var(--cream2);opacity:.65;margin-left:auto;}
+.ptz-upd{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:.6px;color:var(--accent);border:1px solid rgba(194,173,132,0.28);background:rgba(194,173,132,0.08);padding:2px 6px;border-radius:20px;}
+.ptz-upd i{width:4px;height:4px;border-radius:50%;background:var(--accent);font-style:normal;}
 .ptz-title{font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--cream);line-height:1.3;margin-bottom:8px;}
 .ptz-sum{font-size:13px;line-height:1.55;color:var(--cream2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:14px;}
 .ptz-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;}
@@ -2301,11 +2303,62 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .tzo-content tr:last-child td{border-bottom:none;}
 .tzo-note{margin-top:34px;padding:12px 16px;border:1px solid var(--portal-border);border-left:3px solid var(--warn);background:rgba(0,0,0,0.2);border-radius:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.3px;line-height:1.7;color:var(--cream2);opacity:.8;}
 .tzo-ctas{margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+
+/* ── Tezin seyri: güncelleme zaman çizelgesi ── */
+.tzo-upd{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);background:rgba(194,173,132,0.09);border:1px solid rgba(194,173,132,0.28);padding:3px 9px;border-radius:20px;cursor:pointer;transition:background .2s;}
+.tzo-upd:hover{background:rgba(194,173,132,0.18);}
+.tzo-upd .pulse{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(194,173,132,.55);animation:tztPulse 2.4s infinite;}
+@keyframes tztPulse{0%{box-shadow:0 0 0 0 rgba(194,173,132,.5);}70%{box-shadow:0 0 0 6px rgba(194,173,132,0);}100%{box-shadow:0 0 0 0 rgba(194,173,132,0);}}
+
+.tzo-timeline{margin-top:44px;padding-top:26px;border-top:1px solid var(--portal-border);scroll-margin-top:80px;}
+.tzt-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:22px;}
+.tzt-kicker{font-family:var(--font-mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
+.tzt-sub{font-size:12px;color:var(--cream2);opacity:.7;}
+.tzt-list{position:relative;padding-left:26px;}
+.tzt-list:before{content:'';position:absolute;left:5px;top:6px;bottom:6px;width:1px;background:linear-gradient(180deg,rgba(194,173,132,.35),rgba(194,173,132,.08));}
+.tzt-item{position:relative;margin-bottom:18px;}
+.tzt-item:last-child{margin-bottom:0;}
+.tzt-dot{position:absolute;left:-26px;top:14px;width:11px;height:11px;border-radius:50%;background:var(--anthracite2,#0c0f15);border:2px solid rgba(194,173,132,.45);}
+.tzt-item.son .tzt-dot{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px rgba(194,173,132,.14);}
+.tzt-card{border:1px solid var(--portal-border);border-radius:12px;background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);padding:14px 16px;transition:border-color .2s;}
+.tzt-item.son .tzt-card{border-color:rgba(194,173,132,.32);}
+.tzt-card:hover{border-color:rgba(194,173,132,.24);}
+.tzt-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px;}
+.tzt-date{font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;color:var(--cream2);opacity:.75;}
+.tzt-tur{font-family:var(--font-mono);font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:var(--cream2);border:1px solid var(--portal-border-s,var(--portal-border));padding:2px 7px;border-radius:4px;}
+.tzt-tur.bilanco{color:#5aa9e6;border-color:rgba(90,169,230,.35);}
+.tzt-tur.haber{color:#c2ad84;border-color:rgba(194,173,132,.35);}
+.tzt-tur.revizyon{color:#d08770;border-color:rgba(208,135,112,.35);}
+.tzt-tur.fiyat{color:#22c55e;border-color:rgba(34,197,94,.3);}
+.tzt-tur.kapanis{color:#8a93a3;border-color:rgba(138,147,163,.35);}
+.tzt-sig{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:.8px;padding:2px 7px;border-radius:4px;}
+.tzt-sig.al{color:#22c55e;background:rgba(34,197,94,.12);}
+.tzt-sig.izle{color:#c2ad84;background:rgba(194,173,132,.14);}
+.tzt-sig.notr{color:#8a93a3;background:rgba(138,147,163,.14);}
+.tzt-sig.uzak{color:#f05252;background:rgba(240,82,82,.12);}
+.tzt-fiyat{font-family:var(--font-mono);font-size:10px;color:var(--cream2);opacity:.7;margin-left:auto;}
+.tzt-guncel{font-family:var(--font-mono);font-size:8px;letter-spacing:1.2px;color:var(--accent);border:1px solid rgba(194,173,132,.4);padding:2px 6px;border-radius:4px;}
+.tzt-title{font-size:15px;font-weight:600;color:var(--cream);line-height:1.45;overflow-wrap:break-word;}
+.tzt-body{margin-top:8px;color:#b9c0cc;font-size:14px;line-height:1.8;overflow-wrap:break-word;word-break:break-word;}
+.tzt-body p{margin:0 0 10px;} .tzt-body p:last-child{margin-bottom:0;}
+.tzt-body ul,.tzt-body ol{padding-left:20px;margin:0 0 10px;}
+.tzt-body a{color:var(--accent);}
+.tzt-body img{max-width:100%;height:auto;border-radius:8px;}
+.tzt-body table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.tzt-body th,.tzt-body td{padding:8px 10px;border-bottom:1px solid var(--portal-border);text-align:left;}
+
 @media(max-width:768px){
   .tzo-content{font-size:14px;line-height:1.85;}
   .tzo-lede{font-size:14px;padding-left:12px;}
   .tzo-content th,.tzo-content td{padding:9px 11px;}
   .tzo-cover{max-height:220px;border-radius:10px;}
+  .tzo-timeline{margin-top:34px;}
+  .tzt-list{padding-left:20px;}
+  .tzt-dot{left:-20px;width:9px;height:9px;}
+  .tzt-card{padding:12px 13px;}
+  .tzt-title{font-size:14px;}
+  .tzt-body{font-size:13.5px;line-height:1.75;}
+  .tzt-fiyat{margin-left:0;}
 }
 
 /* Haber / Mercek — tıklanabilir video + kart serisi */
@@ -6029,6 +6082,58 @@ function garpAnalizAc(ticker) {
   window.__openTez = openTez;
   window.__gotoTez = openTez;
 
+  /* ── TEZİN SEYRİ: güncelleme zaman çizelgesi ── */
+  const turMap = {
+    bilanco:  ['bilanco','Bilanço'],
+    haber:    ['haber','Haber'],
+    revizyon: ['revizyon','Tez Revizyonu'],
+    fiyat:    ['fiyat','Fiyat / Pozisyon'],
+    kapanis:  ['kapanis','Pozisyon Kapanışı'],
+    not:      ['not','Not'],
+  };
+  function fmtFiyat(v){
+    const n = Number(v);
+    if (!Number.isFinite(n)) return '';
+    return n.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function timelineHTML(list, ilkTarih){
+    if (!Array.isArray(list) || !list.length) return '';
+    const items = list.map((g,i)=>{
+      const son  = i === list.length - 1;
+      const tur  = turMap[g.tur] || turMap.not;
+      const sg   = g.sinyal && sigMap[g.sinyal] ? sigMap[g.sinyal] : null;
+      let body = g.icerik || '';
+      if (body.includes('<')) body = body.replace(/\n\n/g,'').replace(/\n/g,'');
+      else body = esc(body).replace(/\n/g,'<br>');
+      return `<div class="tzt-item${son?' son':''}">
+        <span class="tzt-dot"></span>
+        <div class="tzt-card">
+          <div class="tzt-meta">
+            <span class="tzt-date">${esc(trDate(g.tarih))}</span>
+            <span class="tzt-tur ${tur[0]}">${tur[1]}</span>
+            ${sg ? `<span class="tzt-sig ${sg[0]}">→ ${sg[1]}</span>` : ''}
+            ${son ? '<span class="tzt-guncel">GÜNCEL</span>' : ''}
+            ${g.fiyat != null ? `<span class="tzt-fiyat">${esc(fmtFiyat(g.fiyat))}</span>` : ''}
+          </div>
+          <div class="tzt-title">${esc(g.baslik||'')}</div>
+          ${body ? `<div class="tzt-body">${body}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    const n = list.length;
+    return `<div class="tzo-timeline" id="tezSeyri">
+      <div class="tzt-head">
+        <span class="tzt-kicker">Tezin Seyri</span>
+        <span class="tzt-sub">${n} güncelleme${ilkTarih ? ` · ilk yayın ${esc(ilkTarih)}` : ''}</span>
+      </div>
+      <div class="tzt-list">${items}</div>
+    </div>`;
+  }
+  window.__tezSeyre = function(){
+    const el = document.getElementById('tezSeyri');
+    if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+  };
+
   /* ── TEZ OKUMA SAYFASI (/tez/:id) ── */
   let _tzoLast = 0;
   async function loadTezOku(id){
@@ -6050,6 +6155,8 @@ function garpAnalizAc(ticker) {
       const backLabel = kat==='arastirma' ? 'Tüm Araştırmalar' : 'Tüm Tezler';
       const sig = tez.sinyal && sigMap[tez.sinyal] ? sigMap[tez.sinyal] : null;
       const tarih = trDate(tez.olusturma);
+      const guncellemeler = Array.isArray(tez.guncellemeler) ? tez.guncellemeler : [];
+      const sonGunc = guncellemeler.length ? guncellemeler[guncellemeler.length - 1] : null;
       document.title = tez.baslik + ' — Barış Investing';
       art.innerHTML = `
         <span class="tzo-back" data-route="${backRoute}">← ${backLabel}</span>
@@ -6059,17 +6166,19 @@ function garpAnalizAc(ticker) {
           ${kat==='arastirma' ? '<span class="ptz-cat">Araştırma</span>' : ''}
           ${sig ? `<span class="ptz-sig ${sig[0]}">${sig[1]}</span>` : ''}
           ${tarih ? `<span class="ptz-date" style="margin-left:0">${esc(tarih)}</span>` : ''}
+          ${sonGunc ? `<span class="tzo-upd" onclick="window.__tezSeyre()"><span class="pulse"></span>Son güncelleme: ${esc(trDate(sonGunc.tarih))}</span>` : ''}
         </div>
         <h1 class="tzo-title">${esc(tez.baslik)}</h1>
         ${tez.ozet ? `<p class="tzo-lede">${esc(tez.ozet)}</p>` : ''}
         <div class="tzo-content">${icerik}</div>
+        ${timelineHTML(guncellemeler, tarih)}
         <div class="tzo-note">Bu içerik araştırma ve bilgi amaçlıdır; yatırım tavsiyesi değildir. Tüm projeksiyonlar tahmin içermektedir.</div>
         <div class="tzo-ctas">
           <span class="tzo-back" data-route="${backRoute}" style="margin:0">← ${backLabel}</span>
           <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'de Analiz Et <span class="arr">→</span></a>
         </div>`;
       // İçerikteki tabloları ferah, mobilde yatay kaydırılabilir sarmalayıcıya al
-      art.querySelectorAll('.tzo-content table').forEach(tbl=>{
+      art.querySelectorAll('.tzo-content table, .tzt-body table').forEach(tbl=>{
         if (tbl.parentElement.classList.contains('tzo-tbl-scroll')) return;
         const w = document.createElement('div');
         w.className = 'tzo-tbl-scroll';
@@ -6089,6 +6198,12 @@ function garpAnalizAc(ticker) {
     _tezCache = await r.json();
     return _tezCache;
   }
+  /* Kartta "N güncelleme" rozeti — pozisyonun takip edildiğini gösterir */
+  function updChipHTML(t){
+    const n = t.guncelleme_sayisi || 0;
+    if (!n) return '';
+    return `<span class="ptz-upd" title="Son güncelleme: ${esc(trDate(t.son_guncelleme))}"><i></i>${n} güncelleme</span>`;
+  }
   function tezCardHTML(t){
     const sig = sigMap[t.sinyal] || sigMap.NOTR;
     return `<div class="pt-tez-card" onclick="window.__openTez(${t.id})">
@@ -6097,6 +6212,7 @@ function garpAnalizAc(ticker) {
         <div class="ptz-meta">
           ${t.ticker ? `<span class="ptz-ticker">${esc(t.ticker)}</span>` : ''}
           <span class="ptz-sig ${sig[0]}">${sig[1]}</span>
+          ${updChipHTML(t)}
           ${t.olusturma ? `<span class="ptz-date">${esc(trDate(t.olusturma))}</span>` : ''}
         </div>
         <div class="ptz-title">${esc(t.baslik||'')}</div>
@@ -6118,6 +6234,7 @@ function garpAnalizAc(ticker) {
           ${t.ticker ? `<span class="ptz-ticker">${esc(t.ticker)}</span>` : ''}
           <span class="ptz-cat">Araştırma</span>
           ${hasSig ? `<span class="ptz-sig ${sig[0]}">${sig[1]}</span>` : ''}
+          ${updChipHTML(t)}
           ${t.olusturma ? `<span class="ptz-date">${esc(trDate(t.olusturma))}</span>` : ''}
         </div>
         <div class="ptz-title">${esc(t.baslik||'')}</div>

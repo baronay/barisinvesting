@@ -317,6 +317,83 @@ async function openTezEditor() {
         </div>
       </div><!-- /tezFormArea -->
 
+      <!-- GÜNCELLEME ALANI (pozisyon geçmişi) -->
+      <div id="tezGuncArea" style="display:none;">
+        <div style="font-size:11px;color:#5d6675;font-family:'JetBrains Mono',monospace;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;">
+          <span>GÜNCELLEMELER</span>
+          <button onclick="tezListeYukle()" style="background:none;border:none;color:#5d6675;cursor:pointer;font-size:11px;">&#8592; Listeye dön</button>
+        </div>
+        <div id="tezGuncTezBaslik" style="font-size:14px;color:#ffffff;font-weight:500;margin-bottom:14px;"></div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:10px;color:#3a4150;">Eskiden yeniye sıralanır — okuyucu tezin seyrini bu çizelgeden takip eder.</span>
+          <button onclick="tezGuncFormAc(null)" style="background:rgba(194,173,132,0.15);border:1px solid rgba(194,173,132,0.3);color:#c2ad84;font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;">+ Yeni Güncelleme</button>
+        </div>
+        <div id="tezGuncListe" style="color:#5d6675;font-size:12px;margin-bottom:18px;">Yükleniyor...</div>
+
+        <!-- Güncelleme formu -->
+        <div id="tezGuncForm" style="display:none;border-top:1px solid rgba(255,255,255,0.07);padding-top:16px;">
+          <div style="font-size:11px;color:#5d6675;font-family:'JetBrains Mono',monospace;margin-bottom:12px;" id="tezGuncFormBaslik">YENİ GÜNCELLEME</div>
+          <input type="hidden" id="tezGuncId"/>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div>
+              <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">TARİH</label>
+              <input id="tezGuncTarih" type="date" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;"/>
+            </div>
+            <div>
+              <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">TÜR</label>
+              <select id="tezGuncTur" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;">
+                <option value="bilanco">📊 Bilanço</option>
+                <option value="haber">📰 Haber / Gelişme</option>
+                <option value="revizyon">✎ Tez Revizyonu</option>
+                <option value="fiyat">📈 Fiyat / Pozisyon</option>
+                <option value="kapanis">🏁 Pozisyon Kapanışı</option>
+                <option value="not" selected>• Not</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">YENİ SİNYAL</label>
+              <select id="tezGuncSinyal" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;">
+                <option value="">— değişmedi</option>
+                <option value="AL">AL</option>
+                <option value="IZLE">İZLE</option>
+                <option value="NOTR">NÖTR</option>
+                <option value="KACIN">KAÇIN</option>
+              </select>
+              <div style="font-size:9px;color:#3a4150;margin-top:3px;">Seçersen tezin sinyali de değişir</div>
+            </div>
+            <div>
+              <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">O GÜNKÜ FİYAT</label>
+              <input id="tezGuncFiyat" type="number" step="0.01" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;font-family:'JetBrains Mono',monospace;" placeholder="opsiyonel"/>
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">BAŞLIK</label>
+            <input id="tezGuncBaslik" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;" placeholder="2025/Q3 bilançosu: marj beklentinin üzerinde"/>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">AÇIKLAMA (HTML destekler)</label>
+            <textarea id="tezGuncIcerik" rows="6" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:10px 12px;border-radius:6px;font-size:12px;resize:vertical;font-family:'JetBrains Mono',monospace;line-height:1.7;white-space:pre-wrap;word-break:break-word;" placeholder="Gelişmenin teze etkisi..."></textarea>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="checkbox" id="tezGuncYayinda" checked style="width:14px;height:14px;"/>
+              <span style="font-size:12px;color:#ffffff;">Yayında</span>
+            </label>
+          </div>
+
+          <div style="display:flex;gap:8px;">
+            <button onclick="tezGuncKaydet()" style="background:#c2ad84;border:none;color:#fff;padding:9px 20px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">Kaydet</button>
+            <button onclick="tezGuncFormKapat()" style="background:none;border:1px solid rgba(255,255,255,0.15);color:#8a93a3;padding:9px 18px;border-radius:6px;cursor:pointer;font-size:13px;">Vazgeç</button>
+            <span id="tezGuncDurum" style="font-size:12px;color:#5d6675;align-self:center;margin-left:4px;"></span>
+          </div>
+        </div>
+      </div><!-- /tezGuncArea -->
+
       </div><!-- /scrollable body -->
     </div>
   `;
@@ -395,6 +472,8 @@ async function tezKapakUpload() {
 
 async function tezListeYukle() {
   document.getElementById('tezFormArea').style.display = 'none';
+  const guncArea = document.getElementById('tezGuncArea');
+  if (guncArea) guncArea.style.display = 'none';
   document.getElementById('tezListeArea').style.display = 'block';
   const el = document.getElementById('tezListeIcerik');
   el.innerHTML = 'Yukleniyor...';
@@ -428,6 +507,7 @@ async function tezListeYukle() {
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="tezGuncAc(${t.id})" title="Güncellemeler (pozisyon geçmişi)" style="background:rgba(138,147,163,0.08);border:1px solid rgba(255,255,255,0.12);color:#8a93a3;font-size:11px;padding:5px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;">🕒 Güncelleme</button>
           <button onclick="tezFormAcId(${t.id})" style="background:rgba(194,173,132,0.1);border:1px solid rgba(194,173,132,0.2);color:#c2ad84;font-size:11px;padding:5px 12px;border-radius:4px;cursor:pointer;white-space:nowrap;">✏ Düzenle</button>
           <button onclick="tezSilDogrudan(${t.id})" style="background:none;border:1px solid rgba(168,116,106,0.3);color:#f05252;font-size:11px;padding:5px 10px;border-radius:4px;cursor:pointer;">✕</button>
         </div>
@@ -447,6 +527,8 @@ function tezFormAcId(id) {
 
 function tezFormAc(tez) {
   document.getElementById('tezListeArea').style.display = 'none';
+  const _guncArea = document.getElementById('tezGuncArea');
+  if (_guncArea) _guncArea.style.display = 'none';
   document.getElementById('tezFormArea').style.display = 'block';
   _tezKapakUrl = null;
 
@@ -605,5 +687,169 @@ async function tezSil() {
     tezListeYukle();
   } catch(e) {
     showToast('Hata: ' + e.message);
+  }
+}
+
+// ── TEZ GÜNCELLEMELERİ (pozisyon geçmişi) ────────────────────────
+
+let _guncTezId = null;
+let _guncMap   = {};
+
+const GUNC_ETIKET = {
+  bilanco:  '📊 Bilanço',
+  haber:    '📰 Haber',
+  revizyon: '✎ Revizyon',
+  fiyat:    '📈 Fiyat',
+  kapanis:  '🏁 Kapanış',
+  not:      '• Not',
+};
+
+function _gEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function _gTarih(s) {
+  if (!s) return '';
+  const d = new Date(s);
+  return isNaN(d) ? '' : d.toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
+}
+
+// Bir tezin güncelleme panelini aç
+async function tezGuncAc(tezId) {
+  _guncTezId = tezId;
+  document.getElementById('tezListeArea').style.display = 'none';
+  document.getElementById('tezFormArea').style.display  = 'none';
+  document.getElementById('tezGuncArea').style.display  = 'block';
+  document.getElementById('tezGuncForm').style.display  = 'none';
+
+  const tez = _tezMap[tezId];
+  const bas = document.getElementById('tezGuncTezBaslik');
+  if (bas) bas.innerHTML = tez
+    ? `${tez.ticker ? `<span style="color:#c2ad84;font-family:'JetBrains Mono',monospace;font-size:12px;margin-right:8px;">${_gEsc(tez.ticker)}</span>` : ''}${_gEsc(tez.baslik || '')}`
+    : '';
+
+  await tezGuncListeYukle();
+}
+
+async function tezGuncListeYukle() {
+  const el = document.getElementById('tezGuncListe');
+  if (!el || !_guncTezId) return;
+  el.innerHTML = 'Yükleniyor...';
+  try {
+    const r = await fetch('/api/tez-admin?entity=guncelleme&tez_id=' + encodeURIComponent(_guncTezId), {
+      headers: { Authorization: 'Bearer ' + _tezSecret }
+    });
+    const list = await r.json();
+    if (!Array.isArray(list)) throw new Error(list?.error || 'Liste alınamadı');
+
+    _guncMap = {};
+    list.forEach(g => { _guncMap[g.id] = g; });
+
+    if (!list.length) {
+      el.innerHTML = '<div style="color:#3a4150;font-size:12px;">Henüz güncelleme yok. Yeni bilanço, haber ya da tez revizyonu geldikçe buraya ekle.</div>';
+      return;
+    }
+
+    el.innerHTML = list.map(g => `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px;background:#13182a;border-radius:6px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.06);gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px;">
+            <span style="font-size:10px;color:#8a93a3;font-family:'JetBrains Mono',monospace;">${_gEsc(_gTarih(g.tarih))}</span>
+            <span style="font-size:9px;color:#8a93a3;border:1px solid rgba(255,255,255,0.12);padding:1px 6px;border-radius:3px;">${_gEsc(GUNC_ETIKET[g.tur] || GUNC_ETIKET.not)}</span>
+            ${g.sinyal ? `<span style="font-size:9px;color:#c2ad84;border:1px solid rgba(194,173,132,0.3);padding:1px 6px;border-radius:3px;">→ ${_gEsc(g.sinyal)}</span>` : ''}
+            ${g.fiyat != null ? `<span style="font-size:10px;color:#5d6675;font-family:'JetBrains Mono',monospace;">${_gEsc(g.fiyat)}</span>` : ''}
+            <span style="font-size:10px;color:${g.yayinda ? '#22c55e' : '#5d6675'};">${g.yayinda ? '● Yayında' : '○ Taslak'}</span>
+          </div>
+          <div style="font-size:13px;color:#ffffff;font-weight:500;word-break:break-word;">${_gEsc(g.baslik)}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="tezGuncFormAcId(${g.id})" style="background:rgba(194,173,132,0.1);border:1px solid rgba(194,173,132,0.2);color:#c2ad84;font-size:11px;padding:5px 12px;border-radius:4px;cursor:pointer;">✏</button>
+          <button onclick="tezGuncSil(${g.id})" style="background:none;border:1px solid rgba(168,116,106,0.3);color:#f05252;font-size:11px;padding:5px 10px;border-radius:4px;cursor:pointer;">✕</button>
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="color:#f05252;font-size:12px;">Hata: ' + _gEsc(e.message) + '</div>';
+  }
+}
+
+function tezGuncFormAcId(id) {
+  tezGuncFormAc(_guncMap[id] || null);
+}
+
+function tezGuncFormAc(g) {
+  const form = document.getElementById('tezGuncForm');
+  if (!form) return;
+  form.style.display = 'block';
+  document.getElementById('tezGuncFormBaslik').textContent = g ? 'GÜNCELLEMEYİ DÜZENLE' : 'YENİ GÜNCELLEME';
+  document.getElementById('tezGuncId').value      = g ? g.id : '';
+  document.getElementById('tezGuncTarih').value   = g && g.tarih ? g.tarih.split('T')[0] : new Date().toISOString().split('T')[0];
+  document.getElementById('tezGuncTur').value     = g ? (g.tur || 'not') : 'not';
+  document.getElementById('tezGuncSinyal').value  = g && g.sinyal ? g.sinyal : '';
+  document.getElementById('tezGuncFiyat').value   = g && g.fiyat != null ? g.fiyat : '';
+  document.getElementById('tezGuncBaslik').value  = g ? (g.baslik || '') : '';
+  document.getElementById('tezGuncIcerik').value  = g ? (g.icerik || '') : '';
+  document.getElementById('tezGuncYayinda').checked = g ? !!g.yayinda : true;
+  document.getElementById('tezGuncDurum').textContent = '';
+  form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function tezGuncFormKapat() {
+  const form = document.getElementById('tezGuncForm');
+  if (form) form.style.display = 'none';
+}
+
+async function tezGuncKaydet() {
+  if (!_guncTezId) return;
+  const id     = document.getElementById('tezGuncId').value;
+  const durum  = document.getElementById('tezGuncDurum');
+  const baslik = document.getElementById('tezGuncBaslik').value.trim();
+  if (!baslik) { showToast('Başlık zorunlu'); return; }
+
+  const tarihVal = document.getElementById('tezGuncTarih').value;
+  const fiyatVal = document.getElementById('tezGuncFiyat').value;
+
+  const body = {
+    tez_id:  parseInt(_guncTezId, 10),
+    baslik,
+    icerik:  document.getElementById('tezGuncIcerik').value || null,
+    tur:     document.getElementById('tezGuncTur').value || 'not',
+    sinyal:  document.getElementById('tezGuncSinyal').value || null,
+    fiyat:   fiyatVal !== '' ? parseFloat(fiyatVal) : null,
+    yayinda: document.getElementById('tezGuncYayinda').checked,
+    tarih:   tarihVal ? new Date(tarihVal + 'T12:00:00').toISOString() : new Date().toISOString(),
+  };
+
+  if (durum) durum.textContent = 'Kaydediliyor...';
+  try {
+    if (id) body.id = parseInt(id, 10);
+    const r = await fetch('/api/tez-admin?entity=guncelleme', {
+      method: id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + _tezSecret },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d?.error || 'Kayıt başarısız');
+    if (durum) durum.textContent = '';
+    showToast(id ? '✓ Güncelleme kaydedildi' : '✓ Güncelleme eklendi');
+    tezGuncFormKapat();
+    await tezGuncListeYukle();
+  } catch(e) {
+    if (durum) durum.textContent = '';
+    showToast('Hata: ' + e.message, 'error');
+  }
+}
+
+async function tezGuncSil(id) {
+  if (!id || !confirm('Bu güncelleme silinsin mi?')) return;
+  try {
+    await fetch('/api/tez-admin?entity=guncelleme', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + _tezSecret },
+      body: JSON.stringify({ id: parseInt(id, 10) })
+    });
+    showToast('Güncelleme silindi');
+    await tezGuncListeYukle();
+  } catch(e) {
+    showToast('Hata: ' + e.message, 'error');
   }
 }
