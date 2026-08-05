@@ -2038,6 +2038,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
   --anthracite2:#10151e;
   --portal-border:rgba(236,228,212,0.08);
   --portal-border-s:rgba(236,228,212,0.14);
+  --tzoTop:94px;   /* sticky sekme şeridinin üst boşluğu — JS ölçünce güncellenir */
 }
 
 /* Route view toggling */
@@ -2310,19 +2311,39 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .tzo-upd .pulse{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(194,173,132,.55);animation:tztPulse 2.4s infinite;}
 @keyframes tztPulse{0%{box-shadow:0 0 0 0 rgba(194,173,132,.5);}70%{box-shadow:0 0 0 6px rgba(194,173,132,0);}100%{box-shadow:0 0 0 0 rgba(194,173,132,0);}}
 
-/* Tez gövdesinin üstünde durur — okur önce güncel durumu görsün */
-.tzo-timeline{margin:0 0 34px;padding:20px 20px 22px;border:1px solid rgba(194,173,132,.22);border-radius:14px;background:linear-gradient(160deg,rgba(194,173,132,.055) 0%,rgba(0,0,0,0) 60%);scroll-margin-top:80px;}
-.tzt-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+/* ── SEKMELER: Güncellemeler | İlk Tez ──
+   Güncellemeler tez boyunda olabildiği için hepsi aynı anda açık durmuyor;
+   okur sekmeyle geçiyor, satırları tek tıkla açıp kapatıyor. */
+.tzo-tabs{display:flex;gap:6px;margin:0 0 22px;padding:5px;border:1px solid var(--portal-border);border-radius:12px;background:rgba(0,0,0,.25);position:sticky;top:var(--tzoTop,94px);z-index:40;backdrop-filter:blur(8px);scroll-margin-top:calc(var(--tzoTop,94px) + 10px);}
+.tzo-tab{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border:none;border-radius:8px;background:none;color:var(--cream2);font-family:var(--font-mono);font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;transition:background .2s,color .2s;}
+.tzo-tab:hover{color:var(--cream);}
+.tzo-tab.active{background:rgba(194,173,132,.14);color:var(--accent);box-shadow:inset 0 0 0 1px rgba(194,173,132,.28);}
+.tzo-tab-n{font-size:9px;padding:1px 6px;border-radius:10px;background:rgba(194,173,132,.18);color:var(--accent);}
+.tzo-tab.active .tzo-tab-n{background:rgba(194,173,132,.28);}
+.tzo-panel{display:none;}
+.tzo-panel.active{display:block;animation:tztAc .3s ease;}
+@keyframes tztAc{from{opacity:0;transform:translateY(-5px);}to{opacity:1;transform:none;}}
+
+/* Akordeon satırı — kapalıyken tek satır, açıkken tam içerik */
+.tzt-acc{border:1px solid var(--portal-border);border-radius:12px;background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);margin-bottom:10px;overflow:hidden;transition:border-color .2s;scroll-margin-top:calc(var(--tzoTop,94px) + 68px);}
+.tzt-acc:hover{border-color:rgba(194,173,132,.24);}
+.tzt-acc.son{border-color:rgba(194,173,132,.32);}
+.tzt-acc.open{border-color:rgba(194,173,132,.34);}
+.tzt-accbtn{display:block;width:100%;text-align:left;background:none;border:none;padding:14px 16px;cursor:pointer;color:inherit;font:inherit;}
+.tzt-accbtn:hover{background:rgba(194,173,132,.04);}
+.tzt-accttl{display:block;font-size:15px;font-weight:600;color:var(--cream);line-height:1.45;padding-right:26px;overflow-wrap:break-word;}
+.tzt-chev{position:absolute;right:16px;top:16px;color:var(--accent);font-size:12px;transition:transform .25s;opacity:.8;}
+.tzt-acc.open .tzt-chev{transform:rotate(180deg);}
+.tzt-accwrap{position:relative;}
+.tzt-accbody{display:none;padding:0 16px 18px;border-top:1px solid var(--portal-border);margin-top:2px;}
+.tzt-acc.open .tzt-accbody{display:block;animation:tztAc .3s ease;}
+.tzt-accbody .tzt-body{margin-top:14px;}
+.tzt-bos{font-size:13px;color:var(--cream2);opacity:.6;margin-top:14px;}
+
+/* Sekme başlığı üstündeki özet satırı */
+.tzt-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
 .tzt-kicker{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
 .tzt-live{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:tztPulse 2.4s infinite;}
-
-/* Katlanan eski güncellemeler */
-.tzt-gizli{display:none;}
-.tzt-gizli.acik{display:block;animation:tztAc .35s ease;}
-@keyframes tztAc{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
-.tzt-more{display:inline-flex;align-items:center;gap:7px;margin-top:2px;background:rgba(194,173,132,.08);border:1px solid rgba(194,173,132,.26);color:var(--accent);font-family:var(--font-mono);font-size:10px;letter-spacing:.8px;padding:7px 14px;border-radius:20px;cursor:pointer;transition:background .2s;}
-.tzt-more:hover{background:rgba(194,173,132,.16);}
-.tzt-more .chev{font-size:11px;line-height:1;}
 
 /* Featured kartın "GÜNCELLEME YAYINDA" varyantı */
 #featTez.guncel{border-color:rgba(194,173,132,.34);}
@@ -2388,11 +2409,13 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   .tzo-lede{font-size:14px;padding-left:12px;}
   .tzo-content th,.tzo-content td{padding:9px 11px;}
   .tzo-cover{max-height:220px;border-radius:10px;}
-  .tzo-timeline{margin-bottom:26px;padding:16px 14px 18px;border-radius:12px;}
   .tzo-govde-not{font-size:11.5px;margin-bottom:20px;}
-  .tzt-list{padding-left:20px;}
-  .tzt-dot{left:-20px;width:9px;height:9px;}
-  .tzt-card{padding:12px 13px;}
+  .tzo-tabs{margin-bottom:16px;padding:4px;gap:4px;}
+  .tzo-tab{padding:9px 8px;font-size:9.5px;letter-spacing:1px;}
+  .tzt-accbtn{padding:12px 13px;}
+  .tzt-accttl{font-size:14px;padding-right:22px;}
+  .tzt-accbody{padding:0 13px 15px;}
+  .tzt-chev{right:12px;top:14px;}
   .tzt-title{font-size:14px;}
   .tzt-body{font-size:13.5px;line-height:1.75;}
   .tzt-fiyat{margin-left:0;}
@@ -6133,57 +6156,104 @@ function garpAnalizAc(ticker) {
     if (!Number.isFinite(n)) return '';
     return n.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
   }
-  /* Tez gövdesinin ÜSTÜNDE durur: en yeni gelişme en üstte, geriye doğru.
-     İlk 2 açık gelir, gerisi katlanır — uzun geçmiş tezi aşağı itmesin. */
-  const TZT_ACIK = 2;
-  function guncCardHTML(g, enYeni){
+  /* Akordeon satırı: kapalıyken tek satır başlık, açıkken tam içerik.
+     Güncellemeler tez boyunda olabildiği için varsayılan olarak
+     yalnızca en yenisi açık gelir. */
+  function guncAccHTML(g, enYeni, i){
     const tur = turMap[g.tur] || turMap.not;
     const sg  = g.sinyal && sigMap[g.sinyal] ? sigMap[g.sinyal] : null;
     let body = g.icerik || '';
     if (body.includes('<')) body = body.replace(/\n\n/g,'').replace(/\n/g,'');
     else body = esc(body).replace(/\n/g,'<br>');
-    return `<div class="tzt-item${enYeni?' son':''}">
-      <span class="tzt-dot"></span>
-      <div class="tzt-card">
-        <div class="tzt-meta">
-          <span class="tzt-date">${esc(trDate(g.tarih))}</span>
-          <span class="tzt-tur ${tur[0]}">${tur[1]}</span>
-          ${sg ? `<span class="tzt-sig ${sg[0]}">→ ${sg[1]}</span>` : ''}
-          ${enYeni ? '<span class="tzt-guncel">GÜNCEL</span>' : ''}
-          ${g.fiyat != null ? `<span class="tzt-fiyat">${esc(fmtFiyat(g.fiyat))}</span>` : ''}
-        </div>
-        <div class="tzt-title">${esc(g.baslik||'')}</div>
-        ${body ? `<div class="tzt-body">${body}</div>` : ''}
+    return `<div class="tzt-acc${enYeni?' son open':''}" id="tztAcc${i}">
+      <div class="tzt-accwrap">
+        <button type="button" class="tzt-accbtn" onclick="window.__tezAccTogg(${i})" aria-expanded="${enYeni?'true':'false'}">
+          <span class="tzt-meta">
+            <span class="tzt-date">${esc(trDate(g.tarih))}</span>
+            <span class="tzt-tur ${tur[0]}">${tur[1]}</span>
+            ${sg ? `<span class="tzt-sig ${sg[0]}">→ ${sg[1]}</span>` : ''}
+            ${enYeni ? '<span class="tzt-guncel">GÜNCEL</span>' : ''}
+            ${g.fiyat != null ? `<span class="tzt-fiyat">${esc(fmtFiyat(g.fiyat))}</span>` : ''}
+          </span>
+          <span class="tzt-accttl">${esc(g.baslik||'')}</span>
+        </button>
+        <span class="tzt-chev">▾</span>
+      </div>
+      <div class="tzt-accbody">
+        ${body ? `<div class="tzt-body">${body}</div>` : '<div class="tzt-bos">Bu güncellemede ek açıklama yok.</div>'}
       </div>
     </div>`;
   }
-  function timelineHTML(list, ilkTarih){
-    if (!Array.isArray(list) || !list.length) return '';
-    const yeniden = list.slice().reverse();          // en yeni en üstte
-    const acik    = yeniden.slice(0, TZT_ACIK);
-    const gizli   = yeniden.slice(TZT_ACIK);
+
+  /* Sekmeli yapı: [Güncellemeler] [İlk Tez] — okur kaydırmakla uğraşmasın */
+  function tezPanelleriHTML(list, ilkTarih, icerik, govdeAd){
+    if (!Array.isArray(list) || !list.length){
+      return `<div class="tzo-content">${icerik}</div>`;
+    }
+    const yeniden = list.slice().reverse();   // en yeni en üstte
     const n = list.length;
-    return `<div class="tzo-timeline" id="tezSeyri">
-      <div class="tzt-head">
-        <span class="tzt-kicker"><span class="tzt-live"></span>Tezin Seyri</span>
-        <span class="tzt-sub">${n} güncelleme · ilk tez ${esc(ilkTarih||'')} · en yeni üstte</span>
+    return `<div class="tzo-tabs" id="tezSeyri">
+        <button type="button" class="tzo-tab active" onclick="window.__tezTab('guncel')" id="tezTabGuncel">
+          Güncellemeler <span class="tzo-tab-n">${n}</span>
+        </button>
+        <button type="button" class="tzo-tab" onclick="window.__tezTab('ilk')" id="tezTabIlk">${govdeAd}</button>
       </div>
-      <div class="tzt-list">
-        ${acik.map((g,i)=>guncCardHTML(g, i===0)).join('')}
-        ${gizli.length ? `<div id="tztGizli" class="tzt-gizli">${gizli.map(g=>guncCardHTML(g,false)).join('')}</div>
-        <button type="button" class="tzt-more" id="tztMoreBtn" onclick="window.__tezSeyriAc()">
-          <span class="chev">▾</span> ${gizli.length} daha eski güncellemeyi göster
-        </button>` : ''}
+      <div class="tzo-panel active" id="tezPanelGuncel">
+        <div class="tzt-head">
+          <span class="tzt-kicker"><span class="tzt-live"></span>Tezin Seyri</span>
+          <span class="tzt-sub">en yeni üstte · başlığa tıkla, açılsın</span>
+        </div>
+        ${yeniden.map((g,i)=>guncAccHTML(g, i===0, i)).join('')}
       </div>
-    </div>`;
+      <div class="tzo-panel" id="tezPanelIlk">
+        <p class="tzo-govde-not">Aşağıdaki metin ${esc(ilkTarih||'')} tarihinde yayınlandığı hâliyle duruyor; sonradan değiştirilmedi. Güncellemeler bu tezin üzerine eklendi.</p>
+        <div class="tzo-content">${icerik}</div>
+      </div>`;
   }
-  window.__tezSeyriAc = function(){
-    const box = document.getElementById('tztGizli');
-    const btn = document.getElementById('tztMoreBtn');
-    if (!box) return;
-    box.classList.add('acik');
-    if (btn) btn.remove();
+
+  window.__tezAccTogg = function(i){
+    const el = document.getElementById('tztAcc' + i);
+    if (!el) return;
+    const acildi = !el.classList.contains('open');
+    el.classList.toggle('open', acildi);
+    const btn = el.querySelector('.tzt-accbtn');
+    if (btn) btn.setAttribute('aria-expanded', acildi ? 'true' : 'false');
+    // Kapatınca satır ekranın dışında kalmasın
+    if (!acildi){
+      const r = el.getBoundingClientRect();
+      if (r.top < 0) el.scrollIntoView({ block:'start' });
+    }
   };
+
+  window.__tezTab = function(hangi){
+    const g = hangi === 'guncel';
+    const pg = document.getElementById('tezPanelGuncel');
+    const pi = document.getElementById('tezPanelIlk');
+    const tg = document.getElementById('tezTabGuncel');
+    const ti = document.getElementById('tezTabIlk');
+    if (!pg || !pi) return;
+    pg.classList.toggle('active', g);
+    pi.classList.toggle('active', !g);
+    if (tg) tg.classList.toggle('active', g);
+    if (ti) ti.classList.toggle('active', !g);
+    // Sekme değişince sekme şeridi görünür kalsın
+    const tabs = document.getElementById('tezSeyri');
+    if (tabs){
+      const r = tabs.getBoundingClientRect();
+      if (r.top < 0) tabs.scrollIntoView({ block:'start' });
+    }
+  };
+
+  /* Sticky sekme şeridi üstteki başlık barının altına otursun.
+     Bar gizliyken (başka route) yükseklik 0 ölçülür; o değeri yazarsak
+     şerit barın ARKASINA kayar — bu yüzden makul bir alt sınır koyuyoruz. */
+  function tzoTopHesapla(){
+    if (!document.body.classList.contains('route-tezoku')) return;
+    const bar = document.querySelector('#tezOkuRoot .pt-topbar');
+    const h = bar ? Math.round(bar.getBoundingClientRect().height) : 0;
+    document.documentElement.style.setProperty('--tzoTop', (h > 40 ? h : 94) + 'px');
+  }
+  window.addEventListener('resize', tzoTopHesapla);
   window.__tezSeyre = function(){
     const el = document.getElementById('tezSeyri');
     if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
@@ -6226,19 +6296,13 @@ function garpAnalizAc(ticker) {
         </div>
         <h1 class="tzo-title">${esc(tez.baslik)}</h1>
         ${tez.ozet ? `<p class="tzo-lede">${esc(tez.ozet)}</p>` : ''}
-        ${timelineHTML(guncellemeler, tarih)}
-        ${sonGunc ? `<div class="tzo-govde-head">
-          <span class="tzo-govde-cizgi"></span>
-          <span class="tzo-govde-et">${govdeAd}${tarih ? ` · ${esc(tarih)}` : ''}</span>
-          <span class="tzo-govde-cizgi"></span>
-        </div>
-        <p class="tzo-govde-not">Aşağıdaki metin ilk yayınlandığı hâliyle duruyor; sonradan değiştirilmedi. Yukarıdaki güncellemeler bu tezin üzerine eklendi.</p>` : ''}
-        <div class="tzo-content">${icerik}</div>
+        ${tezPanelleriHTML(guncellemeler, tarih, icerik, govdeAd)}
         <div class="tzo-note">Bu içerik araştırma ve bilgi amaçlıdır; yatırım tavsiyesi değildir. Tüm projeksiyonlar tahmin içermektedir.</div>
         <div class="tzo-ctas">
           <span class="tzo-back" data-route="${backRoute}" style="margin:0">← ${backLabel}</span>
           <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'de Analiz Et <span class="arr">→</span></a>
         </div>`;
+      tzoTopHesapla();   // sticky sekme şeridinin üst boşluğu
       // İçerikteki tabloları ferah, mobilde yatay kaydırılabilir sarmalayıcıya al
       art.querySelectorAll('.tzo-content table, .tzt-body table').forEach(tbl=>{
         if (tbl.parentElement.classList.contains('tzo-tbl-scroll')) return;
