@@ -2325,20 +2325,27 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 @keyframes tztAc{from{opacity:0;transform:translateY(-5px);}to{opacity:1;transform:none;}}
 
 /* Akordeon satırı — kapalıyken tek satır, açıkken tam içerik */
-.tzt-acc{border:1px solid var(--portal-border);border-radius:12px;background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);margin-bottom:10px;overflow:hidden;transition:border-color .2s;scroll-margin-top:calc(var(--tzoTop,94px) + 68px);}
+.tzt-acc{border:1px solid var(--portal-border);border-radius:12px;background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);margin-bottom:10px;overflow:hidden;transition:border-color .2s,background .2s;scroll-margin-top:calc(var(--tzoTop,94px) + 68px);}
 .tzt-acc:hover{border-color:rgba(194,173,132,.24);}
 .tzt-acc.son{border-color:rgba(194,173,132,.32);}
-.tzt-acc.open{border-color:rgba(194,173,132,.34);}
 .tzt-accbtn{display:block;width:100%;text-align:left;background:none;border:none;padding:14px 16px;cursor:pointer;color:inherit;font:inherit;}
 .tzt-accbtn:hover{background:rgba(194,173,132,.04);}
 .tzt-accttl{display:block;font-size:15px;font-weight:600;color:var(--cream);line-height:1.45;padding-right:26px;overflow-wrap:break-word;}
 .tzt-chev{position:absolute;right:16px;top:16px;color:var(--accent);font-size:12px;transition:transform .25s;opacity:.8;}
 .tzt-acc.open .tzt-chev{transform:rotate(180deg);}
 .tzt-accwrap{position:relative;}
-.tzt-accbody{display:none;padding:0 16px 18px;border-top:1px solid var(--portal-border);margin-top:2px;}
+.tzt-accbody{display:none;}
 .tzt-acc.open .tzt-accbody{display:block;animation:tztAc .3s ease;}
-.tzt-accbody .tzt-body{margin-top:14px;}
-.tzt-bos{font-size:13px;color:var(--cream2);opacity:.6;margin-top:14px;}
+.tzt-bos{font-size:13px;color:var(--cream2);opacity:.6;padding:0 0 18px;}
+
+/* Açık satırda kart çerçevesi kalkar, içerik tam genişliğe yayılır —
+   güncelleme metinleri kendi tasarımını taşıdığı için çizgi/kutu araya girmesin */
+.tzt-acc.open{border:none;background:none;border-radius:0;overflow:visible;margin-bottom:26px;}
+.tzt-acc.open:hover{border:none;}
+.tzt-acc.open .tzt-accbtn{padding:14px 26px 14px 0;border-bottom:1px solid var(--portal-border);}
+.tzt-acc.open .tzt-accbtn:hover{background:none;}
+.tzt-acc.open .tzt-chev{right:0;top:16px;}
+.tzt-acc.open .tzt-body{margin-top:20px;}
 
 /* Sekme başlığı üstündeki özet satırı */
 .tzt-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
@@ -2414,8 +2421,10 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   .tzo-tab{padding:9px 8px;font-size:9.5px;letter-spacing:1px;}
   .tzt-accbtn{padding:12px 13px;}
   .tzt-accttl{font-size:14px;padding-right:22px;}
-  .tzt-accbody{padding:0 13px 15px;}
   .tzt-chev{right:12px;top:14px;}
+  .tzt-acc.open{margin-bottom:20px;}
+  .tzt-acc.open .tzt-accbtn{padding:12px 22px 12px 0;}
+  .tzt-acc.open .tzt-chev{right:0;top:14px;}
   .tzt-title{font-size:14px;}
   .tzt-body{font-size:13.5px;line-height:1.75;}
   .tzt-fiyat{margin-left:0;}
