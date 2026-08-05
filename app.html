@@ -2324,6 +2324,26 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .tzt-more:hover{background:rgba(194,173,132,.16);}
 .tzt-more .chev{font-size:11px;line-height:1;}
 
+/* Featured kartın "GÜNCELLEME YAYINDA" varyantı */
+#featTez.guncel{border-color:rgba(194,173,132,.34);}
+#featTez.guncel .feat-kicker{color:var(--accent);}
+#featTez.guncel .feat-kicker .dot{background:var(--accent);}
+.feat-parent{font-size:13px;line-height:1.6;color:var(--cream2);opacity:.8;margin-top:10px;}
+.feat-parent b{color:var(--cream);font-weight:500;}
+.feat-updtag{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--accent);border:1px solid rgba(194,173,132,.3);background:rgba(194,173,132,.09);padding:2px 8px;border-radius:5px;margin-left:auto;}
+
+/* Sağ alt güncelleme bildirimi */
+.upd-bar{position:fixed;right:18px;bottom:18px;z-index:9000;display:flex;align-items:center;gap:12px;max-width:330px;padding:12px 14px;border:1px solid rgba(194,173,132,.3);border-radius:14px;background:rgba(14,18,26,.94);backdrop-filter:blur(10px);box-shadow:0 18px 44px rgba(0,0,0,.5);cursor:pointer;transform:translateY(130%);opacity:0;transition:transform .45s cubic-bezier(.2,.8,.3,1),opacity .45s;}
+.upd-bar.acik{transform:none;opacity:1;}
+.upd-bar:hover{border-color:rgba(194,173,132,.5);}
+.upd-bar .upd-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:tztPulse 2.4s infinite;}
+.upd-txt{min-width:0;flex:1;}
+.upd-kick{font-family:var(--font-mono);font-size:8.5px;letter-spacing:1.4px;color:var(--accent);margin-bottom:3px;}
+.upd-title{font-size:12.5px;line-height:1.45;color:var(--cream);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.upd-x{background:none;border:none;color:var(--cream2);opacity:.7;font-size:17px;line-height:1;cursor:pointer;padding:0 2px;flex-shrink:0;align-self:flex-start;}
+.upd-x:hover{opacity:1;}
+@media(max-width:520px){.upd-bar{right:12px;left:12px;bottom:12px;max-width:none;}}
+
 /* "İlk Tez" ayracı — gövdenin nerede başladığını netleştirir */
 .tzo-govde-head{display:flex;align-items:center;gap:14px;margin:0 0 10px;}
 .tzo-govde-cizgi{flex:1;height:1px;background:linear-gradient(90deg,rgba(236,228,212,0),rgba(236,228,212,.16),rgba(236,228,212,0));}
@@ -6237,8 +6257,69 @@ function garpAnalizAc(ticker) {
   async function getTezler(){
     if (_tezCache) return _tezCache;
     const r = await fetch('/api/tez-admin?pub=1');
-    _tezCache = await r.json();
+    const d = await r.json();
+    // Güncelleme alan tez başa gelsin — sıra "son hareket"e göre
+    _tezCache = Array.isArray(d) ? hareketSirala(d) : d;
     return _tezCache;
+  }
+
+  /* Tezin son hareketi: güncelleme varsa onun tarihi, yoksa yayın tarihi.
+     ISO tarih string'leri sözlük sırasında da doğru karşılaştırılır. */
+  function sonHareket(t){
+    const g = t.son_guncelleme;
+    return (g && g > t.olusturma) ? g : (t.olusturma || '');
+  }
+  function guncelMi(t){ return !!(t.son_guncelleme && t.son_guncelleme > t.olusturma); }
+  function hareketSirala(list){
+    return list.slice().sort((a,b)=> String(sonHareket(b)).localeCompare(String(sonHareket(a))));
+  }
+
+  /* ── Sağ alt güncelleme bildirimi ──
+     Son 7 gün içinde yayınlanmış bir güncelleme varsa çıkar.
+     Kullanıcı kapatınca o güncelleme için bir daha gösterilmez. */
+  const UPD_BAR_GUN = 7;
+  let _updBarGosterildi = false;
+  function guncellemeBariniGoster(list){
+    try{
+      if (_updBarGosterildi || !Array.isArray(list) || !list.length) return;
+      const guncel = list.filter(guncelMi);
+      if (!guncel.length) return;
+
+      const t = guncel.slice().sort((a,b)=> String(b.son_guncelleme).localeCompare(String(a.son_guncelleme)))[0];
+      const yas = (Date.now() - new Date(t.son_guncelleme).getTime()) / 86400000;
+      if (!(yas >= 0) || yas > UPD_BAR_GUN) return;
+
+      const anahtar = 'updBar:' + t.id + ':' + t.son_guncelleme;
+      if (localStorage.getItem(anahtar)) return;
+      _updBarGosterildi = true;
+
+      const bilgi = t.son_guncelleme_bilgi || {};
+      const bar = document.createElement('div');
+      bar.className = 'upd-bar';
+      bar.innerHTML =
+        '<span class="upd-dot"></span>' +
+        '<div class="upd-txt">' +
+          `<div class="upd-kick">GÜNCELLEME YAYINDA${t.ticker ? ' · ' + esc(t.ticker) : ''}</div>` +
+          `<div class="upd-title">${esc(bilgi.baslik || t.baslik || '')}</div>` +
+        '</div>' +
+        '<button class="upd-x" aria-label="Kapat">&times;</button>';
+
+      const kapat = () => {
+        try{ localStorage.setItem(anahtar,'1'); }catch(_){}
+        bar.classList.remove('acik');
+        setTimeout(()=>bar.remove(), 500);
+      };
+      bar.querySelector('.upd-x').addEventListener('click', e => { e.stopPropagation(); kapat(); });
+      bar.addEventListener('click', () => {
+        try{ localStorage.setItem(anahtar,'1'); }catch(_){}
+        bar.remove();
+        openTez(t.id);
+        setTimeout(()=>{ const el = document.getElementById('tezSeyri'); if (el) el.scrollIntoView({behavior:'smooth',block:'start'}); }, 700);
+      });
+
+      document.body.appendChild(bar);
+      setTimeout(()=>bar.classList.add('acik'), 2500);
+    }catch(_){ /* bildirim kritik degil */ }
   }
   /* Kartta "N güncelleme" rozeti — pozisyonun takip edildiğini gösterir */
   function updChipHTML(t){
@@ -6295,6 +6376,7 @@ function garpAnalizAc(ticker) {
     const row  = document.getElementById('tezGridPortal');
     try{
       const all = await getTezler();
+      guncellemeBariniGoster(Array.isArray(all)?all:[]);
       const list = (Array.isArray(all)?all:[]).filter(t=>(t.kategori||'tez')==='tez');
       if (!Array.isArray(list) || !list.length){
         if (host){ host.classList.remove('clickable'); host.innerHTML = '<div class="feat-inner"><div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div><div class="feat-title">İlk tez yakında geliyor</div><div class="feat-summary">Yeni araştırma tezleri burada yayınlanacak.</div></div>'; }
@@ -6368,18 +6450,27 @@ function garpAnalizAc(ticker) {
     const host = document.getElementById('featTez');
     if (!host || !t) return;
     const sig = sigMap[t.sinyal] || sigMap.NOTR;
+    // Güncelleme almış tez başa geldiyse kart "GÜNCELLEME YAYINDA" formatına döner
+    const g      = guncelMi(t) ? (t.son_guncelleme_bilgi || {}) : null;
+    const kapak  = (g && g.gorsel) ? g.gorsel : t.kapak_gorseli;
+    const baslik = (g && g.baslik) ? g.baslik : (t.baslik || '');
+    host.classList.toggle('guncel', !!g);
     host.innerHTML =
-      (t.kapak_gorseli ? `<div class="feat-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : '') +
+      (kapak ? `<div class="feat-cover"><img src="${esc(kapak)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : '') +
       '<div class="feat-inner">' +
-        '<div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div>' +
+        '<div class="feat-kicker"><span class="dot"></span>' + (g ? 'GÜNCELLEME YAYINDA' : 'HAFTANIN SEÇİMİ') +
+          (g ? `<span class="feat-updtag">${esc(trDate(t.son_guncelleme))}</span>` : '') +
+        '</div>' +
         '<div class="feat-meta">' +
           (t.ticker ? `<span class="feat-ticker">${esc(t.ticker)}</span>` : '') +
           `<span class="feat-sig ${sig[0]}">${sig[1]}</span>` +
           (t.olusturma ? `<span class="feat-date">${esc(trDate(t.olusturma))}</span>` : '') +
         '</div>' +
-        `<div class="feat-title">${esc(t.baslik||'')}</div>` +
-        (t.ozet ? `<div class="feat-summary">${esc(t.ozet)}</div>` : '') +
-        '<div class="feat-cta">Tezi Oku <span>→</span></div>' +
+        `<div class="feat-title">${esc(baslik)}</div>` +
+        (g
+          ? `<div class="feat-parent"><b>${esc(t.baslik||'')}</b> tezine eklendi${t.guncelleme_sayisi > 1 ? ` · toplam ${t.guncelleme_sayisi} güncelleme` : ''}</div>`
+          : (t.ozet ? `<div class="feat-summary">${esc(t.ozet)}</div>` : '')) +
+        '<div class="feat-cta">' + (g ? 'Güncellemeyi Oku' : 'Tezi Oku') + ' <span>→</span></div>' +
       '</div>';
     host.onclick = function(){ openTez(t.id); };
   }

@@ -379,6 +379,21 @@ async function openTezEditor() {
             <textarea id="tezGuncIcerik" rows="6" style="width:100%;box-sizing:border-box;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:10px 12px;border-radius:6px;font-size:12px;resize:vertical;font-family:'JetBrains Mono',monospace;line-height:1.7;white-space:pre-wrap;word-break:break-word;" placeholder="Gelişmenin teze etkisi..."></textarea>
           </div>
 
+          <div style="margin-bottom:12px;">
+            <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">GÜNCELLEME GÖRSELİ</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="file" id="tezGuncGorselFile" accept="image/*" style="display:none;" onchange="tezGuncGorselOnizle(this)"/>
+              <button onclick="document.getElementById('tezGuncGorselFile').click()" style="background:rgba(194,173,132,0.1);border:1px solid rgba(194,173,132,0.3);color:#c2ad84;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;">📁 Görsel Seç</button>
+              <span id="tezGuncGorselDurum" style="font-size:11px;color:#5d6675;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Henüz seçilmedi</span>
+            </div>
+            <div id="tezGuncGorselWrap" style="margin-top:8px;display:none;">
+              <img id="tezGuncGorselPreview" style="height:60px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);object-fit:cover;"/>
+              <button onclick="tezGuncGorselTemizle()" style="background:none;border:none;color:#f05252;cursor:pointer;font-size:11px;margin-left:8px;">✕ Kaldır</button>
+            </div>
+            <input type="hidden" id="tezGuncGorselMevcut"/>
+            <div style="font-size:9px;color:#3a4150;margin-top:5px;">Ana sayfadaki "GÜNCELLEME YAYINDA" kartı bu görseli kullanır. Boş bırakırsan tezin kapak görseli kullanılır. Kapak görseliyle aynı oran (16:6) iyi durur.</div>
+          </div>
+
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
             <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
               <input type="checkbox" id="tezGuncYayinda" checked style="width:14px;height:14px;"/>
@@ -758,6 +773,7 @@ async function tezGuncListeYukle() {
             <span style="font-size:9px;color:#8a93a3;border:1px solid rgba(255,255,255,0.12);padding:1px 6px;border-radius:3px;">${_gEsc(GUNC_ETIKET[g.tur] || GUNC_ETIKET.not)}</span>
             ${g.sinyal ? `<span style="font-size:9px;color:#c2ad84;border:1px solid rgba(194,173,132,0.3);padding:1px 6px;border-radius:3px;">→ ${_gEsc(g.sinyal)}</span>` : ''}
             ${g.fiyat != null ? `<span style="font-size:10px;color:#5d6675;font-family:'JetBrains Mono',monospace;">${_gEsc(g.fiyat)}</span>` : ''}
+            ${g.gorsel ? '<span title="Görseli var" style="font-size:10px;">🖼</span>' : ''}
             <span style="font-size:10px;color:${g.yayinda ? '#22c55e' : '#5d6675'};">${g.yayinda ? '● Yayında' : '○ Taslak'}</span>
           </div>
           <div style="font-size:13px;color:#ffffff;font-weight:500;word-break:break-word;">${_gEsc(g.baslik)}</div>
@@ -776,6 +792,51 @@ function tezGuncFormAcId(id) {
   tezGuncFormAc(_guncMap[id] || null);
 }
 
+// ── Güncelleme görseli: önizleme / temizle / upload ──
+function tezGuncGorselOnizle(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const durum = document.getElementById('tezGuncGorselDurum');
+  const wrap  = document.getElementById('tezGuncGorselWrap');
+  const img   = document.getElementById('tezGuncGorselPreview');
+  durum.textContent = file.name;
+  durum.style.color = '#22c55e';
+  const reader = new FileReader();
+  reader.onload = e => { img.src = e.target.result; wrap.style.display = 'block'; };
+  reader.readAsDataURL(file);
+}
+
+function tezGuncGorselTemizle() {
+  document.getElementById('tezGuncGorselFile').value = '';
+  const durum = document.getElementById('tezGuncGorselDurum');
+  durum.textContent = 'Henüz seçilmedi';
+  durum.style.color = '#5d6675';
+  document.getElementById('tezGuncGorselWrap').style.display = 'none';
+  document.getElementById('tezGuncGorselMevcut').value = '';
+}
+
+// Tez kapağıyla aynı ucu kullanır — /api/tez-admin?action=upload_image
+async function tezGuncGorselUpload() {
+  const input = document.getElementById('tezGuncGorselFile');
+  const file  = input?.files[0];
+  if (!file) return null;
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async e => {
+      try {
+        const r = await fetch('/api/tez-admin?action=upload_image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + _tezSecret },
+          body: JSON.stringify({ filename: 'guncelleme-' + file.name, base64: e.target.result })
+        });
+        const d = await r.json();
+        if (d.url) resolve(d.url); else reject(new Error(d.error || 'Upload başarısız'));
+      } catch(err) { reject(err); }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function tezGuncFormAc(g) {
   const form = document.getElementById('tezGuncForm');
   if (!form) return;
@@ -790,6 +851,25 @@ function tezGuncFormAc(g) {
   document.getElementById('tezGuncIcerik').value  = g ? (g.icerik || '') : '';
   document.getElementById('tezGuncYayinda').checked = g ? !!g.yayinda : true;
   document.getElementById('tezGuncDurum').textContent = '';
+
+  // Görsel alanını doldur / sıfırla
+  const gFile  = document.getElementById('tezGuncGorselFile');
+  const gDurum = document.getElementById('tezGuncGorselDurum');
+  const gWrap  = document.getElementById('tezGuncGorselWrap');
+  const gImg   = document.getElementById('tezGuncGorselPreview');
+  const gMev   = document.getElementById('tezGuncGorselMevcut');
+  if (gFile) gFile.value = '';
+  if (g && g.gorsel) {
+    if (gMev)   gMev.value = g.gorsel;
+    if (gImg)   gImg.src = g.gorsel;
+    if (gWrap)  gWrap.style.display = 'block';
+    if (gDurum) { gDurum.textContent = 'Mevcut görsel'; gDurum.style.color = '#22c55e'; }
+  } else {
+    if (gMev)   gMev.value = '';
+    if (gWrap)  gWrap.style.display = 'none';
+    if (gDurum) { gDurum.textContent = 'Henüz seçilmedi'; gDurum.style.color = '#5d6675'; }
+  }
+
   form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
@@ -808,10 +888,24 @@ async function tezGuncKaydet() {
   const tarihVal = document.getElementById('tezGuncTarih').value;
   const fiyatVal = document.getElementById('tezGuncFiyat').value;
 
+  // Yeni görsel seçildiyse önce yükle
+  let gorselUrl = document.getElementById('tezGuncGorselMevcut')?.value || null;
+  if (document.getElementById('tezGuncGorselFile')?.files[0]) {
+    if (durum) durum.textContent = 'Görsel yükleniyor...';
+    try {
+      gorselUrl = await tezGuncGorselUpload();
+    } catch(e) {
+      if (durum) durum.textContent = '';
+      showToast('Görsel yüklenemedi: ' + e.message, 'error');
+      return;
+    }
+  }
+
   const body = {
     tez_id:  parseInt(_guncTezId, 10),
     baslik,
     icerik:  document.getElementById('tezGuncIcerik').value || null,
+    gorsel:  gorselUrl || null,
     tur:     document.getElementById('tezGuncTur').value || 'not',
     sinyal:  document.getElementById('tezGuncSinyal').value || null,
     fiyat:   fiyatVal !== '' ? parseFloat(fiyatVal) : null,

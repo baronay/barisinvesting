@@ -85,10 +85,10 @@ export default async function handler(req, res) {
     // Kartlarda "N guncelleme" rozeti icin ozet bilgi — tek ek sorgu, govde cekilmez
     if (Array.isArray(list) && list.length) {
       try {
-        const gr = await fetch(
-          `${SUPABASE_URL}/rest/v1/tez_guncellemeler?yayinda=eq.true&select=tez_id,tarih&order=tarih.desc`,
-          { headers }
-        );
+        const GU = `${SUPABASE_URL}/rest/v1/tez_guncellemeler?yayinda=eq.true&order=tarih.desc&select=`;
+        let gr = await fetch(GU + 'tez_id,tarih,baslik,tur,gorsel,sinyal', { headers });
+        // gorsel sutunu henuz eklenmediyse rozetler tamamen kaybolmasin
+        if (!gr.ok) gr = await fetch(GU + 'tez_id,tarih,baslik,tur,sinyal', { headers });
         const gs = await gr.json();
         if (Array.isArray(gs)) {
           const byTez = {};
@@ -96,12 +96,19 @@ export default async function handler(req, res) {
             const k = g.tez_id;
             if (!byTez[k]) byTez[k] = { n: 0, son: null };
             byTez[k].n++;
-            if (!byTez[k].son || g.tarih > byTez[k].son) byTez[k].son = g.tarih;
+            // order=tarih.desc geldigi icin ilk gorulen en yenisi
+            if (!byTez[k].son || g.tarih > byTez[k].son.tarih) byTez[k].son = g;
           }
           for (const t of list) {
             const s = byTez[t.id];
             t.guncelleme_sayisi = s ? s.n : 0;
-            t.son_guncelleme    = s ? s.son : null;
+            t.son_guncelleme    = s ? s.son.tarih : null;
+            t.son_guncelleme_bilgi = s ? {
+              baslik: s.son.baslik,
+              tur:    s.son.tur,
+              gorsel: s.son.gorsel || null,
+              sinyal: s.son.sinyal || null,
+            } : null;
           }
         }
       } catch (_) { /* guncelleme tablosu yoksa liste yine calissin */ }
@@ -134,7 +141,12 @@ export default async function handler(req, res) {
       if (!body.tez_id)  return res.status(400).json({ error: 'tez_id zorunlu' });
       if (!body.baslik)  return res.status(400).json({ error: 'baslik zorunlu' });
       body.olusturma = new Date().toISOString();
-      const r = await fetch(GT, { method: 'POST', headers, body: JSON.stringify(body) });
+      let r = await fetch(GT, { method: 'POST', headers, body: JSON.stringify(body) });
+      // gorsel sutunu henuz eklenmediyse kayit tamamen kirilmasin — o alan olmadan tekrar dene
+      if (!r.ok && 'gorsel' in body) {
+        const { gorsel, ...gorselsiz } = body;
+        r = await fetch(GT, { method: 'POST', headers, body: JSON.stringify(gorselsiz) });
+      }
       const data = await r.json();
       if (!r.ok) return res.status(r.status).json({ error: 'kayit basarisiz', detail: data });
       await syncTezSinyal(headers, body);
@@ -146,7 +158,11 @@ export default async function handler(req, res) {
       if (!gid) return res.status(400).json({ error: 'id gerekli' });
       const body = normalizeGuncelleme(req.body || {});
       delete body.id;
-      const r = await fetch(`${GT}?id=eq.${gid}`, { method: 'PATCH', headers, body: JSON.stringify(body) });
+      let r = await fetch(`${GT}?id=eq.${gid}`, { method: 'PATCH', headers, body: JSON.stringify(body) });
+      if (!r.ok && 'gorsel' in body) {
+        const { gorsel, ...gorselsiz } = body;
+        r = await fetch(`${GT}?id=eq.${gid}`, { method: 'PATCH', headers, body: JSON.stringify(gorselsiz) });
+      }
       const data = await r.json();
       if (!r.ok) return res.status(r.status).json({ error: 'guncelleme basarisiz', detail: data });
       await syncTezSinyal(headers, body);
@@ -289,6 +305,7 @@ function normalizeGuncelleme(b) {
   if (b.tez_id != null) out.tez_id = parseInt(String(b.tez_id).replace(/[^0-9]/g, ''), 10) || null;
   if (b.baslik  != null) out.baslik  = String(b.baslik).slice(0, 300);
   if (b.icerik  != null) out.icerik  = b.icerik ? String(b.icerik) : null;
+  if (b.gorsel  !== undefined) out.gorsel = b.gorsel ? String(b.gorsel).slice(0, 500) : null;
   if (b.tur     != null) out.tur     = GUNC_TURLER.includes(b.tur) ? b.tur : 'not';
   if (b.sinyal  !== undefined) out.sinyal = SINYALLER.includes(b.sinyal) ? b.sinyal : null;
   if (b.fiyat   !== undefined) {
