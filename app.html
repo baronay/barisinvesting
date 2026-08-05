@@ -2310,9 +2310,25 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .tzo-upd .pulse{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(194,173,132,.55);animation:tztPulse 2.4s infinite;}
 @keyframes tztPulse{0%{box-shadow:0 0 0 0 rgba(194,173,132,.5);}70%{box-shadow:0 0 0 6px rgba(194,173,132,0);}100%{box-shadow:0 0 0 0 rgba(194,173,132,0);}}
 
-.tzo-timeline{margin-top:44px;padding-top:26px;border-top:1px solid var(--portal-border);scroll-margin-top:80px;}
-.tzt-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:22px;}
-.tzt-kicker{font-family:var(--font-mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
+/* Tez gövdesinin üstünde durur — okur önce güncel durumu görsün */
+.tzo-timeline{margin:0 0 34px;padding:20px 20px 22px;border:1px solid rgba(194,173,132,.22);border-radius:14px;background:linear-gradient(160deg,rgba(194,173,132,.055) 0%,rgba(0,0,0,0) 60%);scroll-margin-top:80px;}
+.tzt-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+.tzt-kicker{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
+.tzt-live{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:tztPulse 2.4s infinite;}
+
+/* Katlanan eski güncellemeler */
+.tzt-gizli{display:none;}
+.tzt-gizli.acik{display:block;animation:tztAc .35s ease;}
+@keyframes tztAc{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+.tzt-more{display:inline-flex;align-items:center;gap:7px;margin-top:2px;background:rgba(194,173,132,.08);border:1px solid rgba(194,173,132,.26);color:var(--accent);font-family:var(--font-mono);font-size:10px;letter-spacing:.8px;padding:7px 14px;border-radius:20px;cursor:pointer;transition:background .2s;}
+.tzt-more:hover{background:rgba(194,173,132,.16);}
+.tzt-more .chev{font-size:11px;line-height:1;}
+
+/* "İlk Tez" ayracı — gövdenin nerede başladığını netleştirir */
+.tzo-govde-head{display:flex;align-items:center;gap:14px;margin:0 0 10px;}
+.tzo-govde-cizgi{flex:1;height:1px;background:linear-gradient(90deg,rgba(236,228,212,0),rgba(236,228,212,.16),rgba(236,228,212,0));}
+.tzo-govde-et{font-family:var(--font-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--cream2);opacity:.75;white-space:nowrap;}
+.tzo-govde-not{font-size:12px;line-height:1.7;color:var(--cream2);opacity:.6;text-align:center;margin:0 0 24px;}
 .tzt-sub{font-size:12px;color:var(--cream2);opacity:.7;}
 .tzt-list{position:relative;padding-left:26px;}
 .tzt-list:before{content:'';position:absolute;left:5px;top:6px;bottom:6px;width:1px;background:linear-gradient(180deg,rgba(194,173,132,.35),rgba(194,173,132,.08));}
@@ -2352,7 +2368,8 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   .tzo-lede{font-size:14px;padding-left:12px;}
   .tzo-content th,.tzo-content td{padding:9px 11px;}
   .tzo-cover{max-height:220px;border-radius:10px;}
-  .tzo-timeline{margin-top:34px;}
+  .tzo-timeline{margin-bottom:26px;padding:16px 14px 18px;border-radius:12px;}
+  .tzo-govde-not{font-size:11.5px;margin-bottom:20px;}
   .tzt-list{padding-left:20px;}
   .tzt-dot{left:-20px;width:9px;height:9px;}
   .tzt-card{padding:12px 13px;}
@@ -6096,39 +6113,57 @@ function garpAnalizAc(ticker) {
     if (!Number.isFinite(n)) return '';
     return n.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
   }
+  /* Tez gövdesinin ÜSTÜNDE durur: en yeni gelişme en üstte, geriye doğru.
+     İlk 2 açık gelir, gerisi katlanır — uzun geçmiş tezi aşağı itmesin. */
+  const TZT_ACIK = 2;
+  function guncCardHTML(g, enYeni){
+    const tur = turMap[g.tur] || turMap.not;
+    const sg  = g.sinyal && sigMap[g.sinyal] ? sigMap[g.sinyal] : null;
+    let body = g.icerik || '';
+    if (body.includes('<')) body = body.replace(/\n\n/g,'').replace(/\n/g,'');
+    else body = esc(body).replace(/\n/g,'<br>');
+    return `<div class="tzt-item${enYeni?' son':''}">
+      <span class="tzt-dot"></span>
+      <div class="tzt-card">
+        <div class="tzt-meta">
+          <span class="tzt-date">${esc(trDate(g.tarih))}</span>
+          <span class="tzt-tur ${tur[0]}">${tur[1]}</span>
+          ${sg ? `<span class="tzt-sig ${sg[0]}">→ ${sg[1]}</span>` : ''}
+          ${enYeni ? '<span class="tzt-guncel">GÜNCEL</span>' : ''}
+          ${g.fiyat != null ? `<span class="tzt-fiyat">${esc(fmtFiyat(g.fiyat))}</span>` : ''}
+        </div>
+        <div class="tzt-title">${esc(g.baslik||'')}</div>
+        ${body ? `<div class="tzt-body">${body}</div>` : ''}
+      </div>
+    </div>`;
+  }
   function timelineHTML(list, ilkTarih){
     if (!Array.isArray(list) || !list.length) return '';
-    const items = list.map((g,i)=>{
-      const son  = i === list.length - 1;
-      const tur  = turMap[g.tur] || turMap.not;
-      const sg   = g.sinyal && sigMap[g.sinyal] ? sigMap[g.sinyal] : null;
-      let body = g.icerik || '';
-      if (body.includes('<')) body = body.replace(/\n\n/g,'').replace(/\n/g,'');
-      else body = esc(body).replace(/\n/g,'<br>');
-      return `<div class="tzt-item${son?' son':''}">
-        <span class="tzt-dot"></span>
-        <div class="tzt-card">
-          <div class="tzt-meta">
-            <span class="tzt-date">${esc(trDate(g.tarih))}</span>
-            <span class="tzt-tur ${tur[0]}">${tur[1]}</span>
-            ${sg ? `<span class="tzt-sig ${sg[0]}">→ ${sg[1]}</span>` : ''}
-            ${son ? '<span class="tzt-guncel">GÜNCEL</span>' : ''}
-            ${g.fiyat != null ? `<span class="tzt-fiyat">${esc(fmtFiyat(g.fiyat))}</span>` : ''}
-          </div>
-          <div class="tzt-title">${esc(g.baslik||'')}</div>
-          ${body ? `<div class="tzt-body">${body}</div>` : ''}
-        </div>
-      </div>`;
-    }).join('');
+    const yeniden = list.slice().reverse();          // en yeni en üstte
+    const acik    = yeniden.slice(0, TZT_ACIK);
+    const gizli   = yeniden.slice(TZT_ACIK);
     const n = list.length;
     return `<div class="tzo-timeline" id="tezSeyri">
       <div class="tzt-head">
-        <span class="tzt-kicker">Tezin Seyri</span>
-        <span class="tzt-sub">${n} güncelleme${ilkTarih ? ` · ilk yayın ${esc(ilkTarih)}` : ''}</span>
+        <span class="tzt-kicker"><span class="tzt-live"></span>Tezin Seyri</span>
+        <span class="tzt-sub">${n} güncelleme · ilk tez ${esc(ilkTarih||'')} · en yeni üstte</span>
       </div>
-      <div class="tzt-list">${items}</div>
+      <div class="tzt-list">
+        ${acik.map((g,i)=>guncCardHTML(g, i===0)).join('')}
+        ${gizli.length ? `<div id="tztGizli" class="tzt-gizli">${gizli.map(g=>guncCardHTML(g,false)).join('')}</div>
+        <button type="button" class="tzt-more" id="tztMoreBtn" onclick="window.__tezSeyriAc()">
+          <span class="chev">▾</span> ${gizli.length} daha eski güncellemeyi göster
+        </button>` : ''}
+      </div>
     </div>`;
   }
+  window.__tezSeyriAc = function(){
+    const box = document.getElementById('tztGizli');
+    const btn = document.getElementById('tztMoreBtn');
+    if (!box) return;
+    box.classList.add('acik');
+    if (btn) btn.remove();
+  };
   window.__tezSeyre = function(){
     const el = document.getElementById('tezSeyri');
     if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
@@ -6157,6 +6192,7 @@ function garpAnalizAc(ticker) {
       const tarih = trDate(tez.olusturma);
       const guncellemeler = Array.isArray(tez.guncellemeler) ? tez.guncellemeler : [];
       const sonGunc = guncellemeler.length ? guncellemeler[guncellemeler.length - 1] : null;
+      const govdeAd = kat==='arastirma' ? 'İlk Araştırma' : 'İlk Tez';
       document.title = tez.baslik + ' — Barış Investing';
       art.innerHTML = `
         <span class="tzo-back" data-route="${backRoute}">← ${backLabel}</span>
@@ -6166,12 +6202,18 @@ function garpAnalizAc(ticker) {
           ${kat==='arastirma' ? '<span class="ptz-cat">Araştırma</span>' : ''}
           ${sig ? `<span class="ptz-sig ${sig[0]}">${sig[1]}</span>` : ''}
           ${tarih ? `<span class="ptz-date" style="margin-left:0">${esc(tarih)}</span>` : ''}
-          ${sonGunc ? `<span class="tzo-upd" onclick="window.__tezSeyre()"><span class="pulse"></span>Son güncelleme: ${esc(trDate(sonGunc.tarih))}</span>` : ''}
+          ${sonGunc ? `<span class="tzo-upd" onclick="window.__tezSeyre()"><span class="pulse"></span>${guncellemeler.length} güncelleme · son ${esc(trDate(sonGunc.tarih))}</span>` : ''}
         </div>
         <h1 class="tzo-title">${esc(tez.baslik)}</h1>
         ${tez.ozet ? `<p class="tzo-lede">${esc(tez.ozet)}</p>` : ''}
-        <div class="tzo-content">${icerik}</div>
         ${timelineHTML(guncellemeler, tarih)}
+        ${sonGunc ? `<div class="tzo-govde-head">
+          <span class="tzo-govde-cizgi"></span>
+          <span class="tzo-govde-et">${govdeAd}${tarih ? ` · ${esc(tarih)}` : ''}</span>
+          <span class="tzo-govde-cizgi"></span>
+        </div>
+        <p class="tzo-govde-not">Aşağıdaki metin ilk yayınlandığı hâliyle duruyor; sonradan değiştirilmedi. Yukarıdaki güncellemeler bu tezin üzerine eklendi.</p>` : ''}
+        <div class="tzo-content">${icerik}</div>
         <div class="tzo-note">Bu içerik araştırma ve bilgi amaçlıdır; yatırım tavsiyesi değildir. Tüm projeksiyonlar tahmin içermektedir.</div>
         <div class="tzo-ctas">
           <span class="tzo-back" data-route="${backRoute}" style="margin:0">← ${backLabel}</span>
