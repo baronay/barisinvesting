@@ -1197,11 +1197,11 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
 
   try {
     // Süre bütçesi: vercel.json maxDuration=60sn (Hobby planı 60sn'e izin verir).
-    // Veri çekme ≤8sn + birincil model 26sn + haiku yedeği 14sn = ~48sn < 60sn.
-    // ÜRETİM ÖLÇÜMÜ (2026-07): Sonnet 4.5 yük altında ~50 tok/sn'ye düşebiliyor,
-    // 30sn bile yetmeyebiliyor (THYAO). Bu yüzden yedek haiku GARANTİLİ sığacak
-    // şekilde ayarlandı: max_tokens 1100 (haiku ~130 tok/sn → ~9sn < 14sn).
-    // 1100 token yedekte nadiren kesilmeye yol açabilir ama BOŞ SONUÇTAN iyidir.
+    // Veri çekme ≤8sn + birincil model 24sn + haiku yedeği 18sn = ~50sn < 60sn.
+    // ÜRETİM ÖLÇÜMÜ (2026-07): Sonnet 4.5 yük altında ~40-50 tok/sn'ye düşüyor,
+    // 26-30sn bile yetmeyebiliyor (THYAO 3 denemede de birincilde timeout).
+    // Yedek haiku 1100 token tavanıyla en kötü ~70 tok/sn'de bile 18sn'ye sığar
+    // (14sn'de THYAO kıl payı kaçırıyordu). Kesilme > boş sonuç.
     const FALLBACK_MODEL = 'claude-haiku-4-5-20251001';
     const primaryModel = process.env.ANALYZE_MODEL || 'claude-sonnet-4-5';
 
@@ -1226,13 +1226,13 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
 
     let response, data, usedFallback = false;
     try {
-      ({ resp: response, d: data } = await callModel(primaryModel, 26000, 1800));
+      ({ resp: response, d: data } = await callModel(primaryModel, 24000, 1800));
     } catch (e) {
       // Birincil model ZAMAN AŞIMINA uğradıysa 504 dönme — hızlı haiku'yla kurtar.
       const isTimeout = e.name === 'TimeoutError' || e.name === 'AbortError';
       if (!isTimeout || primaryModel === FALLBACK_MODEL) throw e;
       dlog(`[AI] ${primaryModel} zaman aşımı → ${FALLBACK_MODEL} ile tekrar deneniyor`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 14000, 1100));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 18000, 1100));
       usedFallback = true;
     }
 
@@ -1241,7 +1241,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // patlamasın.
     if ((!data || data.error || !response.ok) && !usedFallback && primaryModel !== FALLBACK_MODEL) {
       dlog(`[AI] ${primaryModel} başarısız (${data?.error?.message || response?.status}) → ${FALLBACK_MODEL}`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 14000, 1100));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 18000, 1100));
     }
 
     if (!data) return res.status(502).json({ error: 'AI servisinden geçersiz yanıt alındı.' });

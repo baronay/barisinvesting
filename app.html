@@ -2655,6 +2655,125 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   .pt-sec-title{font-size:19px;}
   .yt-grid,.x-grid{grid-template-columns:1fr;}
 }
+
+/* ══ ISI HARİTASI ══ */
+.hm-ust{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+.hm-intro{font-size:11px;color:var(--muted-s);line-height:1.7;max-width:640px;margin-bottom:16px;}
+.hm-intro strong{color:var(--text2);font-weight:600;}
+.hm-kontrol{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.hm-kontrol-grp{display:flex;gap:1px;background:var(--border);border:1px solid var(--border);}
+.hm-tab{background:var(--surface);border:none;color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:1.2px;text-transform:uppercase;padding:7px 11px;cursor:pointer;transition:background .15s,color .15s;display:flex;align-items:center;gap:5px;}
+.hm-tab:hover{background:var(--surface3);color:var(--text2);}
+.hm-tab.active{background:var(--surface3);color:var(--accent);}
+.hm-tab-k .chip-f{opacity:.85;}
+.hm-durum{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted2);}
+.hm-govde{display:grid;grid-template-columns:1fr 218px;gap:14px;align-items:start;}
+.hm-sarmal{position:relative;background:var(--bg2);border:1px solid var(--border-s);overflow:hidden;}
+.hm-yukleniyor{display:flex;align-items:center;justify-content:center;height:100%;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;color:var(--muted2);}
+.hm-sek{position:absolute;background:var(--bg2);overflow:hidden;}
+.hm-sek-bas{height:17px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 5px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted-s);white-space:nowrap;overflow:hidden;}
+.hm-sek-ad{overflow:hidden;text-overflow:ellipsis;}
+.hm-sek-d{font-weight:600;flex-shrink:0;}
+.hm-kutu{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;line-height:1.15;transition:filter .12s;}
+.hm-kutu:hover{filter:brightness(1.35);}
+.hm-tk{font-family:var(--font-mono);font-weight:700;color:#fff;letter-spacing:.3px;}
+.hm-d{font-family:var(--font-mono);color:rgba(255,255,255,.86);margin-top:1px;}
+.hm-ipucu{display:none;position:fixed;z-index:900;pointer-events:none;background:var(--surface3);border:1px solid var(--border-s);padding:8px 10px;min-width:170px;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+.hm-ip-tk{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text);display:flex;justify-content:space-between;gap:12px;margin-bottom:3px;}
+.hm-ip-ad{font-size:10px;color:var(--text2);margin-bottom:4px;}
+.hm-ip-alt{font-family:var(--font-mono);font-size:8.5px;letter-spacing:.5px;color:var(--muted);}
+.hm-ozet{display:flex;flex-direction:column;gap:12px;}
+.hm-oz-blok{background:var(--surface);border:1px solid var(--border);padding:10px 11px;}
+.hm-oz-bas{font-family:var(--font-mono);font-size:8px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted-s);padding-bottom:7px;margin-bottom:6px;border-bottom:1px solid var(--rule);}
+.hm-oz-piyasa{font-family:var(--font-mono);font-size:22px;font-weight:700;}
+.hm-oz-not{font-size:9px;color:var(--muted2);line-height:1.5;margin-top:3px;}
+.hm-oz-row{display:flex;align-items:center;gap:7px;padding:3.5px 0;cursor:pointer;}
+.hm-oz-row:hover .hm-oz-tk,.hm-oz-row:hover .hm-oz-ad{color:var(--accent);}
+.hm-oz-tk{font-family:var(--font-mono);font-size:9.5px;font-weight:700;color:var(--text2);width:52px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;}
+.hm-oz-ad{font-size:9.5px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hm-oz-d{font-family:var(--font-mono);font-size:9.5px;font-weight:600;flex-shrink:0;}
+.hm-lejant{display:flex;align-items:center;gap:8px;margin-top:12px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:1px;color:var(--muted2);flex-wrap:wrap;}
+.hm-lejant-bar{display:flex;height:9px;width:200px;}
+.hm-lejant-bar span{flex:1;}
+@media(max-width:1000px){.hm-govde{grid-template-columns:1fr;}
+  .hm-ozet{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}}
+@media(max-width:600px){.hm-ozet{grid-template-columns:1fr;}
+  .hm-tab{padding:6px 8px;font-size:8.5px;letter-spacing:.8px;}
+  .hm-ipucu{display:none !important;}}
+
+/* ══ TERMİNAL DASHBOARD ══ */
+.db-body{padding-top:18px;}
+.db-tape-wrap{border:1px solid var(--border-s);border-left:none;border-right:none;background:var(--bg2);overflow:hidden;margin-bottom:14px;}
+.db-tape{overflow:hidden;white-space:nowrap;height:34px;}
+.db-tape-akis{display:inline-flex;align-items:center;height:34px;animation:dbKay 46s linear infinite;will-change:transform;}
+.db-tape-wrap:hover .db-tape-akis{animation-play-state:paused;}
+@keyframes dbKay{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.db-tape-i{display:inline-flex;align-items:baseline;gap:7px;padding:0 18px;border-right:1px solid var(--rule);font-family:var(--font-mono);font-size:10px;}
+.db-tape-ad{color:var(--muted-s);letter-spacing:1px;}
+.db-tape-fy{color:var(--text2);font-weight:600;}
+.db-tape-dg{font-weight:700;}
+.db-tape-bos{display:flex;align-items:center;height:34px;padding:0 14px;font-family:var(--font-mono);font-size:9px;letter-spacing:1.5px;color:var(--muted2);}
+.db-up{color:var(--success);}.db-down{color:var(--danger);}.db-flat{color:var(--muted-s);}.db-warn{color:var(--warn);}
+
+.db-rejim{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:18px;}
+.db-rj-h{background:var(--surface);padding:9px 12px;min-width:0;}
+.db-rj-l{font-family:var(--font-mono);font-size:8px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted-s);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.db-rj-v{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.db-rj-alt{font-size:9px;font-weight:400;color:var(--muted);margin-left:5px;}
+
+.db-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start;}
+.db-sol{min-width:0;}
+.db-sag{display:flex;flex-direction:column;gap:14px;min-width:0;}
+.db-kart{background:var(--surface);border:1px solid var(--border);padding:11px 12px;}
+.db-sec-sag{margin-left:auto;font-family:var(--font-mono);font-size:8px;letter-spacing:1px;color:var(--muted2);text-transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;}
+.db-kart .sec-title::after,.db-sol .sec-title::after{display:none;}
+.db-mini-btn{background:none;border:1px solid var(--border-s);color:var(--muted);font-family:var(--font-mono);font-size:8px;letter-spacing:1.2px;padding:4px 8px;cursor:pointer;margin-left:8px;transition:color .15s,border-color .15s;}
+.db-mini-btn:hover{color:var(--accent);border-color:var(--accent2);}
+.db-akis{display:flex;flex-direction:column;max-height:340px;overflow-y:auto;}
+.db-bos{font-size:10px;color:var(--muted2);padding:12px 2px;line-height:1.6;}
+
+/* Bilanço satırı */
+.db-bl{padding:8px 2px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .12s;}
+.db-bl:last-child{border-bottom:none;}
+.db-bl:hover{background:var(--surface2);}
+.db-bl-geldi{border-left:2px solid var(--accent);padding-left:8px;}
+.db-bl-ust{display:flex;align-items:center;gap:7px;margin-bottom:3px;}
+.db-bl-tk{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text);flex-shrink:0;}
+.db-bl-ad{font-size:10px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.db-bl-rozet{font-family:var(--font-mono);font-size:9px;font-weight:700;flex-shrink:0;}
+.db-bekle{color:var(--muted2);font-weight:400;}
+.db-bl-alt{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-family:var(--font-mono);font-size:9px;color:var(--muted-s);}
+.db-bl-eps b{color:var(--text2);}
+.db-bl-ayrac{color:var(--muted2);}
+.db-bl-not{margin-left:auto;font-size:8.5px;letter-spacing:.4px;}
+
+/* Haber satırı */
+.db-hb{display:flex;gap:9px;padding:7px 2px;border-bottom:1px solid var(--rule);text-decoration:none;transition:background .12s;}
+.db-hb:last-child{border-bottom:none;}
+.db-hb:hover{background:var(--surface2);}
+.db-hb:hover .db-hb-bs{color:var(--accent);}
+.db-hb-sa{font-family:var(--font-mono);font-size:8.5px;color:var(--muted2);flex-shrink:0;width:30px;padding-top:1px;}
+.db-hb-bs{font-size:11px;line-height:1.5;color:var(--text2);transition:color .15s;}
+.db-alt{margin-top:20px;padding-top:12px;border-top:1px solid var(--rule);font-size:9px;color:var(--muted2);letter-spacing:.3px;}
+
+@media(max-width:1000px){.db-grid{grid-template-columns:1fr;}
+  .db-akis{max-height:none;}}
+@media(max-width:600px){.db-rejim{grid-template-columns:repeat(2,1fr);}
+  .db-tape-akis{animation-duration:32s;}
+  .db-sec-sag{max-width:120px;}}
+
+/* Ana sayfa mini şeridi */
+.hm-mini-sar{margin-bottom:18px;cursor:pointer;}
+.hm-mini{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;height:46px;}
+.hm-mini-kutu{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden;padding:0 3px;transition:filter .12s;}
+.hm-mini-sar:hover .hm-mini-kutu{filter:brightness(1.25);}
+.hm-mini-ad{font-size:8.5px;letter-spacing:.3px;color:rgba(255,255,255,.82);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.hm-mini-d{font-family:var(--font-mono);font-size:10px;font-weight:700;color:#fff;}
+.hm-mini-bos{font-size:10px;color:var(--muted2);padding:14px 0;}
+.hm-mini-alt{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:1px;color:var(--muted2);}
+.hm-mini-git{color:var(--accent);}
+@media(max-width:900px){.hm-mini{height:40px;grid-auto-flow:row;grid-template-columns:repeat(4,1fr);grid-auto-rows:38px;height:auto;}
+  .hm-mini-ad{font-size:8px;}}
 </style>
 <body>
 <div id="globalToast"><span class="toast-dot"></span><span class="toast-msg"></span></div>
@@ -2990,11 +3109,11 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <div class="nav-item active" id="nav-overview" onclick="showPage('overview');closeSidebar();">
       <span class="nav-num">00</span>Dashboard<span class="nav-status">◎</span>
     </div>
-    <div class="nav-item" id="nav-buffett-akademi" onclick="showPage('buffett-akademi');closeSidebar();">
-      <span class="nav-num">01</span>Buffett Akademi
+    <div class="nav-item" id="nav-analiz-entry" onclick="showPage('analiz');closeSidebar();">
+      <span class="nav-num">01</span>Hisse Analizi
     </div>
-    <div class="nav-item" id="nav-lynch-dersleri" onclick="showPage('lynch-dersleri');closeSidebar();">
-      <span class="nav-num">02</span>Lynch Dersleri
+    <div class="nav-item" id="nav-harita-entry" onclick="showPage('harita');closeSidebar();">
+      <span class="nav-num">02</span>Piyasa Haritası
     </div>
     <div class="nav-item" id="nav-watchlist-entry" onclick="showPage('watchlist');closeSidebar();">
       <span class="nav-num">03</span>Gerçek Zamanlı İzleme
@@ -3086,8 +3205,60 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 <div class="main">
 <div class="main-content">
 
-<!-- ANALYZE + HOME PAGE (combined) -->
+<!-- ══ DASHBOARD — TERMİNAL ANA EKRANI ══
+     Amaç: girer girmez piyasanın durumu görünsün. Analiz akışı buradan
+     çıkarıldı, kendi sekmesinde (page-analiz). -->
 <div class="page active" id="page-overview">
+<div class="page-body db-body">
+
+  <!-- Kayan bant: endeksler + emtia + kripto -->
+  <div class="db-tape-wrap">
+    <div class="db-tape" id="dbTape"><div class="db-tape-bos">Piyasa verisi yükleniyor…</div></div>
+  </div>
+
+  <!-- Rejim satırı -->
+  <div class="db-rejim" id="dbRejim"></div>
+
+  <!-- Sektör ısı şeridi — tam haritanın kısayolu -->
+  <div class="hm-mini-sar" id="hmMiniSar">
+    <div class="sec-title">Sektör Isı Şeridi</div>
+    <div class="hm-mini" id="hmMini"></div>
+    <div class="hm-mini-alt"><span id="hmMiniNot">yükleniyor…</span><span class="hm-mini-git">TAM HARİTAYI AÇ →</span></div>
+  </div>
+
+  <div class="db-grid">
+    <!-- Sol: ısı haritası -->
+    <div class="db-sol">
+      <div class="sec-title">Piyasa Isı Haritası
+        <span class="db-sec-sag" id="dbHaritaDurum"></span>
+        <button class="db-mini-btn" onclick="showPage('harita')">TAMAMI →</button>
+      </div>
+      <div class="hm-sarmal" id="dbHarita"></div>
+    </div>
+
+    <!-- Sağ: bilanço akışı + son dakika -->
+    <div class="db-sag">
+      <div class="db-kart">
+        <div class="sec-title">Bilanço Akışı <span class="db-sec-sag" id="dbBilancoDurum"></span></div>
+        <div class="db-akis" id="dbBilanco"><div class="db-bos">Bilançolar yükleniyor…</div></div>
+      </div>
+      <div class="db-kart">
+        <div class="sec-title">Son Dakika <span class="db-sec-sag" id="dbHaberKaynak"></span></div>
+        <div class="db-akis" id="dbHaber"><div class="db-bos">Haberler yükleniyor…</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="db-alt">
+    Veri: Yahoo Finance · Nasdaq · RSS akışları — bilgilendirme amaçlıdır, yatırım tavsiyesi değildir.
+  </div>
+</div>
+</div>
+
+<!-- HİSSE ANALİZİ SAYFASI (Buffett / Lynch çerçevesi)
+     Eskiden ana sayfaydı (page-overview); artık Dashboard terminal ekranı,
+     analiz kendi sekmesinde. Kimlikler page-analiz / nav-analiz-entry. -->
+<div class="page" id="page-analiz">
 
   <!-- HERO at top — 2 kolon: sol arama, sağ piyasa özeti -->
   <div class="hero">
@@ -3247,38 +3418,11 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   </div>
 </div>
 
-<!-- PORTFOLIO PAGE -->
-<!-- BUFFETT AKADEMI PAGE -->
-<div class="page" id="page-buffett-akademi">
-<div class="page-body">
-  <div class="sec-title"><span style="color:var(--accent);font-size:13px;">◈</span> BUFFETT AKADEMİ</div>
-  <div style="max-width:640px;">
-    <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);margin-bottom:14px;">Warren Buffett'ın <span style="color:var(--accent);">Yatırım Felsefesi</span></div>
-    <div style="font-size:13px;line-height:1.9;color:var(--text2);margin-bottom:16px;">
-      Warren Buffett, "değer yatırımcılığı" okulunun en bilinen ismi olarak; bir şirketin gerçek değerinin altında işlem gören, sürdürülebilir rekabet avantajına ("ekonomik hendek") sahip, yetkin yönetim tarafından idare edilen işletmelere uzun vadeli sahip olmayı savunur. Onun yaklaşımı, kısa vadeli fiyat hareketlerinden çok şirketin temel kazanç gücüne ve nakit yaratma kapasitesine odaklanır.
-    </div>
-    <div style="font-size:13px;line-height:1.9;color:var(--muted2);border-left:2px solid var(--accent);padding-left:16px;">
-      Yakında: Buffett'ın yatırım felsefesi üzerine video dersler ve vaka çalışmaları.
-    </div>
-  </div>
-</div>
-</div>
+<!-- Buffett Akademi / Lynch Dersleri sayfaları kaldırıldı: ikisi de tek
+     paragraf + "yakında video dersler" yer tutucusundan ibaretti. Çerçeve
+     anlatımı Hisse Analizi sayfasındaki kriter detaylarında zaten var. -->
 
-<!-- LYNCH DERSLERI PAGE -->
-<div class="page" id="page-lynch-dersleri">
-<div class="page-body">
-  <div class="sec-title"><span style="color:var(--accent);font-size:13px;">◈</span> LYNCH DERSLERİ</div>
-  <div style="max-width:640px;">
-    <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);margin-bottom:14px;">Peter Lynch'in <span style="color:var(--accent);">Büyüme Avı</span></div>
-    <div style="font-size:13px;line-height:1.9;color:var(--text2);margin-bottom:16px;">
-      Peter Lynch, Fidelity Magellan Fonu'ndaki efsanevi döneminde, "bildiğin şeye yatırım yap" ilkesiyle tanınır. Onun yaklaşımı; hızlı büyüyen, anlaşılması kolay iş modellerine sahip şirketleri erken keşfetmeyi, PEG oranı gibi büyüme-odaklı metriklerle değerlemeyi ve sıradan yatırımcının gözlem gücünü bir avantaja dönüştürmeyi hedefler.
-    </div>
-    <div style="font-size:13px;line-height:1.9;color:var(--muted2);border-left:2px solid var(--accent);padding-left:16px;">
-      Yakında: Peter Lynch'in büyüme hisseleri stratejisi üzerine video dersler ve vaka çalışmaları.
-    </div>
-  </div>
-</div>
-</div>
+<!-- PORTFOLIO PAGE -->
 
 <div class="page" id="page-portfolio">
 <div class="page-body">
@@ -3328,6 +3472,35 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   </div>
   <div class="wl-list" id="wlList"></div>
   <div class="wl-foot" id="wlFoot"></div>
+</div>
+</div>
+
+<!-- ══ PİYASA HARİTASI (ISI HARİTASI) ══ -->
+<div class="page" id="page-harita">
+<div class="page-body">
+  <div class="pt-hdr"><div class="pt-title">Piyasa <span>Haritası</span></div><span class="hm-durum" id="hmDurum" style="margin-left:10px"></span></div>
+  <div class="hm-intro">
+    Her kutu bir hisse: <strong>alanı piyasa değerini</strong>, <strong>rengi seçilen dönemdeki getiriyi</strong> gösterir.
+    Paranın hangi sektöre aktığını tek bakışta görürsün. Kutuya tıkla, hisse doğrudan analiz ekranına düşer.
+  </div>
+  <div class="hm-ust">
+    <div class="hm-kontrol">
+      <div class="hm-kontrol-grp" id="hmKapsamlar"></div>
+      <div class="hm-kontrol-grp" id="hmDonemler"></div>
+    </div>
+  </div>
+  <div class="hm-govde">
+    <div>
+      <div class="hm-sarmal" id="hmHarita"></div>
+      <div class="hm-lejant">
+        <span>-%3</span>
+        <div class="hm-lejant-bar" id="hmLejant"></div>
+        <span>+%3</span>
+        <span style="margin-left:6px">· kutu alanı = piyasa değeri · veri: Yahoo Finance</span>
+      </div>
+    </div>
+    <div class="hm-ozet" id="hmOzet"></div>
+  </div>
 </div>
 </div>
 
@@ -3881,17 +4054,17 @@ function qFill(t,c,ex){selEx(ex);document.getElementById('tickerIn').value=t;doc
 
 // PAGES
 function showPage(type,idx){
-  ['overview','crit','portfolio','forum','tezler','watchlist','buffett-akademi','lynch-dersleri'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
+  ['overview','analiz','crit','portfolio','forum','tezler','watchlist','harita'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const e=document.getElementById('page-'+type);if(e)e.classList.add('active');
-  if(type==='overview'){const n=document.getElementById('nav-overview');if(n)n.classList.add('active');}
+  if(type==='overview'){const n=document.getElementById('nav-overview');if(n)n.classList.add('active');if(window.dbYukle)window.dbYukle();}
+  else if(type==='analiz'){const n=document.getElementById('nav-analiz-entry');if(n)n.classList.add('active');}
   else if(type==='crit'){const n=document.getElementById('nav-'+idx);if(n)n.classList.add('active');renderCritDetail(idx);}
   else if(type==='portfolio'){const n=document.getElementById('nav-portfolio-entry');if(n)n.classList.add('active');renderPt();}
   else if(type==='forum'){const n=document.getElementById('nav-forum-entry');if(n)n.classList.add('active');loadPosts();}
   else if(type==='watchlist'){const n=document.getElementById('nav-watchlist-entry');if(n)n.classList.add('active');if(window.renderWatchlist)window.renderWatchlist();}
+  else if(type==='harita'){const n=document.getElementById('nav-harita-entry');if(n)n.classList.add('active');if(window.hmSayfaAc)window.hmSayfaAc();}
   else if(type==='tezler'){const n=document.getElementById('nav-tezler');if(n)n.classList.add('active');renderTezler();}
-  else if(type==='buffett-akademi'){const n=document.getElementById('nav-buffett-akademi');if(n)n.classList.add('active');}
-  else if(type==='lynch-dersleri'){const n=document.getElementById('nav-lynch-dersleri');if(n)n.classList.add('active');}
 }
 
 // TV CHART
@@ -4302,7 +4475,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   if(fd)renderRealData(fd);
   const mults=parseMult(text);if(mults)renderMult(mults);
   document.getElementById('analysisSection').style.display='block';
-  showPage('overview');switchTab('analiz');
+  showPage('analiz');switchTab('analiz');
   setTimeout(()=>{const rg=document.querySelector('.result-news-grid');if(rg)rg.scrollIntoView({behavior:'smooth',block:'start'});},300);
   tezBildirimKontrol(ticker);
   // Adil Değer Analizi kaldırıldı — Twelve Data ücretsiz planında çoğu NASDAQ/NYSE
@@ -4495,7 +4668,7 @@ function renderPt(){
   document.getElementById('riskUn').textContent=`${portfolio.filter(p=>p.bS===null).length} hisse`;
 }
 
-function anaFromPt(tk,co,ex){selEx(ex);document.getElementById('tickerIn').value=tk;document.getElementById('coIn').value=co||'';switchTab('analiz');showPage('overview');setTimeout(()=>doAnalyze(),200);}
+function anaFromPt(tk,co,ex){selEx(ex);document.getElementById('tickerIn').value=tk;document.getElementById('coIn').value=co||'';switchTab('analiz');showPage('analiz');setTimeout(()=>doAnalyze(),200);}
 
 function updateSbSummary(){
   const el=document.getElementById('ptSbSummary');
@@ -4894,7 +5067,7 @@ function mobileNav(tab) {
     const el = document.getElementById('bn-' + t);
     if(el) el.className = 'bn-tab' + (t === tab ? ' active' : '');
   });
-  if(tab === 'analiz') { showPage('overview'); window.scrollTo(0,0); }
+  if(tab === 'analiz') { showPage('analiz'); window.scrollTo(0,0); }
   else if(tab === 'portfoy') { showPage('portfolio'); window.scrollTo(0,0); }
   else if(tab === 'takip') { showPage('watchlist'); window.scrollTo(0,0); }
 }
@@ -5095,6 +5268,8 @@ if (!localStorage.getItem('baris_fw_seen')) {
 <script src="/admin-panel.js"></script>
 <script src="/analyze-features.js"></script>
 <script src="/score-gauge.js"></script>
+<script src="/heatmap.js"></script>
+<script src="/dashboard.js"></script>
 
 <!-- MOBILE HESAP SHEET -->
 <div id="mobileAccountSheet" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.5)" onclick="closeMobileAccount()">
@@ -5584,7 +5759,7 @@ function garpAnalizAc(ticker) {
 
     // Analiz sayfasına geç
     if (typeof window.switchTab === 'function') window.switchTab('analiz');
-    if (typeof window.showPage === 'function') window.showPage('overview');
+    if (typeof window.showPage === 'function') window.showPage('analiz');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -5596,7 +5771,7 @@ function garpAnalizAc(ticker) {
       tez_id: 'banner_cta'
     });
     if (typeof window.switchTab === 'function') window.switchTab('analiz');
-    if (typeof window.showPage === 'function') window.showPage('overview');
+    if (typeof window.showPage === 'function') window.showPage('analiz');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     // Hero arama kutusuna odaklan — kullanıcı direkt yazmaya başlasın
     // (sidebar'daki tickerIn artık gizli, görünür/odaklanabilir giriş heroIn)

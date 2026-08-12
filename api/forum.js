@@ -62,12 +62,16 @@ export default async function handler(req, res) {
     if (!content || content.trim().length < 5) return res.status(400).json({ error: 'İçerik çok kısa' });
     if (content.length > 1000) return res.status(400).json({ error: 'Mesaj 1000 karakterden uzun olamaz' });
     const posts = await getPosts();
+    // Stored XSS korumasi: bu alanlar istemcide ham HTML/JS baglaminda basiliyor.
+    // ticker onclick JS string'ine giriyor, framework ise HTML rozetine — sadece guvenli karakterlere indir.
+    const safeTicker = ticker ? String(ticker).toUpperCase().replace(/[^A-Z0-9.]/g, '').substring(0, 10) : null;
+    const safeFramework = framework ? String(framework).replace(/[^\p{L}\p{N} .\-]/gu, '').substring(0, 40) : null;
     const newPost = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       author: (author || 'Anonim').substring(0, 30).replace(/[<>]/g, ''),
       content: content.trim().substring(0, 1000).replace(/[<>]/g, ''),
-      ticker: ticker ? ticker.substring(0, 10).toUpperCase() : null,
-      framework: framework || null,
+      ticker: safeTicker || null,
+      framework: safeFramework || null,
       ts: Date.now(),
       likes: 0,
     };

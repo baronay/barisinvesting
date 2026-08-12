@@ -84,7 +84,9 @@ function num(v) {
   return (isNaN(n) || !isFinite(n)) ? null : n;
 }
 function clean(t) {
-  return String(t || '').trim().toUpperCase().replace('.IS','').replace('BIST:','');
+  // toUpperCase + sembol temizligi; ayrica guvenli olmayan karakterleri at
+  // (ticker dogrudan PostgREST filtre URL'ine giriyor -> injection engeli)
+  return String(t || '').trim().toUpperCase().replace('.IS','').replace('BIST:','').replace(/[^A-Z0-9.]/g,'');
 }
 
 // ════════════════════════════════════════════════════
@@ -525,7 +527,8 @@ export default async function handler(req, res) {
   }
 
   const ticker   = clean(req.query?.ticker || req.body?.ticker);
-  const exchange = String(req.query?.exchange || req.body?.exchange || 'BIST').toUpperCase();
+  // exchange de PostgREST filtre URL'ine giriyor — yalniz harflere indir (injection engeli)
+  const exchange = (String(req.query?.exchange || req.body?.exchange || 'BIST').toUpperCase().replace(/[^A-Z]/g,'') || 'BIST');
   const force    = req.query?.force === '1';
   const debug    = req.query?.debug === '1';
 

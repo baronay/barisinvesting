@@ -1,3 +1,5 @@
+import { US_EVREN, BIST_EVREN } from './_heatmap-universe.js';
+
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
   const isAllowed = !origin || origin.includes('barisinvesting.com') || origin.includes('vercel.app') || origin.includes('localhost');
@@ -5,8 +7,441 @@ export default async function handler(req, res) {
   const { type, ticker } = req.query;
   if (type === 'market') return getMarketOverview(res);
   if (type === 'news') return getNews(res);
+  if (type === 'regime') return getRegime(res);
+  if (type === 'heatmap') return getHeatmap(req, res);
+  if (type === 'bilanco') return getBilanco(req, res);
   if (type === 'search' && ticker) return searchTicker(ticker, res);
   return res.status(400).json({ error: 'Invalid' });
+}
+
+/* ── BİLANÇO AKIŞI ───────────────────────────────────────────────
+   "Şu şirketin bilançosu geldi: beklenti X, gerçekleşen Y."
+
+   İki kaynak birleşiyor:
+   1) NASDAQ takvimi  → bugün kim açıklıyor, konsensüs, açılış öncesi mi
+                        kapanış sonrası mı. Tek istek, ~250 satır.
+   2) Yahoo earningsHistory → açıklanan çeyreğin GERÇEKLEŞEN EPS'i.
+                        Sembol başına bir istek; takvimdeki çeyrek ile
+                        geçmişteki son çeyrek eşleşiyorsa "geldi".
+
+   NASDAQ'ın kendi sürpriz tablosu aynı gün güncellenmiyor (ölçüldü),
+   Yahoo güncelleniyor — bu yüzden gerçekleşen oradan alınıyor.
+   ──────────────────────────────────────────────────────────────── */
+const BIL_LIMIT = 14;       // takvimden kaç şirkete gerçekleşen sorulacak
+const BIL_ARALIK = 300;     // ms — bu aralığın altında Yahoo boş dönüyor
+const BIL_SURE = 20000;     // ms — maxDuration 30sn, toplamaya bu kadar
+
+const AYLAR = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+const YAHOO_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+// Crumb sıcak lambda'da yeniden kullanılır — her istekte almak pahalı
+let _crumb = null, _cerez = null, _crumbTs = 0;
+
+async function crumbAl() {
+  if (_crumb && (Date.now() - _crumbTs) < 30 * 60000) return { crumb: _crumb, cerez: _cerez };
+
+  // fc.yahoo.com 404 döner ama çerezi yine de bırakır — durum kodu önemsiz.
+  // Çerez ZORUNLU: çerezsiz getcrumb 401 veriyor (ölçüldü).
+  // İki tur denenir; fc bazen 3sn'ye kadar sürüyor, tek denemede kaybetmeyelim.
+  for (let deneme = 0; deneme < 2; deneme++) {
+    let cerez = '';
+    try {
+      const r1 = await fetch('https://fc.yahoo.com', {
+        headers: { 'User-Agent': YAHOO_UA }, signal: AbortSignal.timeout(7000),
+      });
+      // getSetCookie() çerezleri dizi verir. headers.get('set-cookie') hepsini
+      // virgülle birleştiriyor ve "Expires=Wed, 12-Aug-2026" içindeki virgül
+      // ayrıştırmayı bozuyor — varsa dizi biçimini kullan.
+      const cerezler = typeof r1.headers.getSetCookie === 'function'
+        ? r1.headers.getSetCookie()
+        : String(r1.headers.get('set-cookie') || '').split(/,(?=\s*[A-Za-z0-9_-]+=)/);
+      cerez = cerezler.map(p => String(p).split(';')[0].trim()).filter(Boolean).join('; ');
+    } catch { /* çerez alınamadı — yine de getcrumb'ı dene, bedeli tek istek */ }
+
+    try {
+      const r2 = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', {
+        headers: cerez
+          ? { 'User-Agent': YAHOO_UA, 'Cookie': cerez }
+          : { 'User-Agent': YAHOO_UA },
+        signal: AbortSignal.timeout(7000),
+      });
+      const c = (await r2.text()).trim();
+      if (c && c.length <= 24 && !c.includes('<')) {
+        _crumb = c; _cerez = cerez; _crumbTs = Date.now();
+        return { crumb: _crumb, cerez: _cerez };
+      }
+    } catch { /* sonraki tur */ }
+  }
+
+  _crumb = null;
+  return null;
+}
+
+function sayiCoz(s) {
+  if (s == null) return null;
+  const t = String(s).trim();
+  if (!t || t === 'N/A') return null;
+  // "($0.21)" → -0.21, "$1.23" → 1.23
+  const eksi = /^\(.*\)$/.test(t);
+  const n = parseFloat(t.replace(/[()$,]/g, ''));
+  if (!isFinite(n)) return null;
+  return eksi ? -n : n;
+}
+
+async function getBilanco(req, res) {
+  // Takvim ABD borsa gününe göre — sunucu UTC olabilir, ET'ye çevir
+  const et = new Date(Date.now() - 4 * 3600000);
+  const gun = req.query.date && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)
+    ? req.query.date : et.toISOString().slice(0, 10);
+
+  try {
+    const takvimR = await fetch(`https://api.nasdaq.com/api/calendar/earnings?date=${gun}`, {
+      headers: { 'User-Agent': YAHOO_UA, 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!takvimR.ok) throw new Error('Takvim alınamadı');
+    const takvim = await takvimR.json();
+    const satirlar = takvim?.data?.rows || [];
+
+    if (!satirlar.length) {
+      res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600');
+      return res.status(200).json({ gun, toplam: 0, bilancolar: [], ts: Date.now() });
+    }
+
+    // Piyasa değerine göre sırala — akışta önce büyük şirketler
+    const sirali = satirlar
+      .map(r => ({
+        ticker: String(r.symbol || '').toUpperCase(),
+        // "Brinker International, Inc." → "Brinker International"
+        // (son ek atıldıktan sonra kalan virgül de temizlenmeli)
+        ad: String(r.name || '')
+          .replace(/[\s,]*(Incorporated|Inc\.?|Corporation|Corp\.?|Company|Co\.?|plc|PLC|Limited|Ltd\.?|N\.V\.|S\.A\.|S\.A|AB|AG)\s*$/i, '')
+          .replace(/[\s,.\-]+$/, '')
+          .trim(),
+        kap: sayiCoz(r.marketCap) || 0,
+        beklenti: sayiCoz(r.epsForecast),
+        gecenYil: sayiCoz(r.lastYearEPS),
+        ceyrek: String(r.fiscalQuarterEnding || ''),
+        zaman: r.time === 'time-pre-market' ? 'acilis-oncesi'
+          : r.time === 'time-after-hours' ? 'kapanis-sonrasi' : 'gun-ici',
+      }))
+      .filter(r => r.ticker)
+      .sort((a, b) => b.kap - a.kap);
+
+    const secilenler = sirali.slice(0, BIL_LIMIT);
+
+    // Açıklama saati gelmemiş şirkete Yahoo'ya sormak boşuna — hem yavaş
+    // hem kotayı yiyor. Sadece penceresi geçmiş olanlara sor.
+    const etSimdi = new Date(Date.now() - 4 * 3600000);
+    const bugunMu = gun === etSimdi.toISOString().slice(0, 10);
+    const etSaat = etSimdi.getUTCHours() + etSimdi.getUTCMinutes() / 60;
+    const penceresiGecti = (zaman) => {
+      if (!bugunMu) return true;                       // geçmiş gün: hepsi açıklanmış
+      if (zaman === 'acilis-oncesi') return etSaat >= 7;
+      if (zaman === 'kapanis-sonrasi') return etSaat >= 16;
+      return etSaat >= 9.5;
+    };
+
+    const kimlik = await crumbAl();
+    const baslangic = Date.now();
+
+    // Gerçekleşen EPS — sıralı çekim şart: paralel gidince Yahoo boş
+    // gövde dönüyor (ölçüldü: 8 eşzamanlı istekten 6'sı boş).
+    for (const b of secilenler) {
+      if (!kimlik || Date.now() - baslangic > BIL_SURE) break;
+      if (!penceresiGecti(b.zaman)) continue;
+      try {
+        const u = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(b.ticker)}`
+          + `?modules=earningsHistory&crumb=${encodeURIComponent(kimlik.crumb)}`;
+        const r = await fetch(u, {
+          headers: { 'User-Agent': YAHOO_UA, 'Accept': 'application/json', 'Cookie': kimlik.cerez },
+          signal: AbortSignal.timeout(8000),
+        });
+        const j = r.ok ? await r.json() : null;
+        const gecmis = j?.quoteSummary?.result?.[0]?.earningsHistory?.history;
+        if (Array.isArray(gecmis) && gecmis.length) {
+          const son = gecmis[gecmis.length - 1];
+          const tarih = son?.quarter?.fmt;
+          const [ayAd, yil] = b.ceyrek.split('/');
+          const d = tarih ? new Date(tarih + 'T12:00:00Z') : null;
+          // Takvimdeki çeyrek ile geçmişteki son çeyrek aynıysa açıklanmış
+          if (d && AYLAR[ayAd] === d.getUTCMonth() + 1 && Number(yil) === d.getUTCFullYear()) {
+            const gercek = son?.epsActual?.raw;
+            const tahmin = son?.epsEstimate?.raw;
+            if (gercek != null && isFinite(gercek)) {
+              b.gerceklesen = Math.round(gercek * 10000) / 10000;
+              if (tahmin != null && isFinite(tahmin)) {
+                b.beklenti = Math.round(tahmin * 10000) / 10000;
+                // Sürprizi kendimiz hesaplıyoruz: Yahoo'nun surprisePercent'i
+                // negatif tahminlerde işaret hatası veriyor
+                const bolen = Math.abs(tahmin);
+                if (bolen > 0.005) b.surpriz = Math.round(((gercek - tahmin) / bolen) * 1000) / 10;
+              }
+              b.durum = 'geldi';
+            }
+          }
+        }
+      } catch { /* tek şirket düşerse akış devam etsin */ }
+      await new Promise(z => setTimeout(z, BIL_ARALIK));
+    }
+
+    const bilancolar = secilenler.map(b => {
+      if (!b.durum) b.durum = 'bekleniyor';
+      if (b.surpriz != null) b.yon = b.surpriz > 0.5 ? 'asti' : b.surpriz < -0.5 ? 'kaldi' : 'tutturdu';
+      return b;
+    });
+
+    const gelen = bilancolar.filter(b => b.durum === 'geldi').length;
+    res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=1800');
+    return res.status(200).json({
+      gun,
+      toplam: sirali.length,
+      gelenSayisi: gelen,
+      gerceklesenAlinabildi: !!kimlik,
+      bilancolar,
+      ts: Date.now(),
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+}
+
+/* ── ISI HARİTASI ────────────────────────────────────────────────
+   Kutu boyutu  = statik pay adedi × canlı fiyat (piyasa değeri)
+   Kutu rengi   = seçilen dönemdeki yüzde değişim
+   Kaynak       : Yahoo spark — crumb/çerez istemiyor, istek başına
+                  en fazla 20 sembol (21'de 400 dönüyor, ölçüldü).
+   ──────────────────────────────────────────────────────────────── */
+const HM_DONEM = {
+  '1g': { range: '1d',  interval: '5m',  ad: '1 Gün',   cache: 300 },
+  '1h': { range: '5d',  interval: '1d',  ad: '1 Hafta', cache: 900 },
+  '1a': { range: '1mo', interval: '1d',  ad: '1 Ay',    cache: 1800 },
+  '3a': { range: '3mo', interval: '1d',  ad: '3 Ay',    cache: 3600 },
+  '6a': { range: '6mo', interval: '1wk', ad: '6 Ay',    cache: 3600 },
+  '1y': { range: '1y',  interval: '1wk', ad: '1 Yıl',   cache: 3600 },
+};
+const HM_PARCA = 20; // Yahoo spark'ın sembol tavanı
+
+async function getHeatmap(req, res) {
+  const kapsam = String(req.query.scope || 'us').toLowerCase() === 'bist' ? 'bist' : 'us';
+  const donemKey = HM_DONEM[String(req.query.period || '1g')] ? String(req.query.period || '1g') : '1g';
+  const donem = HM_DONEM[donemKey];
+
+  const evren = kapsam === 'bist' ? BIST_EVREN : US_EVREN;
+  const sembol = (t) => (kapsam === 'bist' ? `${t}.IS` : t);
+
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/json',
+    'Referer': 'https://finance.yahoo.com/',
+  };
+
+  const parcala = (liste) => {
+    const g = [];
+    for (let i = 0; i < liste.length; i += HM_PARCA) g.push(liste.slice(i, i + HM_PARCA));
+    return g;
+  };
+
+  const veri = {}; // sembol → { fiyat, onceki }
+
+  // Bir grup sembolü çek, sonuçları veri sözlüğüne işle
+  async function grupCek(semboller) {
+    const q = semboller.join(',');
+    let j = null;
+    try {
+      const r = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(q)}&range=${donem.range}&interval=${donem.interval}`,
+        { headers, signal: AbortSignal.timeout(9000) }
+      );
+      j = r.ok ? await r.json() : null;
+    } catch { j = null; }
+    if (!j || typeof j !== 'object') return;
+    for (const [sym, s] of Object.entries(j)) {
+      if (!s || typeof s !== 'object') continue;
+      const kapanislar = (s.close || []).filter(v => v != null && isFinite(v));
+      const fiyat = kapanislar.length ? kapanislar[kapanislar.length - 1] : null;
+      // chartPreviousClose = pencerenin BİR ÖNCESİNDEKİ kapanış; dönem
+      // getirisinin doğru referansı bu. Yoksa penceredeki ilk kapanışa düş.
+      const onceki = (s.chartPreviousClose != null && isFinite(s.chartPreviousClose))
+        ? s.chartPreviousClose
+        : (kapanislar.length > 1 ? kapanislar[0] : null);
+      if (fiyat && onceki) veri[sym] = { fiyat, onceki };
+    }
+  }
+
+  const baslangic = Date.now();
+  const SURE_SINIRI = 18000; // maxDuration 30sn — toplamaya bu kadarını ayır
+
+  try {
+    // 1. tur — hepsi paralel
+    await Promise.allSettled(parcala(evren.map(x => sembol(x.t))).map(grupCek));
+
+    // 2. tur — Yahoo eşzamanlı istekleri kısabiliyor; düşenleri bir kez
+    // daha, seri olarak iste. Tek turda kapsama %60'lara kadar inebiliyor.
+    // Seri olduğu için süre sınırı şart: her grup 9sn zaman aşımıyla
+    // beklerse tüm turun maliyeti fonksiyon limitini aşar.
+    const eksik = evren.map(x => sembol(x.t)).filter(s => !veri[s]);
+    for (const g of parcala(eksik)) {
+      if (Date.now() - baslangic > SURE_SINIRI) break;
+      await grupCek(g);
+    }
+
+    // Sektörlere topla
+    const sektorler = new Map();
+    let toplamDeger = 0;
+    for (const h of evren) {
+      const v = veri[sembol(h.t)];
+      if (!v) continue;
+      const degisim = (v.fiyat / v.onceki - 1) * 100;
+      if (!isFinite(degisim)) continue;
+      const deger = h.sh * v.fiyat;
+      if (!isFinite(deger) || deger <= 0) continue;
+      if (!sektorler.has(h.s)) sektorler.set(h.s, { ad: h.s, deger: 0, agirlikli: 0, hisseler: [] });
+      const sek = sektorler.get(h.s);
+      sek.deger += deger;
+      sek.agirlikli += degisim * deger;
+      sek.hisseler.push({
+        t: h.t,
+        n: h.n,
+        d: Math.round(degisim * 100) / 100,
+        v: Math.round(deger),
+        f: Math.round(v.fiyat * 100) / 100,
+      });
+      toplamDeger += deger;
+    }
+
+    if (!sektorler.size) return res.status(502).json({ error: 'Isı haritası verisi alınamadı' });
+
+    const liste = [...sektorler.values()]
+      .map(s => ({
+        ad: s.ad,
+        // Sektör değişimi = piyasa değeri ağırlıklı ortalama
+        d: Math.round((s.agirlikli / s.deger) * 100) / 100,
+        v: Math.round(s.deger),
+        hisseler: s.hisseler.sort((a, b) => b.v - a.v),
+      }))
+      .sort((a, b) => b.v - a.v);
+
+    const hisseSayisi = liste.reduce((a, s) => a + s.hisseler.length, 0);
+    const piyasa = liste.length ? liste.reduce((a, s) => a + s.d * s.v, 0) / toplamDeger : 0;
+
+    res.setHeader('Cache-Control', `s-maxage=${donem.cache}, stale-while-revalidate=${donem.cache * 2}`);
+    return res.status(200).json({
+      kapsam,
+      donem: donemKey,
+      donemAd: donem.ad,
+      paraBirimi: kapsam === 'bist' ? 'TRY' : 'USD',
+      piyasaDegisim: Math.round(piyasa * 100) / 100,
+      hisseSayisi,
+      kapsananOran: Math.round(hisseSayisi / evren.length * 100),
+      sektorler: liste,
+      ts: Date.now(),
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+}
+
+// ── PİYASA REJİMİ — komuta merkezi şeridi ─────────────────────────
+// S&P 500 vs 200 günlük ortalama + VIX seviyesi → rejim etiketi.
+// Korku/açgözlülük: VIX tabanlı proxy (CNN endeksi değil, kendi göstergemiz).
+const MAKRO_TAKVIM = [
+  // Yaklaşık tarihler — resmi takvim açıklandıkça buradan güncelle.
+  // ABD TÜFE (BLS, ~her ayın 10-14'ü) ve FOMC karar günleri, 2026 2. yarı:
+  { tarih: '2026-07-14', tur: 'TÜFE', ad: 'ABD TÜFE açıklaması' },
+  { tarih: '2026-07-23', tur: 'PPK',  ad: 'TCMB faiz kararı' },
+  { tarih: '2026-07-29', tur: 'Fed',  ad: 'FOMC faiz kararı' },
+  { tarih: '2026-08-12', tur: 'TÜFE', ad: 'ABD TÜFE açıklaması' },
+  { tarih: '2026-09-11', tur: 'TÜFE', ad: 'ABD TÜFE açıklaması' },
+  { tarih: '2026-09-16', tur: 'Fed',  ad: 'FOMC faiz kararı' },
+  { tarih: '2026-10-13', tur: 'TÜFE', ad: 'ABD TÜFE açıklaması' },
+  { tarih: '2026-10-28', tur: 'Fed',  ad: 'FOMC faiz kararı' },
+  { tarih: '2026-11-12', tur: 'TÜFE', ad: 'ABD TÜFE açıklaması' },
+  { tarih: '2026-12-09', tur: 'Fed',  ad: 'FOMC faiz kararı' },
+  { tarih: '2026-12-10', tur: 'TÜFE', ad: 'ABD TÜFE açıklaması' },
+];
+
+async function getRegime(res) {
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/json',
+    'Referer': 'https://finance.yahoo.com/',
+  };
+  const chart = (sym, range, interval) =>
+    fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=${interval}&range=${range}`,
+      { headers, signal: AbortSignal.timeout(8000) })
+      .then(r => r.json())
+      .then(j => j?.chart?.result?.[0] || null)
+      .catch(() => null);
+
+  try {
+    const [sp, vix, tnx, dxy, bist] = await Promise.all([
+      chart('^GSPC', '1y', '1d'),
+      chart('^VIX', '5d', '1d'),
+      chart('^TNX', '5d', '1d'),
+      chart('DX=F', '5d', '1d'),
+      chart('XU100.IS', '5d', '1d'),
+    ]);
+
+    const quote = (c) => {
+      if (!c) return null;
+      const m = c.meta;
+      const prev = m.chartPreviousClose || m.previousClose;
+      const cur = m.regularMarketPrice;
+      return { deger: cur, degisim: (cur && prev) ? ((cur - prev) / prev * 100) : 0 };
+    };
+
+    // S&P 200 günlük ortalama
+    let ma200 = null, spFiyat = null;
+    if (sp) {
+      spFiyat = sp.meta?.regularMarketPrice || null;
+      const closes = (sp.indicators?.quote?.[0]?.close || []).filter(v => v != null && isFinite(v));
+      if (closes.length >= 150) {
+        const son = closes.slice(-200);
+        ma200 = son.reduce((a, b) => a + b, 0) / son.length;
+      }
+    }
+
+    const vixQ = quote(vix);
+    const vixV = vixQ?.deger ?? null;
+    const spUstte = (spFiyat && ma200) ? spFiyat > ma200 : null;
+
+    let etiket = 'Belirsiz', detay = 'Veri eksik';
+    if (spUstte !== null && vixV !== null) {
+      if (spUstte && vixV < 20) { etiket = 'Boğa'; detay = 'Genişleme'; }
+      else if (spUstte && vixV < 28) { etiket = 'Boğa'; detay = 'Gergin'; }
+      else if (spUstte) { etiket = 'Boğa'; detay = 'Yüksek oynaklık'; }
+      else if (vixV < 25) { etiket = 'Düzeltme'; detay = 'Trend zayıf'; }
+      else { etiket = 'Ayı'; detay = 'Riskten kaçış'; }
+    }
+
+    // VIX → 0-100 korku/açgözlülük proxy'si (VIX 11 ≈ 98, VIX 35 ≈ 2)
+    let fg = null, fgEtiket = '';
+    if (vixV !== null) {
+      fg = Math.max(2, Math.min(98, Math.round(100 - (vixV - 11) * (100 / 24))));
+      fgEtiket = fg >= 75 ? 'Aşırı açgözlü' : fg >= 55 ? 'Açgözlü' : fg >= 45 ? 'Nötr' : fg >= 25 ? 'Korku' : 'Aşırı korku';
+    }
+
+    const bugun = new Date().toISOString().slice(0, 10);
+    const takvim = MAKRO_TAKVIM.filter(e => e.tarih >= bugun).slice(0, 6);
+
+    res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=1800');
+    return res.status(200).json({
+      rejim: { etiket, detay, sp_200ma_ustu: spUstte, sp_fiyat: spFiyat, sp_ma200: ma200 ? Math.round(ma200) : null },
+      korkuAcgozluluk: fg !== null ? { deger: fg, etiket: fgEtiket } : null,
+      gostergeler: {
+        vix: vixQ,
+        us10y: quote(tnx),
+        dxy: quote(dxy),
+        bist100: quote(bist),
+        sp500: spFiyat ? { deger: spFiyat, degisim: quote(sp)?.degisim ?? 0 } : null,
+      },
+      takvim,
+      ts: Date.now(),
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
 }
 
 async function getMarketOverview(res) {

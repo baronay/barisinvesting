@@ -134,12 +134,14 @@ export default async function handler(req, res) {
     domain = DOMAIN_MAP[ticker];
   }
 
-  // Domain temizle
+  // Domain temizle — sadece gecerli hostname karakterleri kalsin
+  // (domain ucuncu taraf URL'lerine gomuluyor; ?/&/@ ile query/SSRF enjeksiyonunu engelle)
   domain = domain
     .replace(/^https?:\/\//i, '')
     .replace(/\/.*$/, '')
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]/g, '');
 
   if (!domain) {
     // Domain bilinmiyor → 404 ki <img> onerror tetiklensin, çağıran avatar/baş harf göstersin
