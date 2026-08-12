@@ -3863,6 +3863,12 @@ function selFWModal(fw){closeFWModal();selFW(fw);}
 function selEx(ex){
   curEX=ex;
   ['BIST','NYSE','NASDAQ'].forEach(k=>{const e=document.getElementById('ex-'+k.toLowerCase());if(e)e.className='ex-btn'+(k===ex?' active':'');});
+  // Görünür hero butonlarını da eşitle: eskiden sadece gizli sidebar
+  // butonları güncelleniyordu, dışarıdan gelen analizlerde (ısı haritası
+  // kutusu, portföy/takip satırı, tez CTA'sı) hero'da yanlış borsa
+  // seçili kalıyordu.
+  heroEX=ex;
+  ['bist','nyse','nasdaq'].forEach(k=>{const e=document.getElementById('hex-'+k);if(e)e.className='hero-ex-btn'+(k===String(ex).toLowerCase()?' active':'');});
   document.getElementById('coIn').value='';
 }
 function selHeroEx(ex){
@@ -4065,6 +4071,9 @@ function showPage(type,idx){
   else if(type==='watchlist'){const n=document.getElementById('nav-watchlist-entry');if(n)n.classList.add('active');if(window.renderWatchlist)window.renderWatchlist();}
   else if(type==='harita'){const n=document.getElementById('nav-harita-entry');if(n)n.classList.add('active');if(window.hmSayfaAc)window.hmSayfaAc();}
   else if(type==='tezler'){const n=document.getElementById('nav-tezler');if(n)n.classList.add('active');renderTezler();}
+  // Alt menü seçili sekmesini sayfayla eşitle — sayfa kenar çubuğundan,
+  // ısı haritası kutusundan veya bilanço satırından da değişebiliyor
+  if(typeof mobileNavIsaretle==='function')mobileNavIsaretle(type);
 }
 
 // TV CHART
@@ -5062,14 +5071,24 @@ function openTezSupabase(id) {
 }
 
 
-function mobileNav(tab) {
-  ['analiz','portfoy','takip'].forEach(t => {
+// Alt menü sekmesi -> sayfa eşlemesi. Tek kaynak: hem tıklama hem de
+// showPage'den gelen senkronizasyon bunu kullanıyor, yoksa kenar
+// çubuğundan sayfa değiştirince alt menüde yanlış sekme seçili kalıyor.
+const MNAV_SAYFA = { panel:'overview', harita:'harita', analiz:'analiz', portfoy:'portfolio', takip:'watchlist' };
+
+function mobileNavIsaretle(sayfa) {
+  Object.keys(MNAV_SAYFA).forEach(t => {
     const el = document.getElementById('bn-' + t);
-    if(el) el.className = 'bn-tab' + (t === tab ? ' active' : '');
+    if (el) el.className = 'bn-tab' + (MNAV_SAYFA[t] === sayfa ? ' active' : '');
   });
-  if(tab === 'analiz') { showPage('analiz'); window.scrollTo(0,0); }
-  else if(tab === 'portfoy') { showPage('portfolio'); window.scrollTo(0,0); }
-  else if(tab === 'takip') { showPage('watchlist'); window.scrollTo(0,0); }
+}
+
+function mobileNav(tab) {
+  const sayfa = MNAV_SAYFA[tab];
+  if (!sayfa) return;
+  mobileNavIsaretle(sayfa);
+  showPage(sayfa);
+  window.scrollTo(0, 0);
 }
 
 // ===== MOBILE HESAP =====
@@ -5309,7 +5328,15 @@ if (!localStorage.getItem('baris_fw_seen')) {
 
 <!-- BOTTOM NAVIGATION - MOBILE ONLY -->
 <nav class="bottom-nav" id="bottomNav">
-  <button class="bn-tab active" id="bn-analiz" onclick="mobileNav('analiz')">
+  <button class="bn-tab active" id="bn-panel" onclick="mobileNav('panel')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+    <span>Panel</span>
+  </button>
+  <button class="bn-tab" id="bn-harita" onclick="mobileNav('harita')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="8" height="12"/><rect x="13" y="3" width="8" height="7"/><rect x="13" y="12" width="8" height="9"/><rect x="3" y="17" width="8" height="4"/></svg>
+    <span>Harita</span>
+  </button>
+  <button class="bn-tab" id="bn-analiz" onclick="mobileNav('analiz')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     <span>Analiz</span>
   </button>

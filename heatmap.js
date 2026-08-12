@@ -197,6 +197,7 @@
         el.dataset.d = d.d;
         el.dataset.f = d.f;
         el.dataset.v = d.v;
+        if (d.x) el.dataset.x = d.x;
 
         // Etiket kademeleri — sığmayan yazı hiç basılmaz, kırpılmış metin
         // kutuyu okunmaz hale getiriyor. Punto sembol UZUNLUĞUNA göre
@@ -347,7 +348,7 @@
     const azalan = tum.slice().sort((a, b) => a.d - b.d).slice(0, 6);
     const sekArtan = veri.sektorler.slice().sort((a, b) => b.d - a.d);
 
-    const satir = (h) => `<div class="hm-oz-row" data-t="${esc(h.t)}">
+    const satir = (h) => `<div class="hm-oz-row" data-t="${esc(h.t)}" data-x="${esc(h.x || '')}">
         <span class="hm-oz-tk">${esc(h.t)}</span>
         <span class="hm-oz-ad">${esc(h.n)}</span>
         <span class="hm-oz-d" style="color:${h.d >= 0 ? 'var(--success)' : 'var(--danger)'}">${yuzde(h.d)}</span>
@@ -419,14 +420,14 @@
     document.addEventListener('click', e => {
       const el = e.target.closest('.hm-sarmal .hm-kutu');
       if (!el) return;
-      hisseAc(el.dataset.t);
+      hisseAc(el.dataset.t, el.dataset.x);
     });
 
     const kap = document.getElementById('hmHarita');
     const oz = document.getElementById('hmOzet');
     if (oz) oz.addEventListener('click', e => {
       const r = e.target.closest('[data-t]');
-      if (r) hisseAc(r.dataset.t);
+      if (r) hisseAc(r.dataset.t, r.dataset.x);
     });
 
     const mini = document.getElementById('hmMini');
@@ -470,10 +471,12 @@
     window.addEventListener('resize', yenidenCiz);
   }
 
-  function hisseAc(tk) {
+  function hisseAc(tk, borsa) {
     if (!tk) return;
     if (typeof window.qFill !== 'function') return;
-    window.qFill(tk, '', durum.kapsam === 'bist' ? 'BIST' : 'NASDAQ');
+    // Borsa evren tablosundan geliyor; yoksa kapsama göre varsayılan
+    const ex = borsa || (durum.kapsam === 'bist' ? 'BIST' : 'NASDAQ');
+    window.qFill(tk, '', ex);
     // qFill tek başına analiz sayfasını açmıyor (switchTab sadece sekmeyi
     // değiştiriyor) — anaFromPt'deki desen: sonrasında analiz sayfasına geç.
     if (typeof window.showPage === 'function') window.showPage('analiz');

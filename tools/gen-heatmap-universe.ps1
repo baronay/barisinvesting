@@ -98,7 +98,11 @@ function To-Rows($quotes, $stripIS) {
     if (-not $ad) { $ad = [string]$q.symbol }
     $tk = [string]$q.symbol
     if ($stripIS) { $tk = $tk -replace '\.IS$', '' }
-    $rows += [pscustomobject]@{ t = $tk; n = $ad; s = $sec; sh = [long]$sh }
+    # Borsa: analiz ekranındaki rozet doğru yazsın (JPM NYSE, AAPL NASDAQ)
+    $borsa = if ($stripIS) { 'BIST' }
+             elseif ([string]$q.fullExchangeName -match 'Nasdaq') { 'NASDAQ' }
+             else { 'NYSE' }
+    $rows += [pscustomobject]@{ t = $tk; n = $ad; s = $sec; sh = [long]$sh; x = $borsa }
   }
   return $rows | Sort-Object s, @{Expression = 'sh'; Descending = $true }
 }
@@ -110,14 +114,15 @@ Write-Host "ABD: $($usRows.Count) satir, BIST: $($bistRows.Count) satir"
 function Emit($rows) {
   ($rows | ForEach-Object {
     $n = $_.n -replace '\\', '\\' -replace "'", "\'"
-    "  { t: '$($_.t)', n: '$n', s: '$($_.s)', sh: $($_.sh) },"
+    "  { t: '$($_.t)', n: '$n', s: '$($_.s)', sh: $($_.sh), x: '$($_.x)' },"
   }) -join "`n"
 }
 
 $header = @"
 /* ═══════════════════════════════════════════════════════════════
    ISI HARİTASI EVRENİ — statik referans tablosu
-   Alanlar: t = sembol, n = kısa ad, s = sektör, sh = ödenmiş pay adedi.
+   Alanlar: t = sembol, n = kısa ad, s = sektör, sh = ödenmiş pay adedi,
+            x = borsa (NASDAQ / NYSE / BIST).
 
    Kutu boyutu = sh × canlı fiyat (piyasa değeri). Pay adedi yavaş
    değişir (geri alım ~%1-3/yıl), fiyat Yahoo spark'tan canlı gelir —

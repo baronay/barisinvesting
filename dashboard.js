@@ -155,7 +155,7 @@
           const yonCls = b.yon === 'asti' ? 'db-up' : b.yon === 'kaldi' ? 'db-down' : 'db-flat';
           const yonAd = b.yon === 'asti' ? 'beklentiyi aştı'
             : b.yon === 'kaldi' ? 'beklentinin altında' : 'beklentiyi tutturdu';
-          return `<div class="db-bl db-bl-geldi" data-t="${esc(b.ticker)}">
+          return `<div class="db-bl db-bl-geldi" data-t="${esc(b.ticker)}" data-x="${esc(b.x || '')}">
             <div class="db-bl-ust">
               <span class="db-bl-tk">${esc(b.ticker)}</span>
               <span class="db-bl-ad">${esc(b.ad)}</span>
@@ -169,7 +169,7 @@
             </div>
           </div>`;
         }
-        return `<div class="db-bl" data-t="${esc(b.ticker)}">
+        return `<div class="db-bl" data-t="${esc(b.ticker)}" data-x="${esc(b.x || '')}">
           <div class="db-bl-ust">
             <span class="db-bl-tk">${esc(b.ticker)}</span>
             <span class="db-bl-ad">${esc(b.ad)}</span>
@@ -241,7 +241,8 @@
       if (!satir) return;
       const tk = satir.dataset.t;
       if (typeof window.qFill === 'function') {
-        window.qFill(tk, '', 'NASDAQ');
+        // Borsa evren tablosundan geliyor; bilinmiyorsa NASDAQ varsayılıyor
+        window.qFill(tk, '', satir.dataset.x || 'NASDAQ');
         if (typeof window.showPage === 'function') window.showPage('analiz');
         window.scrollTo(0, 0);
       }

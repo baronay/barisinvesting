@@ -108,6 +108,10 @@ async function getBilanco(req, res) {
       return res.status(200).json({ gun, toplam: 0, bilancolar: [], ts: Date.now() });
     }
 
+    // Borsa bilgisi takvimde yok; evren tablosundan bakılıyor, yoksa
+    // NASDAQ varsayılıyor (analiz ekranındaki rozet için)
+    const borsaTablo = new Map(US_EVREN.map(h => [h.t, h.x]));
+
     // Piyasa değerine göre sırala — akışta önce büyük şirketler
     const sirali = satirlar
       .map(r => ({
@@ -124,6 +128,7 @@ async function getBilanco(req, res) {
         ceyrek: String(r.fiscalQuarterEnding || ''),
         zaman: r.time === 'time-pre-market' ? 'acilis-oncesi'
           : r.time === 'time-after-hours' ? 'kapanis-sonrasi' : 'gun-ici',
+        x: borsaTablo.get(String(r.symbol || '').toUpperCase()) || 'NASDAQ',
       }))
       .filter(r => r.ticker)
       .sort((a, b) => b.kap - a.kap);
@@ -151,14 +156,20 @@ async function getBilanco(req, res) {
       if (!kimlik || Date.now() - baslangic > BIL_SURE) break;
       if (!penceresiGecti(b.zaman)) continue;
       try {
+        // price modülü ek istek maliyeti olmadan gerçek borsayı veriyor
+        // (AMCR NYSE, TRMB NasdaqGS) — evren tablosunda olmayan semboller
+        // için "NASDAQ" varsayımından kurtarıyor
         const u = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(b.ticker)}`
-          + `?modules=earningsHistory&crumb=${encodeURIComponent(kimlik.crumb)}`;
+          + `?modules=earningsHistory,price&crumb=${encodeURIComponent(kimlik.crumb)}`;
         const r = await fetch(u, {
           headers: { 'User-Agent': YAHOO_UA, 'Accept': 'application/json', 'Cookie': kimlik.cerez },
           signal: AbortSignal.timeout(8000),
         });
         const j = r.ok ? await r.json() : null;
-        const gecmis = j?.quoteSummary?.result?.[0]?.earningsHistory?.history;
+        const sonuc = j?.quoteSummary?.result?.[0];
+        const borsaAd = sonuc?.price?.exchangeName;
+        if (borsaAd) b.x = /nasdaq/i.test(borsaAd) ? 'NASDAQ' : 'NYSE';
+        const gecmis = sonuc?.earningsHistory?.history;
         if (Array.isArray(gecmis) && gecmis.length) {
           const son = gecmis[gecmis.length - 1];
           const tarih = son?.quarter?.fmt;
@@ -306,6 +317,8 @@ async function getHeatmap(req, res) {
         d: Math.round(degisim * 100) / 100,
         v: Math.round(deger),
         f: Math.round(v.fiyat * 100) / 100,
+        // Borsa: analiz ekranındaki rozet doğru yazsın (JPM NYSE, AAPL NASDAQ)
+        x: h.x || (kapsam === 'bist' ? 'BIST' : 'NASDAQ'),
       });
       toplamDeger += deger;
     }
@@ -379,15 +392,29 @@ async function getRegime(res) {
       chart('^GSPC', '1y', '1d'),
       chart('^VIX', '5d', '1d'),
       chart('^TNX', '5d', '1d'),
-      chart('DX=F', '5d', '1d'),
+      // DX=F artık veri döndürmüyor ("symbol may be delisted"), DXY hep
+      // boş görünüyordu. DX-Y.NYB dolar endeksinin çalışan sembolü.
+      chart('DX-Y.NYB', '5d', '1d'),
       chart('XU100.IS', '5d', '1d'),
     ]);
 
+    // GÜNLÜK değişim. Dikkat: chartPreviousClose, istenen ARALIĞIN
+    // öncesindeki kapanıştır — range=5d'de haftalık, range=1y'de yıllık
+    // getiri veriyordu (petrol -%0,43 iken +%5,96 görünüyordu).
+    // Günlük barlarda doğru referans, bugünün barından bir önceki kapanış.
     const quote = (c) => {
       if (!c) return null;
       const m = c.meta;
-      const prev = m.chartPreviousClose || m.previousClose;
       const cur = m.regularMarketPrice;
+      const closes = (c.indicators?.quote?.[0]?.close || []).filter(v => v != null && isFinite(v));
+      let prev = null;
+      if (closes.length >= 2) {
+        const son = closes[closes.length - 1];
+        // Son bar bugünün barıysa canlı fiyata eşittir; o zaman bir öncekini al
+        prev = (cur != null && Math.abs(son - cur) < Math.abs(cur) * 1e-6)
+          ? closes[closes.length - 2] : son;
+      }
+      if (!prev) prev = m.previousClose || m.chartPreviousClose;
       return { deger: cur, degisim: (cur && prev) ? ((cur - prev) / prev * 100) : 0 };
     };
 
@@ -466,7 +493,10 @@ async function getMarketOverview(res) {
         const chart = r.value?.chart?.result?.[0];
         if (chart) {
           const meta = chart.meta;
-          const prev = meta.chartPreviousClose || meta.previousClose;
+          // previousClose = DÜNÜN kapanışı (saatlik aralıkta geliyor).
+          // chartPreviousClose ise istenen aralığın öncesi, yani range=5d'de
+          // 5 gün öncesi — günlük değişim yerine haftalık getiri veriyordu.
+          const prev = meta.previousClose || meta.chartPreviousClose;
           const cur = meta.regularMarketPrice;
           // Sparkline için son kapanış fiyatları — null/eksik değerleri temizle, en fazla son 24 noktayı tut
           const rawCloses = chart.indicators?.quote?.[0]?.close || [];
