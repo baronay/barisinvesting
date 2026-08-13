@@ -2136,7 +2136,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   backdrop-filter:blur(6px);
 }
 .pt-brand-lockup{display:flex;align-items:center;gap:13px;}
-.brand-mark{width:46px;height:46px;flex-shrink:0;display:block;filter:drop-shadow(0 4px 16px rgba(194,173,132,0.22));}
 .pt-brand{display:flex;flex-direction:column;line-height:1;}
 .pt-brand-tag{font-family:var(--font-mono);font-size:9px;letter-spacing:3.5px;color:var(--cream2);opacity:.7;text-transform:uppercase;margin-bottom:7px;}
 .pt-brand-name{font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--cream);}
@@ -2700,6 +2699,41 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 @media(max-width:600px){.hm-ozet{grid-template-columns:1fr;}
   .hm-tab{padding:6px 8px;font-size:8.5px;letter-spacing:.8px;}
   .hm-ipucu{display:none !important;}}
+.hm-sek-bas{cursor:pointer;transition:color .12s;}
+.hm-sek-bas:hover{color:var(--accent);}
+
+/* ══ SEKTÖR SAYFASI ══ */
+.sk-ust{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;}
+.sk-geri{background:none;border:1px solid var(--border-s);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:1.2px;padding:6px 10px;cursor:pointer;transition:color .15s,border-color .15s;}
+.sk-geri:hover{color:var(--accent);border-color:var(--accent2);}
+.sk-kapsam{display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:9px;letter-spacing:1.2px;color:var(--muted-s);text-transform:uppercase;}
+.sk-intro{font-size:11px;line-height:1.7;color:var(--muted);margin:2px 0 16px;max-width:760px;}
+.sk-ozet{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:16px;}
+.sk-oz{background:var(--surface);padding:11px 13px;min-width:0;}
+.sk-oz-l{font-family:var(--font-mono);font-size:8px;font-weight:600;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted-s);margin-bottom:5px;}
+.sk-oz-v{font-family:var(--font-mono);font-size:18px;font-weight:700;}
+.sk-sar{overflow-x:auto;border:1px solid var(--border);background:var(--surface);}
+.sk-tablo{min-width:640px;}
+.sk-satir{display:grid;grid-template-columns:34px minmax(150px,1fr) 84px 88px repeat(4,72px);align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--rule);}
+.sk-satir:last-child{border-bottom:none;}
+.sk-bas{position:sticky;top:0;z-index:2;background:var(--surface2);border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:8px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted-s);padding-top:9px;padding-bottom:9px;}
+.sk-bas span{cursor:pointer;transition:color .12s;}
+.sk-bas span:hover{color:var(--text2);}
+.sk-bas .sk-aktif{color:var(--accent);}
+.sk-hisse{cursor:pointer;transition:background .12s;}
+.sk-hisse:hover{background:var(--surface2);}
+.sk-hisse:hover .sk-tk{color:var(--accent);}
+.sk-sira{font-family:var(--font-mono);font-size:9px;color:var(--muted2);}
+.sk-isim{min-width:0;}
+.sk-tk{font-family:var(--font-mono);font-size:11.5px;font-weight:700;color:var(--text);transition:color .15s;}
+.sk-ad{font-size:9.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.sk-sayi{font-family:var(--font-mono);font-size:10.5px;color:var(--text2);text-align:right;}
+.sk-getiri{font-family:var(--font-mono);font-size:10.5px;font-weight:600;text-align:right;}
+.sk-bos{color:var(--muted2);font-weight:400;}
+.sk-durum{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted2);margin-top:10px;}
+.sk-yukleniyor{padding:34px 14px;text-align:center;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;color:var(--muted2);}
+@media(max-width:600px){.sk-ozet{grid-template-columns:repeat(2,1fr);}
+  .sk-oz-v{font-size:16px;}}
 
 /* ══ TERMİNAL DASHBOARD ══ */
 .db-body{padding-top:18px;}
@@ -2888,16 +2922,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   <div class="pt-wrap">
     <div class="pt-topbar">
       <div class="pt-brand-lockup" data-route="/" style="cursor:pointer">
-        <svg class="brand-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="bmTile2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2433"/><stop offset="1" stop-color="#0c1017"/></linearGradient>
-            <linearGradient id="bmGold2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ecd9af"/><stop offset="0.5" stop-color="#c2ad84"/><stop offset="1" stop-color="#a8946b"/></linearGradient>
-          </defs>
-          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="url(#bmTile2)"/>
-          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="none" stroke="url(#bmGold2)" stroke-opacity="0.7" stroke-width="1.1"/>
-          <path d="M11.5 30 L19 22.5 L24 26 L33 16.5" fill="none" stroke="url(#bmGold2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.42"/>
-          <text x="22" y="30" font-family="'Playfair Display',Georgia,serif" font-weight="700" font-size="26" fill="url(#bmGold2)" text-anchor="middle">B</text>
-        </svg>
         <div class="pt-brand">
           <div class="pt-brand-tag">Finansal Araştırma & Medya</div>
           <div class="pt-brand-name">Barış <span>Investing</span></div>
@@ -2960,16 +2984,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   <div class="pt-wrap">
     <div class="pt-topbar">
       <div class="pt-brand-lockup" data-route="/" style="cursor:pointer">
-        <svg class="brand-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="bmTile4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2433"/><stop offset="1" stop-color="#0c1017"/></linearGradient>
-            <linearGradient id="bmGold4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ecd9af"/><stop offset="0.5" stop-color="#c2ad84"/><stop offset="1" stop-color="#a8946b"/></linearGradient>
-          </defs>
-          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="url(#bmTile4)"/>
-          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="none" stroke="url(#bmGold4)" stroke-opacity="0.7" stroke-width="1.1"/>
-          <path d="M11.5 30 L19 22.5 L24 26 L33 16.5" fill="none" stroke="url(#bmGold4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.42"/>
-          <text x="22" y="30" font-family="'Playfair Display',Georgia,serif" font-weight="700" font-size="26" fill="url(#bmGold4)" text-anchor="middle">B</text>
-        </svg>
         <div class="pt-brand">
           <div class="pt-brand-tag">Finansal Araştırma & Medya</div>
           <div class="pt-brand-name">Barış <span>Investing</span></div>
@@ -3000,16 +3014,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   <div class="pt-wrap">
     <div class="pt-topbar">
       <div class="pt-brand-lockup" data-route="/" style="cursor:pointer">
-        <svg class="brand-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="bmTile3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2433"/><stop offset="1" stop-color="#0c1017"/></linearGradient>
-            <linearGradient id="bmGold3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ecd9af"/><stop offset="0.5" stop-color="#c2ad84"/><stop offset="1" stop-color="#a8946b"/></linearGradient>
-          </defs>
-          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="url(#bmTile3)"/>
-          <rect x="1.4" y="1.4" width="41.2" height="41.2" rx="11.5" fill="none" stroke="url(#bmGold3)" stroke-opacity="0.7" stroke-width="1.1"/>
-          <path d="M11.5 30 L19 22.5 L24 26 L33 16.5" fill="none" stroke="url(#bmGold3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.42"/>
-          <text x="22" y="30" font-family="'Playfair Display',Georgia,serif" font-weight="700" font-size="26" fill="url(#bmGold3)" text-anchor="middle">B</text>
-        </svg>
         <div class="pt-brand">
           <div class="pt-brand-tag">Finansal Araştırma & Medya</div>
           <div class="pt-brand-name">Barış <span>Investing</span></div>
@@ -3051,12 +3055,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   <div class="brand">
     <div class="brand-top">
       <div style="display:flex;align-items:center;gap:10px;">
-        <svg style="width:30px;height:30px;flex-shrink:0;" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <rect x="1" y="1" width="38" height="38" rx="10" fill="#0c1018"/>
-          <rect x="1" y="1" width="38" height="38" rx="10" fill="none" stroke="#c2ad84" stroke-opacity="0.5"/>
-          <path d="M11 26.5 L17 20.5 L21.5 23.5 L29 14.5" stroke="#c2ad84" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
-          <text x="20" y="26.5" font-family="'Playfair Display',Georgia,serif" font-weight="700" font-size="22" fill="#c2ad84" text-anchor="middle">B</text>
-        </svg>
         <div><div class="brand-tag">Barış Investing</div><div class="brand-name">Analiz <span>Merkezi</span></div><div class="brand-sub">Buffett · Lynch</div></div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;">
@@ -3223,7 +3221,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   <div class="hm-mini-sar" id="hmMiniSar">
     <div class="sec-title">Sektör Isı Şeridi</div>
     <div class="hm-mini" id="hmMini"></div>
-    <div class="hm-mini-alt"><span id="hmMiniNot">yükleniyor…</span><span class="hm-mini-git">TAM HARİTAYI AÇ →</span></div>
+    <div class="hm-mini-alt"><span id="hmMiniNot">yükleniyor…</span><span class="hm-mini-git">SEKTÖRE TIKLA → GETİRİ TABLOSU</span></div>
   </div>
 
   <div class="db-grid">
@@ -3481,7 +3479,8 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   <div class="pt-hdr"><div class="pt-title">Piyasa <span>Haritası</span></div><span class="hm-durum" id="hmDurum" style="margin-left:10px"></span></div>
   <div class="hm-intro">
     Her kutu bir hisse: <strong>alanı piyasa değerini</strong>, <strong>rengi seçilen dönemdeki getiriyi</strong> gösterir.
-    Paranın hangi sektöre aktığını tek bakışta görürsün. Kutuya tıkla, hisse doğrudan analiz ekranına düşer.
+    Paranın hangi sektöre aktığını tek bakışta görürsün. Kutuya tıkla, hisse doğrudan analiz ekranına düşer;
+    <strong>sektör başlığına</strong> tıkla, o sektörün 1 ay / 3 ay / 6 ay / 1 yıllık getiri tablosu açılır.
   </div>
   <div class="hm-ust">
     <div class="hm-kontrol">
@@ -3501,6 +3500,24 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     </div>
     <div class="hm-ozet" id="hmOzet"></div>
   </div>
+</div>
+</div>
+
+<!-- ══ SEKTÖR DETAYI — haritadaki sektör başlığına tıklayınca ══ -->
+<div class="page" id="page-sektor">
+<div class="page-body">
+  <div class="sk-ust">
+    <button class="sk-geri" onclick="showPage('harita')">← Piyasa Haritası</button>
+    <div class="sk-kapsam" id="skKapsam"></div>
+  </div>
+  <div class="pt-hdr"><div class="pt-title" id="skBaslik">Sektör</div><span class="hm-durum" id="skDurum" style="margin-left:10px"></span></div>
+  <div class="sk-intro">
+    Sektördeki şirketlerin <strong>1 ay, 3 ay, 6 ay ve 1 yıllık</strong> getirileri.
+    Başlığa tıklayarak sırala, satıra tıklayarak hisseyi analiz ekranında aç.
+  </div>
+  <div class="sk-ozet" id="skOzet"></div>
+  <div class="sk-sar"><div class="sk-tablo" id="skTablo"><div class="sk-yukleniyor">Sektör verisi hazırlanıyor…</div></div></div>
+  <div class="sk-durum" id="skNot"></div>
 </div>
 </div>
 
@@ -4060,7 +4077,7 @@ function qFill(t,c,ex){selEx(ex);document.getElementById('tickerIn').value=t;doc
 
 // PAGES
 function showPage(type,idx){
-  ['overview','analiz','crit','portfolio','forum','tezler','watchlist','harita'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
+  ['overview','analiz','crit','portfolio','forum','tezler','watchlist','harita','sektor'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const e=document.getElementById('page-'+type);if(e)e.classList.add('active');
   if(type==='overview'){const n=document.getElementById('nav-overview');if(n)n.classList.add('active');if(window.dbYukle)window.dbYukle();}
@@ -4070,10 +4087,12 @@ function showPage(type,idx){
   else if(type==='forum'){const n=document.getElementById('nav-forum-entry');if(n)n.classList.add('active');loadPosts();}
   else if(type==='watchlist'){const n=document.getElementById('nav-watchlist-entry');if(n)n.classList.add('active');if(window.renderWatchlist)window.renderWatchlist();}
   else if(type==='harita'){const n=document.getElementById('nav-harita-entry');if(n)n.classList.add('active');if(window.hmSayfaAc)window.hmSayfaAc();}
+  // Sektör detayı haritanın alt sayfası — menüde "Piyasa Haritası" seçili kalsın
+  else if(type==='sektor'){const n=document.getElementById('nav-harita-entry');if(n)n.classList.add('active');}
   else if(type==='tezler'){const n=document.getElementById('nav-tezler');if(n)n.classList.add('active');renderTezler();}
   // Alt menü seçili sekmesini sayfayla eşitle — sayfa kenar çubuğundan,
   // ısı haritası kutusundan veya bilanço satırından da değişebiliyor
-  if(typeof mobileNavIsaretle==='function')mobileNavIsaretle(type);
+  if(typeof mobileNavIsaretle==='function')mobileNavIsaretle(type==='sektor'?'harita':type);
 }
 
 // TV CHART

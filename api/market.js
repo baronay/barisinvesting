@@ -9,6 +9,7 @@ export default async function handler(req, res) {
   if (type === 'news') return getNews(res);
   if (type === 'regime') return getRegime(res);
   if (type === 'heatmap') return getHeatmap(req, res);
+  if (type === 'sektor') return getSektor(req, res);
   if (type === 'bilanco') return getBilanco(req, res);
   if (type === 'search' && ticker) return searchTicker(ticker, res);
   return res.status(400).json({ error: 'Invalid' });
@@ -348,6 +349,155 @@ async function getHeatmap(req, res) {
       hisseSayisi,
       kapsananOran: Math.round(hisseSayisi / evren.length * 100),
       sektorler: liste,
+      ts: Date.now(),
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+}
+
+/* ── SEKTÖR DETAYI ───────────────────────────────────────────────
+   Bir sektördeki hisselerin 1A / 3A / 6A / 1Y getirileri.
+
+   Tek istek yeter: spark range=1y&interval=1d hem kapanışları hem
+   zaman damgalarını veriyor (ölçüldü) — dört ayrı dönem isteği yerine
+   bir yıllık seriden geriye sayıyoruz. Dönem başına ayrı çağrı 4 kat
+   istek demekti, Yahoo o hacimde kısmaya başlıyor.
+   ──────────────────────────────────────────────────────────────── */
+const SEK_DONEM = [
+  { k: '1a', ad: '1 Ay', gun: 30 },
+  { k: '3a', ad: '3 Ay', gun: 91 },
+  { k: '6a', ad: '6 Ay', gun: 182 },
+  { k: '1y', ad: '1 Yıl', gun: 365 },
+];
+const GUN_MS = 86400;
+
+// Hedef tarihteki (veya bir öncesindeki) kapanış. Seri hedefe kadar
+// gerilemiyorsa null — yeni halka arzda "1 yıllık getiri" uydurmayalım.
+function seriGetiri(ts, kapanis, sonFiyat, gun) {
+  if (!ts.length) return null;
+  const hedef = ts[ts.length - 1] - gun * GUN_MS;
+  // Tolerans: haftasonu/tatil boşlukları hedefi ıskalatabiliyor
+  if (ts[0] > hedef + 10 * GUN_MS) return null;
+  let i = 0;
+  for (let j = 0; j < ts.length; j++) {
+    if (ts[j] <= hedef) i = j; else break;
+  }
+  const ref = kapanis[i];
+  if (!ref || !isFinite(ref)) return null;
+  const d = (sonFiyat / ref - 1) * 100;
+  return isFinite(d) ? Math.round(d * 100) / 100 : null;
+}
+
+async function getSektor(req, res) {
+  const kapsam = String(req.query.scope || 'us').toLowerCase() === 'bist' ? 'bist' : 'us';
+  const sektorAd = String(req.query.sector || '').trim();
+  if (!sektorAd) return res.status(400).json({ error: 'Sektör belirtilmedi' });
+
+  const evren = (kapsam === 'bist' ? BIST_EVREN : US_EVREN).filter(h => h.s === sektorAd);
+  if (!evren.length) return res.status(404).json({ error: 'Sektör bulunamadı' });
+
+  const sembol = (t) => (kapsam === 'bist' ? `${t}.IS` : t);
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/json',
+    'Referer': 'https://finance.yahoo.com/',
+  };
+
+  const seri = {}; // sembol → { ts, kapanis, fiyat, oncekiYil }
+
+  async function grupCek(semboller) {
+    let j = null;
+    try {
+      const r = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(semboller.join(','))}&range=1y&interval=1d`,
+        { headers, signal: AbortSignal.timeout(9000) }
+      );
+      j = r.ok ? await r.json() : null;
+    } catch { j = null; }
+    if (!j || typeof j !== 'object') return;
+    for (const [sym, s] of Object.entries(j)) {
+      if (!s || !Array.isArray(s.close) || !Array.isArray(s.timestamp)) continue;
+      const ts = [], kapanis = [];
+      for (let i = 0; i < s.close.length; i++) {
+        if (s.close[i] != null && isFinite(s.close[i]) && s.timestamp[i] != null) {
+          ts.push(s.timestamp[i]); kapanis.push(s.close[i]);
+        }
+      }
+      if (kapanis.length < 2) continue;
+      seri[sym] = {
+        ts, kapanis,
+        fiyat: kapanis[kapanis.length - 1],
+        // Pencerenin bir öncesindeki kapanış = 1 yıllık getirinin doğru referansı
+        oncekiYil: (s.chartPreviousClose != null && isFinite(s.chartPreviousClose)) ? s.chartPreviousClose : null,
+      };
+    }
+  }
+
+  const parcala = (liste) => {
+    const g = [];
+    for (let i = 0; i < liste.length; i += HM_PARCA) g.push(liste.slice(i, i + HM_PARCA));
+    return g;
+  };
+
+  try {
+    const semboller = evren.map(h => sembol(h.t));
+    await Promise.allSettled(parcala(semboller).map(grupCek));
+    // Eksikleri bir kez daha, seri olarak iste (ısı haritasındaki desen)
+    const eksik = semboller.filter(s => !seri[s]);
+    for (const g of parcala(eksik)) await grupCek(g);
+
+    const hisseler = [];
+    for (const h of evren) {
+      const s = seri[sembol(h.t)];
+      if (!s) continue;
+      const deger = h.sh * s.fiyat;
+      const kayit = {
+        t: h.t,
+        n: h.n,
+        x: h.x || (kapsam === 'bist' ? 'BIST' : 'NASDAQ'),
+        f: Math.round(s.fiyat * 100) / 100,
+        v: isFinite(deger) && deger > 0 ? Math.round(deger) : null,
+      };
+      // Seri gerçekten bir yıla yayılıyor mu? Yeni halka arzda spark yine
+      // chartPreviousClose veriyor ama o "1 yıl önce" değil, ilk işlem günü —
+      // onu 1 yıllık getiri diye yazmak yanlış olur.
+      const tamYil = s.ts.length && (s.ts[s.ts.length - 1] - s.ts[0]) > 350 * 86400;
+      for (const d of SEK_DONEM) {
+        if (d.k === '1y' && s.oncekiYil && tamYil) {
+          const g = (s.fiyat / s.oncekiYil - 1) * 100;
+          kayit[d.k] = isFinite(g) ? Math.round(g * 100) / 100 : null;
+        } else {
+          kayit[d.k] = seriGetiri(s.ts, s.kapanis, s.fiyat, d.gun);
+        }
+      }
+      hisseler.push(kayit);
+    }
+
+    if (!hisseler.length) return res.status(502).json({ error: 'Sektör verisi alınamadı' });
+    hisseler.sort((a, b) => (b.v || 0) - (a.v || 0));
+
+    // Sektör ortalaması: piyasa değeri ağırlıklı (ısı haritasıyla aynı yöntem)
+    const ozet = {};
+    for (const d of SEK_DONEM) {
+      let agirlik = 0, toplam = 0;
+      for (const h of hisseler) {
+        if (h[d.k] == null || !h.v) continue;
+        agirlik += h.v; toplam += h[d.k] * h.v;
+      }
+      ozet[d.k] = agirlik ? Math.round((toplam / agirlik) * 100) / 100 : null;
+    }
+
+    res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600');
+    return res.status(200).json({
+      kapsam,
+      sektor: sektorAd,
+      paraBirimi: kapsam === 'bist' ? 'TRY' : 'USD',
+      donemler: SEK_DONEM.map(d => ({ k: d.k, ad: d.ad })),
+      hisseSayisi: hisseler.length,
+      evrenSayisi: evren.length,
+      ozet,
+      hisseler,
       ts: Date.now(),
     });
   } catch (e) {

@@ -175,6 +175,8 @@
       if (baslikVar) {
         const bas = document.createElement('div');
         bas.className = 'hm-sek-bas';
+        bas.dataset.sektor = s.ad;
+        bas.title = `${s.ad} — sektör detayına git`;
         const isim = sw >= 120 ? esc(s.ad) : esc(s.ad).slice(0, 9);
         bas.innerHTML = sw >= 92
           ? `<span class="hm-sek-ad">${isim}</span><span class="hm-sek-d" style="color:${s.d >= 0 ? 'var(--success)' : 'var(--danger)'}">${yuzde(s.d)}</span>`
@@ -362,7 +364,7 @@
       </div>
       <div class="hm-oz-blok">
         <div class="hm-oz-bas">Sektörler</div>
-        ${sekArtan.map(s => `<div class="hm-oz-row">
+        ${sekArtan.map(s => `<div class="hm-oz-row" data-sektor="${esc(s.ad)}" title="${esc(s.ad)} sektör detayı">
             <span class="hm-oz-ad" style="flex:1">${esc(s.ad)}</span>
             <span class="hm-oz-d" style="color:${s.d >= 0 ? 'var(--success)' : 'var(--danger)'}">${yuzde(s.d)}</span>
           </div>`).join('')}
@@ -385,7 +387,7 @@
       const veri = await getir('us', '1g');
       const sirali = veri.sektorler.slice().sort((a, b) => b.d - a.d);
       el.innerHTML = sirali.map(s => `
-        <div class="hm-mini-kutu" style="background:${renk(s.d)}" title="${esc(s.ad)} ${yuzde(s.d)}">
+        <div class="hm-mini-kutu" data-sektor="${esc(s.ad)}" style="background:${renk(s.d)}" title="${esc(s.ad)} ${yuzde(s.d)} — sektör detayı">
           <span class="hm-mini-ad">${esc(s.ad)}</span>
           <span class="hm-mini-d">${yuzde(s.d)}</span>
         </div>`).join('');
@@ -415,9 +417,12 @@
       sayfaYukle();
     });
 
-    // Kutuya tıkla → analiz akışına düş. Harita iki yerde çiziliyor
-    // (tam sayfa + dashboard paneli), o yüzden belge düzeyinde delege.
+    // Kutuya tıkla → analiz akışına düş, sektör başlığına tıkla → sektör
+    // detayı. Harita iki yerde çiziliyor (tam sayfa + dashboard paneli),
+    // o yüzden belge düzeyinde delege.
     document.addEventListener('click', e => {
+      const bas = e.target.closest('.hm-sarmal .hm-sek-bas[data-sektor]');
+      if (bas) { sektorAc(bas.dataset.sektor); return; }
       const el = e.target.closest('.hm-sarmal .hm-kutu');
       if (!el) return;
       hisseAc(el.dataset.t, el.dataset.x);
@@ -426,12 +431,18 @@
     const kap = document.getElementById('hmHarita');
     const oz = document.getElementById('hmOzet');
     if (oz) oz.addEventListener('click', e => {
+      const sek = e.target.closest('[data-sektor]');
+      if (sek) { sektorAc(sek.dataset.sektor); return; }
       const r = e.target.closest('[data-t]');
       if (r) hisseAc(r.dataset.t, r.dataset.x);
     });
 
-    const mini = document.getElementById('hmMini');
-    if (mini) mini.addEventListener('click', () => {
+    // Mini şerit: bir sektör kutusuna basıldıysa o sektörün detayı,
+    // şeridin boşluğuna basıldıysa haritanın tamamı
+    const mini = document.getElementById('hmMiniSar') || document.getElementById('hmMini');
+    if (mini) mini.addEventListener('click', e => {
+      const sek = e.target.closest('[data-sektor]');
+      if (sek) { sektorAc(sek.dataset.sektor, 'us'); return; }
       if (typeof window.showPage === 'function') window.showPage('harita');
     });
 
@@ -483,6 +494,160 @@
     window.scrollTo(0, 0);
   }
 
+  /* ═══ SEKTÖR DETAY SAYFASI ═══════════════════════════════════
+     Haritada sektör başlığına (veya özet panelindeki sektör satırına)
+     tıklayınca açılır: o sektördeki şirketlerin 1A/3A/6A/1Y getirileri.
+     Veri: /api/market?type=sektor — tek yıllık seriden dört dönem. */
+  const SEK_UC = '/api/market?type=sektor';
+  const sekDurum = { kapsam: 'us', sektor: null, veri: null, anahtar: 'v', yon: -1, istek: 0 };
+  const sekOnbellek = new Map();   // "kapsam|sektör" → { veri, ts }
+
+  const SEK_SUTUN = [
+    { k: 's', ad: '#', sinif: 'sk-sira', siralanir: false },
+    { k: 't', ad: 'Hisse', sinif: 'sk-isim' },
+    { k: 'f', ad: 'Fiyat', sinif: 'sk-sayi' },
+    { k: 'v', ad: 'Değer', sinif: 'sk-sayi' },
+    { k: '1a', ad: '1 Ay', sinif: 'sk-getiri' },
+    { k: '3a', ad: '3 Ay', sinif: 'sk-getiri' },
+    { k: '6a', ad: '6 Ay', sinif: 'sk-getiri' },
+    { k: '1y', ad: '1 Yıl', sinif: 'sk-getiri' },
+  ];
+
+  async function sektorGetir(kapsam, sektor) {
+    const anahtar = `${kapsam}|${sektor}`;
+    const onbl = sekOnbellek.get(anahtar);
+    if (onbl && (Date.now() - onbl.ts) < ONBELLEK_MS) return onbl.veri;
+    const r = await fetch(`${SEK_UC}&scope=${encodeURIComponent(kapsam)}&sector=${encodeURIComponent(sektor)}`);
+    const j = await r.json();
+    if (!j || j.error) throw new Error((j && j.error) || 'Veri yok');
+    sekOnbellek.set(anahtar, { veri: j, ts: Date.now() });
+    return j;
+  }
+
+  function sektorAc(sektor, kapsam) {
+    if (!sektor) return;
+    sekDurum.kapsam = kapsam || durum.kapsam;
+    sekDurum.sektor = sektor;
+    sekDurum.veri = null;
+    sekDurum.anahtar = 'v';
+    sekDurum.yon = -1;
+    if (typeof window.showPage === 'function') window.showPage('sektor');
+    window.scrollTo(0, 0);
+    sektorYukle();
+  }
+
+  async function sektorYukle() {
+    const tablo = document.getElementById('skTablo');
+    if (!tablo) return;
+    const baslik = document.getElementById('skBaslik');
+    const kapsamEl = document.getElementById('skKapsam');
+    const durumEl = document.getElementById('skDurum');
+    const ozetEl = document.getElementById('skOzet');
+    const notEl = document.getElementById('skNot');
+
+    if (baslik) baslik.innerHTML = `${esc(sekDurum.sektor)} <span>Sektörü</span>`;
+    if (kapsamEl) {
+      const k = KAPSAMLAR.find(x => x.k === sekDurum.kapsam) || KAPSAMLAR[0];
+      kapsamEl.innerHTML = `<svg class="chip-f" style="width:14px;height:9px"><use href="${k.bayrak}"/></svg>${k.ad}`;
+    }
+    if (ozetEl) ozetEl.innerHTML = '';
+    if (notEl) notEl.textContent = '';
+    tablo.innerHTML = '<div class="sk-yukleniyor">Sektör verisi hazırlanıyor…</div>';
+    if (durumEl) durumEl.textContent = 'yükleniyor…';
+
+    // Kullanıcı yüklenirken başka sektöre geçebiliyor — geç gelen yanıt
+    // yeni sektörün üstüne yazmasın
+    const bilet = ++sekDurum.istek;
+    try {
+      const veri = await sektorGetir(sekDurum.kapsam, sekDurum.sektor);
+      if (bilet !== sekDurum.istek) return;
+      sekDurum.veri = veri;
+      sektorCiz();
+      if (durumEl) {
+        const saat = new Date(veri.ts).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        durumEl.textContent = `${veri.hisseSayisi} şirket · ${saat}`;
+      }
+      if (notEl) {
+        const eksik = veri.evrenSayisi - veri.hisseSayisi;
+        notEl.textContent = `Getiriler kapanış fiyatlarına göre · veri: Yahoo Finance`
+          + (eksik > 0 ? ` · ${eksik} şirketin verisi alınamadı` : '');
+      }
+    } catch (e) {
+      if (bilet !== sekDurum.istek) return;
+      tablo.innerHTML = '<div class="sk-yukleniyor">Sektör verisi alınamadı. Birazdan tekrar dene.</div>';
+      if (durumEl) durumEl.textContent = '';
+    }
+  }
+
+  function sektorCiz() {
+    const veri = sekDurum.veri;
+    const tablo = document.getElementById('skTablo');
+    if (!veri || !tablo) return;
+
+    const ozetEl = document.getElementById('skOzet');
+    if (ozetEl) {
+      ozetEl.innerHTML = veri.donemler.map(d => {
+        const v = veri.ozet[d.k];
+        return `<div class="sk-oz">
+            <div class="sk-oz-l">${esc(d.ad)}</div>
+            <div class="sk-oz-v" style="color:${v == null ? 'var(--muted2)' : (v >= 0 ? 'var(--success)' : 'var(--danger)')}">${yuzde(v)}</div>
+          </div>`;
+      }).join('');
+    }
+
+    // Sıralama: boş getiriler her zaman en sona
+    const hisseler = veri.hisseler.slice().sort((a, b) => {
+      const k = sekDurum.anahtar;
+      if (k === 't') return a.t.localeCompare(b.t, 'tr') * sekDurum.yon;
+      const av = a[k], bv = b[k];
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return (av - bv) * sekDurum.yon;
+    });
+
+    const ok = (k) => k === sekDurum.anahtar ? (sekDurum.yon < 0 ? ' ▾' : ' ▴') : '';
+    const bas = `<div class="sk-satir sk-bas">` + SEK_SUTUN.map(c =>
+      c.siralanir === false
+        ? `<div class="${c.sinif}">${c.ad}</div>`
+        : `<div class="${c.sinif}"><span data-sut="${c.k}" class="${c.k === sekDurum.anahtar ? 'sk-aktif' : ''}">${c.ad}${ok(c.k)}</span></div>`
+    ).join('') + `</div>`;
+
+    const getiri = (v) => v == null
+      ? `<div class="sk-getiri sk-bos">—</div>`
+      : `<div class="sk-getiri" style="color:${v >= 0 ? 'var(--success)' : 'var(--danger)'}">${yuzde(v)}</div>`;
+
+    const satirlar = hisseler.map((h, i) => `
+      <div class="sk-satir sk-hisse" data-t="${esc(h.t)}" data-x="${esc(h.x || '')}">
+        <div class="sk-sira">${i + 1}</div>
+        <div class="sk-isim"><div class="sk-tk">${esc(h.t)}</div><div class="sk-ad">${esc(h.n)}</div></div>
+        <div class="sk-sayi">${veri.paraBirimi === 'TRY' ? '₺' : '$'}${h.f != null ? esc(h.f.toFixed(2)) : '—'}</div>
+        <div class="sk-sayi">${buyukSayi(h.v, veri.paraBirimi)}</div>
+        ${veri.donemler.map(d => getiri(h[d.k])).join('')}
+      </div>`).join('');
+
+    tablo.innerHTML = bas + satirlar;
+  }
+
+  function sektorOlaylari() {
+    const tablo = document.getElementById('skTablo');
+    if (!tablo) return;
+    tablo.addEventListener('click', e => {
+      const sut = e.target.closest('[data-sut]');
+      if (sut) {
+        const k = sut.dataset.sut;
+        // Aynı sütuna tekrar basınca yön değişir; yeni sütun sembolde
+        // A→Z, sayısal alanlarda büyükten küçüğe başlar
+        if (sekDurum.anahtar === k) sekDurum.yon *= -1;
+        else { sekDurum.anahtar = k; sekDurum.yon = k === 't' ? 1 : -1; }
+        sektorCiz();
+        return;
+      }
+      const satir = e.target.closest('.sk-hisse');
+      if (satir) hisseAc(satir.dataset.t, satir.dataset.x);
+    });
+  }
+
   /* ── Dashboard paneli — aynı motor, ayrı konteyner ──────────── */
   let _panelVeri = null;
 
@@ -517,6 +682,7 @@
   window.hmSayfaAc = function () { sayfaYukle(); };
   window.hmMiniYukle = miniYukle;
   window.hmPanelCiz = panelCiz;
+  window.hmSektorAc = sektorAc;
 
   function lejantCiz() {
     const el = document.getElementById('hmLejant');
@@ -529,6 +695,7 @@
   function baslat() {
     if (!document.getElementById('hmHarita') && !document.getElementById('hmMini')) return;
     olaylariKur();
+    sektorOlaylari();
     kontrolleriCiz();
     lejantCiz();
     miniYukle();
