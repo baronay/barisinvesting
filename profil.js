@@ -158,7 +158,7 @@
     if (!tk) return;
 
     durum.yukleniyor = true;
-    kap.innerHTML = '<div class="pv-bos">Şirket verisi SEC EDGAR\'dan alınıyor…</div>';
+    kap.innerHTML = '<div class="pv-bos">Şirket verisi hazırlanıyor…</div>';
     if (durumEl) durumEl.textContent = tk;
 
     try {
