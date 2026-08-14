@@ -2668,7 +2668,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .hm-durum{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted2);}
 .hm-govde{display:grid;grid-template-columns:1fr 218px;gap:14px;align-items:start;}
 .hm-sarmal{position:relative;background:var(--bg2);border:1px solid var(--border-s);overflow:hidden;}
-.hm-yukleniyor{display:flex;align-items:center;justify-content:center;height:100%;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;color:var(--muted2);}
+.hm-yukleniyor{display:flex;align-items:center;justify-content:center;height:100%;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;color:var(--muted-s);}
 .hm-sek{position:absolute;background:var(--bg2);overflow:hidden;}
 .hm-sek-bas{height:17px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 5px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted-s);white-space:nowrap;overflow:hidden;}
 .hm-sek-ad{overflow:hidden;text-overflow:ellipsis;}
@@ -2758,13 +2758,28 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .db-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start;}
 .db-sol{min-width:0;}
 .db-sag{display:flex;flex-direction:column;gap:14px;min-width:0;}
-.db-kart{background:var(--surface);border:1px solid var(--border);padding:11px 12px;}
-.db-sec-sag{margin-left:auto;font-family:var(--font-mono);font-size:8px;letter-spacing:1px;color:var(--muted2);text-transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;}
+.db-kart{background:var(--surface);border:1px solid var(--border);border-top:2px solid rgba(194,173,132,.32);padding:14px 14px 12px;}
+.db-sec-sag{margin-left:auto;font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted-s);text-transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;}
 .db-kart .sec-title::after,.db-sol .sec-title::after{display:none;}
-.db-mini-btn{background:none;border:1px solid var(--border-s);color:var(--muted);font-family:var(--font-mono);font-size:8px;letter-spacing:1.2px;padding:4px 8px;cursor:pointer;margin-left:8px;transition:color .15s,border-color .15s;}
+
+/* Bölüm başlığı — portal tarafındaki "Yatırım Tezleri" diliyle aynı:
+   mono altın kicker + Playfair başlık + ince ayraç. Terminalin 10px
+   uppercase sec-title'ı burada fazla soluk kalıyordu. */
+.db-sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  padding-bottom:10px;margin-bottom:13px;border-bottom:1px solid var(--border-s);}
+.db-sec-l{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.db-kicker{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--accent);}
+.db-sec-t{font-family:var(--font-head);font-size:20px;font-weight:600;line-height:1.15;letter-spacing:-.2px;color:var(--text);margin:0;}
+.db-sec-t em{font-style:italic;color:var(--accent);}
+.db-sec-meta{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.8px;color:var(--muted-s);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.db-sec-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.db-hm-grp .hm-tab{font-size:8.5px;letter-spacing:1px;padding:5px 9px;}
+.db-kart .db-sec-head{margin-bottom:8px;}
+
+.db-mini-btn{background:none;border:1px solid var(--border-s);color:var(--text2);font-family:var(--font-mono);font-size:9px;letter-spacing:1.2px;padding:5px 9px;cursor:pointer;transition:color .15s,border-color .15s;}
 .db-mini-btn:hover{color:var(--accent);border-color:var(--accent2);}
 .db-akis{display:flex;flex-direction:column;max-height:340px;overflow-y:auto;}
-.db-bos{font-size:10px;color:var(--muted2);padding:12px 2px;line-height:1.6;}
+.db-bos{font-size:11px;color:var(--muted-s);padding:12px 2px;line-height:1.6;}
 
 /* Bilanço satırı */
 .db-bl{padding:8px 2px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .12s;}
@@ -2773,28 +2788,32 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .db-bl-geldi{border-left:2px solid var(--accent);padding-left:8px;}
 .db-bl-ust{display:flex;align-items:center;gap:7px;margin-bottom:3px;}
 .db-bl-tk{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text);flex-shrink:0;}
-.db-bl-ad{font-size:10px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.db-bl-rozet{font-family:var(--font-mono);font-size:9px;font-weight:700;flex-shrink:0;}
-.db-bekle{color:var(--muted2);font-weight:400;}
-.db-bl-alt{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-family:var(--font-mono);font-size:9px;color:var(--muted-s);}
-.db-bl-eps b{color:var(--text2);}
-.db-bl-ayrac{color:var(--muted2);}
-.db-bl-not{margin-left:auto;font-size:8.5px;letter-spacing:.4px;}
+.db-bl-ad{font-size:10.5px;color:var(--muted-s);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.db-bl-rozet{font-family:var(--font-mono);font-size:9.5px;font-weight:700;flex-shrink:0;}
+.db-bekle{color:var(--muted-s);font-weight:400;}
+.db-bl-alt{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-family:var(--font-mono);font-size:10px;color:var(--muted-s);}
+.db-bl-eps b{color:var(--text);}
+.db-bl-ayrac{color:var(--muted);}
+.db-bl-not{margin-left:auto;font-size:9.5px;letter-spacing:.4px;}
 
 /* Haber satırı */
 .db-hb{display:flex;gap:9px;padding:7px 2px;border-bottom:1px solid var(--rule);text-decoration:none;transition:background .12s;}
 .db-hb:last-child{border-bottom:none;}
 .db-hb:hover{background:var(--surface2);}
 .db-hb:hover .db-hb-bs{color:var(--accent);}
-.db-hb-sa{font-family:var(--font-mono);font-size:8.5px;color:var(--muted2);flex-shrink:0;width:30px;padding-top:1px;}
-.db-hb-bs{font-size:11px;line-height:1.5;color:var(--text2);transition:color .15s;}
-.db-alt{margin-top:20px;padding-top:12px;border-top:1px solid var(--rule);font-size:9px;color:var(--muted2);letter-spacing:.3px;}
+.db-hb-sa{font-family:var(--font-mono);font-size:9px;color:var(--muted-s);flex-shrink:0;width:32px;padding-top:1px;}
+.db-hb-bs{font-size:11.5px;line-height:1.55;color:var(--text2);transition:color .15s;}
+.db-alt{margin-top:20px;padding-top:12px;border-top:1px solid var(--rule);font-size:9.5px;color:var(--muted);letter-spacing:.3px;}
 
 @media(max-width:1000px){.db-grid{grid-template-columns:1fr;}
   .db-akis{max-height:none;}}
 @media(max-width:600px){.db-rejim{grid-template-columns:repeat(2,1fr);}
   .db-tape-akis{animation-duration:32s;}
-  .db-sec-sag{max-width:120px;}}
+  .db-sec-sag{max-width:120px;}
+  .db-sec-t{font-size:17px;}
+  .db-sec-head{align-items:flex-start;}
+  .db-sec-r{width:100%;}
+  .db-hm-grp{flex-wrap:wrap;}}
 
 /* Ana sayfa mini şeridi */
 .hm-mini-sar{margin-bottom:18px;cursor:pointer;}
@@ -2804,8 +2823,8 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .hm-mini-ad{font-size:8.5px;letter-spacing:.3px;color:rgba(255,255,255,.82);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .hm-mini-d{font-family:var(--font-mono);font-size:10px;font-weight:700;color:#fff;}
 .hm-mini-bos{font-size:10px;color:var(--muted2);padding:14px 0;}
-.hm-mini-alt{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:1px;color:var(--muted2);}
-.hm-mini-git{color:var(--accent);}
+.hm-mini-alt{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:1px;color:var(--muted-s);}
+.hm-mini-git{font-family:var(--font-mono);font-size:9px;letter-spacing:1.4px;color:var(--accent);}
 @media(max-width:900px){.hm-mini{height:40px;grid-auto-flow:row;grid-template-columns:repeat(4,1fr);grid-auto-rows:38px;height:auto;}
   .hm-mini-ad{font-size:8px;}}
 </style>
@@ -3219,17 +3238,31 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 
   <!-- Sektör ısı şeridi — tam haritanın kısayolu -->
   <div class="hm-mini-sar" id="hmMiniSar">
-    <div class="sec-title">Sektör Isı Şeridi</div>
+    <div class="db-sec-head">
+      <div class="db-sec-l">
+        <span class="db-kicker">◈ Sektörler</span>
+        <h3 class="db-sec-t">Sektör Isı <em>Şeridi</em></h3>
+      </div>
+      <div class="db-sec-r"><span class="hm-mini-git">SEKTÖRE TIKLA → GETİRİ TABLOSU</span></div>
+    </div>
     <div class="hm-mini" id="hmMini"></div>
-    <div class="hm-mini-alt"><span id="hmMiniNot">yükleniyor…</span><span class="hm-mini-git">SEKTÖRE TIKLA → GETİRİ TABLOSU</span></div>
+    <div class="hm-mini-alt"><span id="hmMiniNot">yükleniyor…</span></div>
   </div>
 
   <div class="db-grid">
-    <!-- Sol: ısı haritası -->
+    <!-- Sol: ısı haritası — kapsam/dönem sekmeleri tam sayfayla ortak durumu kullanır -->
     <div class="db-sol">
-      <div class="sec-title">Piyasa Isı Haritası
-        <span class="db-sec-sag" id="dbHaritaDurum"></span>
-        <button class="db-mini-btn" onclick="showPage('harita')">TAMAMI →</button>
+      <div class="db-sec-head">
+        <div class="db-sec-l">
+          <span class="db-kicker">◈ Canlı</span>
+          <h3 class="db-sec-t">Piyasa Isı <em>Haritası</em></h3>
+          <span class="db-sec-meta" id="dbHaritaDurum"></span>
+        </div>
+        <div class="db-sec-r">
+          <div class="hm-kontrol-grp db-hm-grp" id="dbHmKapsamlar"></div>
+          <div class="hm-kontrol-grp db-hm-grp" id="dbHmDonemler"></div>
+          <button class="db-mini-btn" onclick="showPage('harita')">TAMAMI →</button>
+        </div>
       </div>
       <div class="hm-sarmal" id="dbHarita"></div>
     </div>
@@ -3237,11 +3270,23 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <!-- Sağ: bilanço akışı + son dakika -->
     <div class="db-sag">
       <div class="db-kart">
-        <div class="sec-title">Bilanço Akışı <span class="db-sec-sag" id="dbBilancoDurum"></span></div>
+        <div class="db-sec-head">
+          <div class="db-sec-l">
+            <span class="db-kicker">◈ Bugün</span>
+            <h3 class="db-sec-t">Bilanço <em>Akışı</em></h3>
+            <span class="db-sec-meta" id="dbBilancoDurum"></span>
+          </div>
+        </div>
         <div class="db-akis" id="dbBilanco"><div class="db-bos">Bilançolar yükleniyor…</div></div>
       </div>
       <div class="db-kart">
-        <div class="sec-title">Son Dakika <span class="db-sec-sag" id="dbHaberKaynak"></span></div>
+        <div class="db-sec-head">
+          <div class="db-sec-l">
+            <span class="db-kicker">◈ Akış</span>
+            <h3 class="db-sec-t">Son <em>Dakika</em></h3>
+            <span class="db-sec-meta" id="dbHaberKaynak"></span>
+          </div>
+        </div>
         <div class="db-akis" id="dbHaber"><div class="db-bos">Haberler yükleniyor…</div></div>
       </div>
     </div>
@@ -3287,7 +3332,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div class="hero-right" id="heroMarketPanel">
         <div class="hmp-title">CANLI PİYASA</div>
         <div class="hmp-row" id="hmpSP500"><span class="hmp-lbl">S&P 500</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
-        <div class="hmp-row" id="hmpNAS"><span class="hmp-lbl">NASDAQ</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
+        <div class="hmp-row" id="hmpNAS"><span class="hmp-lbl">NASDAQ 100</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
         <div class="hmp-row" id="hmpBIST"><span class="hmp-lbl">BİST 100</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
         <div class="hmp-divider"></div>
         <div class="hmp-row" id="hmpBTC"><span class="hmp-lbl">BTC</span><span class="hmp-val">—</span><span class="hmp-chg">—</span></div>
@@ -6864,7 +6909,7 @@ function garpAnalizAc(ticker) {
   const MKT = [
     { key:'bist100', label:'BIST 100', cur:'',  dp:0 },
     { key:'sp500',   label:'S&P 500',  cur:'',  dp:0 },
-    { key:'nasdaq',  label:'NASDAQ',   cur:'',  dp:0 },
+    { key:'nasdaq',  label:'NASDAQ 100', cur:'',  dp:0 },
     { key:'gold',    label:'Altın (ons)', cur:'$', dp:0 },
     { key:'btc',     label:'Bitcoin',  cur:'$', dp:0 },
   ];

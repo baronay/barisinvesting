@@ -290,17 +290,27 @@
     return Math.max(520, Math.min(720, Math.round(window.innerHeight * 0.66)));
   }
 
+  function donemTablari(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = DONEMLER.map(d =>
+      `<button class="hm-tab${d.k === durum.donem ? ' active' : ''}" data-donem="${d.k}">${d.ad}</button>`).join('');
+  }
+
+  function kapsamTablari(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = KAPSAMLAR.map(k =>
+      `<button class="hm-tab hm-tab-k${k.k === durum.kapsam ? ' active' : ''}" data-kapsam="${k.k}"><svg class="chip-f" style="width:14px;height:9px"><use href="${k.bayrak}"/></svg>${k.ad}</button>`).join('');
+  }
+
+  /* Tam sayfa ve dashboard paneli aynı durumu paylaşıyor; hangisinden
+     değiştirilirse değiştirilsin iki taraftaki sekmeler de senkron kalsın. */
   function kontrolleriCiz() {
-    const dEl = document.getElementById('hmDonemler');
-    if (dEl) {
-      dEl.innerHTML = DONEMLER.map(d =>
-        `<button class="hm-tab${d.k === durum.donem ? ' active' : ''}" data-donem="${d.k}">${d.ad}</button>`).join('');
-    }
-    const kEl = document.getElementById('hmKapsamlar');
-    if (kEl) {
-      kEl.innerHTML = KAPSAMLAR.map(k =>
-        `<button class="hm-tab hm-tab-k${k.k === durum.kapsam ? ' active' : ''}" data-kapsam="${k.k}"><svg class="chip-f" style="width:14px;height:9px"><use href="${k.bayrak}"/></svg>${k.ad}</button>`).join('');
-    }
+    donemTablari('hmDonemler');
+    kapsamTablari('hmKapsamlar');
+    donemTablari('dbHmDonemler');
+    kapsamTablari('dbHmKapsamlar');
   }
 
   async function sayfaYukle() {
@@ -415,6 +425,28 @@
       durum.kapsam = b.dataset.kapsam;
       durum.veri = null;
       sayfaYukle();
+    });
+
+    // Dashboard panelindeki sekmeler — tam sayfayı açmadan dönem/kapsam
+    // değiştirilebilsin. Tam sayfa bir sonraki açılışında yeni durumu çeker.
+    const dbD = document.getElementById('dbHmDonemler');
+    if (dbD) dbD.addEventListener('click', e => {
+      const b = e.target.closest('[data-donem]');
+      if (!b || b.dataset.donem === durum.donem) return;
+      durum.donem = b.dataset.donem;
+      durum.veri = null;
+      kontrolleriCiz();
+      panelCiz('dbHarita', 'dbHaritaDurum');
+    });
+
+    const dbK = document.getElementById('dbHmKapsamlar');
+    if (dbK) dbK.addEventListener('click', e => {
+      const b = e.target.closest('[data-kapsam]');
+      if (!b || b.dataset.kapsam === durum.kapsam) return;
+      durum.kapsam = b.dataset.kapsam;
+      durum.veri = null;
+      kontrolleriCiz();
+      panelCiz('dbHarita', 'dbHaritaDurum');
     });
 
     // Kutuya tıkla → analiz akışına düş, sektör başlığına tıkla → sektör
@@ -660,6 +692,7 @@
     const kap = document.getElementById(kapId || 'dbHarita');
     if (!kap) return;
     const durumEl = durumId ? document.getElementById(durumId) : null;
+    kontrolleriCiz();
     kap.style.height = panelYukseklik() + 'px';
     kap.innerHTML = '<div class="hm-yukleniyor">Isı haritası hazırlanıyor…</div>';
     try {
