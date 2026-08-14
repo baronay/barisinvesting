@@ -2543,6 +2543,27 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 @media(max-width:980px){.mkt-grid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:560px){.mkt-grid{grid-template-columns:repeat(2,1fr);}}
 
+/* Şirket Profili — künye kartı + finansal tablolar */
+.pr-kunye{border:1px solid var(--border-s);background:var(--surface);padding:16px 18px;margin-bottom:22px;}
+.pr-k-ust{display:flex;align-items:center;gap:14px;padding-bottom:13px;border-bottom:1px solid var(--rule);margin-bottom:13px;}
+.pr-logo{width:46px;height:46px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border-s);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--muted-s);overflow:hidden;}
+.pr-k-bas{flex:1;min-width:0;}
+.pr-ad{font-family:var(--font-head);font-size:19px;font-weight:600;color:var(--text);line-height:1.2;}
+.pr-alt{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:var(--muted-s);margin-top:4px;text-transform:uppercase;}
+.pr-edgar{font-family:var(--font-mono);font-size:9px;letter-spacing:1.2px;color:var(--accent);text-decoration:none;border:1px solid var(--border-s);padding:6px 10px;white-space:nowrap;transition:border-color .15s;}
+.pr-edgar:hover{border-color:var(--accent2);}
+.pr-k-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 22px;}
+.pr-k-row{display:flex;align-items:baseline;gap:10px;min-width:0;}
+.pr-k-l{font-family:var(--font-mono);font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted-s);min-width:104px;flex-shrink:0;}
+.pr-k-v{font-size:11.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pr-tablo td:first-child,.pr-tablo th:first-child{text-align:left;}
+.pr-tablo .pr-kalem{color:var(--text2);font-family:var(--font-mono);font-size:10.5px;white-space:nowrap;}
+.pr-tablo .pr-grup td{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:1.8px;text-transform:uppercase;color:var(--accent);background:var(--surface2);padding:7px 10px;border-bottom:1px solid var(--border);}
+.pr-tablo td{color:var(--text);}
+.pr-tablo .pr-eksi{color:var(--danger);}
+.pr-ay{font-family:var(--font-mono);font-size:8px;color:var(--muted-s);margin-left:5px;letter-spacing:.5px;}
+@media(max-width:600px){.pr-k-l{min-width:88px;}.pr-ad{font-size:16px;}}
+
 /* Takip Listem — sade sürüm (hedef fiyat / alarm yok) */
 .tk-ekle{display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap;}
 .tk-in{flex:1;min-width:200px;background:rgba(0,0,0,0.25);border:1px solid var(--border-s);color:var(--text);font-family:var(--font-mono);font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:10px 12px;outline:none;transition:border-color .15s;}
@@ -2555,7 +2576,12 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .tk-row{display:flex;align-items:center;gap:14px;padding:11px 14px;border-bottom:1px solid var(--rule);}
 .tk-row:last-child{border-bottom:none;}
 .tk-row:hover{background:var(--surface2);}
-.tk-tk{font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--text);min-width:76px;cursor:pointer;}
+/* Logo kutusu: img yüklenirse baş harfleri örter, 404'te img kendini
+   siler ve altındaki baş harfler görünür kalır */
+.tk-logo{position:relative;width:26px;height:26px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border-s);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.tk-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:2px;background:var(--surface2);}
+.tk-logo i{font-family:var(--font-mono);font-size:9px;font-weight:700;font-style:normal;color:var(--muted-s);}
+.tk-tk{font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--text);min-width:70px;cursor:pointer;}
 .tk-row:hover .tk-tk{color:var(--accent);}
 .tk-ex{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted-s);flex:1;}
 .tk-px{font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;text-align:right;min-width:96px;}
@@ -2785,6 +2811,8 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .db-bl:hover{background:var(--surface2);}
 .db-bl-geldi{border-left:2px solid var(--accent);padding-left:8px;}
 .db-bl-ust{display:flex;align-items:center;gap:7px;margin-bottom:3px;}
+.db-bl-logo{width:18px;height:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.db-bl-logo img{width:100%;height:100%;object-fit:contain;}
 .db-bl-tk{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text);flex-shrink:0;}
 .db-bl-ad{font-size:10.5px;color:var(--muted-s);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .db-bl-rozet{font-family:var(--font-mono);font-size:9.5px;font-weight:700;flex-shrink:0;}
@@ -3129,14 +3157,17 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <div class="nav-item" id="nav-harita-entry" onclick="showPage('harita');closeSidebar();">
       <span class="nav-num">02</span>Piyasa Verileri
     </div>
+    <div class="nav-item" id="nav-profil-entry" onclick="showPage('profil');closeSidebar();">
+      <span class="nav-num">03</span>Şirket Profili
+    </div>
     <div class="nav-item" id="nav-watchlist-entry" onclick="showPage('watchlist');closeSidebar();">
-      <span class="nav-num">03</span>Takip Listem
+      <span class="nav-num">04</span>Takip Listem
     </div>
     <div class="nav-item" id="nav-forum-entry" onclick="showPage('forum');closeSidebar();">
-      <span class="nav-num">04</span>Topluluk Görüşleri
+      <span class="nav-num">05</span>Topluluk Görüşleri
     </div>
     <div class="nav-item" id="nav-portfolio-entry" onclick="showPage('portfolio');closeSidebar();">
-      <span class="nav-num">05</span>Portföy İzleyici
+      <span class="nav-num">06</span>Portföy İzleyici
     </div>
     <!-- Kriter listesi sidebar'dan kaldırıldı — kriterlere artık "Analiz Sonuçları"
          kartındaki checklist'ten tıklanarak ulaşılıyor. navList JS'te hâlâ
@@ -3481,6 +3512,22 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <div class="risk-card"><div class="risk-t">Risk Analizi<span class="rl" id="riskLv">—</span></div><div class="risk-items"><div class="ri"><div class="ri-l">Konsantrasyon</div><div class="ri-v" id="riskConc">—</div></div><div class="ri"><div class="ri-l">En Büyük Pozisyon</div><div class="ri-v" id="riskBig">—</div></div><div class="ri"><div class="ri-l">Ort. Buffett Skoru</div><div class="ri-v" id="riskAvgB">—</div></div><div class="ri"><div class="ri-l">Analiz Edilmemiş</div><div class="ri-v" id="riskUn">—</div></div></div></div>
   </div>
 </div><!-- /page-body -->
+</div>
+
+<!-- ══ ŞİRKET PROFİLİ — künye + finansal tablolar (SEC EDGAR, ABD) ══ -->
+<div class="page" id="page-profil">
+<div class="page-body">
+  <div class="pt-hdr"><div class="pt-title">Şirket <span>Profili</span></div><span class="hm-durum" id="prDurum" style="margin-left:10px"></span></div>
+  <div class="pv-intro">
+    Şirketin künyesi ve <strong>SEC'e raporladığı resmî finansal tabloları</strong> — gelir tablosu, bilanço ve nakit akışı,
+    son 5 mali yıl ve son 6 çeyrek. Veri doğrudan SEC EDGAR'ın XBRL kayıtlarından geliyor.
+  </div>
+  <div class="tk-ekle">
+    <input class="tk-in" id="prTicker" placeholder="Hisse kodu (AAPL, MSFT, POWL…)" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')prAra()"/>
+    <button class="tk-btn" onclick="prAra()">GETİR →</button>
+  </div>
+  <div id="prGovde"></div>
+</div>
 </div>
 
 <!-- ══ TAKİP LİSTEM — sade sürüm: hedef fiyat / alarm yok ══ -->
@@ -4088,7 +4135,7 @@ function qFill(t,c,ex){selEx(ex);document.getElementById('tickerIn').value=t;doc
 
 // PAGES
 function showPage(type,idx){
-  ['overview','analiz','crit','portfolio','forum','tezler','harita','sektor','watchlist'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
+  ['overview','analiz','crit','portfolio','forum','tezler','harita','sektor','watchlist','profil'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const e=document.getElementById('page-'+type);if(e)e.classList.add('active');
   if(type==='overview'){const n=document.getElementById('nav-overview');if(n)n.classList.add('active');if(window.dbYukle)window.dbYukle();}
@@ -4096,6 +4143,7 @@ function showPage(type,idx){
   else if(type==='crit'){const n=document.getElementById('nav-'+idx);if(n)n.classList.add('active');renderCritDetail(idx);}
   else if(type==='portfolio'){const n=document.getElementById('nav-portfolio-entry');if(n)n.classList.add('active');renderPt();}
   else if(type==='forum'){const n=document.getElementById('nav-forum-entry');if(n)n.classList.add('active');loadPosts();}
+  else if(type==='profil'){const n=document.getElementById('nav-profil-entry');if(n)n.classList.add('active');if(window.prSayfaAc)window.prSayfaAc();}
   else if(type==='watchlist'){const n=document.getElementById('nav-watchlist-entry');if(n)n.classList.add('active');if(window.tkCiz)window.tkCiz();}
   else if(type==='harita'){const n=document.getElementById('nav-harita-entry');if(n)n.classList.add('active');if(window.pvSayfaAc)window.pvSayfaAc();}
   // Sektör detayı bu sayfanın alt sayfası — menüde "Piyasa Verileri" seçili kalsın
@@ -5319,6 +5367,7 @@ if (!localStorage.getItem('baris_fw_seen')) {
 <script src="/score-gauge.js"></script>
 <script src="/heatmap.js"></script>
 <script src="/market-data.js"></script>
+<script src="/profil.js"></script>
 <script src="/dashboard.js"></script>
 
 <!-- MOBILE HESAP SHEET -->
@@ -6982,6 +7031,7 @@ function garpAnalizAc(ticker) {
 
     kap.innerHTML = '<div class="tk-sar">' + liste.map(it => `
       <div class="tk-row" id="tk-${esc(it.tk)}-${esc(it.ex)}">
+        <span class="tk-logo"><img src="/api/logo?ticker=${encodeURIComponent(it.tk)}&sz=64" alt="" loading="lazy" onerror="this.remove()"><i>${esc(it.tk.slice(0,2))}</i></span>
         <span class="tk-tk" onclick="tkAc('${esc(it.tk)}','${esc(it.ex)}')">${esc(it.tk)}</span>
         <span class="tk-ex">${it.ex === 'BIST' ? 'BİST' : 'ABD'}</span>
         <span class="tk-px" id="tk-px-${esc(it.tk)}-${esc(it.ex)}">…</span>

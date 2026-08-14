@@ -157,6 +157,7 @@
             : b.yon === 'kaldi' ? 'beklentinin altında' : 'beklentiyi tutturdu';
           return `<div class="db-bl db-bl-geldi" data-t="${esc(b.ticker)}" data-x="${esc(b.x || '')}">
             <div class="db-bl-ust">
+              <span class="db-bl-logo"><img src="/api/logo?ticker=${encodeURIComponent(b.ticker)}&sz=64" alt="" loading="lazy" onerror="this.remove()"></span>
               <span class="db-bl-tk">${esc(b.ticker)}</span>
               <span class="db-bl-ad">${esc(b.ad)}</span>
               <span class="db-bl-rozet ${yonCls}">${b.surpriz != null ? yuzde(b.surpriz, 1) : 'geldi'}</span>
@@ -171,6 +172,7 @@
         }
         return `<div class="db-bl" data-t="${esc(b.ticker)}" data-x="${esc(b.x || '')}">
           <div class="db-bl-ust">
+            <span class="db-bl-logo"><img src="/api/logo?ticker=${encodeURIComponent(b.ticker)}&sz=64" alt="" loading="lazy" onerror="this.remove()"></span>
             <span class="db-bl-tk">${esc(b.ticker)}</span>
             <span class="db-bl-ad">${esc(b.ad)}</span>
             <span class="db-bl-rozet db-bekle">bekleniyor</span>
