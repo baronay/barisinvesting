@@ -12,7 +12,10 @@
   const UC = '/api/market?type=piyasa';
   const ONBELLEK_MS = 300000;         // 5 dk — sunucu tarafı zaten 10 dk cache'li
 
-  const durum = { veri: null, ts: 0, yukleniyor: false };
+  // Sayfa eskiden dört tabloyu alt alta, her birini altı dönem sütunuyla
+  // gösteriyordu: 45 satır × 7 sütun. Okunmuyordu. Artık aynı anda tek
+  // blok ve tek dönem görünüyor; kullanıcı ikisini de üstten seçiyor.
+  const durum = { veri: null, ts: 0, yukleniyor: false, blok: null, donem: '1g' };
   // Blok bazlı sıralama: { blokKey: { anahtar, yon } }. anahtar 'ad' | 'f' | dönem kodu.
   const sirala = {};
 
@@ -70,6 +73,17 @@
     return liste;
   }
 
+  function sekmeCiz(veri) {
+    const bloklar = veri.bloklar.map(b =>
+      `<button class="pv-sek${b.k === durum.blok ? ' active' : ''}" data-blok="${esc(b.k)}">${esc(b.ad)}</button>`).join('');
+    const donemler = veri.donemler.map(d =>
+      `<button class="pv-sek pv-sek-d${d.k === durum.donem ? ' active' : ''}" data-donem="${esc(d.k)}">${esc(d.ad)}</button>`).join('');
+    return `<div class="pv-sekmeler">
+      <div class="pv-sek-grp">${bloklar}</div>
+      <div class="pv-sek-grp pv-sek-sag">${donemler}</div>
+    </div>`;
+  }
+
   function blokCiz(blok, donemler) {
     const s = sirala[blok.k] || {};
     // Sektör ortalamalarının tek bir fiyatı yok — o blokta sütunu hiç açma,
@@ -90,7 +104,6 @@
 
     return `<div class="pv-blok">
       <div class="pv-blok-bas">
-        <span class="pv-blok-t">${esc(blok.ad)}</span>
         <span class="pv-blok-n">${esc(blok.not || '')}</span>
       </div>
       <div class="pv-sar">
@@ -117,11 +130,11 @@
 
     try {
       const veri = await getir(zorla);
-      govde.innerHTML = veri.bloklar.map(b => blokCiz(b, veri.donemler)).join('');
+      if (!durum.blok || !veri.bloklar.some(b => b.k === durum.blok)) durum.blok = veri.bloklar[0].k;
+      ciz();
       if (durumEl) {
         const saat = new Date(veri.ts).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-        const adet = veri.bloklar.reduce((t, b) => t + b.satirlar.length, 0);
-        durumEl.textContent = `${adet} enstrüman · ${saat}`;
+        durumEl.textContent = saat;
       }
     } catch (e) {
       govde.innerHTML = '<div class="pv-bos">Piyasa verisi alınamadı. Birazdan tekrar dene.</div>';
@@ -134,7 +147,13 @@
   function ciz() {
     const govde = document.getElementById('pvGovde');
     if (!govde || !durum.veri) return;
-    govde.innerHTML = durum.veri.bloklar.map(b => blokCiz(b, durum.veri.donemler)).join('');
+    const veri = durum.veri;
+    const blok = veri.bloklar.find(b => b.k === durum.blok) || veri.bloklar[0];
+    const donem = veri.donemler.find(d => d.k === durum.donem) || veri.donemler[0];
+    // Seçili dönemi varsayılan sıralama yap: tablo doğrudan bir sıralama
+    // olarak okunsun, kullanıcı başlığa basmak zorunda kalmasın
+    if (!sirala[blok.k]) sirala[blok.k] = { anahtar: donem.k, yon: -1 };
+    govde.innerHTML = sekmeCiz(veri) + blokCiz(blok, [donem]);
   }
 
   function olaylariKur() {
@@ -142,6 +161,17 @@
     if (!govde) return;
 
     govde.addEventListener('click', e => {
+      const sekB = e.target.closest('[data-blok]:not(th)');
+      if (sekB) { durum.blok = sekB.dataset.blok; ciz(); return; }
+      const sekD = e.target.closest('[data-donem]');
+      if (sekD) {
+        durum.donem = sekD.dataset.donem;
+        // Dönem değişince sıralama da o döneme geçsin
+        const b = durum.blok;
+        if (b) sirala[b] = { anahtar: durum.donem, yon: -1 };
+        ciz();
+        return;
+      }
       const th = e.target.closest('th[data-sirala]');
       if (th) {
         const blok = th.dataset.blok, anahtar = th.dataset.sirala;

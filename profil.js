@@ -54,6 +54,25 @@
 
   const TABLO_AD = { gelir: 'Gelir Tablosu', bilanco: 'Bilanço', nakit: 'Nakit Akışı' };
 
+  /* Bir önceki döneme göre değişim. Dönemler yeniden eskiye sıralı, yani
+     karşılaştırma bir sağdaki sütunla yapılıyor. İşaret değiştiren
+     kalemlerde (zarardan kâra geçiş gibi) yüzde anlamsız olduğu için
+     boş bırakıyoruz. */
+  function degisim(simdi, once) {
+    if (simdi == null || once == null || !isFinite(simdi) || !isFinite(once)) return null;
+    if (once === 0) return null;
+    if ((simdi < 0) !== (once < 0)) return null;
+    return (simdi - once) / Math.abs(once) * 100;
+  }
+
+  function degisimHtml(v) {
+    if (v == null) return '';
+    const sinif = v > 0.05 ? 'pos' : v < -0.05 ? 'neg' : 'neu';
+    const ok = v > 0.05 ? '▲' : v < -0.05 ? '▼' : '—';
+    const say = Math.abs(v) >= 1000 ? Math.round(v) : v.toFixed(1);
+    return `<span class="pr-dg ${sinif}">${ok} ${v > 0 ? '+' : v < 0 ? '-' : ''}${String(say).replace('-', '').replace('.', ',')}%</span>`;
+  }
+
   function tabloCiz(bolum, baslik, not, ceyrek) {
     if (!bolum || !bolum.satirlar || !bolum.satirlar.length) return '';
     const bas = bolum.donemler.map(d =>
@@ -65,8 +84,12 @@
       if (!satirlar.length) continue;
       govde += `<tr class="pr-grup"><td colspan="${bolum.donemler.length + 1}">${esc(TABLO_AD[grup])}</td></tr>`;
       govde += satirlar.map(s => `<tr>
-        <td class="pr-kalem" title="${esc(s.xbrl || '')}">${esc(s.ad)}</td>
-        ${s.d.map(v => `<td class="${v != null && v < 0 ? 'pr-eksi' : ''}">${deger(v, s.birim)}</td>`).join('')}
+        <td class="pr-kalem">${esc(s.ad)}</td>
+        ${s.d.map((v, i) => {
+          const dg = degisimHtml(degisim(v, s.d[i + 1]));
+          return `<td class="${v != null && v < 0 ? 'pr-eksi' : ''}">
+            <span class="pr-v">${deger(v, s.birim)}</span>${dg}</td>`;
+        }).join('')}
       </tr>`).join('');
     }
 
@@ -90,7 +113,7 @@
           <div class="pr-ad">${esc(k.ad)}</div>
           <div class="pr-alt">${esc(k.ticker)}${k.borsa ? ' · ' + esc(k.borsa) : ''}${k.sektor ? ' · ' + esc(k.sektor) : ''}</div>
         </div>
-        <a class="pr-edgar" href="${esc(k.edgar)}" target="_blank" rel="noopener noreferrer">SEC DOSYALARI →</a>
+        <button class="pr-edgar" onclick="prAnaliz('${esc(k.ticker)}')">ANALİZ ET →</button>
       </div>
       <div class="pr-k-grid">
         ${satir('Sektör (SIC)', k.sektor ? `${k.sektor}${k.sicKod ? ' · ' + k.sicKod : ''}` : null)}
@@ -112,9 +135,8 @@
     kap.innerHTML =
       kunyeCiz(v.kunye) +
       (v.uyari ? `<div class="pv-bos">${esc(v.uyari)}</div>` : '') +
-      tabloCiz(v.yillik, 'Yıllık Finansallar', 'son 5 mali yıl · 10-K', false) +
-      tabloCiz(v.ceyreklik, 'Çeyreklik Finansallar', 'son 6 çeyrek · 10-Q / 10-K', true) +
-      `<div class="pv-alt">Kaynak: SEC EDGAR (resmî XBRL) · rakamlar şirketin raporladığı gibidir, düzeltme yapılmamıştır</div>`;
+      tabloCiz(v.yillik, 'Yıllık Finansallar', 'son 5 mali yıl · bir önceki yıla göre değişim', false) +
+      tabloCiz(v.ceyreklik, 'Çeyreklik Finansallar', 'son çeyrekler · bir önceki çeyreğe göre değişim', true);
 
     // Künye logosu: /api/logo 404 dönerse baş harf avatarı kalır
     const lg = document.getElementById('prLogo');
@@ -167,6 +189,13 @@
   window.prAra = function () {
     const inp = document.getElementById('prTicker');
     if (inp) yukle(inp.value);
+  };
+  window.prAnaliz = function (ticker) {
+    if (typeof window.qFill === 'function') {
+      window.qFill(ticker, '', 'NASDAQ');
+      if (typeof window.showPage === 'function') window.showPage('analiz');
+      window.scrollTo(0, 0);
+    }
   };
   // Başka ekranlardan çağrılabilsin (takip listesi, analiz sonucu)
   window.prAc = function (ticker) {

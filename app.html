@@ -2559,8 +2559,11 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .pr-tablo td:first-child,.pr-tablo th:first-child{text-align:left;}
 .pr-tablo .pr-kalem{color:var(--text2);font-family:var(--font-mono);font-size:10.5px;white-space:nowrap;}
 .pr-tablo .pr-grup td{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:1.8px;text-transform:uppercase;color:var(--accent);background:var(--surface2);padding:7px 10px;border-bottom:1px solid var(--border);}
-.pr-tablo td{color:var(--text);}
-.pr-tablo .pr-eksi{color:var(--danger);}
+.pr-tablo td{color:var(--text);vertical-align:top;}
+.pr-tablo .pr-eksi .pr-v{color:var(--danger);}
+.pr-v{display:block;font-variant-numeric:tabular-nums;}
+.pr-dg{display:block;font-family:var(--font-mono);font-size:8.5px;font-weight:600;margin-top:2px;letter-spacing:.2px;}
+.pr-dg.pos{color:var(--success);} .pr-dg.neg{color:var(--danger);} .pr-dg.neu{color:var(--muted-s);}
 .pr-ay{font-family:var(--font-mono);font-size:8px;color:var(--muted-s);margin-left:5px;letter-spacing:.5px;}
 @media(max-width:600px){.pr-k-l{min-width:88px;}.pr-ad{font-size:16px;}}
 
@@ -2597,6 +2600,14 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .pv-intro strong{color:var(--cream);}
 .pv-ust{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
 .pv-blok{margin-bottom:26px;}
+/* Blok + dönem sekmeleri: aynı anda tek tablo, tek dönem */
+.pv-sekmeler{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+.pv-sek-grp{display:flex;gap:1px;background:var(--border);border:1px solid var(--border);flex-wrap:wrap;}
+.pv-sek{background:var(--surface);border:none;color:var(--muted-s);font-family:var(--font-mono);font-size:9.5px;letter-spacing:1.1px;text-transform:uppercase;padding:8px 13px;cursor:pointer;transition:background .15s,color .15s;}
+.pv-sek:hover{background:var(--surface2);color:var(--text2);}
+.pv-sek.active{background:var(--surface2);color:var(--accent);}
+.pv-sek-d{padding:8px 10px;font-size:9px;}
+@media(max-width:700px){.pv-sekmeler{gap:8px;}.pv-sek{padding:7px 9px;font-size:8.5px;letter-spacing:.6px;}}
 .pv-blok-bas{display:flex;align-items:baseline;gap:10px;margin-bottom:9px;}
 .pv-blok-t{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text2);}
 .pv-blok-n{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted-s);}
@@ -2780,6 +2791,33 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .db-rj-l{font-family:var(--font-mono);font-size:8px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted-s);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .db-rj-v{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .db-rj-alt{font-size:9px;font-weight:400;color:var(--muted);margin-left:5px;}
+
+/* Dashboard şirket arama şeridi */
+.db-ara{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border-s);padding:10px 14px;margin-bottom:14px;flex-wrap:wrap;}
+.db-ara-lbl{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--accent);flex-shrink:0;}
+.db-ara-in{flex:1;min-width:180px;background:none;border:none;border-bottom:1px solid var(--border-s);color:var(--text);font-family:var(--font-mono);font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:6px 2px;outline:none;transition:border-color .15s;}
+.db-ara-in:focus{border-bottom-color:var(--accent);}
+.db-ara-in::placeholder{color:var(--muted-s);text-transform:none;letter-spacing:0;}
+.db-ara-btn{background:none;border:1px solid var(--accent2);color:var(--accent);font-family:var(--font-mono);font-size:9px;letter-spacing:1.2px;padding:7px 12px;cursor:pointer;transition:background .15s;white-space:nowrap;}
+.db-ara-btn:hover{background:var(--accent-dim);}
+
+/* Dashboard takip kartı */
+.db-tk-ekle{display:flex;gap:6px;margin-bottom:10px;}
+.db-tk-in{flex:1;min-width:0;background:rgba(0,0,0,0.22);border:1px solid var(--border-s);color:var(--text);font-family:var(--font-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:6px 8px;outline:none;}
+.db-tk-in:focus{border-color:var(--accent);}
+.db-tk-in::placeholder{color:var(--muted-s);text-transform:none;letter-spacing:0;}
+.db-tk-sel{background:rgba(0,0,0,0.22);border:1px solid var(--border-s);color:var(--text2);font-family:var(--font-mono);font-size:9px;padding:6px 4px;outline:none;cursor:pointer;}
+.db-tk-btn{background:none;border:1px solid var(--accent2);color:var(--accent);font-family:var(--font-mono);font-size:12px;font-weight:700;padding:0 11px;cursor:pointer;line-height:1;}
+.db-tk-btn:hover{background:var(--accent-dim);}
+.db-tk-row{display:flex;align-items:center;gap:9px;padding:7px 2px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .12s;}
+.db-tk-row:last-of-type{border-bottom:none;}
+.db-tk-row:hover{background:var(--surface2);}
+.db-tk-row:hover .db-tk-tk{color:var(--accent);}
+.db-tk-tk{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text);flex:1;min-width:0;}
+.db-tk-px{font-family:var(--font-mono);font-size:11px;color:var(--text2);font-variant-numeric:tabular-nums;}
+.db-tk-dg{font-family:var(--font-mono);font-size:10px;font-weight:700;min-width:56px;text-align:right;}
+.db-tk-dg.pos{color:var(--success);} .db-tk-dg.neg{color:var(--danger);} .db-tk-dg.neu{color:var(--muted-s);}
+.db-tk-daha{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted-s);padding:8px 2px 0;}
 
 .db-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start;}
 .db-sol{min-width:0;}
@@ -3157,17 +3195,14 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <div class="nav-item" id="nav-harita-entry" onclick="showPage('harita');closeSidebar();">
       <span class="nav-num">02</span>Piyasa Verileri
     </div>
-    <div class="nav-item" id="nav-profil-entry" onclick="showPage('profil');closeSidebar();">
-      <span class="nav-num">03</span>Şirket Profili
-    </div>
     <div class="nav-item" id="nav-watchlist-entry" onclick="showPage('watchlist');closeSidebar();">
-      <span class="nav-num">04</span>Takip Listem
+      <span class="nav-num">03</span>Takip Listem
     </div>
     <div class="nav-item" id="nav-forum-entry" onclick="showPage('forum');closeSidebar();">
-      <span class="nav-num">05</span>Topluluk Görüşleri
+      <span class="nav-num">04</span>Topluluk Görüşleri
     </div>
     <div class="nav-item" id="nav-portfolio-entry" onclick="showPage('portfolio');closeSidebar();">
-      <span class="nav-num">06</span>Portföy İzleyici
+      <span class="nav-num">05</span>Portföy İzleyici
     </div>
     <!-- Kriter listesi sidebar'dan kaldırıldı — kriterlere artık "Analiz Sonuçları"
          kartındaki checklist'ten tıklanarak ulaşılıyor. navList JS'te hâlâ
@@ -3252,6 +3287,13 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <div class="db-tape" id="dbTape"><div class="db-tape-bos">Piyasa verisi yükleniyor…</div></div>
   </div>
 
+  <!-- Şirket arama: profil sayfasına ayrı menü girişi yerine buradan -->
+  <div class="db-ara">
+    <span class="db-ara-lbl">Şirket Ara</span>
+    <input class="db-ara-in" id="dbAra" placeholder="Hisse kodu gir — AAPL, MSFT, NVDA…" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')dbAraGit()"/>
+    <button class="db-ara-btn" onclick="dbAraGit()">PROFİLİ AÇ →</button>
+  </div>
+
   <!-- Rejim satırı -->
   <div class="db-rejim" id="dbRejim"></div>
 
@@ -3284,8 +3326,25 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div class="hm-sarmal" id="dbHarita"></div>
     </div>
 
-    <!-- Sağ: bilanço akışı + son dakika -->
+    <!-- Sağ: takip listesi + bilanço akışı + son dakika -->
     <div class="db-sag">
+      <div class="db-kart">
+        <div class="db-sec-head">
+          <div class="db-sec-l">
+            <h3 class="db-sec-t">Takip Listem</h3>
+            <span class="db-sec-meta" id="dbTakipDurum"></span>
+          </div>
+          <div class="db-sec-r">
+            <button class="db-mini-btn" onclick="showPage('watchlist')">TÜMÜ →</button>
+          </div>
+        </div>
+        <div class="db-tk-ekle">
+          <input class="db-tk-in" id="dbTkIn" placeholder="Kod ekle" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')tkHizliEkle()"/>
+          <select class="db-tk-sel" id="dbTkEx"><option value="BIST">BİST</option><option value="US">ABD</option></select>
+          <button class="db-tk-btn" onclick="tkHizliEkle()">+</button>
+        </div>
+        <div id="dbTakipListe"></div>
+      </div>
       <div class="db-kart">
         <div class="db-sec-head">
           <div class="db-sec-l">
@@ -3519,8 +3578,8 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 <div class="page-body">
   <div class="pt-hdr"><div class="pt-title">Şirket <span>Profili</span></div><span class="hm-durum" id="prDurum" style="margin-left:10px"></span></div>
   <div class="pv-intro">
-    Şirketin künyesi ve <strong>SEC'e raporladığı resmî finansal tabloları</strong> — gelir tablosu, bilanço ve nakit akışı,
-    son 5 mali yıl ve son 6 çeyrek. Veri doğrudan SEC EDGAR'ın XBRL kayıtlarından geliyor.
+    Şirketin künyesi ve <strong>resmî finansal tabloları</strong> — gelir tablosu, bilanço ve nakit akışı,
+    yıllık ve çeyreklik, bir önceki döneme göre değişimiyle birlikte.
   </div>
   <div class="tk-ekle">
     <input class="tk-in" id="prTicker" placeholder="Hisse kodu (AAPL, MSFT, POWL…)" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')prAra()"/>
@@ -4133,17 +4192,28 @@ function heroSearch(tk,co){
 
 function qFill(t,c,ex){selEx(ex);document.getElementById('tickerIn').value=t;document.getElementById('coIn').value=c;switchTab('analiz');closeSidebar();setTimeout(()=>doAnalyze(),100);}
 
+// Dashboard'daki şirket arama kutusu → profil sayfası
+function dbAraGit(){
+  const inp=document.getElementById('dbAra');
+  if(!inp) return;
+  const tk=(inp.value||'').toUpperCase().replace(/[^A-Z0-9.]/g,'');
+  if(!tk){inp.focus();return;}
+  if(typeof window.prAc==='function') window.prAc(tk);
+  inp.value='';
+}
+
 // PAGES
 function showPage(type,idx){
   ['overview','analiz','crit','portfolio','forum','tezler','harita','sektor','watchlist','profil'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const e=document.getElementById('page-'+type);if(e)e.classList.add('active');
-  if(type==='overview'){const n=document.getElementById('nav-overview');if(n)n.classList.add('active');if(window.dbYukle)window.dbYukle();}
+  if(type==='overview'){const n=document.getElementById('nav-overview');if(n)n.classList.add('active');if(window.dbYukle)window.dbYukle();if(window.tkMini)window.tkMini();}
   else if(type==='analiz'){const n=document.getElementById('nav-analiz-entry');if(n)n.classList.add('active');}
   else if(type==='crit'){const n=document.getElementById('nav-'+idx);if(n)n.classList.add('active');renderCritDetail(idx);}
   else if(type==='portfolio'){const n=document.getElementById('nav-portfolio-entry');if(n)n.classList.add('active');renderPt();}
   else if(type==='forum'){const n=document.getElementById('nav-forum-entry');if(n)n.classList.add('active');loadPosts();}
-  else if(type==='profil'){const n=document.getElementById('nav-profil-entry');if(n)n.classList.add('active');if(window.prSayfaAc)window.prSayfaAc();}
+  // Profil sayfasının menü girişi yok — dashboard'daki arama kutusundan açılıyor
+  else if(type==='profil'){if(window.prSayfaAc)window.prSayfaAc();}
   else if(type==='watchlist'){const n=document.getElementById('nav-watchlist-entry');if(n)n.classList.add('active');if(window.tkCiz)window.tkCiz();}
   else if(type==='harita'){const n=document.getElementById('nav-harita-entry');if(n)n.classList.add('active');if(window.pvSayfaAc)window.pvSayfaAc();}
   // Sektör detayı bu sayfanın alt sayfası — menüde "Piyasa Verileri" seçili kalsın
@@ -6980,9 +7050,11 @@ function garpAnalizAc(ticker) {
     try{ localStorage.setItem(TK_KEY, JSON.stringify(liste)); }catch(e){}
   }
 
-  window.tkEkle = function(){
-    const inp = document.getElementById('tkTicker');
-    const sel = document.getElementById('tkEx');
+  // Ekleme iki yerden yapılabiliyor (takip sayfası ve dashboard kartı),
+  // ikisi de aynı çekirdeği kullansın
+  function tkEkleCekirdek(inpId, selId){
+    const inp = document.getElementById(inpId);
+    const sel = document.getElementById(selId);
     if (!inp) return;
     const tk = (inp.value||'').toUpperCase().replace(/[^A-Z0-9.]/g,'');
     const ex = (sel && sel.value) || 'BIST';
@@ -6998,13 +7070,15 @@ function garpAnalizAc(ticker) {
     tkYaz(liste);
     inp.value = '';
     inp.focus();
-    tkCiz();
+    tkCiz(); tkMini();
     if (typeof window.trackEvent==='function') window.trackEvent('takip_ekle', { ticker:tk, exchange:ex });
-  };
+  }
+  window.tkEkle = function(){ tkEkleCekirdek('tkTicker', 'tkEx'); };
+  window.tkHizliEkle = function(){ tkEkleCekirdek('dbTkIn', 'dbTkEx'); };
 
   window.tkSil = function(tk, ex){
     tkYaz(tkAl().filter(x => !(x.tk===tk && x.ex===ex)));
-    tkCiz();
+    tkCiz(); tkMini();
   };
 
   // Satıra tıkla → analiz ekranında aç
@@ -7065,6 +7139,46 @@ function garpAnalizAc(ticker) {
     }
   }
   window.tkCiz = tkCiz;
+
+  /* Dashboard'daki kompakt takip kartı — aynı liste, kısaltılmış görünüm */
+  function tkMini(){
+    const kap = document.getElementById('dbTakipListe');
+    const durumEl = document.getElementById('dbTakipDurum');
+    if (!kap) return;
+    const liste = tkAl();
+    if (durumEl) durumEl.textContent = liste.length ? liste.length + ' hisse' : '';
+    if (!liste.length){
+      kap.innerHTML = '<div class="db-bos">Henüz hisse eklemedin. Yukarıdan kod gir, buradan takip et.</div>';
+      return;
+    }
+    const gosterilen = liste.slice(0, 8);
+    const par = (v) => (v==null || !isFinite(v)) ? '—'
+      : (v >= 1000 ? Number(v).toLocaleString('tr-TR',{maximumFractionDigits:0}) : Number(v).toFixed(2));
+
+    kap.innerHTML = gosterilen.map(it => `
+      <div class="db-tk-row" onclick="tkAc('${esc(it.tk)}','${esc(it.ex)}')">
+        <span class="tk-logo"><img src="/api/logo?ticker=${encodeURIComponent(it.tk)}&sz=64" alt="" loading="lazy" onerror="this.remove()"><i>${esc(it.tk.slice(0,2))}</i></span>
+        <span class="db-tk-tk">${esc(it.tk)}</span>
+        <span class="db-tk-px" id="dbtk-px-${esc(it.tk)}-${esc(it.ex)}">…</span>
+        <span class="db-tk-dg neu" id="dbtk-dg-${esc(it.tk)}-${esc(it.ex)}"></span>
+      </div>`).join('') +
+      (liste.length > gosterilen.length ? `<div class="db-tk-daha">+${liste.length - gosterilen.length} hisse daha</div>` : '');
+
+    gosterilen.forEach(async it => {
+      const q = await getPrice(it.tk, it.ex);
+      const pxEl = document.getElementById('dbtk-px-'+it.tk+'-'+it.ex);
+      const dgEl = document.getElementById('dbtk-dg-'+it.tk+'-'+it.ex);
+      const bir = it.ex === 'BIST' ? '₺' : '$';
+      if (!q || q.price == null){ if (pxEl) pxEl.textContent = '—'; return; }
+      if (pxEl) pxEl.textContent = bir + par(q.price);
+      if (dgEl && q.change != null){
+        const d = q.change > 0.04 ? 'pos' : q.change < -0.04 ? 'neg' : 'neu';
+        dgEl.className = 'db-tk-dg ' + d;
+        dgEl.textContent = (q.change>0?'+':'') + q.change.toFixed(2) + '%';
+      }
+    });
+  }
+  window.tkMini = tkMini;
 
   /* ── MERCEK (tema kart serisi) ── */
   function ytId(url){ if(!url) return ''; const m=String(url).match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{6,})/); return m?m[1]:''; }

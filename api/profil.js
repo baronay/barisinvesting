@@ -227,8 +227,8 @@ export default async function handler(req, res) {
     const kayit = await cikBul(ticker);
     if (!kayit) {
       return res.status(404).json({
-        error: 'Bu hisse SEC kayıtlarında bulunamadı',
-        detay: 'Şirket profili şimdilik yalnızca ABD borsalarına kayıtlı şirketler için var.',
+        error: 'Bu hisse için şirket verisi bulunamadı',
+        detay: 'Şirket profili şimdilik yalnızca ABD borsalarındaki şirketler için mevcut.',
       });
     }
     const cik = String(kayit.cik).padStart(10, '0');
@@ -270,7 +270,7 @@ export default async function handler(req, res) {
         // bağlanıyor (ExxonMobil Holdings gibi) ve yıllık geçmiş selef
         // kayıtta kalıyor — sessizce boş tablo göstermek yerine söyle
         if (!yillik && ceyreklik) {
-          uyari = 'Bu ticker SEC\'te yeni kurulmuş bir tüzel kişilik altında kayıtlı; yıllık tablolar henüz bu kayıtta yok. Geçmiş yıllar için aşağıdaki SEC dosyaları bağlantısını kullan.';
+          uyari = 'Bu şirket yakın zamanda yeniden yapılandı; yıllık tablolar yeni kayıtta henüz oluşmadı, çeyreklikler gösteriliyor.';
         }
       } else {
         uyari = 'Şirketin XBRL finansal verisi bulunamadı.';
