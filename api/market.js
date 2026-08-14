@@ -10,6 +10,7 @@ export default async function handler(req, res) {
   if (type === 'regime') return getRegime(res);
   if (type === 'heatmap') return getHeatmap(req, res);
   if (type === 'sektor') return getSektor(req, res);
+  if (type === 'piyasa') return getPiyasaVerileri(req, res);
   if (type === 'bilanco') return getBilanco(req, res);
   if (type === 'search' && ticker) return searchTicker(ticker, res);
   return res.status(400).json({ error: 'Invalid' });
@@ -498,6 +499,190 @@ async function getSektor(req, res) {
       evrenSayisi: evren.length,
       ozet,
       hisseler,
+      ts: Date.now(),
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+}
+
+/* ── PİYASA VERİLERİ — endeks / sektör / emtia getiri tabloları ────
+   Tek beş yıllık günlük seriden bütün dönemler hesaplanıyor (ısı
+   haritası ve sektör detayındaki desenin aynısı). Dönem başına ayrı
+   istek atmak 6 kat çağrı demekti; Yahoo o hacimde kısıyor.
+   ──────────────────────────────────────────────────────────────── */
+const PV_DONEM = [
+  { k: '1g', ad: '1 Gün', gun: 1 },
+  { k: '1h', ad: '1 Hafta', gun: 7 },
+  { k: '1a', ad: '1 Ay', gun: 30 },
+  { k: 'ybb', ad: 'YBB' },              // yıl başından bu yana
+  { k: '1y', ad: '1 Yıl', gun: 365 },
+  { k: '3y', ad: '3 Yıl', gun: 1095 },
+];
+
+const PV_BLOKLAR = [
+  {
+    k: 'endeks', ad: 'Endeksler', not: 'ABD · Avrupa · Asya · BİST',
+    satirlar: [
+      { s: '^GSPC', ad: 'S&P 500', kod: 'SPX' },
+      { s: '^NDX', ad: 'NASDAQ 100', kod: 'NDX' },
+      { s: '^IXIC', ad: 'NASDAQ Composite', kod: 'IXIC' },
+      { s: '^DJI', ad: 'Dow Jones', kod: 'DJI' },
+      { s: '^RUT', ad: 'Russell 2000', kod: 'RUT' },
+      { s: '^VIX', ad: 'VIX · Korku Endeksi', kod: 'VIX' },
+      { s: 'XU100.IS', ad: 'BİST 100', kod: 'XU100' },
+      { s: 'XU030.IS', ad: 'BİST 30', kod: 'XU030' },
+      { s: '^GDAXI', ad: 'DAX', kod: 'DAX' },
+      { s: '^FTSE', ad: 'FTSE 100', kod: 'FTSE' },
+      { s: '^N225', ad: 'Nikkei 225', kod: 'N225' },
+    ],
+  },
+  {
+    k: 'us-sektor', ad: 'ABD Sektörleri', not: 'SPDR sektör fonları',
+    satirlar: [
+      // sek = ısı haritası evrenindeki sektör adı; satır tıklanınca o
+      // sektörün hisse tablosu açılıyor
+      { s: 'XLK', ad: 'Teknoloji', kod: 'XLK', sek: 'Teknoloji' },
+      { s: 'XLC', ad: 'İletişim', kod: 'XLC', sek: 'İletişim' },
+      { s: 'XLY', ad: 'Tüketici (İsteğe Bağlı)', kod: 'XLY', sek: 'Tüketici' },
+      { s: 'XLP', ad: 'Temel Tüketim', kod: 'XLP', sek: 'Temel Tüketim' },
+      { s: 'XLF', ad: 'Finans', kod: 'XLF', sek: 'Finans' },
+      { s: 'XLV', ad: 'Sağlık', kod: 'XLV', sek: 'Sağlık' },
+      { s: 'XLI', ad: 'Sanayi', kod: 'XLI', sek: 'Sanayi' },
+      { s: 'XLE', ad: 'Enerji', kod: 'XLE', sek: 'Enerji' },
+      { s: 'XLB', ad: 'Temel Materyal', kod: 'XLB', sek: 'Temel Materyal' },
+      { s: 'XLU', ad: 'Kamu Hizmetleri', kod: 'XLU', sek: 'Kamu Hizmetleri' },
+      { s: 'XLRE', ad: 'Gayrimenkul', kod: 'XLRE', sek: 'Gayrimenkul' },
+    ],
+  },
+  {
+    k: 'bist-sektor', ad: 'BİST Sektörleri', not: 'Borsa İstanbul sektör endeksleri',
+    satirlar: [
+      { s: 'XBANK.IS', ad: 'Bankacılık', kod: 'XBANK' },
+      { s: 'XUMAL.IS', ad: 'Mali', kod: 'XUMAL' },
+      { s: 'XUSIN.IS', ad: 'Sınai', kod: 'XUSIN' },
+      { s: 'XUTEK.IS', ad: 'Teknoloji', kod: 'XUTEK' },
+      { s: 'XUHIZ.IS', ad: 'Hizmetler', kod: 'XUHIZ' },
+      { s: 'XHOLD.IS', ad: 'Holding ve Yatırım', kod: 'XHOLD' },
+      { s: 'XGIDA.IS', ad: 'Gıda ve İçecek', kod: 'XGIDA' },
+      { s: 'XKMYA.IS', ad: 'Kimya, Petrol, Plastik', kod: 'XKMYA' },
+      { s: 'XMANA.IS', ad: 'Metal Ana Sanayi', kod: 'XMANA' },
+      { s: 'XMESY.IS', ad: 'Metal Eşya, Makine', kod: 'XMESY' },
+      { s: 'XULAS.IS', ad: 'Ulaştırma', kod: 'XULAS' },
+      { s: 'XELKT.IS', ad: 'Elektrik', kod: 'XELKT' },
+      { s: 'XGMYO.IS', ad: 'Gayrimenkul Yat. Ort.', kod: 'XGMYO' },
+      { s: 'XMADN.IS', ad: 'Madencilik', kod: 'XMADN' },
+      { s: 'XILTM.IS', ad: 'İletişim', kod: 'XILTM' },
+      { s: 'XINSA.IS', ad: 'İnşaat', kod: 'XINSA' },
+    ],
+  },
+  {
+    k: 'emtia', ad: 'Emtia · Kripto · Kur', not: 'vadeli ve spot fiyatlar',
+    satirlar: [
+      { s: 'GC=F', ad: 'Altın (ons)', kod: 'XAU' },
+      { s: 'SI=F', ad: 'Gümüş (ons)', kod: 'XAG' },
+      { s: 'HG=F', ad: 'Bakır', kod: 'HG' },
+      { s: 'CL=F', ad: 'Ham Petrol (WTI)', kod: 'WTI' },
+      { s: 'BZ=F', ad: 'Brent Petrol', kod: 'BRENT' },
+      { s: 'NG=F', ad: 'Doğalgaz', kod: 'NG' },
+      { s: 'BTC-USD', ad: 'Bitcoin', kod: 'BTC' },
+      { s: 'ETH-USD', ad: 'Ethereum', kod: 'ETH' },
+      { s: 'DX-Y.NYB', ad: 'Dolar Endeksi', kod: 'DXY' },
+      { s: 'EURUSD=X', ad: 'EUR / USD', kod: 'EURUSD' },
+      { s: 'USDTRY=X', ad: 'USD / TRY', kod: 'USDTRY' },
+      { s: 'EURTRY=X', ad: 'EUR / TRY', kod: 'EURTRY' },
+    ],
+  },
+];
+
+// Yıl başından bu yana: bu yılın ilk işlem gününden ÖNCEKİ kapanış referans.
+// Ocak başındaki ilk kapanışı almak yılın ilk günkü hareketini yutuyordu.
+function ybbGetiri(ts, kapanis, sonFiyat) {
+  if (!ts.length) return null;
+  const yil = new Date(ts[ts.length - 1] * 1000).getUTCFullYear();
+  let ref = null;
+  for (let i = 0; i < ts.length; i++) {
+    if (new Date(ts[i] * 1000).getUTCFullYear() === yil) { ref = i > 0 ? kapanis[i - 1] : null; break; }
+  }
+  if (!ref || !isFinite(ref)) return null;
+  const d = (sonFiyat / ref - 1) * 100;
+  return isFinite(d) ? Math.round(d * 100) / 100 : null;
+}
+
+async function getPiyasaVerileri(req, res) {
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/json',
+    'Referer': 'https://finance.yahoo.com/',
+  };
+
+  const seri = {};
+  async function grupCek(semboller) {
+    let j = null;
+    try {
+      const r = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(semboller.join(','))}&range=5y&interval=1d`,
+        { headers, signal: AbortSignal.timeout(11000) }
+      );
+      j = r.ok ? await r.json() : null;
+    } catch { j = null; }
+    if (!j || typeof j !== 'object') return;
+    for (const [sym, s] of Object.entries(j)) {
+      if (!s || !Array.isArray(s.close) || !Array.isArray(s.timestamp)) continue;
+      const ts = [], kapanis = [];
+      for (let i = 0; i < s.close.length; i++) {
+        if (s.close[i] != null && isFinite(s.close[i]) && s.timestamp[i] != null) {
+          ts.push(s.timestamp[i]); kapanis.push(s.close[i]);
+        }
+      }
+      if (kapanis.length < 2) continue;
+      seri[sym] = { ts, kapanis, fiyat: kapanis[kapanis.length - 1] };
+    }
+  }
+
+  try {
+    const tumSemboller = PV_BLOKLAR.flatMap(b => b.satirlar.map(r => r.s));
+    const gruplar = [];
+    for (let i = 0; i < tumSemboller.length; i += HM_PARCA) gruplar.push(tumSemboller.slice(i, i + HM_PARCA));
+    await Promise.allSettled(gruplar.map(grupCek));
+    // Eksik kalanları bir kez daha dene — spark ara sıra tek tük sembolü atlıyor
+    const eksik = tumSemboller.filter(s => !seri[s]);
+    if (eksik.length) {
+      const tekrar = [];
+      for (let i = 0; i < eksik.length; i += HM_PARCA) tekrar.push(eksik.slice(i, i + HM_PARCA));
+      for (const g of tekrar) await grupCek(g);
+    }
+
+    const bloklar = PV_BLOKLAR.map(b => ({
+      k: b.k,
+      ad: b.ad,
+      not: b.not,
+      satirlar: b.satirlar.map(r => {
+        const s = seri[r.s];
+        if (!s) return null;
+        const g = {};
+        for (const d of PV_DONEM) {
+          g[d.k] = d.k === 'ybb'
+            ? ybbGetiri(s.ts, s.kapanis, s.fiyat)
+            : seriGetiri(s.ts, s.kapanis, s.fiyat, d.gun);
+        }
+        return {
+          s: r.s,
+          ad: r.ad,
+          kod: r.kod,
+          sek: r.sek || null,
+          f: Math.round(s.fiyat * 100) / 100,
+          g,
+        };
+      }).filter(Boolean),
+    })).filter(b => b.satirlar.length);
+
+    if (!bloklar.length) return res.status(502).json({ error: 'Piyasa verisi alınamadı' });
+
+    res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=1800');
+    return res.status(200).json({
+      donemler: PV_DONEM.map(d => ({ k: d.k, ad: d.ad })),
+      bloklar,
       ts: Date.now(),
     });
   } catch (e) {

@@ -2476,9 +2476,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .spot-lbl{font-family:var(--font-mono);font-size:8px;letter-spacing:2px;color:var(--cream2);text-transform:uppercase;opacity:.7;margin-bottom:5px;}
 .spot-metrik{font-size:13px;line-height:1.5;color:var(--cream);font-weight:500;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--portal-border);}
 .spot-rol{font-size:12.5px;line-height:1.6;color:var(--cream2);margin-bottom:16px;flex:1;}
-.spot-add{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;background:transparent;border:1px solid var(--portal-border-s);color:var(--cream);font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.5px;padding:10px;border-radius:7px;cursor:pointer;transition:all .2s;margin-top:auto;}
-.spot-add:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
-.spot-add.added{border-color:var(--success);color:var(--success);background:var(--success-dim);cursor:default;}
 @media(max-width:1080px){.spot-grid{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:560px){.spot-grid{grid-template-columns:1fr;}}
 
@@ -2546,55 +2543,35 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 @media(max-width:980px){.mkt-grid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:560px){.mkt-grid{grid-template-columns:repeat(2,1fr);}}
 
-/* Takip Listem (watchlist) */
-.wl-intro{font-size:13px;line-height:1.6;color:var(--cream2);margin:-2px 0 18px;max-width:680px;}
-.wl-intro strong{color:var(--cream);}
-.wl-add{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
-.wl-search-wrap{position:relative;flex:1;min-width:200px;}
-.wl-in{width:100%;background:rgba(0,0,0,0.25);border:1px solid var(--portal-border-s);color:var(--cream);font-size:13px;padding:11px 13px;border-radius:6px;outline:none;transition:border-color .2s;}
-.wl-in:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
-.wl-in::placeholder{color:var(--cream2);opacity:.5;}
-.wl-target{width:130px;flex:none;}
-.wl-ex{background:rgba(0,0,0,0.25);border:1px solid var(--portal-border-s);color:var(--cream);font-size:13px;padding:11px;border-radius:6px;outline:none;cursor:pointer;}
-.wl-ex:focus{border-color:var(--accent);}
-.wl-btn{background:var(--accent);color:var(--anthracite);border:none;font-family:var(--font-mono);font-size:12px;font-weight:600;letter-spacing:.5px;padding:0 18px;border-radius:6px;cursor:pointer;transition:background .2s,transform .2s;white-space:nowrap;}
-.wl-btn:hover{background:#d6c399;transform:translateY(-1px);}
-.wl-btn:disabled{opacity:.5;cursor:default;transform:none;}
-.wl-suggest{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--anthracite2);border:1px solid var(--portal-border-s);border-radius:8px;overflow:hidden;z-index:30;display:none;box-shadow:0 16px 40px rgba(0,0,0,0.5);}
-.wl-suggest.open{display:block;}
-.wl-sug-item{padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:background .15s;border-bottom:1px solid var(--portal-border);}
-.wl-sug-item:last-child{border-bottom:none;}
-.wl-sug-item:hover{background:rgba(194,173,132,0.10);}
-.wl-sug-tk{font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--cream);}
-.wl-sug-nm{font-size:12px;color:var(--cream2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.wl-sug-ex{font-family:var(--font-mono);font-size:9px;color:var(--accent);letter-spacing:1px;flex-shrink:0;}
-.wl-list{display:flex;flex-direction:column;gap:8px;}
-.wl-empty{text-align:center;padding:38px 20px;border:1px dashed var(--portal-border-s);border-radius:12px;color:var(--cream2);}
-.wl-empty-t{font-family:var(--font-head);font-size:17px;color:var(--cream);margin-bottom:8px;}
-.wl-empty-s{font-size:13px;line-height:1.6;opacity:.8;}
-.wl-row{display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--portal-border);border-radius:10px;background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);transition:border-color .2s;}
-.wl-row.hit{border-color:rgba(34,197,94,0.5);background:linear-gradient(160deg,rgba(34,197,94,0.08),var(--anthracite2));}
-.wl-r-tk{font-family:var(--font-mono);font-size:13px;font-weight:600;letter-spacing:1px;color:var(--cream);min-width:64px;}
-.wl-r-mid{flex:1;min-width:0;}
-.wl-r-nm{font-size:12px;color:var(--cream2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.wl-r-sub{font-family:var(--font-mono);font-size:10px;color:var(--cream2);opacity:.7;margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.wl-tez-chip{color:var(--accent);cursor:pointer;text-decoration:none;}
-.wl-tez-chip:hover{text-decoration:underline;}
-.wl-hit-badge{color:var(--success);font-weight:600;}
-.wl-r-px{text-align:right;flex-shrink:0;}
-.wl-r-price{font-family:var(--font-mono);font-size:15px;font-weight:600;color:var(--cream);font-variant-numeric:tabular-nums;}
-.wl-r-chg{font-family:var(--font-mono);font-size:11px;font-weight:600;margin-top:2px;}
-.wl-r-chg.pos{color:var(--success);} .wl-r-chg.neg{color:var(--danger);} .wl-r-chg.neu{color:var(--cream2);}
-.wl-r-rm{background:none;border:none;color:var(--cream2);opacity:.5;cursor:pointer;font-size:15px;padding:4px 6px;transition:color .2s,opacity .2s;flex-shrink:0;}
-.wl-r-rm:hover{color:var(--danger);opacity:1;}
-.wl-foot{margin-top:14px;font-size:12px;color:var(--cream2);}
-.wl-foot a{color:var(--accent);cursor:pointer;text-decoration:none;}
-.wl-foot a:hover{text-decoration:underline;}
-@media(max-width:560px){
-  .wl-add{flex-direction:column;}
-  .wl-target,.wl-ex,.wl-search-wrap{width:100%;}
-  .wl-r-nm{display:none;}
-}
+/* Piyasa Verileri tablosu (Seeking Alpha "Market Data" düzeni) */
+.pv-intro{font-size:13px;line-height:1.6;color:var(--cream2);margin:-2px 0 18px;max-width:720px;}
+.pv-intro strong{color:var(--cream);}
+.pv-ust{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.pv-blok{margin-bottom:26px;}
+.pv-blok-bas{display:flex;align-items:baseline;gap:10px;margin-bottom:9px;}
+.pv-blok-t{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text2);}
+.pv-blok-n{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted-s);}
+.pv-sar{border:1px solid var(--border-s);background:var(--surface);overflow-x:auto;}
+.pv-tablo{width:100%;border-collapse:collapse;min-width:660px;}
+.pv-tablo th{position:sticky;top:0;background:var(--surface2);font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted-s);text-align:right;padding:9px 10px;white-space:nowrap;cursor:pointer;user-select:none;border-bottom:1px solid var(--border);}
+.pv-tablo th:first-child,.pv-tablo td:first-child{text-align:left;}
+.pv-tablo th:hover{color:var(--text2);}
+.pv-tablo th.sirali{color:var(--accent);}
+.pv-tablo td{padding:9px 10px;text-align:right;font-family:var(--font-mono);font-size:11px;color:var(--text2);border-bottom:1px solid var(--rule);white-space:nowrap;font-variant-numeric:tabular-nums;}
+.pv-tablo tr:last-child td{border-bottom:none;}
+.pv-tablo tbody tr{transition:background .12s;}
+.pv-tablo tbody tr:hover{background:var(--surface2);}
+.pv-tablo tbody tr[data-sek]{cursor:pointer;}
+.pv-tablo tbody tr[data-sek]:hover .pv-ad-t{color:var(--accent);}
+.pv-ad{display:flex;align-items:baseline;gap:8px;min-width:0;}
+.pv-ad-t{font-size:11.5px;font-weight:600;color:var(--text);}
+.pv-ad-s{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted-s);}
+.pv-fiyat{color:var(--text);font-weight:600;}
+.pv-g{font-weight:600;}
+.pv-g.pos{color:var(--success);} .pv-g.neg{color:var(--danger);} .pv-g.neu{color:var(--muted-s);}
+.pv-bos{padding:26px 14px;text-align:center;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;color:var(--muted-s);}
+.pv-alt{margin-top:6px;font-family:var(--font-mono);font-size:9px;letter-spacing:.6px;color:var(--muted);}
+@media(max-width:600px){.pv-tablo td,.pv-tablo th{padding:8px 7px;}}
 
 /* X embeds (official widgets) */
 .x-embed{display:flex;justify-content:center;min-height:60px;}
@@ -2758,19 +2735,17 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .db-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start;}
 .db-sol{min-width:0;}
 .db-sag{display:flex;flex-direction:column;gap:14px;min-width:0;}
-.db-kart{background:var(--surface);border:1px solid var(--border);border-top:2px solid rgba(194,173,132,.32);padding:14px 14px 12px;}
+.db-kart{background:var(--surface);border:1px solid var(--border);padding:13px 14px 12px;}
 .db-sec-sag{margin-left:auto;font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted-s);text-transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;}
 .db-kart .sec-title::after,.db-sol .sec-title::after{display:none;}
 
-/* Bölüm başlığı — portal tarafındaki "Yatırım Tezleri" diliyle aynı:
-   mono altın kicker + Playfair başlık + ince ayraç. Terminalin 10px
-   uppercase sec-title'ı burada fazla soluk kalıyordu. */
+/* Bölüm başlığı — terminal dili: sade mono/uppercase, süs yok.
+   Tek değişiklik kontrast: eski 10px başlık --muted tonundaydı ve
+   ekranda soluk kalıyordu, burada tam metin rengiyle yazılıyor. */
 .db-sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;
-  padding-bottom:10px;margin-bottom:13px;border-bottom:1px solid var(--border-s);}
+  padding-bottom:9px;margin-bottom:12px;border-bottom:1px solid var(--border-s);}
 .db-sec-l{display:flex;flex-direction:column;gap:4px;min-width:0;}
-.db-kicker{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--accent);}
-.db-sec-t{font-family:var(--font-head);font-size:20px;font-weight:600;line-height:1.15;letter-spacing:-.2px;color:var(--text);margin:0;}
-.db-sec-t em{font-style:italic;color:var(--accent);}
+.db-sec-t{font-family:var(--font-mono);font-size:10.5px;font-weight:600;line-height:1.3;letter-spacing:1.9px;text-transform:uppercase;color:var(--text);margin:0;}
 .db-sec-meta{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.8px;color:var(--muted-s);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .db-sec-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .db-hm-grp .hm-tab{font-size:8.5px;letter-spacing:1px;padding:5px 9px;}
@@ -2810,7 +2785,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 @media(max-width:600px){.db-rejim{grid-template-columns:repeat(2,1fr);}
   .db-tape-akis{animation-duration:32s;}
   .db-sec-sag{max-width:120px;}
-  .db-sec-t{font-size:17px;}
   .db-sec-head{align-items:flex-start;}
   .db-sec-r{width:100%;}
   .db-hm-grp{flex-wrap:wrap;}}
@@ -3088,9 +3062,9 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     </div>
   </div>
 
-  <!-- Üstteki Analiz/Portföy/Takip sekme şeridi kaldırıldı — Portföy ve Takip
-       sayfalarına artık doğrudan aşağıdaki MENÜ listesinden ulaşılıyor,
-       ayrı bir sekme/widget'a gerek kalmadı. -->
+  <!-- Üstteki Analiz/Portföy sekme şeridi kaldırıldı — Portföy sayfasına
+       artık doğrudan aşağıdaki MENÜ listesinden ulaşılıyor, ayrı bir
+       sekme/widget'a gerek kalmadı. -->
   <div class="tab-content active" id="tab-analiz-content">
     <!-- Borsa/Ticker/Çerçeve/Analiz Et kontrolleri sol menüden kaldırıldı —
          tüm arama artık hero'daki kutuda (heroIn/heroFwSel/hero-search-btn).
@@ -3130,16 +3104,13 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <span class="nav-num">01</span>Hisse Analizi
     </div>
     <div class="nav-item" id="nav-harita-entry" onclick="showPage('harita');closeSidebar();">
-      <span class="nav-num">02</span>Piyasa Haritası
-    </div>
-    <div class="nav-item" id="nav-watchlist-entry" onclick="showPage('watchlist');closeSidebar();">
-      <span class="nav-num">03</span>Gerçek Zamanlı İzleme
+      <span class="nav-num">02</span>Piyasa Verileri
     </div>
     <div class="nav-item" id="nav-forum-entry" onclick="showPage('forum');closeSidebar();">
-      <span class="nav-num">04</span>Topluluk Görüşleri
+      <span class="nav-num">03</span>Topluluk Görüşleri
     </div>
     <div class="nav-item" id="nav-portfolio-entry" onclick="showPage('portfolio');closeSidebar();">
-      <span class="nav-num">05</span>Portföy İzleyici
+      <span class="nav-num">04</span>Portföy İzleyici
     </div>
     <!-- Kriter listesi sidebar'dan kaldırıldı — kriterlere artık "Analiz Sonuçları"
          kartındaki checklist'ten tıklanarak ulaşılıyor. navList JS'te hâlâ
@@ -3171,15 +3142,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:7px">Portföy Özeti</div>
       <div id="ptSbSummary" style="font-size:10px;color:var(--muted2)">Henüz hisse eklenmedi.</div>
       <button class="pt-sb-btn" onclick="showPage('portfolio');closeSidebar()">PORTFÖYÜ GÖR →</button>
-    </div>
-  </div>
-
-  <!-- TAKIP TAB -->
-  <div class="tab-content" id="tab-takip-content">
-    <div class="pt-sb">
-      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:7px">Takip & Alarm</div>
-      <div id="wlSbSummary" style="font-size:10px;color:var(--muted2)">İzleme listene hisse ekle, hedef fiyat alarmı kur.</div>
-      <button class="pt-sb-btn" onclick="showPage('watchlist');closeSidebar()">TAKİBİ GÖR →</button>
     </div>
   </div>
 
@@ -3240,8 +3202,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   <div class="hm-mini-sar" id="hmMiniSar">
     <div class="db-sec-head">
       <div class="db-sec-l">
-        <span class="db-kicker">◈ Sektörler</span>
-        <h3 class="db-sec-t">Sektör Isı <em>Şeridi</em></h3>
+        <h3 class="db-sec-t">Sektör Isı Şeridi</h3>
       </div>
       <div class="db-sec-r"><span class="hm-mini-git">SEKTÖRE TIKLA → GETİRİ TABLOSU</span></div>
     </div>
@@ -3254,14 +3215,13 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <div class="db-sol">
       <div class="db-sec-head">
         <div class="db-sec-l">
-          <span class="db-kicker">◈ Canlı</span>
-          <h3 class="db-sec-t">Piyasa Isı <em>Haritası</em></h3>
+          <h3 class="db-sec-t">Piyasa Isı Haritası</h3>
           <span class="db-sec-meta" id="dbHaritaDurum"></span>
         </div>
         <div class="db-sec-r">
           <div class="hm-kontrol-grp db-hm-grp" id="dbHmKapsamlar"></div>
           <div class="hm-kontrol-grp db-hm-grp" id="dbHmDonemler"></div>
-          <button class="db-mini-btn" onclick="showPage('harita')">TAMAMI →</button>
+          <button class="db-mini-btn" onclick="showPage('harita')">GETİRİ TABLOSU →</button>
         </div>
       </div>
       <div class="hm-sarmal" id="dbHarita"></div>
@@ -3272,8 +3232,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div class="db-kart">
         <div class="db-sec-head">
           <div class="db-sec-l">
-            <span class="db-kicker">◈ Bugün</span>
-            <h3 class="db-sec-t">Bilanço <em>Akışı</em></h3>
+            <h3 class="db-sec-t">Bilanço Akışı</h3>
             <span class="db-sec-meta" id="dbBilancoDurum"></span>
           </div>
         </div>
@@ -3282,8 +3241,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
       <div class="db-kart">
         <div class="db-sec-head">
           <div class="db-sec-l">
-            <span class="db-kicker">◈ Akış</span>
-            <h3 class="db-sec-t">Son <em>Dakika</em></h3>
+            <h3 class="db-sec-t">Son Dakika</h3>
             <span class="db-sec-meta" id="dbHaberKaynak"></span>
           </div>
         </div>
@@ -3499,52 +3457,21 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 </div><!-- /page-body -->
 </div>
 
-<!-- TAKIP PAGE -->
-<div class="page" id="page-watchlist">
-<div class="page-body">
-  <div class="pt-hdr"><div class="pt-title">Takip <span>Listem</span></div><span id="wlCount" style="font-size:9px;color:var(--muted2);font-family:'JetBrains Mono',monospace;margin-left:10px"></span></div>
-  <div class="wl-intro">İzlemek istediğin hisseleri ekle — canlı fiyat, günlük değişim ve <strong>hedef fiyat alarmı</strong> burada. Hedefe ulaşınca satır işaretlenir.</div>
-  <div class="wl-add">
-    <div class="wl-search-wrap">
-      <input class="wl-in" id="wlTicker" placeholder="Hisse ara veya kod gir (örn. THYAO, AAPL)" autocomplete="off" spellcheck="false" oninput="wlSearch()" onkeydown="if(event.key==='Enter')wlAdd()"/>
-      <div class="wl-suggest" id="wlSuggest"></div>
-    </div>
-    <select class="wl-ex" id="wlExchange"><option value="BIST">BIST</option><option value="US">ABD</option></select>
-    <input class="wl-in wl-target" id="wlTarget" type="number" placeholder="Hedef fiyat · alarm (ops.)" step="any" onkeydown="if(event.key==='Enter')wlAdd()"/>
-    <button class="wl-btn" id="wlAddBtn" onclick="wlAdd()">+ Ekle</button>
-  </div>
-  <div class="wl-list" id="wlList"></div>
-  <div class="wl-foot" id="wlFoot"></div>
-</div>
-</div>
-
-<!-- ══ PİYASA HARİTASI (ISI HARİTASI) ══ -->
+<!-- ══ PİYASA VERİLERİ — endeks / sektör / emtia getiri tabloları ══
+     Isı haritası dashboard'da duruyor; bu sayfa dönemsel getirilere
+     odaklanıyor (Seeking Alpha "Market Data" düzeni). -->
 <div class="page" id="page-harita">
 <div class="page-body">
-  <div class="pt-hdr"><div class="pt-title">Piyasa <span>Haritası</span></div><span class="hm-durum" id="hmDurum" style="margin-left:10px"></span></div>
-  <div class="hm-intro">
-    Her kutu bir hisse: <strong>alanı piyasa değerini</strong>, <strong>rengi seçilen dönemdeki getiriyi</strong> gösterir.
-    Paranın hangi sektöre aktığını tek bakışta görürsün. Kutuya tıkla, hisse doğrudan analiz ekranına düşer;
-    <strong>sektör başlığına</strong> tıkla, o sektörün 1 ay / 3 ay / 6 ay / 1 yıllık getiri tablosu açılır.
+  <div class="pt-hdr"><div class="pt-title">Piyasa <span>Verileri</span></div><span class="hm-durum" id="pvDurum" style="margin-left:10px"></span></div>
+  <div class="pv-intro">
+    Endeksler, sektörler ve emtia/kripto — her satırda <strong>1 gün, 1 hafta, 1 ay, YBB, 1 yıl ve 3 yıl</strong> getirisi.
+    Başlığa tıklayarak sırala; hangi dönemde paranın nereye aktığını buradan okursun.
   </div>
-  <div class="hm-ust">
-    <div class="hm-kontrol">
-      <div class="hm-kontrol-grp" id="hmKapsamlar"></div>
-      <div class="hm-kontrol-grp" id="hmDonemler"></div>
-    </div>
+  <div class="pv-ust">
+    <button class="db-mini-btn" onclick="pvYenile()">YENİLE ↻</button>
   </div>
-  <div class="hm-govde">
-    <div>
-      <div class="hm-sarmal" id="hmHarita"></div>
-      <div class="hm-lejant">
-        <span>-%3</span>
-        <div class="hm-lejant-bar" id="hmLejant"></div>
-        <span>+%3</span>
-        <span style="margin-left:6px">· kutu alanı = piyasa değeri · veri: Yahoo Finance</span>
-      </div>
-    </div>
-    <div class="hm-ozet" id="hmOzet"></div>
-  </div>
+  <div id="pvGovde"><div class="pv-bos">Piyasa verileri hazırlanıyor…</div></div>
+  <div class="pv-alt">Veri: Yahoo Finance · getiriler fiyat bazlı, temettü hariç · YBB = yıl başından bu yana</div>
 </div>
 </div>
 
@@ -3552,7 +3479,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 <div class="page" id="page-sektor">
 <div class="page-body">
   <div class="sk-ust">
-    <button class="sk-geri" onclick="showPage('harita')">← Piyasa Haritası</button>
+    <button class="sk-geri" onclick="showPage('harita')">← Piyasa Verileri</button>
     <div class="sk-kapsam" id="skKapsam"></div>
   </div>
   <div class="pt-hdr"><div class="pt-title" id="skBaslik">Sektör</div><span class="hm-durum" id="skDurum" style="margin-left:10px"></span></div>
@@ -3909,11 +3836,10 @@ function closeSidebar(){
 
 // TABS
 function switchTab(t){
-  ['analiz','portfoy','takip'].forEach(x=>{
+  ['analiz','portfoy'].forEach(x=>{
     const b=document.getElementById('tab-'+x);if(b)b.className='mnav-tab'+(x===t?' active':'');
     const c=document.getElementById('tab-'+x+'-content');if(c)c.className='tab-content'+(x===t?' active':'');
   });
-  if(t==='takip')showPage('watchlist');
 }
 
 // FW MODAL
@@ -4122,7 +4048,7 @@ function qFill(t,c,ex){selEx(ex);document.getElementById('tickerIn').value=t;doc
 
 // PAGES
 function showPage(type,idx){
-  ['overview','analiz','crit','portfolio','forum','tezler','watchlist','harita','sektor'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
+  ['overview','analiz','crit','portfolio','forum','tezler','harita','sektor'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const e=document.getElementById('page-'+type);if(e)e.classList.add('active');
   if(type==='overview'){const n=document.getElementById('nav-overview');if(n)n.classList.add('active');if(window.dbYukle)window.dbYukle();}
@@ -4130,9 +4056,8 @@ function showPage(type,idx){
   else if(type==='crit'){const n=document.getElementById('nav-'+idx);if(n)n.classList.add('active');renderCritDetail(idx);}
   else if(type==='portfolio'){const n=document.getElementById('nav-portfolio-entry');if(n)n.classList.add('active');renderPt();}
   else if(type==='forum'){const n=document.getElementById('nav-forum-entry');if(n)n.classList.add('active');loadPosts();}
-  else if(type==='watchlist'){const n=document.getElementById('nav-watchlist-entry');if(n)n.classList.add('active');if(window.renderWatchlist)window.renderWatchlist();}
-  else if(type==='harita'){const n=document.getElementById('nav-harita-entry');if(n)n.classList.add('active');if(window.hmSayfaAc)window.hmSayfaAc();}
-  // Sektör detayı haritanın alt sayfası — menüde "Piyasa Haritası" seçili kalsın
+  else if(type==='harita'){const n=document.getElementById('nav-harita-entry');if(n)n.classList.add('active');if(window.pvSayfaAc)window.pvSayfaAc();}
+  // Sektör detayı bu sayfanın alt sayfası — menüde "Piyasa Verileri" seçili kalsın
   else if(type==='sektor'){const n=document.getElementById('nav-harita-entry');if(n)n.classList.add('active');}
   else if(type==='tezler'){const n=document.getElementById('nav-tezler');if(n)n.classList.add('active');renderTezler();}
   // Alt menü seçili sekmesini sayfayla eşitle — sayfa kenar çubuğundan,
@@ -5138,7 +5063,7 @@ function openTezSupabase(id) {
 // Alt menü sekmesi -> sayfa eşlemesi. Tek kaynak: hem tıklama hem de
 // showPage'den gelen senkronizasyon bunu kullanıyor, yoksa kenar
 // çubuğundan sayfa değiştirince alt menüde yanlış sekme seçili kalıyor.
-const MNAV_SAYFA = { panel:'overview', harita:'harita', analiz:'analiz', portfoy:'portfolio', takip:'watchlist' };
+const MNAV_SAYFA = { panel:'overview', harita:'harita', analiz:'analiz', portfoy:'portfolio' };
 
 function mobileNavIsaretle(sayfa) {
   Object.keys(MNAV_SAYFA).forEach(t => {
@@ -5352,6 +5277,7 @@ if (!localStorage.getItem('baris_fw_seen')) {
 <script src="/analyze-features.js"></script>
 <script src="/score-gauge.js"></script>
 <script src="/heatmap.js"></script>
+<script src="/market-data.js"></script>
 <script src="/dashboard.js"></script>
 
 <!-- MOBILE HESAP SHEET -->
@@ -5397,8 +5323,8 @@ if (!localStorage.getItem('baris_fw_seen')) {
     <span>Panel</span>
   </button>
   <button class="bn-tab" id="bn-harita" onclick="mobileNav('harita')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="8" height="12"/><rect x="13" y="3" width="8" height="7"/><rect x="13" y="12" width="8" height="9"/><rect x="3" y="17" width="8" height="4"/></svg>
-    <span>Harita</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+    <span>Veriler</span>
   </button>
   <button class="bn-tab" id="bn-analiz" onclick="mobileNav('analiz')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -5407,10 +5333,6 @@ if (!localStorage.getItem('baris_fw_seen')) {
   <button class="bn-tab" id="bn-portfoy" onclick="mobileNav('portfoy')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
     <span>Portföy</span>
-  </button>
-  <button class="bn-tab" id="bn-takip" onclick="mobileNav('takip')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-    <span>Takip</span>
   </button>
   <button class="bn-tab" id="bn-hesap" onclick="openMobileAccount()">
     <div id="bnAccountIcon" style="width:22px;height:22px;border-radius:50%;background:var(--border-s);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:11px;font-weight:700;color:#7a8493">?</div>
@@ -6814,7 +6736,7 @@ function garpAnalizAc(ticker) {
     host.onclick = function(){ openTez(t.id); };
   }
 
-  /* Paylaşılan fiyat cache (teaser getiri + sicil + watchlist) */
+  /* Paylaşılan fiyat cache (teaser getiri + sicil + mercek kartları) */
   const _px = {};
   async function getPrice(tk, ex){
     const k = tk + '|' + ex;
@@ -6947,164 +6869,6 @@ function garpAnalizAc(ticker) {
     }
   }
 
-  /* ── TAKİP LİSTEM (Watchlist) ── */
-  const WL_KEY = 'bi_watchlist';
-  let _wlMem = null;          // localStorage yoksa bellek yedeği
-  let _wlTimer = null;
-  let _wlPending = {};        // öneriden gelen ad/borsa
-  let _wlSearchT = null;
-
-  function wlGet(){
-    try{ const v = localStorage.getItem(WL_KEY); return v ? JSON.parse(v) : []; }
-    catch(e){ return _wlMem || []; }
-  }
-  function wlSave(list){
-    _wlMem = list;
-    try{ localStorage.setItem(WL_KEY, JSON.stringify(list)); }catch(e){}
-  }
-
-  // Arama (market.js type=search)
-  function wlSearch(){
-    const inp = document.getElementById('wlTicker');
-    const box = document.getElementById('wlSuggest');
-    if (!inp || !box) return;
-    const q = (inp.value||'').trim();
-    if (q.length < 2){ box.classList.remove('open'); box.innerHTML=''; return; }
-    clearTimeout(_wlSearchT);
-    _wlSearchT = setTimeout(async ()=>{
-      try{
-        const r = await fetch('/api/market?type=search&ticker=' + encodeURIComponent(q));
-        const j = await r.json();
-        const res = (j && j.results) || [];
-        if (!res.length){ box.classList.remove('open'); box.innerHTML=''; return; }
-        box.innerHTML = res.map(o=>{
-          const ex = /BIST|\.IS|IST/i.test(o.exchange||'') ? 'BIST' : 'US';
-          return `<div class="wl-sug-item" onclick='wlPick(${JSON.stringify({tk:o.ticker,nm:o.name||'',ex}).replace(/'/g,"&#39;")})'>
-            <span class="wl-sug-tk">${esc(o.ticker)}</span>
-            <span class="wl-sug-nm">${esc(o.name||'')}</span>
-            <span class="wl-sug-ex">${ex}</span>
-          </div>`;
-        }).join('');
-        box.classList.add('open');
-      }catch(e){ box.classList.remove('open'); }
-    }, 260);
-  }
-  window.wlSearch = wlSearch;
-  window.wlPick = function(o){
-    const inp=document.getElementById('wlTicker'), sel=document.getElementById('wlExchange'), box=document.getElementById('wlSuggest');
-    if(inp) inp.value = o.tk;
-    if(sel) sel.value = o.ex || 'BIST';
-    _wlPending[o.tk.toUpperCase()] = { name:o.nm||'', ex:o.ex||'BIST' };
-    if(box){ box.classList.remove('open'); box.innerHTML=''; }
-    const tgt=document.getElementById('wlTarget'); if(tgt) tgt.focus();
-  };
-
-  window.wlAdd = async function(){
-    const inp = document.getElementById('wlTicker');
-    const sel = document.getElementById('wlExchange');
-    const tgt = document.getElementById('wlTarget');
-    const box = document.getElementById('wlSuggest');
-    if (!inp) return;
-    const tk = (inp.value||'').toUpperCase().replace(/[^A-Z0-9.]/g,'');
-    const ex = (sel && sel.value) || 'BIST';
-    const target = tgt && tgt.value ? parseFloat(tgt.value) : null;
-    if (!tk){ inp.focus(); return; }
-    const list = wlGet();
-    if (list.some(x=>x.tk===tk && x.ex===ex)){ inp.style.borderColor='var(--warn)'; setTimeout(()=>inp.style.borderColor='',900); return; }
-    const name = (_wlPending[tk] && _wlPending[tk].name) || '';
-    const q = await getPrice(tk, ex);
-    list.push({ tk, ex, target: (target && isFinite(target))?target:null, name, base: (q&&q.price)||null });
-    wlSave(list);
-    inp.value=''; if(tgt) tgt.value=''; if(box){box.classList.remove('open');box.innerHTML='';}
-    inp.focus();
-    renderWatchlist();
-    if (typeof window.trackEvent==='function') window.trackEvent('watchlist_add', { ticker:tk, exchange:ex });
-  };
-  window.wlRemove = function(tk, ex){
-    wlSave(wlGet().filter(x=>!(x.tk===tk && x.ex===ex)));
-    renderWatchlist();
-  };
-  // Programatik ekleme (tema kartlarından)
-  window.wlAddItem = function(tk, ex, name, target){
-    const list = wlGet();
-    if (list.some(x=>x.tk===tk && x.ex===ex)) return 'exists';
-    const c = _px[tk+'|'+ex];
-    list.push({ tk, ex, target: (target&&isFinite(target))?target:null, name: name||'', base: (c&&c.price)||null });
-    wlSave(list);
-    renderWatchlist();
-    if (typeof window.trackEvent==='function') window.trackEvent('watchlist_add', { ticker:tk, exchange:ex, source:'spotlight' });
-    return 'added';
-  };
-  function curOf(ex){ return ex==='BIST' ? '₺' : (ex==='KRX'||ex==='KS') ? '₩' : '$'; }
-  window.wlGoLogin = function(){
-    if (typeof window.showAuthModal==='function') window.showAuthModal();
-  };
-  window.renderWatchlist = function(){ return renderWatchlist(); };
-
-  async function renderWatchlist(){
-    const wrap = document.getElementById('wlList');
-    const cnt  = document.getElementById('wlCount');
-    const foot = document.getElementById('wlFoot');
-    if (!wrap) return;
-    const list = wlGet();
-    if (cnt) cnt.textContent = list.length ? list.length + ' hisse' : '';
-    if (foot) foot.innerHTML = '💾 Liste bu cihazda saklanıyor. <a onclick="wlGoLogin()">Giriş yap</a> → her cihazda senkron + hedef uyarısı maili (yakında).';
-    if (!list.length){
-      wrap.innerHTML = '<div class="wl-empty"><div class="wl-empty-t">Takibe başla</div><div class="wl-empty-s">İzlemek istediğin hisseleri ekle — canlı fiyat, günlük değişim ve hedefe ulaşınca uyarı burada.</div></div>';
-      return;
-    }
-    // tez eşleştirme
-    let tezMap = {};
-    try{ (await getTezler()||[]).forEach(t=>{ if(t.ticker) tezMap[t.ticker.toUpperCase()] = t.id; }); }catch(e){}
-    // iskelet
-    wrap.innerHTML = list.map(it=>`<div class="wl-row" id="wl-${it.tk}-${it.ex}">
-      <span class="wl-r-tk">${esc(it.tk)}</span>
-      <div class="wl-r-mid">
-        ${it.name ? `<div class="wl-r-nm">${esc(it.name)}</div>` : `<div class="wl-r-nm">${esc(it.ex)}</div>`}
-        <div class="wl-r-sub" id="wl-sub-${it.tk}-${it.ex}">${it.target?('Hedef: '+it.target):'—'}</div>
-      </div>
-      <div class="wl-r-px"><div class="wl-r-price" id="wl-pr-${it.tk}-${it.ex}">…</div><div class="wl-r-chg neu" id="wl-ch-${it.tk}-${it.ex}"></div></div>
-      <button class="wl-r-rm" title="Kaldır" onclick="wlRemove('${it.tk}','${it.ex}')">✕</button>
-    </div>`).join('');
-    // fiyatları çek
-    list.forEach(async it=>{
-      const q = await getPrice(it.tk, it.ex);
-      const row = document.getElementById('wl-'+it.tk+'-'+it.ex);
-      const prEl = document.getElementById('wl-pr-'+it.tk+'-'+it.ex);
-      const chEl = document.getElementById('wl-ch-'+it.tk+'-'+it.ex);
-      const subEl= document.getElementById('wl-sub-'+it.tk+'-'+it.ex);
-      const cur = curOf(it.ex);
-      if (!q || q.price==null){ if(prEl) prEl.textContent='—'; return; }
-      if (prEl) prEl.textContent = cur + (q.price>=1000 ? Number(q.price).toLocaleString('en-US',{maximumFractionDigits:0}) : Number(q.price).toFixed(2));
-      if (chEl && q.change!=null){
-        const d = q.change>0.04?'pos':q.change<-0.04?'neg':'neu';
-        chEl.className = 'wl-r-chg '+d;
-        chEl.textContent = (q.change>0?'▲ +':q.change<0?'▼ ':'— ')+Math.abs(q.change).toFixed(2)+'%';
-      }
-      // hedef + tez + uyarı
-      const parts = [];
-      let hit = false;
-      if (it.target!=null){
-        if (it.base!=null) hit = (it.base<it.target && q.price>=it.target) || (it.base>it.target && q.price<=it.target);
-        else hit = q.price>=it.target;
-        parts.push('Hedef: '+cur+it.target);
-      }
-      const tezId = tezMap[it.tk];
-      if (tezId) parts.push(`<a class="wl-tez-chip" onclick="window.__openTez(${tezId})">📄 Tez</a>`);
-      if (hit){ parts.push('<span class="wl-hit-badge">🎯 Hedefe ulaştı</span>'); if(row) row.classList.add('hit'); }
-      if (subEl) subEl.innerHTML = parts.length ? parts.join(' · ') : '—';
-    });
-    if (!_wlTimer){
-      _wlTimer = setInterval(()=>{ if (document.body.classList.contains('route-terminal') && document.getElementById('page-watchlist') && document.getElementById('page-watchlist').classList.contains('active') && wlGet().length){ Object.keys(_px).forEach(k=>delete _px[k]); renderWatchlist(); } }, 60000);
-    }
-  }
-
-  // öneri kutusunu dışarı tıklayınca kapat
-  document.addEventListener('click', function(e){
-    const w = document.querySelector('.wl-search-wrap');
-    const box = document.getElementById('wlSuggest');
-    if (box && w && !w.contains(e.target)) box.classList.remove('open');
-  });
 
   /* ── MERCEK (tema kart serisi) ── */
   function ytId(url){ if(!url) return ''; const m=String(url).match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{6,})/); return m?m[1]:''; }
@@ -7142,7 +6906,6 @@ function garpAnalizAc(ticker) {
         <div class="spot-metrik">${esc(c.metrik||'')}</div>
         <div class="spot-lbl">Rol</div>
         <div class="spot-rol">${esc(c.rol||'')}</div>
-        <button class="spot-add" id="spot-add-${i}" onclick="window.spotAdd(${i})">+ Takibe Ekle</button>
       </div>`).join('');
     sp.cards.forEach(async (c,i)=>{
       const q = await getPrice(c.sym, c.ex);
@@ -7154,13 +6917,6 @@ function garpAnalizAc(ticker) {
         const d = q.change>0.04?'pos':q.change<-0.04?'neg':'neu';
         ch.className='spot-chg '+d;
         ch.textContent=(q.change>0?'▲ +':q.change<0?'▼ ':'— ')+Math.abs(q.change).toFixed(2)+'%';
-      }
-    });
-    const wl = wlGet();
-    sp.cards.forEach((c,i)=>{
-      if (wl.some(x=>x.tk===c.sym && x.ex===c.ex)){
-        const btn=document.getElementById('spot-add-'+i);
-        if(btn){ btn.textContent='✓ Takipte'; btn.classList.add('added'); }
       }
     });
   }
@@ -7180,13 +6936,6 @@ function garpAnalizAc(ticker) {
     const open = body.style.display==='none';
     body.style.display = open?'block':'none';
     if(btn) btn.textContent = open?'Gizle ▴':'Göster ▾';
-  };
-  window.spotAdd = function(i){
-    const c = CONFIG.spotlight && CONFIG.spotlight.cards[i];
-    if (!c) return;
-    const res = window.wlAddItem(c.sym, c.ex, c.name);
-    const btn = document.getElementById('spot-add-'+i);
-    if (btn){ btn.textContent = res==='exists' ? '✓ Zaten takipte' : '✓ Takibe eklendi'; btn.classList.add('added'); }
   };
 
   /* YouTube grid — başlıklar oEmbed ile otomatik */
