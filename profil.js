@@ -21,8 +21,8 @@
     const m = Math.abs(v);
     const bic = (x, ond) => x.toLocaleString('tr-TR', { minimumFractionDigits: ond, maximumFractionDigits: ond });
     if (m >= 1e12) return `${isaret}$${bic(m / 1e12, 2)} Tn`;
-    if (m >= 1e9) return `${isaret}$${bic(m / 1e9, m / 1e9 >= 100 ? 0 : 1)} Mlr`;
-    if (m >= 1e6) return `${isaret}$${bic(m / 1e6, m / 1e6 >= 100 ? 0 : 1)} Mn`;
+    if (m >= 1e9) return `${isaret}$${bic(m / 1e9, 1)} Mlr`;
+    if (m >= 1e6) return `${isaret}$${bic(m / 1e6, 1)} Mn`;
     return `${isaret}$${bic(m, 0)}`;
   }
 

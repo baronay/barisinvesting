@@ -140,9 +140,15 @@ function tabloKur(usGaap, periyot, adet) {
   // Dönem eksenini TÜM kalemlerin birleşiminden kur. Tek bir kalemin
   // dönemlerine bakıp erken çıkmak, o kalemin verisi eskiyse tabloyu
   // eski yıllara kilitliyordu.
+  // Çeyreklikte nakit akışı kalemleri işe yaramıyor: şirketler bunları
+  // yıl başından itibaren kümülatif veriyor (3 ay, 6 ay, 9 ay), tek bir
+  // çeyreğin rakamı çoğu dönemde hiç bulunmuyor — tabloyu boş sütunlarla
+  // doldurmaktansa bu bloğu çeyreklikte hiç göstermiyoruz.
+  const kalemListesi = periyot === 'ceyrek' ? KALEMLER.filter(k => k.tablo !== 'nakit') : KALEMLER;
+
   const bulunanlar = new Map();
   const tarihler = new Set();
-  for (const kalem of KALEMLER) {
+  for (const kalem of kalemListesi) {
     const b = etiketBul(usGaap, kalem.etiketler, kalem.tur, periyot);
     if (!b) continue;
     bulunanlar.set(kalem.k, b);
@@ -161,7 +167,7 @@ function tabloKur(usGaap, periyot, adet) {
 
   const satirlar = [];
   const deger = {};
-  for (const kalem of KALEMLER) {
+  for (const kalem of kalemListesi) {
     const bulunan = bulunanlar.get(kalem.k);
     if (!bulunan) continue;
     const liste = bulunan.liste;
@@ -179,7 +185,7 @@ function tabloKur(usGaap, periyot, adet) {
     });
     if (degerler.every(v => v == null)) continue;
     deger[kalem.k] = degerler;
-    satirlar.push({ k: kalem.k, ad: kalem.ad, birim: kalem.birim, tablo: kalem.tablo, xbrl: bulunan.etiket, d: degerler });
+    satirlar.push({ k: kalem.k, ad: kalem.ad, birim: kalem.birim, tablo: kalem.tablo, tur: kalem.tur, xbrl: bulunan.etiket, d: degerler });
   }
 
   // Serbest nakit akışı = faaliyet nakit akışı − yatırım harcaması
@@ -191,6 +197,17 @@ function tabloKur(usGaap, periyot, adet) {
         return (v == null || y == null) ? null : v - y;
       }),
     });
+  }
+
+  // Gelir tablosu tarafı tamamen boş kalan dönemi sütun olarak gösterme.
+  // Bunun tipik örneği 4. çeyrek: şirketler onu ayrı 10-Q ile vermiyor,
+  // yıl sonu bilançosu dolu ama gelir satırları boş kalıyordu.
+  const doluIndeks = donemler.map((_, i) =>
+    satirlar.some(s => s.tur === 'akis' && s.d[i] != null));
+  if (doluIndeks.some(v => !v) && doluIndeks.some(v => v)) {
+    const kalan = donemler.filter((_, i) => doluIndeks[i]);
+    for (const s of satirlar) s.d = s.d.filter((_, i) => doluIndeks[i]);
+    return { donemler: kalan, satirlar };
   }
 
   return { donemler, satirlar };
