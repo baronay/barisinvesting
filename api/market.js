@@ -596,6 +596,8 @@ const PV_TEKRAR = 2;
 // Hisse sembolleri toplu istekte sorun çıkarmıyor (ısı haritası 96 hisseyi
 // 20'lik gruplarla çekiyor) — sektör endekslerindeki gibi küçültmeye gerek yok
 const PV_HISSE_PARCA = 16;
+// Bir sektör ortalaması sayılabilmesi için gereken en az hisse sayısı
+const PV_MIN_HISSE = 3;
 
 async function getPiyasaVerileri(req, res) {
   const headers = {
@@ -700,13 +702,33 @@ async function getPiyasaVerileri(req, res) {
         kayit.toplam[d.k] = (kayit.toplam[d.k] || 0) + g * deger;
       }
     }
-    const bistSatirlar = [...sektorHar.entries()].map(([ad, k]) => {
-      const g = {};
+    // BİST getirileri TL bazında: 3 yıllık ham getiri büyük ölçüde enflasyon,
+    // ABD sektörlerinin dolar bazlı getirisiyle aynı ölçekte gösterilince
+    // yanıltıyor. Bu yüzden BİST 100'e göre PUAN FARKI veriyoruz — "hangi
+    // sektör endeksi yendi" sorusu enflasyondan bağımsız cevaplanıyor.
+    const xu100 = seri['XU100.IS'];
+    const xuGetiri = {};
+    if (xu100) {
       for (const d of PV_DONEM) {
-        g[d.k] = k.agirlik[d.k] ? Math.round((k.toplam[d.k] / k.agirlik[d.k]) * 100) / 100 : null;
+        xuGetiri[d.k] = d.k === 'ybb'
+          ? ybbGetiri(xu100.ts, xu100.kapanis, xu100.fiyat)
+          : seriGetiri(xu100.ts, xu100.kapanis, xu100.fiyat, d.gun);
       }
-      return { s: `BIST:${ad}`, ad, kod: `${k.adet} hisse`, sek: ad, kap: 'bist', f: null, g };
-    }).sort((a, b) => a.ad.localeCompare(b.ad, 'tr'));
+    }
+    const bistSatirlar = [...sektorHar.entries()]
+      // Tek/iki hisselik "sektör ortalaması" ortalama değil, o hissenin
+      // kendisi — tabloyu gürültüyle doldurmasın
+      .filter(([, k]) => k.adet >= PV_MIN_HISSE)
+      .map(([ad, k]) => {
+        const g = {};
+        for (const d of PV_DONEM) {
+          const ham = k.agirlik[d.k] ? (k.toplam[d.k] / k.agirlik[d.k]) : null;
+          const ref = xuGetiri[d.k];
+          g[d.k] = (ham == null || ref == null) ? null : Math.round((ham - ref) * 100) / 100;
+        }
+        return { s: `BIST:${ad}`, ad, kod: `${k.adet} hisse`, sek: ad, kap: 'bist', f: null, g };
+      })
+      .sort((a, b) => (b.g['1a'] ?? -Infinity) - (a.g['1a'] ?? -Infinity));
 
     const bloklar = PV_BLOKLAR.map(b => ({
       k: b.k,
@@ -739,7 +761,10 @@ async function getPiyasaVerileri(req, res) {
       bloklar.splice(yer < 0 ? bloklar.length : yer + 1, 0, {
         k: 'bist-sektor',
         ad: 'BİST Sektörleri',
-        not: `${BIST_EVREN.length} hisseden piyasa değeri ağırlıklı`,
+        not: 'BİST 100\'e göre puan farkı · TL bazında · piyasa değeri ağırlıklı',
+        // Sektör ortalamasının tek bir fiyatı yok; birim de % değil puan
+        fiyatVar: false,
+        birim: 'p',
         satirlar: bistSatirlar,
       });
     }

@@ -20,9 +20,12 @@
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
-  function yuzde(v) {
+  // Çoğu blok yüzde getiri gösteriyor; BİST sektörleri BİST 100'e göre
+  // puan farkı gösterdiği için birimi ayrı (blok.birim === 'p')
+  function yuzde(v, birim) {
     if (v == null || !isFinite(v)) return '—';
-    return `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
+    const son = birim === 'p' ? ' p' : '%';
+    return `${v >= 0 ? '+' : ''}${v.toFixed(2)}${son}`;
   }
 
   function sinif(v) {
@@ -69,15 +72,18 @@
 
   function blokCiz(blok, donemler) {
     const s = sirala[blok.k] || {};
+    // Sektör ortalamalarının tek bir fiyatı yok — o blokta sütunu hiç açma,
+    // 11 satır boyunca "—" yazan ölü bir sütun kalmasın
+    const fiyatVar = blok.fiyatVar !== false;
     const bas = (anahtar, ad) =>
       `<th class="${s.anahtar === anahtar ? 'sirali' : ''}" data-blok="${esc(blok.k)}" data-sirala="${esc(anahtar)}">${esc(ad)}${s.anahtar === anahtar ? (s.yon > 0 ? ' ▲' : ' ▼') : ''}</th>`;
 
     const satirlar = siralanmis(blok).map(r => {
       const hucreler = donemler.map(d =>
-        `<td class="pv-g ${sinif(r.g[d.k])}">${yuzde(r.g[d.k])}</td>`).join('');
+        `<td class="pv-g ${sinif(r.g[d.k])}">${yuzde(r.g[d.k], blok.birim)}</td>`).join('');
       return `<tr${r.sek ? ` data-sek="${esc(r.sek)}" data-kap="${esc(r.kap || 'us')}" title="${esc(r.ad)} sektöründeki hisseler"` : ''}>
         <td><span class="pv-ad"><span class="pv-ad-t">${esc(r.ad)}</span><span class="pv-ad-s">${esc(r.kod || '')}</span></span></td>
-        <td class="pv-fiyat">${fiyat(r.f)}</td>
+        ${fiyatVar ? `<td class="pv-fiyat">${fiyat(r.f)}</td>` : ''}
         ${hucreler}
       </tr>`;
     }).join('');
@@ -91,7 +97,7 @@
         <table class="pv-tablo">
           <thead><tr>
             ${bas('ad', 'Ad')}
-            ${bas('f', 'Fiyat')}
+            ${fiyatVar ? bas('f', 'Fiyat') : ''}
             ${donemler.map(d => bas(d.k, d.ad)).join('')}
           </tr></thead>
           <tbody>${satirlar}</tbody>

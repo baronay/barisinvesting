@@ -2543,6 +2543,29 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 @media(max-width:980px){.mkt-grid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:560px){.mkt-grid{grid-template-columns:repeat(2,1fr);}}
 
+/* Takip Listem — sade sürüm (hedef fiyat / alarm yok) */
+.tk-ekle{display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap;}
+.tk-in{flex:1;min-width:200px;background:rgba(0,0,0,0.25);border:1px solid var(--border-s);color:var(--text);font-family:var(--font-mono);font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:10px 12px;outline:none;transition:border-color .15s;}
+.tk-in:focus{border-color:var(--accent);}
+.tk-in::placeholder{color:var(--muted-s);text-transform:none;letter-spacing:0;}
+.tk-sel{background:rgba(0,0,0,0.25);border:1px solid var(--border-s);color:var(--text2);font-family:var(--font-mono);font-size:11px;padding:10px;outline:none;cursor:pointer;}
+.tk-btn{background:none;border:1px solid var(--accent2);color:var(--accent);font-family:var(--font-mono);font-size:11px;letter-spacing:1.2px;padding:0 18px;cursor:pointer;transition:background .15s;white-space:nowrap;}
+.tk-btn:hover{background:var(--accent-dim);}
+.tk-sar{border:1px solid var(--border-s);background:var(--surface);}
+.tk-row{display:flex;align-items:center;gap:14px;padding:11px 14px;border-bottom:1px solid var(--rule);}
+.tk-row:last-child{border-bottom:none;}
+.tk-row:hover{background:var(--surface2);}
+.tk-tk{font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--text);min-width:76px;cursor:pointer;}
+.tk-row:hover .tk-tk{color:var(--accent);}
+.tk-ex{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted-s);flex:1;}
+.tk-px{font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;text-align:right;min-width:96px;}
+.tk-dg{font-family:var(--font-mono);font-size:11px;font-weight:700;text-align:right;min-width:76px;}
+.tk-dg.pos{color:var(--success);} .tk-dg.neg{color:var(--danger);} .tk-dg.neu{color:var(--muted-s);}
+.tk-sil{background:none;border:none;color:var(--muted-s);cursor:pointer;font-size:14px;padding:2px 4px;transition:color .15s;}
+.tk-sil:hover{color:var(--danger);}
+.tk-bos{padding:30px 16px;text-align:center;border:1px dashed var(--border-s);color:var(--muted-s);font-size:12px;line-height:1.7;}
+@media(max-width:560px){.tk-ekle{flex-direction:column;}.tk-ex{display:none;}}
+
 /* Piyasa Verileri tablosu (Seeking Alpha "Market Data" düzeni) */
 .pv-intro{font-size:13px;line-height:1.6;color:var(--cream2);margin:-2px 0 18px;max-width:720px;}
 .pv-intro strong{color:var(--cream);}
@@ -3106,11 +3129,14 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <div class="nav-item" id="nav-harita-entry" onclick="showPage('harita');closeSidebar();">
       <span class="nav-num">02</span>Piyasa Verileri
     </div>
+    <div class="nav-item" id="nav-watchlist-entry" onclick="showPage('watchlist');closeSidebar();">
+      <span class="nav-num">03</span>Takip Listem
+    </div>
     <div class="nav-item" id="nav-forum-entry" onclick="showPage('forum');closeSidebar();">
-      <span class="nav-num">03</span>Topluluk Görüşleri
+      <span class="nav-num">04</span>Topluluk Görüşleri
     </div>
     <div class="nav-item" id="nav-portfolio-entry" onclick="showPage('portfolio');closeSidebar();">
-      <span class="nav-num">04</span>Portföy İzleyici
+      <span class="nav-num">05</span>Portföy İzleyici
     </div>
     <!-- Kriter listesi sidebar'dan kaldırıldı — kriterlere artık "Analiz Sonuçları"
          kartındaki checklist'ten tıklanarak ulaşılıyor. navList JS'te hâlâ
@@ -3455,6 +3481,20 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <div class="risk-card"><div class="risk-t">Risk Analizi<span class="rl" id="riskLv">—</span></div><div class="risk-items"><div class="ri"><div class="ri-l">Konsantrasyon</div><div class="ri-v" id="riskConc">—</div></div><div class="ri"><div class="ri-l">En Büyük Pozisyon</div><div class="ri-v" id="riskBig">—</div></div><div class="ri"><div class="ri-l">Ort. Buffett Skoru</div><div class="ri-v" id="riskAvgB">—</div></div><div class="ri"><div class="ri-l">Analiz Edilmemiş</div><div class="ri-v" id="riskUn">—</div></div></div></div>
   </div>
 </div><!-- /page-body -->
+</div>
+
+<!-- ══ TAKİP LİSTEM — sade sürüm: hedef fiyat / alarm yok ══ -->
+<div class="page" id="page-watchlist">
+<div class="page-body">
+  <div class="pt-hdr"><div class="pt-title">Takip <span>Listem</span></div><span class="hm-durum" id="tkDurum" style="margin-left:10px"></span></div>
+  <div class="pv-intro">Takip etmek istediğin hisseleri ekle — canlı fiyat ve günlük değişim burada. Liste bu cihazda saklanır.</div>
+  <div class="tk-ekle">
+    <input class="tk-in" id="tkTicker" placeholder="Hisse kodu (THYAO, AAPL…)" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')tkEkle()"/>
+    <select class="tk-sel" id="tkEx"><option value="BIST">BİST</option><option value="US">ABD</option></select>
+    <button class="tk-btn" onclick="tkEkle()">+ Ekle</button>
+  </div>
+  <div id="tkListe"></div>
+</div>
 </div>
 
 <!-- ══ PİYASA VERİLERİ — endeks / sektör / emtia getiri tabloları ══
@@ -4048,7 +4088,7 @@ function qFill(t,c,ex){selEx(ex);document.getElementById('tickerIn').value=t;doc
 
 // PAGES
 function showPage(type,idx){
-  ['overview','analiz','crit','portfolio','forum','tezler','harita','sektor'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
+  ['overview','analiz','crit','portfolio','forum','tezler','harita','sektor','watchlist'].forEach(p=>{const e=document.getElementById('page-'+p);if(e)e.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const e=document.getElementById('page-'+type);if(e)e.classList.add('active');
   if(type==='overview'){const n=document.getElementById('nav-overview');if(n)n.classList.add('active');if(window.dbYukle)window.dbYukle();}
@@ -4056,6 +4096,7 @@ function showPage(type,idx){
   else if(type==='crit'){const n=document.getElementById('nav-'+idx);if(n)n.classList.add('active');renderCritDetail(idx);}
   else if(type==='portfolio'){const n=document.getElementById('nav-portfolio-entry');if(n)n.classList.add('active');renderPt();}
   else if(type==='forum'){const n=document.getElementById('nav-forum-entry');if(n)n.classList.add('active');loadPosts();}
+  else if(type==='watchlist'){const n=document.getElementById('nav-watchlist-entry');if(n)n.classList.add('active');if(window.tkCiz)window.tkCiz();}
   else if(type==='harita'){const n=document.getElementById('nav-harita-entry');if(n)n.classList.add('active');if(window.pvSayfaAc)window.pvSayfaAc();}
   // Sektör detayı bu sayfanın alt sayfası — menüde "Piyasa Verileri" seçili kalsın
   else if(type==='sektor'){const n=document.getElementById('nav-harita-entry');if(n)n.classList.add('active');}
@@ -5063,7 +5104,7 @@ function openTezSupabase(id) {
 // Alt menü sekmesi -> sayfa eşlemesi. Tek kaynak: hem tıklama hem de
 // showPage'den gelen senkronizasyon bunu kullanıyor, yoksa kenar
 // çubuğundan sayfa değiştirince alt menüde yanlış sekme seçili kalıyor.
-const MNAV_SAYFA = { panel:'overview', harita:'harita', analiz:'analiz', portfoy:'portfolio' };
+const MNAV_SAYFA = { panel:'overview', harita:'harita', analiz:'analiz', takip:'watchlist', portfoy:'portfolio' };
 
 function mobileNavIsaretle(sayfa) {
   Object.keys(MNAV_SAYFA).forEach(t => {
@@ -5329,6 +5370,10 @@ if (!localStorage.getItem('baris_fw_seen')) {
   <button class="bn-tab" id="bn-analiz" onclick="mobileNav('analiz')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     <span>Analiz</span>
+  </button>
+  <button class="bn-tab" id="bn-takip" onclick="mobileNav('takip')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6.4.8-4.7 4.3 1.3 6.3L12 17l-5.6 3 1.3-6.3L3 9.4l6.4-.8z"/></svg>
+    <span>Takip</span>
   </button>
   <button class="bn-tab" id="bn-portfoy" onclick="mobileNav('portfoy')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
@@ -6869,6 +6914,107 @@ function garpAnalizAc(ticker) {
     }
   }
 
+
+  /* ── TAKİP LİSTEM (sade sürüm) ──
+     Hedef fiyat ve alarm bilerek yok: liste, canlı fiyat, günlük değişim.
+     localStorage'da tutuluyor — sunucu tarafı gerektirmiyor. */
+  const TK_KEY = 'bi_takip';
+  let _tkBellek = null;      // localStorage kapalıysa bellek yedeği
+  let _tkZaman = null;
+
+  function tkAl(){
+    try{ const v = localStorage.getItem(TK_KEY); return v ? JSON.parse(v) : []; }
+    catch(e){ return _tkBellek || []; }
+  }
+  function tkYaz(liste){
+    _tkBellek = liste;
+    try{ localStorage.setItem(TK_KEY, JSON.stringify(liste)); }catch(e){}
+  }
+
+  window.tkEkle = function(){
+    const inp = document.getElementById('tkTicker');
+    const sel = document.getElementById('tkEx');
+    if (!inp) return;
+    const tk = (inp.value||'').toUpperCase().replace(/[^A-Z0-9.]/g,'');
+    const ex = (sel && sel.value) || 'BIST';
+    if (!tk){ inp.focus(); return; }
+    const liste = tkAl();
+    if (liste.some(x => x.tk===tk && x.ex===ex)){
+      // Zaten listede — girişi kısaca kırmızıya çevirip bırak
+      inp.style.borderColor='var(--warn)';
+      setTimeout(()=>{ inp.style.borderColor=''; }, 900);
+      return;
+    }
+    liste.push({ tk, ex });
+    tkYaz(liste);
+    inp.value = '';
+    inp.focus();
+    tkCiz();
+    if (typeof window.trackEvent==='function') window.trackEvent('takip_ekle', { ticker:tk, exchange:ex });
+  };
+
+  window.tkSil = function(tk, ex){
+    tkYaz(tkAl().filter(x => !(x.tk===tk && x.ex===ex)));
+    tkCiz();
+  };
+
+  // Satıra tıkla → analiz ekranında aç
+  window.tkAc = function(tk, ex){
+    if (typeof window.qFill === 'function'){
+      window.qFill(tk, '', ex === 'BIST' ? 'BIST' : 'NASDAQ');
+      if (typeof window.showPage === 'function') window.showPage('analiz');
+      window.scrollTo(0, 0);
+    }
+  };
+
+  function tkCiz(){
+    const kap = document.getElementById('tkListe');
+    const durumEl = document.getElementById('tkDurum');
+    if (!kap) return;
+    const liste = tkAl();
+    if (durumEl) durumEl.textContent = liste.length ? liste.length + ' hisse' : '';
+    if (!liste.length){
+      kap.innerHTML = '<div class="tk-bos">Listen boş. Yukarıdan bir hisse kodu ekle —<br>canlı fiyatı ve günlük değişimi burada görürsün.</div>';
+      return;
+    }
+    const par = (v) => (v==null || !isFinite(v)) ? '—'
+      : (v >= 1000 ? Number(v).toLocaleString('tr-TR',{maximumFractionDigits:0}) : Number(v).toFixed(2));
+
+    kap.innerHTML = '<div class="tk-sar">' + liste.map(it => `
+      <div class="tk-row" id="tk-${esc(it.tk)}-${esc(it.ex)}">
+        <span class="tk-tk" onclick="tkAc('${esc(it.tk)}','${esc(it.ex)}')">${esc(it.tk)}</span>
+        <span class="tk-ex">${it.ex === 'BIST' ? 'BİST' : 'ABD'}</span>
+        <span class="tk-px" id="tk-px-${esc(it.tk)}-${esc(it.ex)}">…</span>
+        <span class="tk-dg neu" id="tk-dg-${esc(it.tk)}-${esc(it.ex)}"></span>
+        <button class="tk-sil" title="Kaldır" onclick="tkSil('${esc(it.tk)}','${esc(it.ex)}')">✕</button>
+      </div>`).join('') + '</div>';
+
+    liste.forEach(async it => {
+      const q = await getPrice(it.tk, it.ex);
+      const pxEl = document.getElementById('tk-px-'+it.tk+'-'+it.ex);
+      const dgEl = document.getElementById('tk-dg-'+it.tk+'-'+it.ex);
+      const bir = it.ex === 'BIST' ? '₺' : '$';
+      if (!q || q.price == null){ if (pxEl) pxEl.textContent = '—'; return; }
+      if (pxEl) pxEl.textContent = bir + par(q.price);
+      if (dgEl && q.change != null){
+        const d = q.change > 0.04 ? 'pos' : q.change < -0.04 ? 'neg' : 'neu';
+        dgEl.className = 'tk-dg ' + d;
+        dgEl.textContent = (q.change>0?'▲ +':q.change<0?'▼ ':'— ') + Math.abs(q.change).toFixed(2) + '%';
+      }
+    });
+
+    // Sayfa açıkken dakikada bir tazele; fiyat cache'ini de temizle
+    if (!_tkZaman){
+      _tkZaman = setInterval(()=>{
+        const s = document.getElementById('page-watchlist');
+        if (s && s.classList.contains('active') && tkAl().length){
+          Object.keys(_px).forEach(k => delete _px[k]);
+          tkCiz();
+        }
+      }, 60000);
+    }
+  }
+  window.tkCiz = tkCiz;
 
   /* ── MERCEK (tema kart serisi) ── */
   function ytId(url){ if(!url) return ''; const m=String(url).match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{6,})/); return m?m[1]:''; }
