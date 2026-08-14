@@ -623,11 +623,23 @@ async function getPiyasaVerileri(req, res) {
   };
 
   const seri = {};
-  async function grupCek(semboller) {
+
+  function seriYaz(sym, closes, stamps) {
+    const ts = [], kapanis = [];
+    for (let i = 0; i < closes.length; i++) {
+      if (closes[i] != null && isFinite(closes[i]) && stamps[i] != null) {
+        ts.push(stamps[i]); kapanis.push(closes[i]);
+      }
+    }
+    if (kapanis.length < 2) return;
+    seri[sym] = { ts, kapanis, fiyat: kapanis[kapanis.length - 1] };
+  }
+
+  async function grupCek(semboller, host) {
     let j = null;
     try {
       const r = await fetch(
-        `https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(semboller.join(','))}&range=5y&interval=1d`,
+        `https://${host || 'query1'}.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(semboller.join(','))}&range=5y&interval=1d`,
         { headers, signal: AbortSignal.timeout(9000) }
       );
       j = r.ok ? await r.json() : null;
@@ -635,15 +647,25 @@ async function getPiyasaVerileri(req, res) {
     if (!j || typeof j !== 'object') return;
     for (const [sym, s] of Object.entries(j)) {
       if (!s || !Array.isArray(s.close) || !Array.isArray(s.timestamp)) continue;
-      const ts = [], kapanis = [];
-      for (let i = 0; i < s.close.length; i++) {
-        if (s.close[i] != null && isFinite(s.close[i]) && s.timestamp[i] != null) {
-          ts.push(s.timestamp[i]); kapanis.push(s.close[i]);
-        }
-      }
-      if (kapanis.length < 2) continue;
-      seri[sym] = { ts, kapanis, fiyat: kapanis[kapanis.length - 1] };
+      seriYaz(sym, s.close, s.timestamp);
     }
+  }
+
+  // Spark toplu isteği bazı sembolleri (özellikle BİST sektör endekslerini)
+  // sunucu tarafında sessizce atlıyor — yereldeki aynı istek tamamını
+  // döndürdüğü hâlde. Kalanlar için tek tek chart uç noktası.
+  async function tekCek(sym) {
+    try {
+      const r = await fetch(
+        `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=5y&interval=1d`,
+        { headers, signal: AbortSignal.timeout(9000) }
+      );
+      if (!r.ok) return;
+      const j = await r.json();
+      const c = j?.chart?.result?.[0];
+      if (!c) return;
+      seriYaz(sym, c.indicators?.quote?.[0]?.close || [], c.timestamp || []);
+    } catch { /* sembol atlanır */ }
   }
 
   try {
@@ -653,13 +675,15 @@ async function getPiyasaVerileri(req, res) {
       for (let i = 0; i < liste.length; i += PV_PARCA) g.push(liste.slice(i, i + PV_PARCA));
       return g;
     };
-    await Promise.allSettled(parcala(tumSemboller).map(grupCek));
-    // Eksik kalanları tekrar dene — spark yoğunlukta tek tük sembol atlıyor
+    await Promise.allSettled(parcala(tumSemboller).map(g => grupCek(g)));
+    // Eksik kalanları önce diğer Yahoo host'uyla toplu, sonra tek tek dene
     for (let tur = 0; tur < PV_TEKRAR; tur++) {
       const eksik = tumSemboller.filter(s => !seri[s]);
       if (!eksik.length) break;
-      await Promise.allSettled(parcala(eksik).map(grupCek));
+      await Promise.allSettled(parcala(eksik).map(g => grupCek(g, tur === 0 ? 'query2' : 'query1')));
     }
+    const kalan = tumSemboller.filter(s => !seri[s]);
+    if (kalan.length) await Promise.allSettled(kalan.map(tekCek));
 
     const bloklar = PV_BLOKLAR.map(b => ({
       k: b.k,
@@ -691,6 +715,8 @@ async function getPiyasaVerileri(req, res) {
     return res.status(200).json({
       donemler: PV_DONEM.map(d => ({ k: d.k, ad: d.ad })),
       bloklar,
+      // Hangi sembolün verisi gelmedi — sessizce eksik tablo yerine görünür kayıt
+      eksik: tumSemboller.filter(s => !seri[s]),
       ts: Date.now(),
     });
   } catch (e) {
