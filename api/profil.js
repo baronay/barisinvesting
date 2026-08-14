@@ -112,42 +112,59 @@ function donemleriCikar(kayitlar, tur, periyot) {
   return [...harita.values()].sort((a, b) => (a.end < b.end ? 1 : -1));
 }
 
-function etiketBul(usGaap, etiketler) {
+/* Bir kalemin etiketini seçerken listedeki İLK eşleşmeyi almak yetmiyor:
+   şirketler zaman içinde etiket değiştiriyor (NVIDIA eski yıllarda
+   "RevenueFromContractWithCustomer…", sonra başka bir etiket kullanmış).
+   İlk eşleşme alınınca tablo 2018-2022'de donup kalıyordu. Bu yüzden
+   dönem filtresinden geçen kayıtları olan etiketler arasından EN GÜNCEL
+   verisi olanı seçiyoruz. */
+function etiketBul(usGaap, etiketler, tur, periyot) {
+  let enIyi = null;
   for (const e of etiketler) {
     const d = usGaap[e];
     if (!d || !d.units) continue;
     // Para birimi USD, EPS ise USD/shares
     const birimAd = Object.keys(d.units).find(u => u === 'USD' || u === 'USD/shares') || Object.keys(d.units)[0];
     if (!birimAd) continue;
-    const kayitlar = d.units[birimAd];
-    if (Array.isArray(kayitlar) && kayitlar.length) return { kayitlar, etiket: e };
+    const ham = d.units[birimAd];
+    if (!Array.isArray(ham) || !ham.length) continue;
+    const liste = donemleriCikar(ham, tur, periyot);
+    if (!liste.length) continue;
+    const sonTarih = liste[0].end;
+    if (!enIyi || sonTarih > enIyi.sonTarih) enIyi = { liste, etiket: e, sonTarih };
   }
-  return null;
+  return enIyi;
 }
 
 function tabloKur(usGaap, periyot, adet) {
-  // Önce dönem eksenini hasılat/net kâr üzerinden belirle — hangi mali
-  // dönemlerin var olduğunu en güvenilir onlar söylüyor
-  const eksen = [];
-  for (const k of ['hasilat', 'netKar', 'varlik']) {
-    const kalem = KALEMLER.find(x => x.k === k);
-    const bulunan = etiketBul(usGaap, kalem.etiketler);
-    if (!bulunan) continue;
-    for (const c of donemleriCikar(bulunan.kayitlar, kalem.tur, periyot)) {
-      if (!eksen.includes(c.end)) eksen.push(c.end);
-    }
-    if (eksen.length >= adet) break;
+  // Dönem eksenini TÜM kalemlerin birleşiminden kur. Tek bir kalemin
+  // dönemlerine bakıp erken çıkmak, o kalemin verisi eskiyse tabloyu
+  // eski yıllara kilitliyordu.
+  const bulunanlar = new Map();
+  const tarihler = new Set();
+  for (const kalem of KALEMLER) {
+    const b = etiketBul(usGaap, kalem.etiketler, kalem.tur, periyot);
+    if (!b) continue;
+    bulunanlar.set(kalem.k, b);
+    for (const c of b.liste) tarihler.add(c.end);
   }
-  eksen.sort((a, b) => (a < b ? 1 : -1));
-  const donemler = eksen.slice(0, adet);
+  // Aynı mali dönem kalemden kaleme birkaç gün kayabiliyor (bilanço 27
+  // Eylül, gelir tablosu 30 Eylül gibi) — 10 gün içindeki tarihleri tek
+  // dönem say, yoksa eksende aynı yıl iki kez çıkıyor
+  const donemler = [];
+  for (const t of [...tarihler].sort((a, b) => (a < b ? 1 : -1))) {
+    if (donemler.some(v => Math.abs(gunFarki(t, v)) <= 10)) continue;
+    donemler.push(t);
+    if (donemler.length >= adet) break;
+  }
   if (!donemler.length) return null;
 
   const satirlar = [];
   const deger = {};
   for (const kalem of KALEMLER) {
-    const bulunan = etiketBul(usGaap, kalem.etiketler);
+    const bulunan = bulunanlar.get(kalem.k);
     if (!bulunan) continue;
-    const liste = donemleriCikar(bulunan.kayitlar, kalem.tur, periyot);
+    const liste = bulunan.liste;
     const eslesen = new Map(liste.map(c => [c.end, c.val]));
     // Bilanço kalemleri gelir tablosuyla birkaç gün kayabiliyor: en yakın
     // (±10 gün) bakiyeyi eşleştir, yoksa boş bırak
@@ -230,6 +247,12 @@ export default async function handler(req, res) {
       if (usGaap) {
         yillik = tabloKur(usGaap, 'yillik', 5);
         ceyreklik = tabloKur(usGaap, 'ceyrek', 6);
+        // Yeniden yapılanan şirketlerde ticker yeni bir tüzel kişiliğe
+        // bağlanıyor (ExxonMobil Holdings gibi) ve yıllık geçmiş selef
+        // kayıtta kalıyor — sessizce boş tablo göstermek yerine söyle
+        if (!yillik && ceyreklik) {
+          uyari = 'Bu ticker SEC\'te yeni kurulmuş bir tüzel kişilik altında kayıtlı; yıllık tablolar henüz bu kayıtta yok. Geçmiş yıllar için aşağıdaki SEC dosyaları bağlantısını kullan.';
+        }
       } else {
         uyari = 'Şirketin XBRL finansal verisi bulunamadı.';
       }
