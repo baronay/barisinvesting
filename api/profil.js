@@ -72,7 +72,9 @@ const KALEMLER = [
   { k: 'faalNakit', ad: 'Faaliyet Nakit Akışı', tur: 'akis', birim: 'USD', tablo: 'nakit',
     etiketler: ['NetCashProvidedByUsedInOperatingActivities', 'NetCashProvidedByUsedInOperatingActivitiesContinuingOperations'] },
   { k: 'yatirim',  ad: 'Yatırım Harcaması',  tur: 'akis', birim: 'USD', tablo: 'nakit',
-    etiketler: ['PaymentsToAcquirePropertyPlantAndEquipment'] },
+    // NVIDIA yeni yıllarda "ProductiveAssets" etiketine geçmiş; tek etiket
+    // bırakılınca satır komple düşüyordu
+    etiketler: ['PaymentsToAcquirePropertyPlantAndEquipment', 'PaymentsToAcquireProductiveAssets', 'PaymentsToAcquirePropertyPlantAndEquipmentAndIntangibleAssets'] },
   { k: 'finNakit', ad: 'Finansman Nakit Akışı', tur: 'akis', birim: 'USD', tablo: 'nakit',
     etiketler: ['NetCashProvidedByUsedInFinancingActivities', 'NetCashProvidedByUsedInFinancingActivitiesContinuingOperations'] },
 ];
