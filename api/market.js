@@ -622,7 +622,9 @@ async function getRegime(res) {
 }
 
 async function getMarketOverview(res) {
-  const symbols = ['^GSPC', '^IXIC', 'XU100.IS', 'BTC-USD', 'ETH-USD', 'GC=F', 'CL=F'];
+  // ^NDX = NASDAQ 100. ^IXIC (Composite) ile karıştırılmasın: bant "NASDAQ 100"
+  // yazıyor, TradingView/Investing'de takip edilen endeks de bu.
+  const symbols = ['^GSPC', '^NDX', 'XU100.IS', 'BTC-USD', 'ETH-USD', 'GC=F', 'CL=F'];
   const labels = ['sp500', 'nasdaq', 'bist100', 'btc', 'eth', 'gold', 'oil'];
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',

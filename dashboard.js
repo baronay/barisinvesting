@@ -37,7 +37,7 @@
   /* ════════ 1. KAYAN BANT ════════ */
   const BANT = [
     { k: 'sp500', ad: 'S&P 500', ondalik: 0 },
-    { k: 'nasdaq', ad: 'NASDAQ', ondalik: 0 },
+    { k: 'nasdaq', ad: 'NASDAQ 100', ondalik: 0 },
     { k: 'bist100', ad: 'BİST 100', ondalik: 0 },
     { k: 'btc', ad: 'BTC', ondalik: 0, on: '$' },
     { k: 'eth', ad: 'ETH', ondalik: 0, on: '$' },
