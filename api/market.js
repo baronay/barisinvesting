@@ -542,38 +542,17 @@ const PV_BLOKLAR = [
     satirlar: [
       // sek = ısı haritası evrenindeki sektör adı; satır tıklanınca o
       // sektörün hisse tablosu açılıyor
-      { s: 'XLK', ad: 'Teknoloji', kod: 'XLK', sek: 'Teknoloji' },
-      { s: 'XLC', ad: 'İletişim', kod: 'XLC', sek: 'İletişim' },
-      { s: 'XLY', ad: 'Tüketici (İsteğe Bağlı)', kod: 'XLY', sek: 'Tüketici' },
-      { s: 'XLP', ad: 'Temel Tüketim', kod: 'XLP', sek: 'Temel Tüketim' },
-      { s: 'XLF', ad: 'Finans', kod: 'XLF', sek: 'Finans' },
-      { s: 'XLV', ad: 'Sağlık', kod: 'XLV', sek: 'Sağlık' },
-      { s: 'XLI', ad: 'Sanayi', kod: 'XLI', sek: 'Sanayi' },
-      { s: 'XLE', ad: 'Enerji', kod: 'XLE', sek: 'Enerji' },
-      { s: 'XLB', ad: 'Temel Materyal', kod: 'XLB', sek: 'Temel Materyal' },
-      { s: 'XLU', ad: 'Kamu Hizmetleri', kod: 'XLU', sek: 'Kamu Hizmetleri' },
-      { s: 'XLRE', ad: 'Gayrimenkul', kod: 'XLRE', sek: 'Gayrimenkul' },
-    ],
-  },
-  {
-    k: 'bist-sektor', ad: 'BİST Sektörleri', not: 'Borsa İstanbul sektör endeksleri',
-    satirlar: [
-      { s: 'XBANK.IS', ad: 'Bankacılık', kod: 'XBANK' },
-      { s: 'XUMAL.IS', ad: 'Mali', kod: 'XUMAL' },
-      { s: 'XUSIN.IS', ad: 'Sınai', kod: 'XUSIN' },
-      { s: 'XUTEK.IS', ad: 'Teknoloji', kod: 'XUTEK' },
-      { s: 'XUHIZ.IS', ad: 'Hizmetler', kod: 'XUHIZ' },
-      { s: 'XHOLD.IS', ad: 'Holding ve Yatırım', kod: 'XHOLD' },
-      { s: 'XGIDA.IS', ad: 'Gıda ve İçecek', kod: 'XGIDA' },
-      { s: 'XKMYA.IS', ad: 'Kimya, Petrol, Plastik', kod: 'XKMYA' },
-      { s: 'XMANA.IS', ad: 'Metal Ana Sanayi', kod: 'XMANA' },
-      { s: 'XMESY.IS', ad: 'Metal Eşya, Makine', kod: 'XMESY' },
-      { s: 'XULAS.IS', ad: 'Ulaştırma', kod: 'XULAS' },
-      { s: 'XELKT.IS', ad: 'Elektrik', kod: 'XELKT' },
-      { s: 'XGMYO.IS', ad: 'Gayrimenkul Yat. Ort.', kod: 'XGMYO' },
-      { s: 'XMADN.IS', ad: 'Madencilik', kod: 'XMADN' },
-      { s: 'XILTM.IS', ad: 'İletişim', kod: 'XILTM' },
-      { s: 'XINSA.IS', ad: 'İnşaat', kod: 'XINSA' },
+      { s: 'XLK', ad: 'Teknoloji', kod: 'XLK', sek: 'Teknoloji', kap: 'us' },
+      { s: 'XLC', ad: 'İletişim', kod: 'XLC', sek: 'İletişim', kap: 'us' },
+      { s: 'XLY', ad: 'Tüketici (İsteğe Bağlı)', kod: 'XLY', sek: 'Tüketici', kap: 'us' },
+      { s: 'XLP', ad: 'Temel Tüketim', kod: 'XLP', sek: 'Temel Tüketim', kap: 'us' },
+      { s: 'XLF', ad: 'Finans', kod: 'XLF', sek: 'Finans', kap: 'us' },
+      { s: 'XLV', ad: 'Sağlık', kod: 'XLV', sek: 'Sağlık', kap: 'us' },
+      { s: 'XLI', ad: 'Sanayi', kod: 'XLI', sek: 'Sanayi', kap: 'us' },
+      { s: 'XLE', ad: 'Enerji', kod: 'XLE', sek: 'Enerji', kap: 'us' },
+      { s: 'XLB', ad: 'Temel Materyal', kod: 'XLB', sek: 'Temel Materyal', kap: 'us' },
+      { s: 'XLU', ad: 'Kamu Hizmetleri', kod: 'XLU', sek: 'Kamu Hizmetleri', kap: 'us' },
+      { s: 'XLRE', ad: 'Gayrimenkul', kod: 'XLRE', sek: 'Gayrimenkul', kap: 'us' },
     ],
   },
   {
@@ -614,6 +593,9 @@ function ybbGetiri(ts, kapanis, sonFiyat) {
 // eksik kaldı). Küçük gruplar + tekrar denemeyle tamamı geliyor.
 const PV_PARCA = 8;
 const PV_TEKRAR = 2;
+// Hisse sembolleri toplu istekte sorun çıkarmıyor (ısı haritası 96 hisseyi
+// 20'lik gruplarla çekiyor) — sektör endekslerindeki gibi küçültmeye gerek yok
+const PV_HISSE_PARCA = 16;
 
 async function getPiyasaVerileri(req, res) {
   const headers = {
@@ -685,6 +667,47 @@ async function getPiyasaVerileri(req, res) {
     const kalan = tumSemboller.filter(s => !seri[s]);
     if (kalan.length) await Promise.allSettled(kalan.map(tekCek));
 
+    // BİST sektörleri: Yahoo'nun sektör endeksi sembolleri (XUTEK.IS, XHOLD.IS…)
+    // sunucudan çekilemiyor — aynı istek yerelden 16/16 dönerken Vercel'den
+    // 2/16 dönüyor, tek tek chart da vermiyor. Hisse sembolleri sorunsuz
+    // geldiği için sektörleri ısı haritası evreninden, piyasa değeri
+    // ağırlıklı hesaplıyoruz: sektör detay sayfasıyla da aynı yöntem.
+    const bistSemboller = BIST_EVREN.map(h => `${h.t}.IS`);
+    const hisseParcala = (liste) => {
+      const g = [];
+      for (let i = 0; i < liste.length; i += PV_HISSE_PARCA) g.push(liste.slice(i, i + PV_HISSE_PARCA));
+      return g;
+    };
+    await Promise.allSettled(hisseParcala(bistSemboller).map(g => grupCek(g)));
+    const bistEksik = bistSemboller.filter(s => !seri[s]);
+    if (bistEksik.length) await Promise.allSettled(hisseParcala(bistEksik).map(g => grupCek(g, 'query2')));
+
+    const sektorHar = new Map();
+    for (const h of BIST_EVREN) {
+      const s = seri[`${h.t}.IS`];
+      if (!s) continue;
+      const deger = h.sh * s.fiyat;
+      if (!isFinite(deger) || deger <= 0) continue;
+      let kayit = sektorHar.get(h.s);
+      if (!kayit) { kayit = { agirlik: {}, toplam: {}, adet: 0 }; sektorHar.set(h.s, kayit); }
+      kayit.adet++;
+      for (const d of PV_DONEM) {
+        const g = d.k === 'ybb'
+          ? ybbGetiri(s.ts, s.kapanis, s.fiyat)
+          : seriGetiri(s.ts, s.kapanis, s.fiyat, d.gun);
+        if (g == null) continue;
+        kayit.agirlik[d.k] = (kayit.agirlik[d.k] || 0) + deger;
+        kayit.toplam[d.k] = (kayit.toplam[d.k] || 0) + g * deger;
+      }
+    }
+    const bistSatirlar = [...sektorHar.entries()].map(([ad, k]) => {
+      const g = {};
+      for (const d of PV_DONEM) {
+        g[d.k] = k.agirlik[d.k] ? Math.round((k.toplam[d.k] / k.agirlik[d.k]) * 100) / 100 : null;
+      }
+      return { s: `BIST:${ad}`, ad, kod: `${k.adet} hisse`, sek: ad, kap: 'bist', f: null, g };
+    }).sort((a, b) => a.ad.localeCompare(b.ad, 'tr'));
+
     const bloklar = PV_BLOKLAR.map(b => ({
       k: b.k,
       ad: b.ad,
@@ -703,11 +726,23 @@ async function getPiyasaVerileri(req, res) {
           ad: r.ad,
           kod: r.kod,
           sek: r.sek || null,
+          kap: r.kap || null,
           f: Math.round(s.fiyat * 100) / 100,
           g,
         };
       }).filter(Boolean),
     })).filter(b => b.satirlar.length);
+
+    // BİST sektör bloğu ABD sektörlerinin hemen ardına
+    if (bistSatirlar.length) {
+      const yer = bloklar.findIndex(b => b.k === 'us-sektor');
+      bloklar.splice(yer < 0 ? bloklar.length : yer + 1, 0, {
+        k: 'bist-sektor',
+        ad: 'BİST Sektörleri',
+        not: `${BIST_EVREN.length} hisseden piyasa değeri ağırlıklı`,
+        satirlar: bistSatirlar,
+      });
+    }
 
     if (!bloklar.length) return res.status(502).json({ error: 'Piyasa verisi alınamadı' });
 
@@ -717,6 +752,7 @@ async function getPiyasaVerileri(req, res) {
       bloklar,
       // Hangi sembolün verisi gelmedi — sessizce eksik tablo yerine görünür kayıt
       eksik: tumSemboller.filter(s => !seri[s]),
+      bistEksik: bistSemboller.filter(s => !seri[s]).length,
       ts: Date.now(),
     });
   } catch (e) {

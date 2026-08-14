@@ -75,7 +75,7 @@
     const satirlar = siralanmis(blok).map(r => {
       const hucreler = donemler.map(d =>
         `<td class="pv-g ${sinif(r.g[d.k])}">${yuzde(r.g[d.k])}</td>`).join('');
-      return `<tr${r.sek ? ` data-sek="${esc(r.sek)}" title="${esc(r.ad)} sektöründeki hisseler"` : ''}>
+      return `<tr${r.sek ? ` data-sek="${esc(r.sek)}" data-kap="${esc(r.kap || 'us')}" title="${esc(r.ad)} sektöründeki hisseler"` : ''}>
         <td><span class="pv-ad"><span class="pv-ad-t">${esc(r.ad)}</span><span class="pv-ad-s">${esc(r.kod || '')}</span></span></td>
         <td class="pv-fiyat">${fiyat(r.f)}</td>
         ${hucreler}
@@ -146,9 +146,9 @@
         ciz();
         return;
       }
-      // ABD sektör satırı → o sektörün hisse tablosu (ısı haritasıyla ortak sayfa)
+      // Sektör satırı → o sektörün hisse tablosu (ısı haritasıyla ortak sayfa)
       const tr = e.target.closest('tr[data-sek]');
-      if (tr && typeof window.hmSektorAc === 'function') window.hmSektorAc(tr.dataset.sek, 'us');
+      if (tr && typeof window.hmSektorAc === 'function') window.hmSektorAc(tr.dataset.sek, tr.dataset.kap || 'us');
     });
   }
 
