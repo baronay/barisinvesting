@@ -222,6 +222,17 @@
             dg.textContent = yuzde(d.d);
             el.appendChild(dg);
           }
+          // Logo yalnızca geniş kutularda: 166 kutunun hepsine istek atmak
+          // hem ağ hem görsel gürültü, küçük kutuda zaten sığmıyor
+          if (hy.w >= 78 && hy.h >= 62) {
+            const lg = document.createElement('img');
+            lg.className = 'hm-logo';
+            lg.alt = '';
+            lg.loading = 'lazy';
+            lg.onerror = () => lg.remove();
+            lg.src = '/api/logo?ticker=' + encodeURIComponent(d.t) + '&sz=64';
+            el.appendChild(lg);
+          }
         }
         kutu.appendChild(el);
         cizilen++;
@@ -516,12 +527,17 @@
 
   function hisseAc(tk, borsa) {
     if (!tk) return;
+    // Kutuya tıklayınca şirket kartı açılıyor: özet, haberler ve
+    // finansallar orada. Analiz akışına oradaki butondan geçiliyor.
+    if (typeof window.prAc === 'function') {
+      window.prAc(tk);
+      window.scrollTo(0, 0);
+      return;
+    }
     if (typeof window.qFill !== 'function') return;
     // Borsa evren tablosundan geliyor; yoksa kapsama göre varsayılan
     const ex = borsa || (durum.kapsam === 'bist' ? 'BIST' : 'NASDAQ');
     window.qFill(tk, '', ex);
-    // qFill tek başına analiz sayfasını açmıyor (switchTab sadece sekmeyi
-    // değiştiriyor) — anaFromPt'deki desen: sonrasında analiz sayfasına geç.
     if (typeof window.showPage === 'function') window.showPage('analiz');
     window.scrollTo(0, 0);
   }

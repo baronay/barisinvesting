@@ -14,8 +14,100 @@
    değişkeniyle değiştirilebilir.
    ═══════════════════════════════════════════════════════════════ */
 
+import { US_EVREN, BIST_EVREN } from './_heatmap-universe.js';
+
 const SEC_UA = process.env.SEC_UA || 'BarisInvesting/1.0 (info@barisinvesting.com)';
 const BASLIK = { 'User-Agent': SEC_UA, 'Accept': 'application/json' };
+const WEB_BASLIK = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' };
+
+/* ── Şirket adı temizliği ─────────────────────────────────────────
+   "NVIDIA CORP" → "NVIDIA", "Apple Inc." → "Apple". Hem ansiklopedi
+   hem haber aramasında ham unvan kötü sonuç veriyor. */
+const SIRKET_EKI = /\b(inc|inc\.|incorporated|corp|corp\.|corporation|co|co\.|company|plc|ltd|ltd\.|llc|lp|nv|sa|ag|holdings?|group|the)\b/gi;
+function adiSadelestir(ad) {
+  return String(ad || '')
+    .replace(/[,&]/g, ' ')
+    .replace(SIRKET_EKI, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Ansiklopedi araması yanlış şirkete düşebiliyor (TR'de "NVIDIA Corp"
+// araması MSI'yı, "Powell Industries" bir kaykaycıyı getirdi) — bulunan
+// başlık şirket adıyla en az bir anlamlı kelimeyi paylaşmalı
+function baslikUyuyor(baslik, ad) {
+  const kelimeler = adiSadelestir(ad).toLowerCase().split(/\s+/).filter(k => k.length >= 4);
+  if (!kelimeler.length) return false;
+  const b = String(baslik || '').toLowerCase();
+  return kelimeler.some(k => b.includes(k));
+}
+
+async function ozetGetir(ad) {
+  const sorgu = adiSadelestir(ad);
+  if (!sorgu) return null;
+  for (const dil of ['tr', 'en']) {
+    try {
+      const u = `https://${dil}.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=1&explaintext=1&exchars=520&generator=search&gsrsearch=${encodeURIComponent(sorgu)}&gsrlimit=1`;
+      const r = await fetch(u, { headers: BASLIK, signal: AbortSignal.timeout(8000) });
+      if (!r.ok) continue;
+      const j = await r.json();
+      const sayfalar = j?.query?.pages;
+      if (!sayfalar) continue;
+      const s = Object.values(sayfalar)[0];
+      if (!s || !s.extract || !baslikUyuyor(s.title, ad)) continue;
+      const metin = String(s.extract).replace(/\s+/g, ' ').trim();
+      if (metin.length < 40) continue;
+      return { metin, dil };
+    } catch { /* sonraki dil */ }
+  }
+  return null;
+}
+
+/* ── Şirket haberleri ─────────────────────────────────────────────
+   Google Haberler RSS: ücretsiz, anahtarsız ve Türkçe sorguda
+   Investing.com Türkiye başlıklarını da getiriyor. */
+function rssAyikla(xml, adet) {
+  const cikti = [];
+  const parcalar = String(xml).split('<item>').slice(1);
+  for (const p of parcalar.slice(0, adet)) {
+    const al = (etiket) => {
+      const m = p.match(new RegExp(`<${etiket}[^>]*>([\\s\\S]*?)</${etiket}>`));
+      if (!m) return '';
+      return m[1].replace(/<!\[CDATA\[|\]\]>/g, '')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+        .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+        .trim();
+    };
+    let baslik = al('title');
+    if (!baslik) continue;
+    // Google başlığı "Haber metni - Kaynak" biçiminde veriyor
+    let kaynak = al('source');
+    const ayrac = baslik.lastIndexOf(' - ');
+    if (!kaynak && ayrac > 20) { kaynak = baslik.slice(ayrac + 3); baslik = baslik.slice(0, ayrac); }
+    else if (kaynak && baslik.endsWith(' - ' + kaynak)) baslik = baslik.slice(0, -(kaynak.length + 3));
+    const tarih = al('pubDate');
+    cikti.push({ baslik, kaynak: kaynak || null, link: al('link') || null, tarih: tarih ? Date.parse(tarih) || null : null });
+  }
+  return cikti;
+}
+
+async function haberGetir(ad, ticker) {
+  const sorgular = [
+    { q: `${adiSadelestir(ad)} hisse`, dil: 'tr', bolge: 'TR' },
+    { q: `"${adiSadelestir(ad)}" stock ${ticker}`, dil: 'en-US', bolge: 'US' },
+  ];
+  for (const s of sorgular) {
+    try {
+      const u = `https://news.google.com/rss/search?q=${encodeURIComponent(s.q)}&hl=${s.dil}&gl=${s.bolge}&ceid=${s.bolge}:${s.dil.slice(0, 2)}`;
+      const r = await fetch(u, { headers: WEB_BASLIK, signal: AbortSignal.timeout(9000) });
+      if (!r.ok) continue;
+      const liste = rssAyikla(await r.text(), 6);
+      if (liste.length >= 3) return liste;
+    } catch { /* sonraki sorgu */ }
+  }
+  return [];
+}
 
 // ticker → CIK tablosu ~1 MB; fonksiyon örneği hayatta kaldıkça bellekte tut
 let _cikTablo = null;
@@ -224,20 +316,40 @@ export default async function handler(req, res) {
   if (!ticker) return res.status(400).json({ error: 'Ticker belirtilmedi' });
 
   try {
-    const kayit = await cikBul(ticker);
+    const kayit = await cikBul(ticker).catch(() => null);
+
+    /* Kayıtlı olmayan hisseler (BİST dahil): finansal tablo yok ama
+       şirket kartı yine de çalışsın — ad/sektör ısı haritası evreninden,
+       özet ve haberler her borsa için aynı şekilde geliyor. */
     if (!kayit) {
-      return res.status(404).json({
-        error: 'Bu hisse için şirket verisi bulunamadı',
-        detay: 'Şirket profili şimdilik yalnızca ABD borsalarındaki şirketler için mevcut.',
+      const yerli = [...BIST_EVREN, ...US_EVREN].find(h => h.t === ticker.replace('.IS', ''));
+      if (!yerli) {
+        return res.status(404).json({
+          error: 'Bu hisse için şirket verisi bulunamadı',
+          detay: 'Kod yanlış olabilir; BİST hisselerinde nokta ve uzantı olmadan dene (THYAO gibi).',
+        });
+      }
+      const [ozet, haberler] = await Promise.all([
+        ozetGetir(yerli.n).catch(() => null),
+        haberGetir(yerli.n, ticker).catch(() => []),
+      ]);
+      res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=21600');
+      return res.status(200).json({
+        kunye: { ad: yerli.n, ticker, borsa: yerli.x || 'BIST', sektor: yerli.s || null },
+        ozet, haberler,
+        yillik: null, ceyreklik: null, finansal: false,
+        uyari: 'Finansal tablolar şimdilik yalnızca ABD borsalarındaki şirketler için mevcut.',
+        ts: Date.now(),
       });
     }
+
     const cik = String(kayit.cik).padStart(10, '0');
 
     const [subR, factR] = await Promise.all([
       fetch(`https://data.sec.gov/submissions/CIK${cik}.json`, { headers: BASLIK, signal: AbortSignal.timeout(15000) }),
       fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`, { headers: BASLIK, signal: AbortSignal.timeout(20000) }),
     ]);
-    if (!subR.ok) throw new Error('SEC künye verisi alınamadı');
+    if (!subR.ok) throw new Error('Şirket künyesi alınamadı');
     const sub = await subR.json();
 
     const adr = (sub.addresses && (sub.addresses.business || sub.addresses.mailing)) || {};
@@ -279,8 +391,14 @@ export default async function handler(req, res) {
       uyari = 'Finansal tablolar şu an alınamadı; künye bilgisi gösteriliyor.';
     }
 
-    res.setHeader('Cache-Control', 's-maxage=21600, stale-while-revalidate=86400');
-    return res.status(200).json({ kunye, yillik, ceyreklik, uyari, kaynak: 'SEC EDGAR', ts: Date.now() });
+    const [ozet, haberler] = await Promise.all([
+      ozetGetir(kunye.ad).catch(() => null),
+      haberGetir(kunye.ad, ticker).catch(() => []),
+    ]);
+
+    // Haberler saatlik değişiyor, finansallar çeyreklik — daha kısa cache
+    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=21600');
+    return res.status(200).json({ kunye, ozet, haberler, yillik, ceyreklik, finansal: true, uyari, ts: Date.now() });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }

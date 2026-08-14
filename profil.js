@@ -8,7 +8,7 @@
 (function () {
   'use strict';
 
-  const durum = { ticker: null, veri: null, yukleniyor: false };
+  const durum = { ticker: null, veri: null, yukleniyor: false, sekme: 'ozet' };
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -128,15 +128,56 @@
     </div>`;
   }
 
+  function gecenSure(ms) {
+    if (!ms) return '';
+    const dk = Math.round((Date.now() - ms) / 60000);
+    if (dk < 1) return 'şimdi';
+    if (dk < 60) return dk + ' dk';
+    const sa = Math.round(dk / 60);
+    if (sa < 24) return sa + ' sa';
+    const g = Math.round(sa / 24);
+    return g < 30 ? g + ' gün' : Math.round(g / 30) + ' ay';
+  }
+
+  function ozetCiz(v) {
+    let h = '';
+    if (v.ozet && v.ozet.metin) {
+      h += `<div class="pr-ozet"><div class="pr-ozet-t">Şirket Hakkında</div><p>${esc(v.ozet.metin)}</p></div>`;
+    }
+    const hb = v.haberler || [];
+    if (hb.length) {
+      h += `<div class="pv-blok">
+        <div class="pv-blok-bas"><span class="pv-blok-t">Son Haberler</span></div>
+        <div class="pr-haber">${hb.map(n => `
+          <a class="pr-hb" ${n.link ? `href="${esc(n.link)}" target="_blank" rel="noopener noreferrer"` : ''}>
+            <span class="pr-hb-bs">${esc(n.baslik)}</span>
+            <span class="pr-hb-alt">${n.kaynak ? esc(n.kaynak) : ''}${n.tarih ? (n.kaynak ? ' · ' : '') + esc(gecenSure(n.tarih)) : ''}</span>
+          </a>`).join('')}</div>
+      </div>`;
+    }
+    if (!h) h = '<div class="pv-bos">Bu şirket için özet ve haber bulunamadı.</div>';
+    return h;
+  }
+
+  function sekmeCiz(v) {
+    const s = (k, ad) => `<button class="pv-sek${durum.sekme === k ? ' active' : ''}" data-sekme="${k}">${ad}</button>`;
+    return `<div class="pv-sekmeler"><div class="pv-sek-grp">${s('ozet', 'Özet')}${s('finansal', 'Finansallar')}</div></div>`;
+  }
+
   function ciz() {
     const kap = document.getElementById('prGovde');
     if (!kap || !durum.veri) return;
     const v = durum.veri;
-    kap.innerHTML =
-      kunyeCiz(v.kunye) +
-      (v.uyari ? `<div class="pv-bos">${esc(v.uyari)}</div>` : '') +
-      tabloCiz(v.yillik, 'Yıllık Finansallar', 'son 5 mali yıl · bir önceki yıla göre değişim', false) +
-      tabloCiz(v.ceyreklik, 'Çeyreklik Finansallar', 'son çeyrekler · bir önceki çeyreğe göre değişim', true);
+    const finansalVar = !!(v.yillik || v.ceyreklik);
+    if (durum.sekme === 'finansal' && !finansalVar) durum.sekme = 'ozet';
+
+    const icerik = durum.sekme === 'finansal'
+      ? ((v.uyari ? `<div class="pv-bos">${esc(v.uyari)}</div>` : '') +
+         tabloCiz(v.yillik, 'Yıllık Finansallar', 'son 5 mali yıl · bir önceki yıla göre değişim', false) +
+         tabloCiz(v.ceyreklik, 'Çeyreklik Finansallar', 'son çeyrekler · bir önceki çeyreğe göre değişim', true))
+      : (ozetCiz(v) + (!finansalVar && v.uyari ? `<div class="pv-bos">${esc(v.uyari)}</div>` : ''));
+
+    kap.innerHTML = kunyeCiz(v.kunye) + sekmeCiz(v) + icerik;
 
     // Künye logosu: /api/logo 404 dönerse baş harf avatarı kalır
     const lg = document.getElementById('prLogo');
@@ -171,6 +212,7 @@
       }
       durum.ticker = tk;
       durum.veri = j;
+      durum.sekme = 'ozet';   // yeni şirkette hep özetle başla
       ciz();
       if (durumEl) {
         const saat = new Date(j.ts).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
@@ -185,6 +227,14 @@
       durum.yukleniyor = false;
     }
   }
+
+  // Sekme tıklaması — içerik her çizimde yeniden basıldığı için delege
+  document.addEventListener('click', e => {
+    const b = e.target.closest('#prGovde [data-sekme]');
+    if (!b) return;
+    durum.sekme = b.dataset.sekme;
+    ciz();
+  });
 
   window.prAra = function () {
     const inp = document.getElementById('prTicker');
