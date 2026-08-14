@@ -609,6 +609,12 @@ function ybbGetiri(ts, kapanis, sonFiyat) {
   return isFinite(d) ? Math.round(d * 100) / 100 : null;
 }
 
+// Spark, 5 yıllık günlük seride 20'lik gruplarda sembol düşürüyor
+// (ölçüldü: 20 istenen gruptan 6 sembol döndü, BİST sektör endeksleri
+// eksik kaldı). Küçük gruplar + tekrar denemeyle tamamı geliyor.
+const PV_PARCA = 8;
+const PV_TEKRAR = 2;
+
 async function getPiyasaVerileri(req, res) {
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -622,7 +628,7 @@ async function getPiyasaVerileri(req, res) {
     try {
       const r = await fetch(
         `https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(semboller.join(','))}&range=5y&interval=1d`,
-        { headers, signal: AbortSignal.timeout(11000) }
+        { headers, signal: AbortSignal.timeout(9000) }
       );
       j = r.ok ? await r.json() : null;
     } catch { j = null; }
@@ -642,15 +648,17 @@ async function getPiyasaVerileri(req, res) {
 
   try {
     const tumSemboller = PV_BLOKLAR.flatMap(b => b.satirlar.map(r => r.s));
-    const gruplar = [];
-    for (let i = 0; i < tumSemboller.length; i += HM_PARCA) gruplar.push(tumSemboller.slice(i, i + HM_PARCA));
-    await Promise.allSettled(gruplar.map(grupCek));
-    // Eksik kalanları bir kez daha dene — spark ara sıra tek tük sembolü atlıyor
-    const eksik = tumSemboller.filter(s => !seri[s]);
-    if (eksik.length) {
-      const tekrar = [];
-      for (let i = 0; i < eksik.length; i += HM_PARCA) tekrar.push(eksik.slice(i, i + HM_PARCA));
-      for (const g of tekrar) await grupCek(g);
+    const parcala = (liste) => {
+      const g = [];
+      for (let i = 0; i < liste.length; i += PV_PARCA) g.push(liste.slice(i, i + PV_PARCA));
+      return g;
+    };
+    await Promise.allSettled(parcala(tumSemboller).map(grupCek));
+    // Eksik kalanları tekrar dene — spark yoğunlukta tek tük sembol atlıyor
+    for (let tur = 0; tur < PV_TEKRAR; tur++) {
+      const eksik = tumSemboller.filter(s => !seri[s]);
+      if (!eksik.length) break;
+      await Promise.allSettled(parcala(eksik).map(grupCek));
     }
 
     const bloklar = PV_BLOKLAR.map(b => ({
