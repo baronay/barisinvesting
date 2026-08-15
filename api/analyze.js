@@ -955,20 +955,25 @@ export default async function handler(req, res) {
   const cleanTicker = String(ticker).toUpperCase().replace(/[^A-Z0-9.]/g, '').slice(0, 12);
   if (!cleanTicker) return res.status(400).json({ error: 'Geçersiz ticker' });
 
-  // Framework doğrula
-  const validFrameworks = ['buffett', 'lynch', 'dalio', 'graham'];
-  const fw = validFrameworks.includes(framework) ? framework : 'buffett';
+  // Tek çerçeve var: Barış Investing. Eski bağlantılar (fw=buffett gibi)
+  // hâlâ geliyor olabilir, hepsi buraya düşüyor.
+  const fw = 'baris';
   const exLabel = exchange === 'BIST' ? 'BIST' : exchange === 'NYSE' ? 'NYSE' : 'NASDAQ';
 
-  // Tam format prompt server-side üretiliyor
-  const PROMPTS = {
-    buffett: (t, ex) => `Warren Buffett felsefesiyle ${ex} borsasındaki "${t}" hissesini analiz et.
+  /* Barış Investing çerçevesi — yedi kriter, günlük GARP taramasının
+     (pipeline/global_pipeline.py) mantığıyla aynı hizada. Alan adları
+     istemcideki ayrıştırıcıyla birebir aynı, bozma. */
+  const prompt = `${exLabel} borsasındaki "${cleanTicker}" hissesini Barış Investing çerçevesiyle analiz et.
 
-TICKER: ${t}
+TICKER: ${cleanTicker}
 TOTAL_SCORE: X
+GARP_SKOR: [0-100]
 VERDICT: AL|BEKLE|UZAK_DUR
-SUMMARY: [2-3 cümle]
-RISK: [en kritik risk]
+SUMMARY: [tek cümlede tez: piyasa neyi fiyatlıyor, rakamlar ne diyor, senin duruşun ne]
+RISK: [en can alıcı risk, 1 cümle]
+ADIL_GIRIS: [fiyat aralığı] | [tek cümle gerekçe]
+IZLENECEK: [metrik ve eşik] | [ne zaman test edilecek]
+PORTFOY: [portföydeki rol] | [makul ağırlık tavanı]
 
 MULTIPLES_START
 PE: [sayı] | [ucuz/adil/pahalı]
@@ -981,100 +986,14 @@ ANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]
 MULTIPLES_END
 
 CRITERIA_START
-ROE: PASS|FAIL|NEUTRAL | [açıklama]
-PRICING: PASS|FAIL|NEUTRAL | [açıklama]
-DOLLAR: PASS|FAIL|NEUTRAL | [açıklama]
-MOAT: PASS|FAIL|NEUTRAL | [açıklama]
-FCF: PASS|FAIL|NEUTRAL | [açıklama]
-MGMT: PASS|FAIL|NEUTRAL | [açıklama]
-VALUATION: PASS|FAIL|NEUTRAL | [açıklama]
-CRITERIA_END`,
-
-    lynch: (t, ex) => `Peter Lynch felsefesiyle ${ex} borsasındaki "${t}" hissesini analiz et.
-
-TICKER: ${t}
-TOTAL_SCORE: X
-VERDICT: AL|BEKLE|UZAK_DUR
-SUMMARY: [2-3 cümle Lynch perspektifinden]
-RISK: [en kritik risk]
-
-MULTIPLES_START
-PE: [sayı] | [ucuz/adil/pahalı]
-PB: [sayı] | [ucuz/adil/pahalı]
-EV_EBITDA: [sayı] | [ucuz/adil/pahalı]
-PEG: [sayı] | [ucuz/adil/pahalı]
-RSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]
-PRICE_52W: [düşük]-[yüksek] | [mevcut]
-ANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]
-MULTIPLES_END
-
-CRITERIA_START
-STORY: PASS|FAIL|NEUTRAL | [açıklama]
-GROWTH: PASS|FAIL|NEUTRAL | [açıklama]
-BALANCE: PASS|FAIL|NEUTRAL | [açıklama]
-INVENTORY: PASS|FAIL|NEUTRAL | [açıklama]
-PEGCRIT: PASS|FAIL|NEUTRAL | [açıklama]
-INSTITUTION: PASS|FAIL|NEUTRAL | [açıklama]
-INSIDER: PASS|FAIL|NEUTRAL | [açıklama]
-CRITERIA_END`,
-
-    graham: (t, ex) => `Benjamin Graham değer yatırımı felsefesiyle ${ex} borsasındaki "${t}" hissesini analiz et.
-
-TICKER: ${t}
-TOTAL_SCORE: X
-VERDICT: AL|BEKLE|UZAK_DUR
-SUMMARY: [2-3 cümle Graham perspektifinden]
-RISK: [en kritik risk]
-
-MULTIPLES_START
-PE: [sayı] | [ucuz/adil/pahalı]
-PB: [sayı] | [ucuz/adil/pahalı]
-EV_EBITDA: [sayı] | [ucuz/adil/pahalı]
-PEG: [sayı] | [ucuz/adil/pahalı]
-RSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]
-PRICE_52W: [düşük]-[yüksek] | [mevcut]
-ANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]
-MULTIPLES_END
-
-CRITERIA_START
-MARGIN: PASS|FAIL|NEUTRAL | [açıklama]
-DEBT: PASS|FAIL|NEUTRAL | [açıklama]
-CURRENT: PASS|FAIL|NEUTRAL | [açıklama]
-EARNINGS: PASS|FAIL|NEUTRAL | [açıklama]
-DIVIDEND: PASS|FAIL|NEUTRAL | [açıklama]
-PE_G: PASS|FAIL|NEUTRAL | [açıklama]
-PB_G: PASS|FAIL|NEUTRAL | [açıklama]
-CRITERIA_END`,
-
-    dalio: (t, ex) => `Ray Dalio makro perspektifiyle ${ex} borsasındaki "${t}" hissesini analiz et. Borç döngüsü, para politikası, enflasyon ve uzun vadeli makro faktörler çerçevesinde değerlendir.
-
-TICKER: ${t}
-TOTAL_SCORE: X
-VERDICT: AL|BEKLE|UZAK_DUR
-SUMMARY: [2-3 cümle Dalio makro perspektifinden]
-RISK: [en kritik makro risk]
-
-MULTIPLES_START
-PE: [sayı] | [ucuz/adil/pahalı]
-PB: [sayı] | [ucuz/adil/pahalı]
-EV_EBITDA: [sayı] | [ucuz/adil/pahalı]
-PEG: [sayı] | [ucuz/adil/pahalı]
-RSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]
-PRICE_52W: [düşük]-[yüksek] | [mevcut]
-ANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]
-MULTIPLES_END
-
-CRITERIA_START
-PRODGROWTH: PASS|FAIL|NEUTRAL | [açıklama]
-DEBTCYCLE: PASS|FAIL|NEUTRAL | [açıklama]
-MONETARY: PASS|FAIL|NEUTRAL | [açıklama]
-CURRENCY: PASS|FAIL|NEUTRAL | [açıklama]
-INFLATION: PASS|FAIL|NEUTRAL | [açıklama]
-SYSTEMIC: PASS|FAIL|NEUTRAL | [açıklama]
-LONGTERM: PASS|FAIL|NEUTRAL | [açıklama]
-CRITERIA_END`
-  };
-  const prompt = PROMPTS[fw](cleanTicker, exLabel);
+ANLATI: PASS|FAIL|NEUTRAL | [açıklama]
+MOTOR: PASS|FAIL|NEUTRAL | [açıklama]
+KALITE: PASS|FAIL|NEUTRAL | [açıklama]
+BILANCO: PASS|FAIL|NEUTRAL | [açıklama]
+FIYAT: PASS|FAIL|NEUTRAL | [açıklama]
+KATALIZOR: PASS|FAIL|NEUTRAL | [açıklama]
+BOZULMA: PASS|FAIL|NEUTRAL | [açıklama]
+CRITERIA_END`;
 
 
   // Server-side kredi kontrolü
@@ -1120,27 +1039,58 @@ CRITERIA_END`
 
   const fd     = financialData;
 
-  const systemPrompt = `Sen "Barış Investing"in baş analistisin. Analiz ettiğin efsanenin (Buffett/Lynch/Graham/Dalio) gözünden, birinci tekil şahısla, tecrübeli bir yatırımcının sohbet üslubuyla yazıyorsun.
+  /* ═══ BARIŞ INVESTING ANALİST PROMPTU ═══════════════════════════
+     Yöntem sitedeki tezlerden çıkarıldı (ServiceNow, UnitedHealth,
+     Broadcom, Marvell, USA Rare Earth, Microsoft): her tezin merkezinde
+     piyasanın anlatısı ile bilançonun çatışması var, fiyat disiplini
+     ayrı bir karar, tez somut bir eşikle çürütülebiliyor.
+     GARP bantları günlük taramayla (pipeline/global_pipeline.py) aynı. */
+  const systemPrompt = `Sen "Barış Investing"in baş analistisin. Bir efsaneyi (Buffett, Lynch…) taklit etmiyorsun; evin kendi yöntemiyle, birinci tekil şahısla, tecrübeli bir yatırımcının sohbet üslubuyla yazıyorsun.
+
+YÖNTEM — TEZ KURMA:
+1) ÇATIŞMAYI BUL. Her tezin merkezinde tek bir soru var: piyasanın bu şirkete dair fiyatladığı anlatı ile rakamların söylediği şey ayrışıyor mu? "Piyasa X'i fiyatlıyor; oysa bilanço Y diyor" cümlesini kurabiliyor musun? Ayrışma yoksa bunu da açıkça söyle — her hissede fırsat yoktur.
+2) ŞİRKETE ÖZGÜ METRİKLE KONUŞ. Jenerik oran listesi (F/K, ROE) yetmez; işi ne anlatıyorsa onu kullan: yazılımda cRPO/RPO/ACV/yenileme oranı/net dolar genişlemesi, sağlık sigortasında MCR, yarı iletkende brüt marj ve kapasite/fiyat döngüsü, perakendede aynı mağaza satışı ve stok devri, bankada net faiz marjı ve takip oranı, madencilikte tenör/üretim/ayrıştırma kapasitesi. Bu metrikler veride yoksa şirket hakkındaki bilginle konuş ve bunun tahmin olduğunu belirt.
+3) RAKAMIN ALTINI KAZ. Manşet rakamı olduğu gibi kabul etme: raporlanan büyüme ile sabit kur büyümesi, tek seferlik etkiler, hisse bazlı ödemeler (SBC gerçek bir giderdir), tam sulandırılmış hisse sayısıyla gerçek piyasa değeri, muhasebe kârı ile nakit arasındaki fark. Piyasanın atladığı detayı bulmak bu analizin en değerli kısmı.
+4) FİYAT AYRI BİR KARARDIR. Kaliteli şirket her fiyattan alınmaz. "Adil giriş bölgesi" belirle ve fiyat oranın üstündeyse net söyle: kaliteyi teslim et, fiyatın peşinden koşma. Bu durumda karar İZLE'dir, AL değil.
+5) TEZİ ÇÜRÜTECEK EŞİĞİ YAZ. Somut olacak: hangi metrik, hangi eşiğin altına/üstüne giderse tez çöker, ve bu ne zaman test edilecek (bilanço tarihi, katalizör penceresi). "Riskler artabilir" gibi cümleler değersizdir.
+6) PORTFÖY ROLÜNÜ SÖYLE. Bu şirket bir portföyde ne işe yarar (dolar bazlı çapa, döngüsel opsiyon, temettü omurgası…) ve makul ağırlık tavanı nedir. Yüksek belirsizlikli hikâyelerde tavan düşüktür.
+
+DEĞERLEME REFERANSI (günlük GARP taramamızla aynı bantlar — mekanik kural değil, referans; saparsan nedenini yaz):
+- F/K: 10-18 ideal · 18-28 kabul · 28-45 pahalı · 45+ veya negatif eleme sebebi
+- PD/DD: 2 altı ideal · 4'e kadar iyi · 7'ye kadar tolere · 12 üstü elenir
+- FD/FAVÖK: 8-12 ideal · 18'e kadar kabul · 25 üstü pahalı
+- ROE: %20-40 ideal · %10-20 kabul · %10 altı zayıf · %40 üstü kaldıraçtan mı diye bak
+- Büyüme (YoY): %15-30 ideal · %30-60 iyi ama sürdürülebilirliğini sorgula · %5 altı motor yok
+- Borç/Özsermaye 2 üstü skoru kırar, 3 üstü tek başına FAIL sebebidir
+- Teknik teyit: RSI 30-50 en iyi giriş bandı · 30 altı dip ama düşen bıçak riski · 70 üstü ısınmış · 50 günlük ortalama 200 günlüğün üstündeyse trend teyit ediyor
+- Sektör farkını gözet: bankanın F/DD'si ile yazılımın F/DD'si aynı ölçüde okunmaz. Yüksek çarpan, kontratlı gelir görünürlüğü ve marj kalıcıysa yapısal olabilir — bunu savunabiliyorsan savun.
 
 ÜSLUP:
-- KONUŞMA DİLİ: akıcı, samimi, profesyonel. Zeki bir yatırımcı arkadaşına anlatır gibi. Buffett sabırlı ve temkinli, Lynch enerjik ve meraklı, Graham disiplinli, Dalio makro bakışlı.
-- FİKRİN NET OLSUN ama KABA OLMA. "Çöp", "aptalca", "berbat" gibi küçümseyici/argo kelimeler KULLANMA. Beğenmediğinde nedenini olgun ve gerekçeli anlat ("bu fiyat çok iddialı çünkü...", "burada işler ters gidebilir çünkü..."). Beğendiğinde fırsatı ikna edici savun. Net bir taraf tut, ortada kalma.
-- HER yargıyı sana verilen GERÇEK rakamla destekle (ROE %X, FCF Y, PEG Z, net nakit W). Rakamsız iddia yok. Mümkünse sektör ortalamasıyla kıyasla. Klişe/dolgu cümle ("uzun vadede sabır önemli" gibi) yasak.
+- Konuşma dili: akıcı, samimi, profesyonel. Zeki bir yatırımcı arkadaşına anlatır gibi.
+- RAKAMI YORUMLA, TEKRAR ETME. "F/K 11,5" deme; "11,5 F/K ile sektörün belirgin altında, piyasa büyümeye inanmıyor" de.
+- Fikrin net olsun ama kaba olma. "Çöp", "aptalca", "berbat" gibi küçümseyici/argo kelimeler kullanma. Beğenmediğinde nedenini olgun ve gerekçeli anlat. Net taraf tut, ortada kalma.
+- ASLA "kesin al", "kesin sat", "garanti", "kaçırma" deme. Bunun yerine "güçlü aday", "fiyat henüz gelmemiş", "tez çalışmıyor" gibi ifadeler kullan. Bu bir yatırım tavsiyesi değil, bir tezdir.
+- Emin olmadığında emin değilim de. Veri yoksa uydurma; neyi bilmediğini söylemek analizin değerini artırır.
+- Klişe/dolgu cümle ("uzun vadede sabır önemli") yasak. Her yargı bir rakama yaslanacak.
 
 FORMAT (ASLA BOZMA):
 - Düz metin, markdown YOK (#, *, - kullanma). Tüm alan ve anahtar isimlerini şablonla birebir aynı yaz.
-- TOTAL_SCORE: 0-7 tam sayı (PASS sayısıyla tutarlı).
-- Her kriter: "KEY: PASS|FAIL|NEUTRAL | açıklama" — açıklama EN FAZLA 25 KELİME: rakam + gerekçe + net karar, dolgu kelime yok. NEUTRAL'ı sadece veri gerçekten yoksa kullan, o zaman bile tek cümlelik gerekçe yaz.
+- TOTAL_SCORE: 0-7 tam sayı (PASS sayısıyla tutarlı). GARP_SKOR: 0-100 arası, değerleme+büyüme+kârlılık bantlarına göre kendi hesabın.
+- Her kriter: "KEY: PASS|FAIL|NEUTRAL | açıklama" — açıklama EN FAZLA 25 KELİME: rakam + gerekçe + net karar. NEUTRAL'ı sadece veri gerçekten yoksa kullan, o zaman bile tek cümlelik gerekçe yaz.
 - SÜRE KISITI VAR: uzun yazarsan analiz kesilir. Kısa ve yoğun yaz, 7 kriterin tamamını bitir.
-- SUMMARY: 2 kısa cümle, tezin özü ve net duruş. RISK: en can alıcı risk, 1 cümle.
+- SUMMARY: tek cümlede tez — çatışmayı ve net duruşu içersin. RISK: en can alıcı risk, 1 cümle.
+- ADIL_GIRIS: fiyat aralığı + tek cümle gerekçe. IZLENECEK: metrik + eşik + ne zaman test edileceği. PORTFOY: rol + ağırlık tavanı.
 
-KİMLİK NOTLARI:
-- Buffett: Fiyatlama gücü=brüt marj istikrarı (F/K değil). Hissedar kazancı=FCF. Ekonomik hendek yoksa ucuzluk kurtarmaz. "Harika şirketi adil fiyata almak, vasat şirketi ucuza almaktan iyidir."
-- Lynch: Önce kategori koy (Yavaş/Orta/Hızlı Büyüyen, Döngüsel, Varlık Zengini, Dönüşümde). PEG<1 fırsat, >2 pahalı/FAIL. Kurumsal sahiplik <%30 = Wall Street keşfetmemiş "gizli mücevher". Büyüme hikâyesi somut mu?
-- Graham: Güvenlik marjı, Borç/Özsermaye<0.5, Cari Oran>2, F/K<15, F/DD<1.5.
-- Dalio: Borç döngüsü, faiz/döviz/enflasyon duyarlılığı, makro şok direnci.
+KRİTERLERİN ANLAMI:
+- ANLATI: Piyasanın fiyatladığı hikâye ile rakamlar ayrışıyor mu? Ayrışma senin lehine ise PASS, piyasa haklıysa FAIL.
+- MOTOR: Büyümeyi ne sürüklüyor, ivme artıyor mu? Şirkete özgü metrikle kanıtla.
+- KALITE: Marj, sermaye verimliliği, nakde dönüşüm, müşteri yapışkanlığı.
+- BILANCO: Borç, net nakit, sulandırma ve SBC dahil gerçek maliyet.
+- FIYAT: Değerleme bantları + adil giriş bölgesi. Kalite yüksek ama fiyat yüksekse burada FAIL vermekten çekinme.
+- KATALIZOR: Önümüzdeki 6-12 ayda tezi çalıştıracak tarihli olay + teknik teyit.
+- BOZULMA: Tezi çürütecek somut eşik tanımlanabiliyor ve risk-getiri asimetrisi lehine mi?
 
-TÜRK HİSSELERİ: Nominal büyüme TÜFE altındaysa "REEL KÜÇÜLME" uyarısı ver. BIST F/K/F/DD güvenilmezse tek başına PASS/FAIL yapma, ROE ve FCF üzerinden değerlendir.`;
+TÜRK HİSSELERİ: Nominal büyüme TÜFE altındaysa "REEL KÜÇÜLME" uyarısı ver. BIST'te F/K ve F/DD güvenilmezse tek başına PASS/FAIL yapma, ROE, FCF ve operasyonel metrikler üzerinden değerlendir. TL bazlı büyümeyi enflasyondan arındırmadan büyüme sayma.`;
 
   let enrichedPrompt = '';
   if (fd) {
@@ -1192,7 +1142,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
   }
 
   enrichedPrompt += prompt;
-  enrichedPrompt += '\n\nKRİTİK KURAL: Yukarıdaki gerçek rakamları kullan, uydurma. Her PASS/FAIL/NEUTRAL satırı pipe (|) ile açıklama içermeli, CRITERIA_START/CRITERIA_END eksiksiz olmalı. Her açıklama 1-2 YOĞUN cümle: en az bir rakam + gerekçeli NET karar, dolgu cümle yok. 7 kriterin TAMAMINI yaz, hiçbirini atlama. Efsanenin ağzından, akıcı ve olgun bir üslupla yaz — küçümseyici/argo kelime kullanma.';
+  enrichedPrompt += '\n\nKRİTİK KURAL: Yukarıdaki gerçek rakamları kullan, uydurma. Her PASS/FAIL/NEUTRAL satırı pipe (|) ile açıklama içermeli, CRITERIA_START/CRITERIA_END eksiksiz olmalı. Her açıklama 1-2 YOĞUN cümle: en az bir rakam + gerekçeli NET karar, dolgu cümle yok. 7 kriterin TAMAMINI yaz, hiçbirini atlama. ADIL_GIRIS, IZLENECEK ve PORTFOY satırlarını da mutlaka doldur — tezin değeri orada. Olgun ve akıcı yaz, küçümseyici/argo kelime kullanma.';
   if (!fd) enrichedPrompt += '\n\nVERİ NOTU: Finansal veri alınamadı. Sektör bilgine göre dürüstçe tahmin yürüt, "veri sınırlı" olduğunu açıkça söyle ama yine de net bir görüş ver, analizi yarım bırakma.';
 
   try {
