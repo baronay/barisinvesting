@@ -2550,8 +2550,11 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .pr-k-bas{flex:1;min-width:0;}
 .pr-ad{font-family:var(--font-head);font-size:19px;font-weight:600;color:var(--text);line-height:1.2;}
 .pr-alt{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:var(--muted-s);margin-top:4px;text-transform:uppercase;}
-.pr-edgar{font-family:var(--font-mono);font-size:9px;letter-spacing:1.2px;color:var(--accent);text-decoration:none;border:1px solid var(--border-s);padding:6px 10px;white-space:nowrap;transition:border-color .15s;}
-.pr-edgar:hover{border-color:var(--accent2);}
+/* Kural bir zamanlar <a> içindi; markup <button> olunca arka plan
+   tanımsız kalıp tarayıcının açık gri varsayılanına düşüyordu —
+   koyu kartın üstünde altın yazı gri kutu. Rengi açıkça veriyoruz. */
+.pr-edgar{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:1.4px;color:var(--accent);text-decoration:none;background:var(--accent-dim);border:1px solid var(--accent2);padding:9px 14px;white-space:nowrap;cursor:pointer;transition:background .15s,color .15s;}
+.pr-edgar:hover{background:var(--accent);color:var(--bg);}
 .pr-k-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 22px;}
 .pr-k-row{display:flex;align-items:baseline;gap:10px;min-width:0;}
 .pr-k-l{font-family:var(--font-mono);font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted-s);min-width:104px;flex-shrink:0;}
@@ -2611,6 +2614,12 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .pv-intro strong{color:var(--cream);}
 .pv-ust{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
 .pv-blok{margin-bottom:26px;}
+/* Süzgeç çipleri: varsayılan "Tümü" — sayfa tıklamadan tam görünür,
+   çipler yalnızca tek bloğa odaklanmak isteyen için. */
+.pv-suzgec{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;}
+.pv-cip{background:none;border:1px solid var(--border);color:var(--muted-s);font-family:var(--font-mono);font-size:9.5px;letter-spacing:1.1px;text-transform:uppercase;padding:7px 13px;border-radius:999px;cursor:pointer;transition:border-color .15s,color .15s,background .15s;}
+.pv-cip:hover{border-color:var(--accent2);color:var(--text2);}
+.pv-cip.active{background:var(--accent-dim);border-color:var(--accent2);color:var(--accent);}
 /* Blok + dönem sekmeleri: aynı anda tek tablo, tek dönem */
 .pv-sekmeler{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
 .pv-sek-grp{display:flex;gap:1px;background:var(--border);border:1px solid var(--border);flex-wrap:wrap;}
@@ -2622,12 +2631,18 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .pv-blok-bas{display:flex;align-items:baseline;gap:10px;margin-bottom:9px;}
 .pv-blok-t{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text2);}
 .pv-blok-n{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted-s);}
+.pv-blok-s{margin-left:auto;font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted);}
 .pv-sar{border:1px solid var(--border-s);background:var(--surface);overflow-x:auto;}
 .pv-tablo{width:100%;border-collapse:collapse;min-width:660px;}
-.pv-tablo th{position:sticky;top:0;background:var(--surface2);font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted-s);text-align:right;padding:9px 10px;white-space:nowrap;cursor:pointer;user-select:none;border-bottom:1px solid var(--border);}
+/* Altı dönem birden: dar ekranda yatay kaydırma, ad sütunu sabit kalır */
+.pv-tablo.pv-genis{min-width:860px;}
+.pv-tablo th{position:sticky;top:0;z-index:2;background:var(--surface2);font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted-s);text-align:right;padding:9px 10px;white-space:nowrap;cursor:pointer;user-select:none;border-bottom:1px solid var(--border);}
 .pv-tablo th:first-child,.pv-tablo td:first-child{text-align:left;}
 .pv-tablo th:hover{color:var(--text2);}
 .pv-tablo th.sirali{color:var(--accent);}
+.pv-ok{display:inline-block;width:9px;font-size:8px;margin-left:3px;}
+.pv-genis .pv-th-ad{min-width:210px;}
+.pv-genis th:not(.pv-th-ad),.pv-genis td:not(:first-child){width:11%;}
 .pv-tablo td{padding:9px 10px;text-align:right;font-family:var(--font-mono);font-size:11px;color:var(--text2);border-bottom:1px solid var(--rule);white-space:nowrap;font-variant-numeric:tabular-nums;}
 .pv-tablo tr:last-child td{border-bottom:none;}
 .pv-tablo tbody tr{transition:background .12s;}
@@ -2806,13 +2821,21 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .db-rj-alt{font-size:9px;font-weight:400;color:var(--muted);margin-left:5px;}
 
 /* Dashboard şirket arama şeridi */
-.db-ara{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border-s);padding:10px 14px;margin-bottom:14px;flex-wrap:wrap;}
-.db-ara-lbl{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--accent);flex-shrink:0;}
-.db-ara-in{flex:1;min-width:180px;background:none;border:none;border-bottom:1px solid var(--border-s);color:var(--text);font-family:var(--font-mono);font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:6px 2px;outline:none;transition:border-color .15s;}
-.db-ara-in:focus{border-bottom-color:var(--accent);}
-.db-ara-in::placeholder{color:var(--muted-s);text-transform:none;letter-spacing:0;}
-.db-ara-btn{background:none;border:1px solid var(--accent2);color:var(--accent);font-family:var(--font-mono);font-size:9px;letter-spacing:1.2px;padding:7px 12px;cursor:pointer;transition:background .15s;white-space:nowrap;}
-.db-ara-btn:hover{background:var(--accent-dim);}
+/* Şirket arama — dashboard'ın tek "yaz ve git" alanı. Bantla aynı yüzeyi
+   paylaşırsa gözden kaçıyordu; kendi kutusu, kendi başlığı olsun. */
+.db-ara{background:var(--surface2);border:1px solid var(--accent2);box-shadow:0 0 0 1px rgba(0,0,0,.2),0 6px 22px rgba(0,0,0,.28);padding:14px 16px 12px;margin-bottom:16px;}
+.db-ara-bas{display:flex;align-items:baseline;gap:9px;margin-bottom:9px;}
+.db-ara-lbl{font-family:var(--font-mono);font-size:9.5px;font-weight:600;letter-spacing:2.2px;text-transform:uppercase;color:var(--accent);flex-shrink:0;}
+.db-ara-not{font-family:var(--font-mono);font-size:9px;letter-spacing:.8px;color:var(--muted-s);}
+.db-ara-sat{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;}
+.db-ara-kutu{flex:1;min-width:220px;display:flex;align-items:center;gap:9px;background:var(--bg);border:1px solid var(--border);padding:0 12px;transition:border-color .15s,box-shadow .15s;}
+.db-ara-kutu:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim);}
+.db-ara-ikon{font-size:14px;color:var(--accent);line-height:1;flex-shrink:0;}
+.db-ara-in{flex:1;min-width:0;background:none;border:none;color:var(--text);font-family:var(--font-mono);font-size:14px;letter-spacing:1.4px;text-transform:uppercase;padding:12px 0;outline:none;}
+.db-ara-in::placeholder{color:var(--muted-s);font-size:12.5px;text-transform:none;letter-spacing:.3px;}
+.db-ara-btn{background:var(--accent-dim);border:1px solid var(--accent2);color:var(--accent);font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:1.4px;padding:0 18px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap;}
+.db-ara-btn:hover{background:var(--accent);color:var(--bg);}
+@media(max-width:560px){.db-ara-btn{padding:11px 14px;width:100%;}}
 
 /* Dashboard takip kartı */
 .db-tk-ekle{display:flex;gap:6px;margin-bottom:10px;}
@@ -3302,9 +3325,17 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 
   <!-- Şirket arama: profil sayfasına ayrı menü girişi yerine buradan -->
   <div class="db-ara">
-    <span class="db-ara-lbl">Şirket Ara</span>
-    <input class="db-ara-in" id="dbAra" placeholder="Hisse kodu gir — AAPL, MSFT, NVDA…" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')dbAraGit()"/>
-    <button class="db-ara-btn" onclick="dbAraGit()">PROFİLİ AÇ →</button>
+    <div class="db-ara-bas">
+      <span class="db-ara-lbl">Şirket Ara</span>
+      <span class="db-ara-not">künye · özet · haberler · finansallar — tek kartta</span>
+    </div>
+    <div class="db-ara-sat">
+      <div class="db-ara-kutu">
+        <span class="db-ara-ikon">⌕</span>
+        <input class="db-ara-in" id="dbAra" placeholder="Hisse kodu gir — AAPL, NVDA, THYAO…" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')dbAraGit()"/>
+      </div>
+      <button class="db-ara-btn" onclick="dbAraGit()">ŞİRKET KARTINI AÇ →</button>
+    </div>
   </div>
 
   <!-- Rejim satırı -->
@@ -7094,8 +7125,11 @@ function garpAnalizAc(ticker) {
     tkCiz(); tkMini();
   };
 
-  // Satıra tıkla → analiz ekranında aç
+  // Satıra tıkla → şirket kartı (özet, haberler, finansallar).
+  // Analiz akışı kartın üstündeki "ANALİZ ET" butonunda; ısı haritası ve
+  // bilanço satırıyla aynı davranış olsun diye buradan da karta gidiyoruz.
   window.tkAc = function(tk, ex){
+    if (typeof window.prAc === 'function'){ window.prAc(tk); return; }
     if (typeof window.qFill === 'function'){
       window.qFill(tk, '', ex === 'BIST' ? 'BIST' : 'NASDAQ');
       if (typeof window.showPage === 'function') window.showPage('analiz');
@@ -7378,6 +7412,10 @@ function garpAnalizAc(ticker) {
 
   /* ───────── INIT ───────── */
   applyRoute(location.pathname, true);
+  // Takip listesi dashboard kartı showPage('overview') ile basılıyordu;
+  // terminale doğrudan girişte o çağrı olmadığı için kart ilk gezinmeye
+  // kadar boş kalıyordu. Açılışta bir kez kendimiz basıyoruz.
+  if (document.body.classList.contains('route-terminal')){ tkMini(); tkCiz(); }
 })();
 </script>
 </body>

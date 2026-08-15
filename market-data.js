@@ -3,7 +3,9 @@
    Veri: /api/market?type=piyasa
 
    Isı haritası dashboard'da duruyor; bu sayfa "hangi dönemde ne
-   kazandırdı" sorusuna bakıyor. Dört blok, her satırda altı dönem.
+   kazandırdı" sorusuna bakıyor. Tüm bloklar alt alta, her satırda
+   altı dönem — Seeking Alpha'nın "Market Data" sayfası gibi tek
+   kaydırmada okunuyor, sekme tıklamaya gerek yok.
    Kütüphane yok — projenin sıfır-build yapısına uysun diye saf DOM.
    ═══════════════════════════════════════════════════════════════ */
 (function () {
@@ -12,11 +14,12 @@
   const UC = '/api/market?type=piyasa';
   const ONBELLEK_MS = 300000;         // 5 dk — sunucu tarafı zaten 10 dk cache'li
 
-  // Sayfa eskiden dört tabloyu alt alta, her birini altı dönem sütunuyla
-  // gösteriyordu: 45 satır × 7 sütun. Okunmuyordu. Artık aynı anda tek
-  // blok ve tek dönem görünüyor; kullanıcı ikisini de üstten seçiyor.
-  const durum = { veri: null, ts: 0, yukleniyor: false, blok: null, donem: '1g' };
+  // Sayfa bir ara "tek blok + tek dönem" sekmelerine indirilmişti: veriyi
+  // görmek için ikili kombinasyon başına iki tıklama gerekiyordu. Artık
+  // her şey açık geliyor; üstteki çipler yalnızca daraltmak isteyene.
+  const durum = { veri: null, ts: 0, yukleniyor: false, suzgec: 'tumu' };
   // Blok bazlı sıralama: { blokKey: { anahtar, yon } }. anahtar 'ad' | 'f' | dönem kodu.
+  // Boş bırakılırsa API'nin kendi sırası korunur (endeksler mantıklı sırada geliyor).
   const sirala = {};
 
   function esc(s) {
@@ -73,14 +76,12 @@
     return liste;
   }
 
-  function sekmeCiz(veri) {
-    const bloklar = veri.bloklar.map(b =>
-      `<button class="pv-sek${b.k === durum.blok ? ' active' : ''}" data-blok="${esc(b.k)}">${esc(b.ad)}</button>`).join('');
-    const donemler = veri.donemler.map(d =>
-      `<button class="pv-sek pv-sek-d${d.k === durum.donem ? ' active' : ''}" data-donem="${esc(d.k)}">${esc(d.ad)}</button>`).join('');
-    return `<div class="pv-sekmeler">
-      <div class="pv-sek-grp">${bloklar}</div>
-      <div class="pv-sek-grp pv-sek-sag">${donemler}</div>
+  // Üstteki çipler bloğu değiştirmiyor, yalnızca listeyi daraltıyor:
+  // varsayılan "Tümü" olduğu için sayfa hiç tıklamadan tam görünüyor.
+  function suzgecCiz(veri) {
+    const cip = (k, ad) => `<button class="pv-cip${k === durum.suzgec ? ' active' : ''}" data-suz="${esc(k)}">${esc(ad)}</button>`;
+    return `<div class="pv-suzgec">
+      ${cip('tumu', 'Tümü')}${veri.bloklar.map(b => cip(b.k, b.ad)).join('')}
     </div>`;
   }
 
@@ -89,8 +90,8 @@
     // Sektör ortalamalarının tek bir fiyatı yok — o blokta sütunu hiç açma,
     // 11 satır boyunca "—" yazan ölü bir sütun kalmasın
     const fiyatVar = blok.fiyatVar !== false;
-    const bas = (anahtar, ad) =>
-      `<th class="${s.anahtar === anahtar ? 'sirali' : ''}" data-blok="${esc(blok.k)}" data-sirala="${esc(anahtar)}">${esc(ad)}${s.anahtar === anahtar ? (s.yon > 0 ? ' ▲' : ' ▼') : ''}</th>`;
+    const bas = (anahtar, ad, ek) =>
+      `<th class="${ek || ''}${s.anahtar === anahtar ? ' sirali' : ''}" data-blok="${esc(blok.k)}" data-sirala="${esc(anahtar)}">${esc(ad)}<span class="pv-ok">${s.anahtar === anahtar ? (s.yon > 0 ? '▲' : '▼') : ''}</span></th>`;
 
     const satirlar = siralanmis(blok).map(r => {
       const hucreler = donemler.map(d =>
@@ -102,14 +103,16 @@
       </tr>`;
     }).join('');
 
-    return `<div class="pv-blok">
+    return `<div class="pv-blok" id="pv-blok-${esc(blok.k)}">
       <div class="pv-blok-bas">
+        <span class="pv-blok-t">${esc(blok.ad)}</span>
         <span class="pv-blok-n">${esc(blok.not || '')}</span>
+        <span class="pv-blok-s">${blok.satirlar.length} satır</span>
       </div>
       <div class="pv-sar">
-        <table class="pv-tablo">
+        <table class="pv-tablo pv-genis">
           <thead><tr>
-            ${bas('ad', 'Ad')}
+            ${bas('ad', 'Ad', 'pv-th-ad')}
             ${fiyatVar ? bas('f', 'Fiyat') : ''}
             ${donemler.map(d => bas(d.k, d.ad)).join('')}
           </tr></thead>
@@ -130,7 +133,7 @@
 
     try {
       const veri = await getir(zorla);
-      if (!durum.blok || !veri.bloklar.some(b => b.k === durum.blok)) durum.blok = veri.bloklar[0].k;
+      if (durum.suzgec !== 'tumu' && !veri.bloklar.some(b => b.k === durum.suzgec)) durum.suzgec = 'tumu';
       ciz();
       if (durumEl) {
         const saat = new Date(veri.ts).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
@@ -148,12 +151,10 @@
     const govde = document.getElementById('pvGovde');
     if (!govde || !durum.veri) return;
     const veri = durum.veri;
-    const blok = veri.bloklar.find(b => b.k === durum.blok) || veri.bloklar[0];
-    const donem = veri.donemler.find(d => d.k === durum.donem) || veri.donemler[0];
-    // Seçili dönemi varsayılan sıralama yap: tablo doğrudan bir sıralama
-    // olarak okunsun, kullanıcı başlığa basmak zorunda kalmasın
-    if (!sirala[blok.k]) sirala[blok.k] = { anahtar: donem.k, yon: -1 };
-    govde.innerHTML = sekmeCiz(veri) + blokCiz(blok, [donem]);
+    const bloklar = durum.suzgec === 'tumu'
+      ? veri.bloklar
+      : veri.bloklar.filter(b => b.k === durum.suzgec);
+    govde.innerHTML = suzgecCiz(veri) + bloklar.map(b => blokCiz(b, veri.donemler)).join('');
   }
 
   function olaylariKur() {
@@ -161,17 +162,8 @@
     if (!govde) return;
 
     govde.addEventListener('click', e => {
-      const sekB = e.target.closest('[data-blok]:not(th)');
-      if (sekB) { durum.blok = sekB.dataset.blok; ciz(); return; }
-      const sekD = e.target.closest('[data-donem]');
-      if (sekD) {
-        durum.donem = sekD.dataset.donem;
-        // Dönem değişince sıralama da o döneme geçsin
-        const b = durum.blok;
-        if (b) sirala[b] = { anahtar: durum.donem, yon: -1 };
-        ciz();
-        return;
-      }
+      const cip = e.target.closest('[data-suz]');
+      if (cip) { durum.suzgec = cip.dataset.suz; ciz(); window.scrollTo(0, 0); return; }
       const th = e.target.closest('th[data-sirala]');
       if (th) {
         const blok = th.dataset.blok, anahtar = th.dataset.sirala;

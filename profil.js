@@ -8,7 +8,19 @@
 (function () {
   'use strict';
 
-  const durum = { ticker: null, veri: null, yukleniyor: false, sekme: 'ozet' };
+  // istenen: şu an ağdan gelen ticker · bekleyen: yükleme sürerken gelen
+  // yeni istek. Kuyruk olmadığında dışarıdan gelen ikinci istek (arama
+  // kutusu → showPage → prSayfaAc yarışı) sessizce düşüyor, ekranda bir
+  // önceki şirket kalıyordu.
+  const durum = { ticker: null, istenen: null, bekleyen: null, veri: null, yukleniyor: false, sekme: 'ozet' };
+
+  // Künyedeki borsa metnini analiz ekranının beklediği üç değere indir
+  function borsaKodu(borsa) {
+    const b = String(borsa || '').toUpperCase();
+    if (b.includes('BIST') || b.includes('BİST')) return 'BIST';
+    if (b.includes('NYSE')) return 'NYSE';
+    return 'NASDAQ';
+  }
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -113,7 +125,7 @@
           <div class="pr-ad">${esc(k.ad)}</div>
           <div class="pr-alt">${esc(k.ticker)}${k.borsa ? ' · ' + esc(k.borsa) : ''}${k.sektor ? ' · ' + esc(k.sektor) : ''}</div>
         </div>
-        <button class="pr-edgar" onclick="prAnaliz('${esc(k.ticker)}')">ANALİZ ET →</button>
+        <button class="pr-edgar" onclick="prAnaliz('${esc(k.ticker)}','${esc(borsaKodu(k.borsa))}')">ANALİZ ET →</button>
       </div>
       <div class="pr-k-grid">
         ${satir('Sektör (SIC)', k.sektor ? `${k.sektor}${k.sicKod ? ' · ' + k.sicKod : ''}` : null)}
@@ -194,10 +206,18 @@
   async function yukle(ticker) {
     const kap = document.getElementById('prGovde');
     const durumEl = document.getElementById('prDurum');
-    if (!kap || durum.yukleniyor) return;
+    if (!kap) return;
     const tk = String(ticker || '').toUpperCase().replace(/[^A-Z0-9.]/g, '');
     if (!tk) return;
 
+    // Yükleme sürerken gelen istek düşmesin: aynı hisseyse yok say,
+    // farklıysa sıraya al — biten istekten sonra o çalışır.
+    if (durum.yukleniyor) {
+      durum.bekleyen = (tk === durum.istenen) ? null : tk;
+      return;
+    }
+
+    durum.istenen = tk;
     durum.yukleniyor = true;
     kap.innerHTML = '<div class="pv-bos">Şirket verisi hazırlanıyor…</div>';
     if (durumEl) durumEl.textContent = tk;
@@ -225,6 +245,9 @@
       if (durumEl) durumEl.textContent = '';
     } finally {
       durum.yukleniyor = false;
+      const bekleyen = durum.bekleyen;
+      durum.bekleyen = null;
+      if (bekleyen && bekleyen !== tk) yukle(bekleyen);
     }
   }
 
@@ -240,20 +263,28 @@
     const inp = document.getElementById('prTicker');
     if (inp) yukle(inp.value);
   };
-  window.prAnaliz = function (ticker) {
+  window.prAnaliz = function (ticker, borsa) {
     if (typeof window.qFill === 'function') {
-      window.qFill(ticker, '', 'NASDAQ');
+      window.qFill(ticker, '', borsaKodu(borsa || (durum.veri && durum.veri.kunye && durum.veri.kunye.borsa)));
       if (typeof window.showPage === 'function') window.showPage('analiz');
       window.scrollTo(0, 0);
     }
   };
-  // Başka ekranlardan çağrılabilsin (takip listesi, analiz sonucu)
+  // Başka ekranlardan çağrılabilsin (ısı haritası, takip listesi, arama kutusu)
   window.prAc = function (ticker) {
+    // Sıra önemli: showPage → prSayfaAc zinciri "sayfa boşsa varsayılanı
+    // getir" diyor. İstenen hisseyi önce yazmazsak AAPL yüklenip
+    // asıl istek kuyruğa düşüyor.
+    const tk = String(ticker || '').toUpperCase().replace(/[^A-Z0-9.]/g, '');
+    if (tk) durum.ticker = tk;
     if (typeof window.showPage === 'function') window.showPage('profil');
-    if (ticker) yukle(ticker);
+    if (tk) yukle(tk);
+    window.scrollTo(0, 0);
   };
   window.prSayfaAc = function () {
-    // Sayfa boşsa son bakılan hisseyi, o da yoksa örnek bir şirketi getir
-    if (!durum.veri) yukle(durum.ticker || 'AAPL');
+    // Sayfa boşsa son bakılan hisseyi, o da yoksa örnek bir şirketi getir.
+    // Bir yükleme sürüyorsa karışma — prAc zaten doğru hisseyi istedi.
+    if (durum.yukleniyor || durum.veri) return;
+    yukle(durum.ticker || 'AAPL');
   };
 })();

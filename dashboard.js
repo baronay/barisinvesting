@@ -235,13 +235,16 @@
     return Math.round(sa / 24) + 'g';
   }
 
-  /* ════════ BİLANÇO SATIRI → ANALİZ ════════ */
+  /* ════════ BİLANÇO SATIRI → ŞİRKET KARTI ════════ */
+  // Dashboard'daki her şirket tıklaması aynı yere gitsin: önce kart
+  // (künye, özet, haber, finansallar), analiz akışına oradaki butondan.
   function tiklamalariKur() {
     const bl = document.getElementById('dbBilanco');
     if (bl) bl.addEventListener('click', e => {
       const satir = e.target.closest('[data-t]');
       if (!satir) return;
       const tk = satir.dataset.t;
+      if (typeof window.prAc === 'function') { window.prAc(tk); return; }
       if (typeof window.qFill === 'function') {
         // Borsa evren tablosundan geliyor; bilinmiyorsa NASDAQ varsayılıyor
         window.qFill(tk, '', satir.dataset.x || 'NASDAQ');
