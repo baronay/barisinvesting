@@ -106,7 +106,11 @@
     }
 
     return `<div class="pv-blok">
-      <div class="pv-blok-bas"><span class="pv-blok-t">${esc(baslik)}</span><span class="pv-blok-n">${esc(not || '')}</span></div>
+      <div class="pv-blok-bas">
+        <span class="pv-blok-t">${esc(baslik)}</span>
+        <span class="pv-blok-n">${esc(not || '')}</span>
+        <span class="pr-tablo-ipucu"><b>▊</b> kaleme tıkla → dönemsel grafik</span>
+      </div>
       <div class="pv-sar">
         <table class="pv-tablo pr-tablo">
           <thead><tr><th>Kalem</th>${bas}</tr></thead>
@@ -228,11 +232,13 @@
     const ov = document.getElementById('prGrafik');
     if (!ov) return;
     ov.classList.add('acik');
+    document.body.classList.add('pr-kilit');   // arkadaki sayfa kaymasın
     grafikCiz();
   }
   function grafikKapat() {
     const ov = document.getElementById('prGrafik');
     if (ov) ov.classList.remove('acik');
+    document.body.classList.remove('pr-kilit');
   }
   window.prGrafikKapat = grafikKapat;
 
