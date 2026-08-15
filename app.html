@@ -2586,7 +2586,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .tk-in{flex:1;min-width:200px;background:rgba(0,0,0,0.25);border:1px solid var(--border-s);color:var(--text);font-family:var(--font-mono);font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:10px 12px;outline:none;transition:border-color .15s;}
 .tk-in:focus{border-color:var(--accent);}
 .tk-in::placeholder{color:var(--muted-s);text-transform:none;letter-spacing:0;}
-.tk-sel{background:rgba(0,0,0,0.25);border:1px solid var(--border-s);color:var(--text2);font-family:var(--font-mono);font-size:11px;padding:10px;outline:none;cursor:pointer;}
 .tk-btn{background:none;border:1px solid var(--accent2);color:var(--accent);font-family:var(--font-mono);font-size:11px;letter-spacing:1.2px;padding:0 18px;cursor:pointer;transition:background .15s;white-space:nowrap;}
 .tk-btn:hover{background:var(--accent-dim);}
 .tk-sar{border:1px solid var(--border-s);background:var(--surface);}
@@ -2821,6 +2820,26 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .db-rj-alt{font-size:9px;font-weight:400;color:var(--muted);margin-left:5px;}
 
 /* Dashboard şirket arama şeridi */
+/* Arama önerileri — her arama kutusunun altına açılan şirket listesi
+   (arama.js her kutuya kendisi takıyor). Borsa seçtirmiyoruz: şirketi
+   listeden seç, borsa evren tablosundan geliyor. */
+.ar-sar{position:relative;flex:1;min-width:0;display:flex;align-items:center;}
+.ar-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;min-width:230px;background:var(--surface2);border:1px solid var(--border-s);box-shadow:0 14px 40px rgba(0,0,0,.55);z-index:120;max-height:340px;overflow-y:auto;}
+.ar-panel.acik{display:block;}
+.ar-bas{font-family:var(--font-mono);font-size:8.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);padding:9px 12px 6px;}
+.ar-sat{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;border-top:1px solid var(--rule);}
+.ar-sat:first-child{border-top:none;}
+.ar-sat.secili,.ar-sat:hover{background:var(--surface3);}
+.ar-logo{width:26px;height:26px;flex-shrink:0;position:relative;background:var(--surface);border:1px solid var(--border-s);border-radius:5px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.ar-logo img{width:100%;height:100%;object-fit:contain;padding:3px;position:relative;z-index:1;background:var(--surface);}
+.ar-logo i{position:absolute;font-style:normal;font-family:var(--font-mono);font-size:9px;font-weight:700;color:var(--muted-s);}
+.ar-bilgi{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.ar-ad{font-size:12.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ar-alt{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted-s);}
+.ar-sat.secili .ar-alt{color:var(--accent);}
+.ar-ok{font-family:var(--font-mono);font-size:11px;color:var(--muted2);flex-shrink:0;}
+.ar-sat.secili .ar-ok{color:var(--accent);}
+
 /* Şirket arama — dashboard'ın tek "yaz ve git" alanı. Bantla aynı yüzeyi
    paylaşırsa gözden kaçıyordu; kendi kutusu, kendi başlığı olsun. */
 .db-ara{background:var(--surface2);border:1px solid var(--accent2);box-shadow:0 0 0 1px rgba(0,0,0,.2),0 6px 22px rgba(0,0,0,.28);padding:14px 16px 12px;margin-bottom:16px;}
@@ -2842,7 +2861,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .db-tk-in{flex:1;min-width:0;background:rgba(0,0,0,0.22);border:1px solid var(--border-s);color:var(--text);font-family:var(--font-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:6px 8px;outline:none;}
 .db-tk-in:focus{border-color:var(--accent);}
 .db-tk-in::placeholder{color:var(--muted-s);text-transform:none;letter-spacing:0;}
-.db-tk-sel{background:rgba(0,0,0,0.22);border:1px solid var(--border-s);color:var(--text2);font-family:var(--font-mono);font-size:9px;padding:6px 4px;outline:none;cursor:pointer;}
 .db-tk-btn{background:none;border:1px solid var(--accent2);color:var(--accent);font-family:var(--font-mono);font-size:12px;font-weight:700;padding:0 11px;cursor:pointer;line-height:1;}
 .db-tk-btn:hover{background:var(--accent-dim);}
 .db-tk-row{display:flex;align-items:center;gap:9px;padding:7px 2px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .12s;}
@@ -3325,14 +3343,11 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 
   <!-- Şirket arama: profil sayfasına ayrı menü girişi yerine buradan -->
   <div class="db-ara">
-    <div class="db-ara-bas">
-      <span class="db-ara-lbl">Şirket Ara</span>
-      <span class="db-ara-not">künye · özet · haberler · finansallar — tek kartta</span>
-    </div>
+    <div class="db-ara-bas"><span class="db-ara-lbl">Şirket Ara</span></div>
     <div class="db-ara-sat">
       <div class="db-ara-kutu">
         <span class="db-ara-ikon">⌕</span>
-        <input class="db-ara-in" id="dbAra" placeholder="Hisse kodu gir — AAPL, NVDA, THYAO…" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')dbAraGit()"/>
+        <input class="db-ara-in" id="dbAra" placeholder="Hisse kodu gir — AAPL, NVDA, THYAO…" autocomplete="off" spellcheck="false"/>
       </div>
       <button class="db-ara-btn" onclick="dbAraGit()">ŞİRKET KARTINI AÇ →</button>
     </div>
@@ -3383,8 +3398,7 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
           </div>
         </div>
         <div class="db-tk-ekle">
-          <input class="db-tk-in" id="dbTkIn" placeholder="Kod ekle" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')tkHizliEkle()"/>
-          <select class="db-tk-sel" id="dbTkEx"><option value="BIST">BİST</option><option value="US">ABD</option></select>
+          <input class="db-tk-in" id="dbTkIn" placeholder="Hisse ekle" autocomplete="off" spellcheck="false"/>
           <button class="db-tk-btn" onclick="tkHizliEkle()">+</button>
         </div>
         <div id="dbTakipListe"></div>
@@ -3621,12 +3635,8 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 <div class="page" id="page-profil">
 <div class="page-body">
   <div class="pt-hdr"><div class="pt-title">Şirket <span>Profili</span></div><span class="hm-durum" id="prDurum" style="margin-left:10px"></span></div>
-  <div class="pv-intro">
-    Şirketin künyesi ve <strong>resmî finansal tabloları</strong> — gelir tablosu, bilanço ve nakit akışı,
-    yıllık ve çeyreklik, bir önceki döneme göre değişimiyle birlikte.
-  </div>
   <div class="tk-ekle">
-    <input class="tk-in" id="prTicker" placeholder="Hisse kodu (AAPL, MSFT, POWL…)" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')prAra()"/>
+    <input class="tk-in" id="prTicker" placeholder="Şirket ara — AAPL, MSFT, THYAO…" autocomplete="off" spellcheck="false"/>
     <button class="tk-btn" onclick="prAra()">GETİR →</button>
   </div>
   <div id="prGovde"></div>
@@ -3637,10 +3647,8 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 <div class="page" id="page-watchlist">
 <div class="page-body">
   <div class="pt-hdr"><div class="pt-title">Takip <span>Listem</span></div><span class="hm-durum" id="tkDurum" style="margin-left:10px"></span></div>
-  <div class="pv-intro">Takip etmek istediğin hisseleri ekle — canlı fiyat ve günlük değişim burada. Liste bu cihazda saklanır.</div>
   <div class="tk-ekle">
-    <input class="tk-in" id="tkTicker" placeholder="Hisse kodu (THYAO, AAPL…)" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')tkEkle()"/>
-    <select class="tk-sel" id="tkEx"><option value="BIST">BİST</option><option value="US">ABD</option></select>
+    <input class="tk-in" id="tkTicker" placeholder="Şirket ara — THYAO, AAPL…" autocomplete="off" spellcheck="false"/>
     <button class="tk-btn" onclick="tkEkle()">+ Ekle</button>
   </div>
   <div id="tkListe"></div>
@@ -3653,15 +3661,11 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 <div class="page" id="page-harita">
 <div class="page-body">
   <div class="pt-hdr"><div class="pt-title">Piyasa <span>Verileri</span></div><span class="hm-durum" id="pvDurum" style="margin-left:10px"></span></div>
-  <div class="pv-intro">
-    Endeksler, sektörler ve emtia/kripto — her satırda <strong>1 gün, 1 hafta, 1 ay, YBB, 1 yıl ve 3 yıl</strong> getirisi.
-    Başlığa tıklayarak sırala; hangi dönemde paranın nereye aktığını buradan okursun.
-  </div>
   <div class="pv-ust">
     <button class="db-mini-btn" onclick="pvYenile()">YENİLE ↻</button>
   </div>
   <div id="pvGovde"><div class="pv-bos">Piyasa verileri hazırlanıyor…</div></div>
-  <div class="pv-alt">Veri: Yahoo Finance · getiriler fiyat bazlı, temettü hariç · YBB = yıl başından bu yana</div>
+  <div class="pv-alt">Yahoo Finance · temettü hariç · YBB = yıl başından bu yana</div>
 </div>
 </div>
 
@@ -3673,10 +3677,6 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <div class="sk-kapsam" id="skKapsam"></div>
   </div>
   <div class="pt-hdr"><div class="pt-title" id="skBaslik">Sektör</div><span class="hm-durum" id="skDurum" style="margin-left:10px"></span></div>
-  <div class="sk-intro">
-    Sektördeki şirketlerin <strong>1 ay, 3 ay, 6 ay ve 1 yıllık</strong> getirileri.
-    Başlığa tıklayarak sırala, satıra tıklayarak hisseyi analiz ekranında aç.
-  </div>
   <div class="sk-ozet" id="skOzet"></div>
   <div class="sk-sar"><div class="sk-tablo" id="skTablo"><div class="sk-yukleniyor">Sektör verisi hazırlanıyor…</div></div></div>
   <div class="sk-durum" id="skNot"></div>
@@ -5479,6 +5479,7 @@ if (!localStorage.getItem('baris_fw_seen')) {
 <script src="/admin-panel.js"></script>
 <script src="/analyze-features.js"></script>
 <script src="/score-gauge.js"></script>
+<script src="/arama.js"></script>
 <script src="/heatmap.js"></script>
 <script src="/market-data.js"></script>
 <script src="/profil.js"></script>
@@ -7094,20 +7095,23 @@ function garpAnalizAc(ticker) {
     try{ localStorage.setItem(TK_KEY, JSON.stringify(liste)); }catch(e){}
   }
 
-  // Ekleme iki yerden yapılabiliyor (takip sayfası ve dashboard kartı),
-  // ikisi de aynı çekirdeği kullansın
-  function tkEkleCekirdek(inpId, selId){
+  /* Ekleme iki yerden yapılabiliyor (takip sayfası ve dashboard kartı),
+     ikisi de aynı çekirdeği kullansın. Borsa artık sorulmuyor: koddan
+     çözülüyor (evren tablosu → sunucu araması), bulunamazsa ABD. */
+  async function tkEkleCekirdek(inpId, borsa){
     const inp = document.getElementById(inpId);
-    const sel = document.getElementById(selId);
     if (!inp) return;
     const tk = (inp.value||'').toUpperCase().replace(/[^A-Z0-9.]/g,'');
-    const ex = (sel && sel.value) || 'BIST';
     if (!tk){ inp.focus(); return; }
+    let x = borsa;
+    if (!x && typeof window.aramaBorsaBul === 'function') x = await window.aramaBorsaBul(tk);
+    const ex = x === 'BIST' ? 'BIST' : 'US';
     const liste = tkAl();
-    if (liste.some(x => x.tk===tk && x.ex===ex)){
-      // Zaten listede — girişi kısaca kırmızıya çevirip bırak
+    if (liste.some(item => item.tk===tk)){
+      // Zaten listede — girişi kısaca uyarı rengine çevirip bırak
       inp.style.borderColor='var(--warn)';
       setTimeout(()=>{ inp.style.borderColor=''; }, 900);
+      inp.value = '';
       return;
     }
     liste.push({ tk, ex });
@@ -7117,8 +7121,8 @@ function garpAnalizAc(ticker) {
     tkCiz(); tkMini();
     if (typeof window.trackEvent==='function') window.trackEvent('takip_ekle', { ticker:tk, exchange:ex });
   }
-  window.tkEkle = function(){ tkEkleCekirdek('tkTicker', 'tkEx'); };
-  window.tkHizliEkle = function(){ tkEkleCekirdek('dbTkIn', 'dbTkEx'); };
+  window.tkEkle = function(borsa){ tkEkleCekirdek('tkTicker', typeof borsa==='string'?borsa:null); };
+  window.tkHizliEkle = function(borsa){ tkEkleCekirdek('dbTkIn', typeof borsa==='string'?borsa:null); };
 
   window.tkSil = function(tk, ex){
     tkYaz(tkAl().filter(x => !(x.tk===tk && x.ex===ex)));
@@ -7144,7 +7148,7 @@ function garpAnalizAc(ticker) {
     const liste = tkAl();
     if (durumEl) durumEl.textContent = liste.length ? liste.length + ' hisse' : '';
     if (!liste.length){
-      kap.innerHTML = '<div class="tk-bos">Listen boş. Yukarıdan bir hisse kodu ekle —<br>canlı fiyatı ve günlük değişimi burada görürsün.</div>';
+      kap.innerHTML = '<div class="tk-bos">Listen boş — yukarıdan hisse ekle.</div>';
       return;
     }
     const par = (v) => (v==null || !isFinite(v)) ? '—'
@@ -7195,7 +7199,7 @@ function garpAnalizAc(ticker) {
     const liste = tkAl();
     if (durumEl) durumEl.textContent = liste.length ? liste.length + ' hisse' : '';
     if (!liste.length){
-      kap.innerHTML = '<div class="db-bos">Henüz hisse eklemedin. Yukarıdan kod gir, buradan takip et.</div>';
+      kap.innerHTML = '<div class="db-bos">Liste boş — yukarıdan hisse ekle.</div>';
       return;
     }
     const gosterilen = liste.slice(0, 8);
@@ -7416,6 +7420,15 @@ function garpAnalizAc(ticker) {
   // terminale doğrudan girişte o çağrı olmadığı için kart ilk gezinmeye
   // kadar boş kalıyordu. Açılışta bir kez kendimiz basıyoruz.
   if (document.body.classList.contains('route-terminal')){ tkMini(); tkCiz(); }
+
+  /* Arama kutularına öneri paneli: kod yazmak yerine listeden şirket
+     seçiliyor, borsa da seçimle birlikte geliyor (arama.js). */
+  if (typeof window.aramaKur === 'function'){
+    window.aramaKur('dbAra',    h => { if (window.prAc) window.prAc(h.t); }, () => dbAraGit());
+    window.aramaKur('prTicker', h => { if (window.prAc) window.prAc(h.t); }, () => prAra());
+    window.aramaKur('tkTicker', h => { const e=document.getElementById('tkTicker'); if(e){ e.value=h.t; window.tkEkle(h.x); } }, () => window.tkEkle());
+    window.aramaKur('dbTkIn',   h => { const e=document.getElementById('dbTkIn');   if(e){ e.value=h.t; window.tkHizliEkle(h.x); } }, () => window.tkHizliEkle());
+  }
 })();
 </script>
 </body>

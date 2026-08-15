@@ -13,7 +13,21 @@ export default async function handler(req, res) {
   if (type === 'piyasa') return getPiyasaVerileri(req, res);
   if (type === 'bilanco') return getBilanco(req, res);
   if (type === 'search' && ticker) return searchTicker(ticker, res);
+  if (type === 'evren') return getEvren(res);
   return res.status(400).json({ error: 'Invalid' });
+}
+
+/* ── ARAMA EVRENİ ────────────────────────────────────────────────
+   Isı haritası evreninin arama için gereken üç alanı. İstemci bunu
+   bir kez çekip yerelde süzüyor: her tuş vuruşunda ağ isteği yok,
+   öneri listesi anında açılıyor. Evren dışındaki kodlar için istemci
+   type=search'e düşüyor. */
+function getEvren(res) {
+  const sade = (h) => ({ t: h.t, n: h.n, x: h.x, s: h.s });
+  res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800');
+  return res.status(200).json({
+    sirketler: [...US_EVREN.map(sade), ...BIST_EVREN.map(sade)],
+  });
 }
 
 /* ── BİLANÇO AKIŞI ───────────────────────────────────────────────

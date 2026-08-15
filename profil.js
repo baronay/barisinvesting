@@ -234,6 +234,10 @@
       durum.veri = j;
       durum.sekme = 'ozet';   // yeni şirkette hep özetle başla
       ciz();
+      // Arama kutusu boşken "son bakılanlar" olarak çıksın
+      if (typeof window.aramaSonEkle === 'function') {
+        window.aramaSonEkle(tk, (j.kunye && j.kunye.ad) || tk, borsaKodu(j.kunye && j.kunye.borsa));
+      }
       if (durumEl) {
         const saat = new Date(j.ts).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
         durumEl.textContent = `${tk} · ${saat}`;
