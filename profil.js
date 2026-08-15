@@ -95,8 +95,8 @@
       const satirlar = bolum.satirlar.filter(s => s.tablo === grup);
       if (!satirlar.length) continue;
       govde += `<tr class="pr-grup"><td colspan="${bolum.donemler.length + 1}">${esc(TABLO_AD[grup])}</td></tr>`;
-      govde += satirlar.map(s => `<tr>
-        <td class="pr-kalem">${esc(s.ad)}</td>
+      govde += satirlar.map(s => `<tr class="pr-satir" data-kalem="${esc(s.ad)}" data-tur="${ceyrek ? 'ceyrek' : 'yil'}" title="${esc(s.ad)} — dönemsel grafiği aç">
+        <td class="pr-kalem">${esc(s.ad)}<span class="pr-grafik-ik">▊</span></td>
         ${s.d.map((v, i) => {
           const dg = degisimHtml(degisim(v, s.d[i + 1]));
           return `<td class="${v != null && v < 0 ? 'pr-eksi' : ''}">
@@ -115,6 +115,126 @@
       </div>
     </div>`;
   }
+
+  /* ═══ DÖNEMSEL GRAFİK ═══════════════════════════════════════
+     Tablodaki bir kalem tıklanınca o kalemin dönem dönem seyri.
+     Tabloda rakamlar var ama eğilim görünmüyor; grafik onu veriyor.
+     Kütüphane yok — saf SVG, projenin sıfır-build yapısına uysun. */
+  const GRF = { kalem: null, tur: 'ceyrek' };
+
+  // Grafik etiketleri dar: "391,0 Mlr" yerine "391 Mlr" yeterli
+  function kisaDeger(v, birim) {
+    if (v == null || !isFinite(v)) return '—';
+    if (birim === 'USD/hisse') return hisseBasi(v);
+    const isaret = v < 0 ? '-' : '';
+    const m = Math.abs(v);
+    const bic = (x) => (x >= 100 ? Math.round(x) : Math.round(x * 10) / 10).toLocaleString('tr-TR');
+    if (m >= 1e12) return `${isaret}${bic(m / 1e12)} Tn`;
+    if (m >= 1e9) return `${isaret}${bic(m / 1e9)} Mlr`;
+    if (m >= 1e6) return `${isaret}${bic(m / 1e6)} Mn`;
+    if (m >= 1e3) return `${isaret}${bic(m / 1e3)} B`;
+    return `${isaret}${Math.round(m)}`;
+  }
+
+  // Kalemi hangi bölümlerde bulabiliyoruz — yıllık/çeyreklik geçişi
+  // yalnızca ikisinde de varsa gösteriliyor
+  function seriBul(kalem, tur) {
+    const v = durum.veri;
+    const bolum = tur === 'yil' ? (v && v.yillik) : (v && v.ceyreklik);
+    if (!bolum || !bolum.satirlar) return null;
+    const satir = bolum.satirlar.find(s => s.ad === kalem);
+    if (!satir) return null;
+    // Dönemler yeniden eskiye geliyor; grafik soldan sağa eskiden yeniye
+    const noktalar = bolum.donemler.map((d, i) => ({ d, v: satir.d[i] })).reverse();
+    return { satir, noktalar };
+  }
+
+  function grafikCiz() {
+    const kap = document.getElementById('prGrafikGovde');
+    if (!kap) return;
+    const seri = seriBul(GRF.kalem, GRF.tur);
+    if (!seri || !seri.noktalar.some(n => n.v != null)) {
+      kap.innerHTML = '<div class="pv-bos">Bu kalem için veri yok.</div>';
+      return;
+    }
+    const nk = seri.noktalar;
+    const birim = seri.satir.birim;
+    const ceyrek = GRF.tur === 'ceyrek';
+
+    // viewBox genişliği sabit, yükseklik ekrana göre: oran korunduğu için
+    // dar ekranda 900×300'lük kutu 100 piksellik ezik bir şerit oluyor.
+    const dar = window.innerWidth < 700;
+    const G = 900, Y = dar ? 560 : 300;
+    const ustBosluk = dar ? 48 : 26, altBosluk = dar ? 64 : 34;
+    const degerler = nk.map(n => (n.v == null || !isFinite(n.v)) ? null : n.v);
+    const enB = Math.max(0, ...degerler.filter(v => v != null));
+    const enK = Math.min(0, ...degerler.filter(v => v != null));
+    const aralik = (enB - enK) || 1;
+    const alan = Y - ustBosluk - altBosluk;
+    const sifirY = ustBosluk + (enB / aralik) * alan;     // sıfır çizgisi
+    const adim = G / nk.length;
+    const kalinlik = Math.max(6, Math.min(46, adim * 0.56));
+
+    const cubuklar = nk.map((n, i) => {
+      const orta = adim * i + adim / 2;
+      if (n.v == null || !isFinite(n.v)) {
+        return `<text class="pr-gr-bos" x="${orta}" y="${sifirY - 6}" text-anchor="middle">—</text>`;
+      }
+      const yuk = Math.abs(n.v) / aralik * alan;
+      const y = n.v >= 0 ? sifirY - yuk : sifirY;
+      const artı = n.v >= 0;
+      // Etiket sıfırın hangi tarafındaysa oraya: negatif çubuğun altına
+      const etY = artı ? y - (dar ? 12 : 7) : y + yuk + (dar ? 24 : 13);
+      return `<rect class="pr-gr-cubuk ${artı ? 'pos' : 'neg'}" x="${orta - kalinlik / 2}" y="${y}" width="${kalinlik}" height="${Math.max(1, yuk)}" rx="2"></rect>
+        <text class="pr-gr-deger" x="${orta}" y="${etY}" text-anchor="middle">${esc(kisaDeger(n.v, birim))}</text>`;
+    }).join('');
+
+    // Dar ekranda her dönemi yazmak okunmaz oluyor — birini atla
+    const atla = nk.length > 12 ? 2 : 1;
+    const etiketler = nk.map((n, i) => (i % atla) ? '' :
+      `<text class="pr-gr-donem" x="${adim * i + adim / 2}" y="${Y - (dar ? 20 : 12)}" text-anchor="middle">${esc(donemAd(n.d, ceyrek))}</text>`).join('');
+
+    const v = durum.veri;
+    const ikisiVar = !!(v && v.yillik && v.ceyreklik
+      && v.yillik.satirlar.some(s => s.ad === GRF.kalem)
+      && v.ceyreklik.satirlar.some(s => s.ad === GRF.kalem));
+    const sekme = ikisiVar ? `<div class="pv-sek-grp pr-gr-sek">
+        <button class="pv-sek${GRF.tur === 'ceyrek' ? ' active' : ''}" data-gtur="ceyrek">Çeyreklik</button>
+        <button class="pv-sek${GRF.tur === 'yil' ? ' active' : ''}" data-gtur="yil">Yıllık</button>
+      </div>` : '';
+
+    const son = nk[nk.length - 1];
+    kap.innerHTML = `
+      <div class="pr-gr-ust">
+        <div class="pr-gr-baslik">
+          <span class="pr-gr-ad">${esc(GRF.kalem)}</span>
+          <span class="pr-gr-son">${esc(deger(son.v, birim))}<span class="pr-gr-son-d">${esc(donemAd(son.d, ceyrek))}</span></span>
+        </div>
+        ${sekme}
+      </div>
+      <div class="pr-gr-alan">
+        <svg viewBox="0 0 ${G} ${Y}" class="pr-gr-svg">
+          <line class="pr-gr-sifir" x1="0" y1="${sifirY}" x2="${G}" y2="${sifirY}"></line>
+          ${cubuklar}${etiketler}
+        </svg>
+      </div>
+      <div class="pr-gr-not">${birim === 'USD/hisse' ? 'Hisse başına, USD' : 'Değerler USD cinsindendir'}</div>`;
+  }
+
+  function grafikAc(kalem, tur) {
+    if (!durum.veri) return;
+    GRF.kalem = kalem;
+    GRF.tur = seriBul(kalem, tur) ? tur : (tur === 'ceyrek' ? 'yil' : 'ceyrek');
+    const ov = document.getElementById('prGrafik');
+    if (!ov) return;
+    ov.classList.add('acik');
+    grafikCiz();
+  }
+  function grafikKapat() {
+    const ov = document.getElementById('prGrafik');
+    if (ov) ov.classList.remove('acik');
+  }
+  window.prGrafikKapat = grafikKapat;
 
   function kunyeCiz(k) {
     const satir = (etiket, d) => d ? `<div class="pr-k-row"><span class="pr-k-l">${esc(etiket)}</span><span class="pr-k-v">${esc(d)}</span></div>` : '';
@@ -258,9 +378,23 @@
   // Sekme tıklaması — içerik her çizimde yeniden basıldığı için delege
   document.addEventListener('click', e => {
     const b = e.target.closest('#prGovde [data-sekme]');
-    if (!b) return;
-    durum.sekme = b.dataset.sekme;
-    ciz();
+    if (b) { durum.sekme = b.dataset.sekme; ciz(); return; }
+
+    // Tablo satırı → dönemsel grafik
+    const satir = e.target.closest('#prGovde tr.pr-satir');
+    if (satir) { grafikAc(satir.dataset.kalem, satir.dataset.tur); return; }
+
+    // Grafik penceresinde yıllık/çeyreklik geçişi
+    const gt = e.target.closest('#prGrafik [data-gtur]');
+    if (gt) { GRF.tur = gt.dataset.gtur; grafikCiz(); return; }
+
+    // Boşluğa tıklayınca kapat (kartın kendisi hariç)
+    const ov = document.getElementById('prGrafik');
+    if (ov && ov.classList.contains('acik') && e.target === ov) grafikKapat();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') grafikKapat();
   });
 
   window.prAra = function () {

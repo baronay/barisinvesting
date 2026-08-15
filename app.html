@@ -2576,6 +2576,34 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .pr-tablo td{color:var(--text);vertical-align:top;}
 .pr-tablo .pr-eksi .pr-v{color:var(--danger);}
 .pr-v{display:block;font-variant-numeric:tabular-nums;}
+/* Kalem satırı tıklanabilir: dönemsel grafik açılıyor */
+.pr-tablo tr.pr-satir{cursor:pointer;}
+.pr-tablo tr.pr-satir:hover{background:var(--surface2);}
+.pr-tablo tr.pr-satir:hover .pr-kalem{color:var(--accent);}
+.pr-grafik-ik{display:inline-block;margin-left:7px;font-size:8px;color:var(--muted2);opacity:0;transition:opacity .12s;}
+.pr-tablo tr.pr-satir:hover .pr-grafik-ik{opacity:1;color:var(--accent);}
+
+/* Dönemsel grafik penceresi */
+.pr-grafik{display:none;position:fixed;inset:0;z-index:1000;background:rgba(6,9,13,.72);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:24px;}
+.pr-grafik.acik{display:flex;}
+.pr-gr-kart{position:relative;width:min(960px,100%);max-height:88vh;overflow-y:auto;background:var(--surface2);border:1px solid var(--border-s);border-radius:12px;padding:18px 20px 14px;box-shadow:0 30px 80px rgba(0,0,0,.6);}
+.pr-gr-kapat{position:absolute;top:12px;right:12px;background:none;border:1px solid var(--border-s);color:var(--muted-s);font-size:13px;line-height:1;width:28px;height:28px;border-radius:6px;cursor:pointer;transition:color .15s,border-color .15s;}
+.pr-gr-kapat:hover{color:var(--text);border-color:var(--accent2);}
+.pr-gr-ust{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:0 34px 14px 0;}
+.pr-gr-ad{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text2);}
+.pr-gr-son{display:block;margin-top:5px;font-family:var(--font-mono);font-size:19px;font-weight:600;color:var(--text);}
+.pr-gr-son-d{margin-left:9px;font-size:9.5px;font-weight:400;letter-spacing:1px;color:var(--muted-s);text-transform:uppercase;}
+/* SVG oranı sabit (900×300): yazılar yatay esneyip bozulmasın diye
+   preserveAspectRatio'ya dokunmuyoruz, yükseklik genişlikten geliyor. */
+.pr-gr-alan{width:100%;}
+.pr-gr-svg{display:block;width:100%;height:auto;overflow:visible;}
+.pr-gr-sifir{stroke:var(--border-s);stroke-width:1;vector-effect:non-scaling-stroke;}
+.pr-gr-cubuk.pos{fill:var(--success);} .pr-gr-cubuk.neg{fill:var(--danger);}
+.pr-gr-deger{fill:var(--text2);font-family:var(--font-mono);font-size:11px;}
+.pr-gr-donem{fill:var(--muted);font-family:var(--font-mono);font-size:10px;}
+.pr-gr-bos{fill:var(--muted2);font-family:var(--font-mono);font-size:10px;}
+.pr-gr-not{margin-top:8px;font-family:var(--font-mono);font-size:9px;letter-spacing:.6px;color:var(--muted);}
+@media(max-width:700px){.pr-gr-kart{padding:14px 13px 11px;}.pr-gr-deger{font-size:15px;}.pr-gr-donem{font-size:14px;}}
 .pr-dg{display:block;font-family:var(--font-mono);font-size:8.5px;font-weight:600;margin-top:2px;letter-spacing:.2px;}
 .pr-dg.pos{color:var(--success);} .pr-dg.neg{color:var(--danger);} .pr-dg.neu{color:var(--muted-s);}
 .pr-ay{font-family:var(--font-mono);font-size:8px;color:var(--muted-s);margin-left:5px;letter-spacing:.5px;}
@@ -3653,6 +3681,13 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
     <button class="tk-btn" onclick="prAra()">GETİR →</button>
   </div>
   <div id="prGovde"></div>
+  <!-- Tablo satırına tıklayınca açılan dönemsel grafik -->
+  <div class="pr-grafik" id="prGrafik">
+    <div class="pr-gr-kart">
+      <button class="pr-gr-kapat" onclick="prGrafikKapat()" title="Kapat (Esc)">✕</button>
+      <div id="prGrafikGovde"></div>
+    </div>
+  </div>
 </div>
 </div>
 
