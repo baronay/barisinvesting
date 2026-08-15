@@ -441,6 +441,7 @@ async function fetchYahooData(yahooTicker) {
     roe: null, roa: null, freeCashflow: null, operatingCashflow: null,
     totalCash: null, totalDebt: null, debtToEquity: null, currentRatio: null,
     revenueGrowth: null, earningsGrowth: null,
+    ebitda: null, totalRevenue: null,
     institutionOwnership: null, recommendationKey: null,
     targetMeanPrice: null, numberOfAnalystOpinions: null,
     shortName: null, website: null, sector: null, industry: null,
@@ -563,6 +564,10 @@ async function fetchYahooData(yahooTicker) {
         if (!result.targetMeanPrice)    result.targetMeanPrice   = f(fd.targetMeanPrice);
         if (!result.recommendationKey)  result.recommendationKey = fd.recommendationKey ?? null;
         if (!result.numberOfAnalystOpinions) result.numberOfAnalystOpinions = f(ks.numberOfAnalystOpinions);
+        // FAVÖK marjı: BIST'te en temiz fiyatlama gücü sinyali. Enflasyon
+        // muhasebesi net kârı ve F/K'yı bozuyor, FAVÖK marjı daha az bozuluyor.
+        if (result.ebitda == null)       result.ebitda       = f(fd.ebitda);
+        if (result.totalRevenue == null) result.totalRevenue = f(fd.totalRevenue);
         result.sector   = ap.sector   ?? result.sector;
         result.industry = ap.industry ?? result.industry;
         result.website  = ap.website  ?? result.website;
@@ -963,6 +968,9 @@ export default async function handler(req, res) {
   /* Barış Investing çerçevesi — yedi kriter, günlük GARP taramasının
      (pipeline/global_pipeline.py) mantığıyla aynı hizada. Alan adları
      istemcideki ayrıştırıcıyla birebir aynı, bozma. */
+  /* Sıra önemli: cevap kesilirse en değerli kısım hayatta kalsın.
+     Yedek model 1100 token tavanıyla çalışıyor; kriterler sona kalınca
+     BIST analizlerinde yarısı boş dönüyordu. Kriterler önce yazılıyor. */
   const prompt = `${exLabel} borsasındaki "${cleanTicker}" hissesini Barış Investing çerçevesiyle analiz et.
 
 TICKER: ${cleanTicker}
@@ -971,19 +979,6 @@ GARP_SKOR: [0-100]
 VERDICT: AL|BEKLE|UZAK_DUR
 SUMMARY: [tek cümlede tez: piyasa neyi fiyatlıyor, rakamlar ne diyor, senin duruşun ne]
 RISK: [en can alıcı risk, 1 cümle]
-ADIL_GIRIS: [fiyat aralığı] | [tek cümle gerekçe]
-IZLENECEK: [metrik ve eşik] | [ne zaman test edilecek]
-PORTFOY: [portföydeki rol] | [makul ağırlık tavanı]
-
-MULTIPLES_START
-PE: [sayı] | [ucuz/adil/pahalı]
-PB: [sayı] | [ucuz/adil/pahalı]
-EV_EBITDA: [sayı] | [ucuz/adil/pahalı]
-PEG: [sayı] | [ucuz/adil/pahalı]
-RSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]
-PRICE_52W: [düşük]-[yüksek] | [mevcut]
-ANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]
-MULTIPLES_END
 
 CRITERIA_START
 ANLATI: PASS|FAIL|NEUTRAL | [açıklama]
@@ -993,7 +988,22 @@ BILANCO: PASS|FAIL|NEUTRAL | [açıklama]
 FIYAT: PASS|FAIL|NEUTRAL | [açıklama]
 KATALIZOR: PASS|FAIL|NEUTRAL | [açıklama]
 BOZULMA: PASS|FAIL|NEUTRAL | [açıklama]
-CRITERIA_END`;
+CRITERIA_END
+
+ADIL_GIRIS: [fiyat aralığı] | [tek cümle gerekçe]
+IZLENECEK: [metrik ve eşik] | [ne zaman test edilecek]
+PORTFOY: [portföydeki rol] | [makul ağırlık tavanı]
+HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]
+
+MULTIPLES_START
+PE: [sayı] | [ucuz/adil/pahalı]
+PB: [sayı] | [ucuz/adil/pahalı]
+EV_EBITDA: [sayı] | [ucuz/adil/pahalı]
+PEG: [sayı] | [ucuz/adil/pahalı]
+RSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]
+PRICE_52W: [düşük]-[yüksek] | [mevcut]
+ANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]
+MULTIPLES_END`;
 
 
   // Server-side kredi kontrolü
@@ -1090,7 +1100,14 @@ KRİTERLERİN ANLAMI:
 - KATALIZOR: Önümüzdeki 6-12 ayda tezi çalıştıracak tarihli olay + teknik teyit.
 - BOZULMA: Tezi çürütecek somut eşik tanımlanabiliyor ve risk-getiri asimetrisi lehine mi?
 
-TÜRK HİSSELERİ: Nominal büyüme TÜFE altındaysa "REEL KÜÇÜLME" uyarısı ver. BIST'te F/K ve F/DD güvenilmezse tek başına PASS/FAIL yapma, ROE, FCF ve operasyonel metrikler üzerinden değerlendir. TL bazlı büyümeyi enflasyondan arındırmadan büyüme sayma.`;
+TÜRK HİSSELERİ (BIST) — AYRI OKUNUR:
+- UCUZLUK TEK BAŞINA TEZ DEĞİL. BIST'te makro belirsizlik yüzünden iskonto zaten otomatiktir; "F/K 4, çok ucuz" demek analiz değildir. Asıl soru: bu iskonto haklı mı, yoksa şirket kalitesi iskontoyu hak etmiyor mu? Cevabı marjda ve reel büyümede ara.
+- FAVÖK MARJI BURADA EN ÖNEMLİ GÖSTERGEDİR. Enflasyon muhasebesi net kârı ve F/K'yı bozar; FAVÖK marjı ve onun trendi (genişliyor mu, daralıyor mu) şirketin fiyatlama gücünü gösteren en temiz sinyaldir. Marj daralıyorsa nominal büyüme ne kadar yüksek olursa olsun tez zayıftır.
+- REEL BÜYÜME: nominal büyümeyi TÜFE ile karşılaştır. TÜFE altında kalıyorsa "REEL KÜÇÜLME" uyarısı ver ve büyüme sayma. TÜFE üstü büyüme gerçek başarıdır, bunu vurgula.
+- BORÇ VE FAİZ: yüksek faiz ortamında net borç/FAVÖK ve refinansman riski, ABD şirketlerine göre çok daha belirleyicidir. Döviz borcu varsa kur şokuna duyarlılığı yaz.
+- SEKTÖR METRİĞİ: sigortada bileşik oran (%92 altı iyi, %96 üstü alarm) ve teknik kâr / yatırım geliri ayrımı — kâr yatırım gelirine bağımlı hale geldiyse söyle; bankada net faiz marjı ve takipteki kredi oranı; havacılıkta doluluk ve birim gelir; perakendede aynı mağaza satışı ve stok devri; sanayide kapasite kullanımı ve ihracat payı.
+- F/K ve F/DD güvenilmezse tek başına PASS/FAIL verme; ROE, FAVÖK marjı, nakit akışı ve operasyonel metrikler üzerinden karar ver.
+- Global benzerleriyle çarpan kıyası yap: iskonto yüzdesini söyle ve iskontonun makul olup olmadığını tartış.`;
 
   let enrichedPrompt = '';
   if (fd) {
@@ -1127,6 +1144,7 @@ F/K (TTM): ${n(fd.peRatio)} | F/K Forward: ${n(fd.forwardPE)} | F/DD: ${n(fd.pbR
 PEG: ${n(fd.pegRatio)} | EV/FAVÖK: ${n(fd.evEbitda)}
 ROE: ${p(fd.roe)}${roeNote} | ROA: ${p(fd.roa)}
 Brüt Marj: ${p(fd.grossMargin)} | Faaliyet Marjı: ${p(fd.operatingMargin)} | Net Marj: ${p(fd.profitMargin)}
+FAVÖK: ${big(fd.ebitda)} | Hasılat: ${big(fd.totalRevenue)} | FAVÖK Marjı: ${(fd.ebitda != null && fd.totalRevenue) ? `%${(fd.ebitda / fd.totalRevenue * 100).toFixed(1)}` : 'N/A'}
 FCF: ${big(fd.freeCashflow)} | Op.CF: ${big(fd.operatingCashflow)}
 Nakit: ${big(fd.totalCash)} | Borç: ${big(fd.totalDebt)} | Net Nakit: ${big(nc)}
 Borç/Özsermaye: ${n(fd.debtToEquity)} | Cari Oran: ${n(fd.currentRatio)}

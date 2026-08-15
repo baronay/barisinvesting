@@ -495,6 +495,31 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .ai-summary-risk{font-size:10px;color:var(--text2);line-height:1.6;padding:7px 9px;background:var(--surface2);border-left:2px solid var(--danger);margin-bottom:8px;}
 .ai-summary-verdict{font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;}
 .ai-garp{margin-left:8px;color:var(--muted-s);}
+/* Eşik şeridi — şirketin çerçeve bantlarındaki yeri */
+.esik-blok{margin-top:12px;border-top:1px solid var(--rule);padding-top:11px;}
+.esik-bas{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted-s);margin-bottom:9px;}
+.esik-bas span{margin-left:8px;letter-spacing:.6px;text-transform:none;color:var(--muted2);}
+.esik-sat{display:flex;align-items:center;gap:9px;padding:5px 0;}
+.esik-ad{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--muted-s);width:104px;flex-shrink:0;}
+.esik-cizgi{position:relative;flex:1;min-width:60px;display:flex;gap:2px;height:7px;}
+.esik-cizgi .eb{flex:1;border-radius:1px;opacity:.32;}
+.esik-cizgi .eb.ideal{background:var(--success);} .esik-cizgi .eb.iyi{background:#7fa06a;}
+.esik-cizgi .eb.orta{background:var(--warn);} .esik-cizgi .eb.kotu{background:var(--danger);}
+.esik-cizgi b{position:absolute;top:-3px;width:2px;height:13px;background:var(--text);box-shadow:0 0 0 2px var(--surface);}
+.esik-deger{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:600;color:var(--text);width:58px;text-align:right;flex-shrink:0;}
+.esik-not{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.4px;width:96px;flex-shrink:0;}
+.esik-not.ideal{color:var(--success);} .esik-not.iyi{color:#7fa06a;}
+.esik-not.orta{color:var(--warn);} .esik-not.kotu{color:var(--danger);}
+@media(max-width:560px){.esik-ad{width:78px;font-size:8.5px;}.esik-not{width:70px;}}
+/* Kriter sayfasındaki şirket şeridi */
+.crit-sirket{display:flex;align-items:center;gap:9px;margin-bottom:12px;padding:8px 11px;background:var(--surface);border:1px solid var(--border-s);}
+.crit-s-logo{width:24px;height:24px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border-s);border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--muted-s);overflow:hidden;}
+.crit-s-tk{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--text);}
+.crit-s-ad{font-size:11px;color:var(--muted-s);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.crit-s-karar{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:1px;padding:3px 9px;border:1px solid;}
+.crit-s-karar.pos{color:var(--success);border-color:rgba(34,197,94,.35);}
+.crit-s-karar.neu{color:var(--warn);border-color:rgba(184,155,106,.35);}
+.crit-s-karar.neg{color:var(--danger);border-color:rgba(240,82,82,.35);}
 /* Tezin aksiyona dönen kısmı: nereden alınır, ne izlenir, ne kadar tutulur */
 .ai-tez-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0 9px;}
 .ai-tez-k{background:var(--surface2);border:1px solid var(--border-s);border-top:2px solid var(--accent2);padding:9px 11px;}
@@ -3563,6 +3588,11 @@ body.pr-kilit{overflow:hidden;}
         <div class="rd-card"><div class="rd-lbl">Gelir Büyümesi</div><div class="rd-val" id="rdRevG">—</div><div class="rd-sub">YoY</div></div>
         <div class="rd-card"><div class="rd-lbl">Kurumsal Sahiplik</div><div class="rd-val" id="rdInst">—</div><div class="rd-sub" id="rdInstS">—</div></div>
       </div>
+      <!-- Eşik şeridi: şirketin çerçevenin bantlarında nerede durduğu -->
+      <div class="esik-blok" id="esikBlok" style="display:none">
+        <div class="esik-bas">Eşikler<span>çerçevenin bantlarına göre konum</span></div>
+        <div id="esikListe"></div>
+      </div>
     </div>
     <div class="result-col result-card" id="resultAiCol" style="display:none">
       <div class="sec-title" style="margin-bottom:10px">Yapay Zeka Özeti</div>
@@ -3649,6 +3679,13 @@ body.pr-kilit{overflow:hidden;}
   </div>
   <div class="page-body" style="padding-top:0">
   <div class="crit-progress" id="critProgress"></div>
+  <!-- Hangi şirketin kriterine bakıyoruz: kriter sayfasında bağlam yoktu -->
+  <div class="crit-sirket" id="critSirket" style="display:none">
+    <span class="crit-s-logo" id="critSLogo"></span>
+    <span class="crit-s-tk" id="critSTk">—</span>
+    <span class="crit-s-ad" id="critSAd">—</span>
+    <span class="crit-s-karar" id="critSKarar">—</span>
+  </div>
   <div class="dh"><div class="dnum" id="critNum">01</div><div><div class="dname" id="critName">—</div><div class="ddesc" id="critDesc">—</div></div><div id="critPill"></div></div>
   <div class="ablock"><div class="ablock-t">Analiz</div><div class="atext" id="critAna">—</div></div>
   <div class="ablock"><div class="ablock-t">Yatırımcının Yaklaşımı</div><div class="atext" id="critCtx">—</div></div>
@@ -3845,15 +3882,17 @@ const EX_CFG={BIST:{l:'BIST',fh:'#f-tr',cur:'₺',tv:(t)=>`BIST:${t}`},NYSE:{l:'
 /* Barış Investing çerçevesi — tek çerçeve. Kriterler sitedeki tezlerin
    yönteminden çıkarıldı: her tezin merkezinde piyasanın anlatısıyla
    bilançonun çatışması var, fiyat ayrı bir karar, tez somut bir eşikle
-   çürütülebiliyor. Prompt sunucuda (api/analyze.js) üretiliyor. */
+   çürütülebiliyor. "Yatırımcının yaklaşımı" metinleri tek bir tezin
+   detayını değil, her hisseye uygulanan genel ilkeyi anlatır.
+   Prompt sunucuda (api/analyze.js) üretiliyor. */
 const FW_BARIS={name:'Barış Investing',criteria:[
-  {name:'Anlatı ↔ Bilanço',desc:'Piyasanın fiyatladığı hikâye ile rakamlar ayrışıyor mu?',ctx:'Her tezin merkezinde bu çatışma var: "Piyasa erozyon fiyatlıyor, bilanço hızlanma gösteriyor." Ayrışma yoksa fırsat da yoktur.'},
-  {name:'Büyüme Motoru',desc:'Büyümeyi ne sürüklüyor, ivme artıyor mu?',ctx:'Şirkete özgü metrikle kanıtlanır: yazılımda cRPO ve ACV, sigortada MCR, yarı iletkende brüt marj ve kapasite döngüsü.'},
-  {name:'İş Kalitesi',desc:'Marj, sermaye verimliliği, nakde dönüşüm ve yapışkanlık.',ctx:'%97 yenileme oranı bir erozyon değil, derinleşme göstergesidir. Muhasebe kârı değil nakit konuşur.'},
-  {name:'Bilanço & Sulandırma',desc:'Borç, net nakit, hisse sayısı ve SBC dahil gerçek maliyet.',ctx:'Tam sulandırılmış hisseyle hesaplanan gerçek piyasa değeri, manşetteki değerden farklıdır. Hisse bazlı ödeme gerçek giderdir.'},
-  {name:'Fiyat & Adil Giriş',desc:'Değerleme bantları ve adil giriş bölgesi — fiyat geldi mi?',ctx:'Kaliteli şirket her fiyattan alınmaz. Fiyat bölgenin üstündeyse kaliteyi teslim et, peşinden koşma; karar İZLE olur.'},
-  {name:'Katalizör',desc:'Önümüzdeki 6-12 ayda tezi çalıştıracak tarihli olay ve teknik teyit.',ctx:'Bilanço tarihi, sözleşme yenilemesi, kapasite devreye alımı. RSI 30-50 bandı ve 50/200 günlük ortalama teyit eder.'},
-  {name:'Bozulma Eşiği',desc:'Tezi çürütecek somut eşik ve risk-getiri asimetrisi.',ctx:'"cRPO %18\'in altına inerse tez çöker" cümlesini kuramıyorsan, elinde tez değil temenni vardır.'}
+  {name:'Anlatı ↔ Bilanço',desc:'Piyasanın fiyatladığı hikâye ile rakamlar ayrışıyor mu?',ctx:'Fiyat her zaman bir hikâye taşır: "bu şirket eriyor", "bu sektör bitti", "buranın büyümesi durdu". İş, o hikâyeyi bilançoya sormaktır. Rakamlar hikâyeyi doğruluyorsa fırsat yoktur, piyasa haklıdır. Rakamlar tersini söylüyorsa ve bu ayrışmanın neden sürdüğünü açıklayabiliyorsan, tez oradadır. Ayrışma yoksa bunu da söylemek analizdir.'},
+  {name:'Büyüme Motoru',desc:'Büyümeyi ne sürüklüyor, ivme artıyor mu?',ctx:'Ciro büyümesi tek başına bir şey anlatmaz; onu üreten motoru görmek gerekir. Her sektörün kendi göstergesi vardır: yazılımda sözleşmeye bağlanmış gelir, sigortada prim üretimi ve teknik kâr, bankada faiz marjı, sanayide kapasite ve fiyatlama. Motor hızlanıyor mu yavaşlıyor mu sorusunun cevabı bu metriklerde saklıdır — manşet ciroda değil.'},
+  {name:'İş Kalitesi',desc:'Marj, sermaye verimliliği, nakde dönüşüm ve yapışkanlık.',ctx:'Kaliteli iş, kazandığı parayı elinde tutan ve müşterisini kaybetmeyen iştir. Marj trendi fiyatlama gücünü, sermaye getirisi yönetimin verimliliğini, kârın nakde dönüşme oranı ise kârın gerçek olup olmadığını gösterir. Muhasebe kârı yorum kabul eder, nakit etmez.'},
+  {name:'Bilanço & Sulandırma',desc:'Borç, net nakit, hisse sayısı ve gerçek maliyet.',ctx:'Bilanço, kötü senaryoda şirketin ne kadar dayanacağını söyler. Borcun büyüklüğü kadar vadesi ve para birimi de önemlidir. Hisse sayısındaki artış sessiz bir maliyettir: tam sulandırılmış hesapla bakıldığında şirketin gerçek değeri manşetten farklı çıkar. Hisse bazlı ödemeler gerçek giderdir.'},
+  {name:'Fiyat & Adil Giriş',desc:'Değerleme bantları ve adil giriş bölgesi — fiyat geldi mi?',ctx:'Kalite ile fiyat iki ayrı karardır. Şirketin iyi olması, bugünkü fiyatın iyi olduğu anlamına gelmez. Önce nakit akışının desteklediği bir adil giriş bölgesi belirlenir, sonra fiyatın orada olup olmadığına bakılır. Fiyat bölgenin üstündeyse doğru cevap "izliyorum"dur; iyi şirketin peşinden koşmak, kötü şirket almak kadar pahalıya gelir.'},
+  {name:'Katalizör',desc:'Tezi çalıştıracak tarihli olay ve teknik teyit.',ctx:'Doğru tez, yanlış zamanda para kaybettirir. Tezi çalıştıracak bir olay ve o olayın takvimi olmalı: bilanço, sözleşme, kapasite devreye alımı, düzenleme değişikliği. Teknik tarafta trend ve momentum girişin zamanlamasını teyit eder; katalizörün yerini tutmaz ama erken girmeyi pahalı hale getirir.'},
+  {name:'Bozulma Eşiği',desc:'Tezi çürütecek somut eşik ve risk-getiri asimetrisi.',ctx:'Bir tez, hangi şartta yanlış olacağını söyleyemiyorsa tez değil temennidir. Somut olmalı: hangi metrik, hangi seviyeye gelirse çıkılır ve bu ne zaman görülecek. Bu eşik aynı zamanda pozisyonun büyüklüğünü belirler — aşağı riski sınırlı, yukarı potansiyeli açık kurgular aranır.'}
 ],keys:['ANLATI','MOTOR','KALITE','BILANCO','FIYAT','KATALIZOR','BOZULMA']};
 // Eski analizler (fw=buffett/lynch/...) geçmişte ve paylaşılan bağlantılarda
 // duruyor; hepsi aynı çerçeveye düşsün ki ekran boş kalmasın.
@@ -4013,6 +4052,59 @@ function checkMasterBadge(ticker, score, maxScore, fwKey) {
 }
 
 // ── ŞİRKET PROFİLİ ──────────────────────────────────────────────
+
+/* ── EŞİK ŞERİDİ ────────────────────────────────────────────────
+   Çerçevenin bantları (günlük GARP taramasıyla aynı) ve şirketin o
+   bantlarda nerede durduğu. Rakamı görmek yetmiyor; "18 F/K iyi mi"
+   sorusunun cevabı ekranda dursun diye. */
+const ESIKLER=[
+  {ad:'F/K',anahtar:'peRatio',bantlar:[{u:10,s:'iyi',e:'ucuz'},{u:18,s:'ideal',e:'ideal'},{u:28,s:'iyi',e:'kabul'},{u:45,s:'orta',e:'pahalı'},{u:Infinity,s:'kotu',e:'elenir'}]},
+  {ad:'PD/DD',anahtar:'pbRatio',bantlar:[{u:2,s:'ideal',e:'ideal'},{u:4,s:'iyi',e:'iyi'},{u:7,s:'orta',e:'tolere'},{u:12,s:'kotu',e:'pahalı'},{u:Infinity,s:'kotu',e:'elenir'}]},
+  {ad:'FD/FAVÖK',anahtar:'evEbitda',bantlar:[{u:8,s:'iyi',e:'ucuz'},{u:12,s:'ideal',e:'ideal'},{u:18,s:'iyi',e:'kabul'},{u:25,s:'orta',e:'pahalı'},{u:Infinity,s:'kotu',e:'çok pahalı'}]},
+  {ad:'ROE',anahtar:'roe',yuzde:true,bantlar:[{u:10,s:'kotu',e:'zayıf'},{u:20,s:'iyi',e:'kabul'},{u:40,s:'ideal',e:'ideal'},{u:Infinity,s:'orta',e:'kaldıraç?'}]},
+  {ad:'FAVÖK Marjı',anahtar:'favokMarji',yuzde:true,tr:true,bantlar:[{u:10,s:'kotu',e:'zayıf'},{u:20,s:'iyi',e:'kabul'},{u:35,s:'ideal',e:'güçlü'},{u:Infinity,s:'ideal',e:'çok güçlü'}]},
+  {ad:'Gelir Büyümesi',anahtar:'revenueGrowth',yuzde:true,bantlar:[{u:5,s:'kotu',e:'motor yok'},{u:15,s:'orta',e:'yavaş'},{u:30,s:'ideal',e:'ideal'},{u:60,s:'iyi',e:'hızlı'},{u:Infinity,s:'orta',e:'sürdürülebilir mi?'}]},
+  {ad:'Borç/Özsermaye',anahtar:'debtToEquity',bantlar:[{u:0.5,s:'ideal',e:'çok düşük'},{u:1,s:'iyi',e:'rahat'},{u:2,s:'orta',e:'takip et'},{u:3,s:'kotu',e:'skoru kırar'},{u:Infinity,s:'kotu',e:'tek başına FAIL'}]},
+];
+
+function esikCiz(fd){
+  const blok=document.getElementById('esikBlok'), liste=document.getElementById('esikListe');
+  if(!blok||!liste) return;
+  if(!fd){ blok.style.display='none'; return; }
+
+  // Borç/Özsermaye Yahoo'da yüzde geliyor (89.76 = 0.90x)
+  const de=fd.debtToEquity!=null?(fd.debtToEquity>5?fd.debtToEquity/100:fd.debtToEquity):null;
+  const favok=(fd.ebitda!=null&&fd.totalRevenue)?fd.ebitda/fd.totalRevenue:null;
+  const deger={peRatio:fd.peRatio,pbRatio:fd.pbRatio,evEbitda:fd.evEbitda,roe:fd.roe,
+               favokMarji:favok,revenueGrowth:fd.revenueGrowth,debtToEquity:de};
+
+  const satirlar=ESIKLER.map(m=>{
+    let v=deger[m.anahtar];
+    if(v==null||!isFinite(v)) return '';
+    if(m.yuzde) v=v*100;
+    let bant=m.bantlar[m.bantlar.length-1], i=0;
+    for(;i<m.bantlar.length;i++){ if(v<=m.bantlar[i].u){ bant=m.bantlar[i]; break; } }
+    // Konum: bulunduğu bandın içinde nerede duruyor
+    const alt=i===0?0:m.bantlar[i-1].u;
+    const ust=isFinite(bant.u)?bant.u:alt*1.6||1;
+    const oran=Math.max(0,Math.min(1,(v-alt)/((ust-alt)||1)));
+    const genislik=((i+oran)/m.bantlar.length)*100;
+    const gosterim=m.yuzde?`%${v.toFixed(1).replace('.',',')}`:v.toFixed(2).replace('.',',');
+    return `<div class="esik-sat">
+      <span class="esik-ad">${esc(m.ad)}</span>
+      <span class="esik-cizgi">
+        ${m.bantlar.map(b=>`<i class="eb ${b.s}"></i>`).join('')}
+        <b style="left:${genislik.toFixed(1)}%"></b>
+      </span>
+      <span class="esik-deger">${gosterim}</span>
+      <span class="esik-not ${bant.s}">${esc(bant.e)}</span>
+    </div>`;
+  }).filter(Boolean).join('');
+
+  if(!satirlar){ blok.style.display='none'; return; }
+  liste.innerHTML=satirlar;
+  blok.style.display='block';
+}
 function renderCompanyProfile(fd, ticker, exchange) { /* kaldırıldı */ }
 
 // STATE
@@ -4473,6 +4565,26 @@ let curCritIdx=0;
 function renderCritDetail(i){
   const fw=FW[curFW];const meta=fw.criteria[i];
   curCritIdx=i;
+  // Şirket şeridi: kriter sayfasında hangi hisseye baktığın belli olsun
+  const cs=document.getElementById('critSirket');
+  if(cs){
+    if(analysisData&&analysisData.ticker){
+      cs.style.display='flex';
+      const lg=document.getElementById('critSLogo');
+      if(lg){
+        lg.textContent=analysisData.ticker.slice(0,2);
+        const im=new Image();
+        im.onload=()=>{lg.textContent='';lg.appendChild(im);im.style.cssText='width:100%;height:100%;object-fit:contain;padding:2px';};
+        im.onerror=()=>{};
+        im.src='/api/logo?ticker='+encodeURIComponent(analysisData.ticker)+'&sz=64';
+      }
+      document.getElementById('critSTk').textContent=analysisData.ticker;
+      document.getElementById('critSAd').textContent=curCo||'';
+      const k=document.getElementById('critSKarar');
+      k.textContent=verdictAd(analysisData.verdict);
+      k.className='crit-s-karar '+(analysisData.verdict==='AL'?'pos':analysisData.verdict==='UZAK_DUR'?'neg':'neu');
+    } else cs.style.display='none';
+  }
   document.getElementById('critTitle').textContent=`${String(i+1).padStart(2,'0')} / ${fw.criteria.length}`;
   document.getElementById('critNum').textContent=String(i+1).padStart(2,'0');
   document.getElementById('critName').textContent=meta.name;document.getElementById('critDesc').textContent=meta.desc;document.getElementById('critCtx').textContent=meta.ctx;
@@ -4630,6 +4742,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   saveToHistory(ticker,company,curEX,fwKey||curFW,score,fw.criteria.length,verdict);
   checkMasterBadge(ticker,score,fw.criteria.length,fwKey||curFW);
   renderCompanyProfile(fd||null,ticker,curEX);
+  esikCiz(fd||null);
   setAnalysisCache(ticker,curEX,fwKey||curFW,textGlobal,fd||null);
   renderFWTeaser(fwKey||curFW, ticker, company);
   // Paylaşılabilir URL güncelle
@@ -4673,14 +4786,14 @@ function parseAndRender(ticker,company,text,fd,fwKey){
       const p=m[1].split('|');
       return {v:(p[0]||'').trim(), n:(p.slice(1).join('|')||'').trim()};
     };
-    const giris=ikili('ADIL_GIRIS'), izle=ikili('IZLENECEK'), portfoy=ikili('PORTFOY');
+    const giris=ikili('ADIL_GIRIS'), izle=ikili('IZLENECEK'), portfoy=ikili('PORTFOY'), hedef=ikili('HEDEF');
     const garpM=text.match(/GARP_SKOR:\s*(\d{1,3})/);
     const vColor=verdict==='AL'?'var(--success)':verdict==='UZAK_DUR'?'var(--danger)':'var(--warn)';
     const kutu=(etiket,d)=>d&&d.v?`<div class="ai-tez-k"><div class="ai-tez-l">${etiket}</div><div class="ai-tez-v">${esc(d.v)}</div>${d.n?`<div class="ai-tez-n">${esc(d.n)}</div>`:''}</div>`:'';
     aiCard.innerHTML=`<div class="ai-tag">${esc(fw.name)} · Tez</div>`+
       (smX?`<div class="ai-summary-text">${esc(smX[1].trim())}</div>`:'')+
       (rkX?`<div class="ai-summary-risk">⚠ ${esc(rkX[1].trim())}</div>`:'')+
-      ((giris||izle||portfoy)?`<div class="ai-tez-grid">${kutu('Adil Giriş Bölgesi',giris)}${kutu('İzlenecek Eşik',izle)}${kutu('Portföydeki Rol',portfoy)}</div>`:'')+
+      ((giris||izle||portfoy||hedef)?`<div class="ai-tez-grid">${kutu('Adil Giriş Bölgesi',giris)}${kutu('12 Aylık Hedef',hedef)}${kutu('İzlenecek Eşik',izle)}${kutu('Portföydeki Rol',portfoy)}</div>`:'')+
       `<div class="ai-summary-verdict" style="color:${vColor}">Nihai Görüş: ${verdictAd(verdict)}${garpM?` <span class="ai-garp">GARP ${garpM[1]}/100</span>`:''}</div>`;
   }
 
