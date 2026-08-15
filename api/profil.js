@@ -15,53 +15,14 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import { US_EVREN, BIST_EVREN } from './_heatmap-universe.js';
+import { ozetGetir, adiSadelestir } from './_ozet.js';
 
 const SEC_UA = process.env.SEC_UA || 'BarisInvesting/1.0 (info@barisinvesting.com)';
 const BASLIK = { 'User-Agent': SEC_UA, 'Accept': 'application/json' };
 const WEB_BASLIK = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' };
 
-/* ── Şirket adı temizliği ─────────────────────────────────────────
-   "NVIDIA CORP" → "NVIDIA", "Apple Inc." → "Apple". Hem ansiklopedi
-   hem haber aramasında ham unvan kötü sonuç veriyor. */
-const SIRKET_EKI = /\b(inc|inc\.|incorporated|corp|corp\.|corporation|co|co\.|company|plc|ltd|ltd\.|llc|lp|nv|sa|ag|holdings?|group|the)\b/gi;
-function adiSadelestir(ad) {
-  return String(ad || '')
-    .replace(/[,&]/g, ' ')
-    .replace(SIRKET_EKI, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-// Ansiklopedi araması yanlış şirkete düşebiliyor (TR'de "NVIDIA Corp"
-// araması MSI'yı, "Powell Industries" bir kaykaycıyı getirdi) — bulunan
-// başlık şirket adıyla en az bir anlamlı kelimeyi paylaşmalı
-function baslikUyuyor(baslik, ad) {
-  const kelimeler = adiSadelestir(ad).toLowerCase().split(/\s+/).filter(k => k.length >= 4);
-  if (!kelimeler.length) return false;
-  const b = String(baslik || '').toLowerCase();
-  return kelimeler.some(k => b.includes(k));
-}
-
-async function ozetGetir(ad) {
-  const sorgu = adiSadelestir(ad);
-  if (!sorgu) return null;
-  for (const dil of ['tr', 'en']) {
-    try {
-      const u = `https://${dil}.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=1&explaintext=1&exchars=520&generator=search&gsrsearch=${encodeURIComponent(sorgu)}&gsrlimit=1`;
-      const r = await fetch(u, { headers: BASLIK, signal: AbortSignal.timeout(8000) });
-      if (!r.ok) continue;
-      const j = await r.json();
-      const sayfalar = j?.query?.pages;
-      if (!sayfalar) continue;
-      const s = Object.values(sayfalar)[0];
-      if (!s || !s.extract || !baslikUyuyor(s.title, ad)) continue;
-      const metin = String(s.extract).replace(/\s+/g, ' ').trim();
-      if (metin.length < 40) continue;
-      return { metin, dil };
-    } catch { /* sonraki dil */ }
-  }
-  return null;
-}
+/* Şirket adı temizliği ve ansiklopedi özeti artık _ozet.js'te:
+   ısı haritası ipucu balonu da aynı özeti kullanıyor. */
 
 /* ── Şirket haberleri ─────────────────────────────────────────────
    Google Haberler RSS: ücretsiz, anahtarsız ve Türkçe sorguda

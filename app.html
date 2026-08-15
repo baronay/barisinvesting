@@ -2740,11 +2740,24 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .hm-tk{font-family:var(--font-mono);font-weight:700;color:#fff;letter-spacing:.3px;}
 .hm-d{font-family:var(--font-mono);color:rgba(255,255,255,.86);margin-top:1px;}
 /* Kutu logosu: köşede, sembolün önüne geçmesin diye soluk ve küçük */
-.hm-logo{position:absolute;top:4px;left:4px;width:15px;height:15px;object-fit:contain;opacity:.85;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55));}
-.hm-ipucu{display:none;position:fixed;z-index:900;pointer-events:none;background:var(--surface3);border:1px solid var(--border-s);padding:8px 10px;min-width:170px;box-shadow:0 8px 24px rgba(0,0,0,.5);}
-.hm-ip-tk{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text);display:flex;justify-content:space-between;gap:12px;margin-bottom:3px;}
-.hm-ip-ad{font-size:10px;color:var(--text2);margin-bottom:4px;}
-.hm-ip-alt{font-family:var(--font-mono);font-size:8.5px;letter-spacing:.5px;color:var(--muted);}
+/* Isı haritası ipucu kartı — kutuların üstündeki logolar yerine
+   fareyle gelince açılan kart: sektör, künye, fiyat ve kısa tanım. */
+.hm-ipucu{display:none;position:fixed;z-index:900;pointer-events:none;width:330px;background:var(--surface2);border:1px solid var(--border-s);border-radius:10px;padding:13px 14px 11px;box-shadow:0 18px 50px rgba(0,0,0,.62);}
+.hm-ip-sek{font-family:var(--font-mono);font-size:9px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted-s);margin-bottom:9px;}
+.hm-ip-bas{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.hm-ip-logo{width:24px;height:24px;flex-shrink:0;position:relative;background:var(--surface);border:1px solid var(--border-s);border-radius:5px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.hm-ip-logo img{width:100%;height:100%;object-fit:contain;padding:3px;position:relative;z-index:1;background:var(--surface);}
+.hm-ip-logo i{position:absolute;font-style:normal;font-family:var(--font-mono);font-size:8px;font-weight:700;color:var(--muted-s);}
+.hm-ip-tk{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text);letter-spacing:.5px;}
+.hm-ip-ad{font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.hm-ip-fy{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-family:var(--font-mono);font-size:12.5px;color:var(--text);margin-bottom:2px;}
+.hm-ip-dg{font-size:11.5px;font-weight:600;}
+.hm-ip-dg.pos{color:var(--success);} .hm-ip-dg.neg{color:var(--danger);} .hm-ip-dg.neu{color:var(--muted-s);}
+.hm-ip-deg{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.6px;color:var(--muted-s);}
+.hm-ip-metin{font-size:11.5px;line-height:1.55;color:var(--text2);margin-top:9px;padding-top:9px;border-top:1px solid var(--rule);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
+.hm-ip-metin.yukleniyor{color:var(--muted);font-family:var(--font-mono);font-size:9.5px;letter-spacing:1px;-webkit-line-clamp:1;}
+.hm-ip-alt{display:flex;justify-content:space-between;gap:12px;margin-top:9px;font-family:var(--font-mono);font-size:8.5px;letter-spacing:.6px;color:var(--muted);}
+.hm-ip-alt b{color:var(--accent);font-weight:500;}
 .hm-ozet{display:flex;flex-direction:column;gap:12px;}
 .hm-oz-blok{background:var(--surface);border:1px solid var(--border);padding:10px 11px;}
 .hm-oz-bas{font-family:var(--font-mono);font-size:8px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted-s);padding-bottom:7px;margin-bottom:6px;border-bottom:1px solid var(--rule);}

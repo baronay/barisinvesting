@@ -1,4 +1,5 @@
 import { US_EVREN, BIST_EVREN } from './_heatmap-universe.js';
+import { ozetGetir } from './_ozet.js';
 
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
@@ -14,7 +15,25 @@ export default async function handler(req, res) {
   if (type === 'bilanco') return getBilanco(req, res);
   if (type === 'search' && ticker) return searchTicker(ticker, res);
   if (type === 'evren') return getEvren(res);
+  if (type === 'ozet' && ticker) return getOzet(ticker, res);
   return res.status(400).json({ error: 'Invalid' });
+}
+
+/* ── ISI HARİTASI İPUCU ÖZETİ ────────────────────────────────────
+   Kutunun üstüne gelince açılan kartın metni. Şirket kartındaki
+   (/api/profil) ağır SEC çağrısını yapmıyor: yalnızca evren tablosu
+   + ansiklopedi girişi. Bir gün cache — tanım metni gün içinde
+   değişmiyor. */
+async function getOzet(ticker, res) {
+  const tk = String(ticker).toUpperCase().replace(/[^A-Z0-9.]/g, '');
+  const h = [...US_EVREN, ...BIST_EVREN].find(x => x.t === tk.replace('.IS', ''));
+  if (!h) return res.status(404).json({ error: 'Bilinmeyen sembol' });
+  const ozet = await ozetGetir(h.n, 300).catch(() => null);
+  res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800');
+  return res.status(200).json({
+    ticker: tk, ad: h.n, sektor: h.s || null, borsa: h.x || null,
+    ozet: ozet ? ozet.metin : null,
+  });
 }
 
 /* ── ARAMA EVRENİ ────────────────────────────────────────────────

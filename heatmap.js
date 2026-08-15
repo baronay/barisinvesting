@@ -199,6 +199,7 @@
         el.dataset.d = d.d;
         el.dataset.f = d.f;
         el.dataset.v = d.v;
+        el.dataset.s = s.ad || '';
         if (d.x) el.dataset.x = d.x;
 
         // Etiket kademeleri — sığmayan yazı hiç basılmaz, kırpılmış metin
@@ -222,17 +223,8 @@
             dg.textContent = yuzde(d.d);
             el.appendChild(dg);
           }
-          // Logo yalnızca geniş kutularda: 166 kutunun hepsine istek atmak
-          // hem ağ hem görsel gürültü, küçük kutuda zaten sığmıyor
-          if (hy.w >= 78 && hy.h >= 62) {
-            const lg = document.createElement('img');
-            lg.className = 'hm-logo';
-            lg.alt = '';
-            lg.loading = 'lazy';
-            lg.onerror = () => lg.remove();
-            lg.src = '/api/logo?ticker=' + encodeURIComponent(d.t) + '&sz=64';
-            el.appendChild(lg);
-          }
+          // Logo kutunun üstünde değil, fareyle gelince açılan ipucu
+          // kartında: haritada 166 küçük logo hem gürültü hem 166 istek.
         }
         kutu.appendChild(el);
         cizilen++;
@@ -252,6 +244,9 @@
   // Para birimi kapsam değiştikçe değişiyor; dinleyici güncel değeri
   // buradan okuyor.
   let ipucuParaBirimi = 'USD';
+  let ipucuHisse = null;          // kart hangi hisseyi gösteriyor
+  let ipucuZaman = null;          // özet isteği için bekleme
+  const ozetOnbellek = new Map(); // ticker → metin | null (yok)
 
   function ipucuKur(kap, paraBirimi) {
     if (paraBirimi) ipucuParaBirimi = paraBirimi;
@@ -264,21 +259,96 @@
     }
     kap.addEventListener('mousemove', e => {
       const el = e.target.closest('.hm-kutu');
-      if (!el) { ipucu.style.display = 'none'; return; }
-      const d = parseFloat(el.dataset.d);
-      ipucu.innerHTML =
-        `<div class="hm-ip-tk">${esc(el.dataset.t)}<span style="color:${d >= 0 ? 'var(--success)' : 'var(--danger)'}">${yuzde(d)}</span></div>` +
-        `<div class="hm-ip-ad">${esc(el.dataset.n)}</div>` +
-        `<div class="hm-ip-alt">Fiyat ${ipucuParaBirimi === 'TRY' ? '₺' : '$'}${esc(el.dataset.f)} · Değer ${buyukSayi(parseFloat(el.dataset.v), ipucuParaBirimi)}</div>`;
-      ipucu.style.display = 'block';
-      // Ekran kenarına taşmasın
-      const g = 14, gen = 200;
-      let x = e.clientX + g;
-      if (x + gen > window.innerWidth) x = e.clientX - gen - g;
-      ipucu.style.left = x + 'px';
-      ipucu.style.top = Math.min(e.clientY + g, window.innerHeight - 90) + 'px';
+      if (!el) { gizle(); return; }
+      // Aynı kutu içinde gezinirken kart yeniden çizilmesin: metin
+      // yüklenmişken her piksel hareketinde sıfırlanıyor, titriyor.
+      if (el.dataset.t === ipucuHisse) return;
+      kartAc(el);
     });
-    kap.addEventListener('mouseleave', () => { if (ipucu) ipucu.style.display = 'none'; });
+    kap.addEventListener('mouseleave', gizle);
+  }
+
+  function gizle() {
+    ipucuHisse = null;
+    clearTimeout(ipucuZaman);
+    if (ipucu) ipucu.style.display = 'none';
+  }
+
+  /* Kartın gövdesi: anında gösterilebilen kısım. Tanım metni ağdan
+     geldiği için ayrı basılıyor (ozetKutusu). */
+  function kartCiz(el, ozet, yukleniyor) {
+    const t = el.dataset.t;
+    const d = parseFloat(el.dataset.d);
+    const sinif = d > 0.004 ? 'pos' : d < -0.004 ? 'neg' : 'neu';
+    const ok = d > 0.004 ? '▲' : d < -0.004 ? '▼' : '—';
+    const birim = ipucuParaBirimi === 'TRY' ? '₺' : '$';
+    // Ok zaten yönü söylüyor; işareti tekrar basınca "▼ -0,30%" oluyor
+    const dgMetin = isFinite(d) ? `%${Math.abs(d).toFixed(2).replace('.', ',')}` : '—';
+    const f = parseFloat(el.dataset.f);
+    const fyMetin = isFinite(f)
+      ? f.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : esc(el.dataset.f);
+    const metin = ozet
+      ? `<div class="hm-ip-metin">${esc(ozet)}</div>`
+      : (yukleniyor ? '<div class="hm-ip-metin yukleniyor">özet geliyor…</div>' : '');
+    const saat = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+    ipucu.innerHTML =
+      `<div class="hm-ip-sek">${esc(el.dataset.s || '')}${el.dataset.x ? ' · ' + esc(el.dataset.x === 'BIST' ? 'BİST' : el.dataset.x) : ''}</div>
+       <div class="hm-ip-bas">
+         <span class="hm-ip-logo"><img src="/api/logo?ticker=${encodeURIComponent(t)}&sz=64" alt="" onerror="this.remove()"><i>${esc(t.slice(0, 2))}</i></span>
+         <span class="hm-ip-tk">${esc(t)}</span>
+         <span class="hm-ip-ad">${esc(el.dataset.n || '')}</span>
+       </div>
+       <div class="hm-ip-fy">
+         <span>${birim}${fyMetin}</span>
+         <span class="hm-ip-dg ${sinif}">${ok} ${dgMetin}</span>
+         <span class="hm-ip-deg">Değer ${buyukSayi(parseFloat(el.dataset.v), ipucuParaBirimi)}</span>
+       </div>
+       ${metin}
+       <div class="hm-ip-alt"><span>Yahoo Finance · ${saat}</span><b>kart için tıkla →</b></div>`;
+  }
+
+  function kartAc(el) {
+    const t = el.dataset.t;
+    ipucuHisse = t;
+    clearTimeout(ipucuZaman);
+
+    const hazir = ozetOnbellek.get(t);
+    kartCiz(el, hazir === undefined ? null : hazir, hazir === undefined);
+    ipucu.style.display = 'block';
+    konumla(el);
+
+    if (hazir !== undefined) return;
+    // Fare kutunun üstünde kalırsa özet çekiliyor — haritada gezinirken
+    // her kutu için istek atmayalım diye kısa bir bekleme var.
+    ipucuZaman = setTimeout(async () => {
+      let metin = null;
+      try {
+        const r = await fetch('/api/market?type=ozet&ticker=' + encodeURIComponent(t));
+        const j = await r.json();
+        metin = (j && j.ozet) || null;
+      } catch (e) { /* özet olmasa da kart çalışıyor */ }
+      ozetOnbellek.set(t, metin);
+      if (ipucuHisse !== t) return;
+      kartCiz(el, metin, false);
+      konumla(el);
+    }, 260);
+  }
+
+  // Kart kutunun sağına, sığmazsa soluna; ekran dışına taşmasın
+  function konumla(el) {
+    const k = el.getBoundingClientRect();
+    const g = 12;
+    const gen = ipucu.offsetWidth || 330;
+    const yuk = ipucu.offsetHeight || 200;
+    let x = k.right + g;
+    if (x + gen > window.innerWidth - 8) x = k.left - gen - g;
+    if (x < 8) x = Math.max(8, Math.min(k.left, window.innerWidth - gen - 8));
+    let y = k.top;
+    if (y + yuk > window.innerHeight - 8) y = window.innerHeight - yuk - 8;
+    ipucu.style.left = Math.round(x) + 'px';
+    ipucu.style.top = Math.round(Math.max(8, y)) + 'px';
   }
 
   /* ── Veri ───────────────────────────────────────────────────── */
