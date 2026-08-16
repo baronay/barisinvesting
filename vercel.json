@@ -19,6 +19,19 @@
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
+    },
+    {
+      "//": "HTML ve uygulama betikleri her açılışta tazelensin. Mobil tarayıcı eski app.html'i önbellekte tutunca kullanıcı aylar öncesinin arayüzünü görüyordu (eski çerçeve rozeti, boş kriterler).",
+      "source": "/(.*)\\.(html|js)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/(terminal|tezler|arastirmalar)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
     }
   ],
   "rewrites": [

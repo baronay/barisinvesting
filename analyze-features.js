@@ -1,18 +1,26 @@
 // ================================================================
 // analyze-features.js — Barış Investing
-// 1. Master Selection / Strong Consensus rozeti
-// 2. Şirket Snapshot kartı (stock-hdr altına, üst konumda)
-// 3. X paylaşım optimizasyonu
+// Analiz ekranının üst kartı (logo + ticker + şirket künyesi).
+//
+// NOT: Bu kart #stockHdr'ın yerine geçiyor (onu gizliyor), yani
+// kullanıcının analiz ekranında gördüğü logo/rozet BURADAKİLER.
+// app.html'deki .stock-logo stilleri ekrana çıkmıyor.
+//
+// Künye eskiden /api/analyze'a İKİNCİ bir istek atıp AI'dan
+// BUSINESS/SECTOR/MOAT/PEERS çekiyordu. api/analyze.js istemciden
+// gelen prompt'u kullanmıyor (kendi çerçeve promptunu kuruyor), yani
+// o istek her analizde ikinci bir tam analiz çalıştırıp sonucundan
+// hiçbir alanı bulamıyor, tüm satırları "—" yazıyordu — üstelik
+// 60sn'lik Vercel penceresinde iki ağır çağrı yan yana koşunca
+// analizin kendisi de zaman aşımına giriyordu. Künye artık
+// ansiklopedi özeti (/api/market?type=ozet, 1 gün cache) + analizin
+// kendi metninden besleniyor: ek AI maliyeti yok.
 // ================================================================
 
 // ── CSS ──────────────────────────────────────────────────────────
 (function() {
   const s = document.createElement('style');
   s.textContent = `
-    @keyframes masterPulse {
-      0%,100% { box-shadow:0 0 0 0 rgba(154,125,58,0); }
-      50%      { box-shadow:0 0 0 8px rgba(154,125,58,0.15); }
-    }
     @keyframes snapIn {
       from { opacity:0; transform:translateY(-4px); }
       to   { opacity:1; transform:translateY(0); }
@@ -53,143 +61,45 @@
       font-family:'Inter',sans-serif;
       line-height:1.6;
     }
-    .snap-logo-placeholder {
-      width:36px;height:36px;border-radius:4px;
-      background:var(--sidebar3,#2d3452);
-      border:1px solid var(--border-s,#3a4260);
+    /* Logo: şeffaf PNG'ler koyu zeminde kayboluyordu — açık zemin + iç boşluk */
+    #snapshotCard .snap-logo {
+      width:48px;height:48px;flex-shrink:0;
+      background:#f6f4ef;
+      border:1px solid rgba(194,173,132,0.35);
+      border-radius:10px;overflow:hidden;
       display:flex;align-items:center;justify-content:center;
-      font-family:'Playfair Display',serif;
-      font-size:14px;font-weight:700;color:#9aa3b2;
-      flex-shrink:0;overflow:hidden;
+      font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;
+      color:#5a4636;letter-spacing:0;
+      box-shadow:0 2px 8px rgba(0,0,0,0.25);
     }
+    #snapshotCard .snap-logo img { width:100%;height:100%;object-fit:contain;padding:6px;box-sizing:border-box; }
+    @media (max-width:640px){ #snapshotCard .snap-logo { width:42px;height:42px; } }
   `;
   document.head.appendChild(s);
 })();
 
 
-// ── 1. MASTER SELECTION ROZETİ ───────────────────────────────────
-const _masterScores = {};
-
-function trackMasterScore(ticker, exchange, fw, score) {
-  const key = `${ticker}:${exchange}`;
-  if (!_masterScores[key]) _masterScores[key] = {};
-  _masterScores[key][fw] = score;
-  checkMasterBadge(ticker, exchange);
+// ── ŞİRKET KÜNYE KARTI ──────────────────────────────────────────
+function snapAlan(metin, anahtar) {
+  const m = String(metin || '').match(new RegExp(`^${anahtar}:\\s*([^\\n]+)`, 'm'));
+  return m ? m[1].split('|')[0].trim() : '';
 }
 
-function checkMasterBadge(ticker, exchange) {
-  const key    = `${ticker}:${exchange}`;
-  const scores  = _masterScores[key] || {};
-  const b = scores.buffett ?? -1;
-  const l = scores.lynch   ?? -1;
-  const d = scores.dalio   ?? -1;
-
-  const isMaster    = b >= 5 && l >= 5;
-  const isConsensus = b >= 4 && l >= 4 && d >= 4;
-
-  const old = document.getElementById('masterBadge');
-  if (old) old.remove();
-  if (!isMaster && !isConsensus) return;
-
-  const badge = document.createElement('div');
-  badge.id = 'masterBadge';
-
-  if (isMaster) {
-    badge.style.cssText = `
-      display:inline-flex;align-items:center;gap:8px;
-      padding:8px 16px;margin:10px 0 2px;
-      background:linear-gradient(135deg,rgba(154,125,58,0.15),rgba(194,173,132,0.06));
-      border:1px solid rgba(154,125,58,0.4);
-      animation:masterPulse 2s ease-in-out 2;
-    `;
-    badge.innerHTML = `
-      <span style="font-size:18px">⭐</span>
-      <div>
-        <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c8a951;font-family:'JetBrains Mono',monospace">Master Selection</div>
-        <div style="font-size:9px;color:#9a7d3a;font-family:'JetBrains Mono',monospace;margin-top:1px">Buffett ${b}/7 · Lynch ${l}/7 — Çift ekol konsensüsü</div>
-      </div>
-    `;
-  } else {
-    badge.style.cssText = `
-      display:inline-flex;align-items:center;gap:8px;
-      padding:8px 16px;margin:10px 0 2px;
-      background:rgba(168,148,107,0.1);
-      border:1px solid rgba(255,255,255,0.25);
-    `;
-    badge.innerHTML = `
-      <span style="font-size:18px">✦</span>
-      <div>
-        <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#9aa3b2;font-family:'JetBrains Mono',monospace">Strong Consensus</div>
-        <div style="font-size:9px;color:#7a8493;font-family:'JetBrains Mono',monospace;margin-top:1px">Buffett ${b}/7 · Lynch ${l}/7 · Dalio ${d}/7</div>
-      </div>
-    `;
-  }
-
-  const vbox = document.getElementById('verdictBox');
-  if (vbox) vbox.after(badge);
-}
-
-
-// ── 2. ŞİRKET SNAPSHOT KARTI ────────────────────────────────────
-function makeLogoEl(ticker, company, website, fmpLogoUrl) {
-  const initial  = (company || ticker || '?')[0].toUpperCase();
-
-  // Deterministik renk
-  const colors = ['#c2ad84','#166534','#b08a5a','#8a7e94','#b08a5a','#c0392b','#15803d','#3c5560'];
-  const colorIdx = ticker.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colors.length;
-
-  const wrap = document.createElement('div');
-  wrap.className = 'snap-logo-placeholder';
-  wrap.style.background = colors[colorIdx];
-  wrap.style.border = 'none';
-  wrap.innerHTML = `<span style="color:#fff;font-family:'Playfair Display',serif;font-size:16px;font-weight:700">${initial}</span>`;
-
-  function tryLoad(src) {
-    if (!src) return;
-    const img = new Image();
-    img.onload = () => {
-      wrap.innerHTML = '';
-      wrap.style.background = '#fff';
-      wrap.style.padding = '3px';
-      wrap.style.border = '1px solid rgba(255,255,255,0.15)';
-      const imgEl = document.createElement('img');
-      imgEl.src = src;
-      imgEl.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:3px';
-      wrap.appendChild(imgEl);
-    };
-    img.src = src;
-  }
-
-  // Google favicon — website varsa dene
-  if (website) {
-    try {
-      const domain = new URL(website.startsWith('http') ? website : 'https://' + website).hostname;
-      tryLoad(`https://www.google.com/s2/favicons?domain=${domain}&sz=128`);
-    } catch {}
-  }
-
-  return wrap;
-}
-
-async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers = [], website = null, logoUrl = null) {
+async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers = [], website = null, logoUrl = null, analizMetni = '', fd = null) {
   const old = document.getElementById('snapshotCard');
   if (old) old.remove();
 
-  // stock-hdr'ı tamamen gizle — tüm içerik snapshotCard içinde
+  // stock-hdr'ı gizle — tüm künye bu kartın içinde
   const stockHdr = document.getElementById('stockHdr');
   if (stockHdr) stockHdr.style.display = 'none';
 
-  // Framework config
-  const fwColors = { buffett: '#c2ad84', lynch: '#b08a5a', dalio: '#8a7e94' };
-  const fwNames  = { buffett: 'BUFFETT', lynch: 'LYNCH',   dalio: 'DALIO'   };
-  const fwC = fwColors[fwKey] || '#c2ad84';
-  const fwN = fwNames[fwKey]  || 'BUFFETT';
+  const fwAd = (typeof FW !== 'undefined' && FW[fwKey] && FW[fwKey].name)
+    ? FW[fwKey].name.toUpperCase()
+    : 'BARIŞ INVESTING';
 
-  // Exchange flag emoji
   const flagMap = { BIST: '🇹🇷', NYSE: '🇺🇸', NASDAQ: '🇺🇸', NAS: '🇺🇸' };
   const flag = flagMap[exchange] || '🌐';
 
-  // Kart iskeleti
   const card = document.createElement('div');
   card.id = 'snapshotCard';
   card.style.cssText = `
@@ -199,33 +109,21 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
     padding:16px 20px 0;
   `;
 
-  // ── Üst satır: Logo + Ticker + Badges + X Butonu ──
+  // ── Üst satır: Logo + Ticker + Rozet + Paylaş ──
   const topRow = document.createElement('div');
   topRow.style.cssText = 'display:flex;align-items:center;gap:14px;margin-bottom:12px;';
 
-  // Logo (proxy)
   const logoWrap = document.createElement('div');
-  logoWrap.style.cssText = `
-    width:42px;height:42px;flex-shrink:0;
-    background:rgba(255,255,255,0.06);
-    border:1px solid rgba(194,173,132,0.25);
-    border-radius:6px;overflow:hidden;
-    display:flex;align-items:center;justify-content:center;
-    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);
-  `;
+  logoWrap.className = 'snap-logo';
+  logoWrap.textContent = ticker.slice(0, 2);
   const logoSrc = `/api/logo?ticker=${encodeURIComponent(ticker)}&sz=128`;
-  const logoImg = document.createElement('img');
-  logoImg.src = logoSrc;
+  const logoImg = new Image();
   logoImg.crossOrigin = 'anonymous';
-  logoImg.style.cssText = 'width:100%;height:100%;object-fit:contain;';
-  logoImg.onerror = () => { logoWrap.innerHTML = `<span>${ticker.slice(0,2)}</span>`; };
-  logoWrap.appendChild(logoImg);
-  // Canvas paylaşım için
-  window._shareLogoImg = null;
-  const _sli = new Image(); _sli.crossOrigin = 'anonymous'; _sli.src = logoSrc;
-  _sli.onload = () => { window._shareLogoImg = _sli; };
+  logoImg.alt = ticker;
+  // Yalnızca gerçekten yüklenince koy: 404'te baş harfler kalsın
+  logoImg.onload = () => { logoWrap.textContent = ''; logoWrap.appendChild(logoImg); window._shareLogoImg = logoImg; };
+  logoImg.src = logoSrc;
 
-  // Ticker + şirket adı + bayrak pill
   const titleCol = document.createElement('div');
   titleCol.innerHTML = `
     <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:2px;line-height:1">${ticker}</div>
@@ -235,15 +133,13 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
     </div>
   `;
 
-  // Badges (FW + CANLI)
   const badgeCol = document.createElement('div');
   badgeCol.style.cssText = 'display:flex;flex-direction:column;gap:4px;margin-left:4px;';
   badgeCol.innerHTML = `
-    <span id="badgeFw" class="badge badge-fw ${fwKey}">${fwN}</span>
-    <span id="badgeLive" class="badge badge-live" style="display:none">● Canlı</span>
+    <span id="badgeFwKart" class="badge badge-fw ${fwKey || 'baris'}">${fwAd}</span>
+    <span id="badgeLiveKart" class="badge badge-live" style="display:none">● Canlı</span>
   `;
 
-  // X Paylaş butonu (sağda)
   const xBtn = document.createElement('button');
   xBtn.className = 'x-shr-btn';
   xBtn.style.marginLeft = 'auto';
@@ -256,157 +152,53 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
   topRow.appendChild(xBtn);
   card.appendChild(topRow);
 
-  // Ince gold çizgi ayraç
   const divider = document.createElement('div');
   divider.style.cssText = 'height:1px;background:rgba(194,173,132,0.15);margin:0 -20px 14px;';
   card.appendChild(divider);
 
-  // Body — loading state
   const body = document.createElement('div');
   body.id = 'snapshotBody';
   body.style.cssText = 'padding:0 0 14px;';
-  body.innerHTML = `
-    <div style="font-size:10px;color:var(--muted-s,#7a8493);font-family:'JetBrains Mono',monospace;letter-spacing:1px;">
-      Profil yükleniyor<span id="snapDots">.</span>
-    </div>
-  `;
   card.appendChild(body);
 
-  // analysisSection'ın en başına ekle
   const aSection = document.getElementById('analysisSection');
   if (aSection) aSection.prepend(card);
 
-  // Loading animasyonu
-  let dotCount = 1;
-  const dotTimer = setInterval(() => {
-    const el = document.getElementById('snapDots');
-    if (el) { dotCount = (dotCount % 3) + 1; el.textContent = '.'.repeat(dotCount); }
-  }, 400);
+  // ── Gövde: ne yapıyor + sektör + rakipler + risk ──
+  const risk = snapAlan(analizMetni, 'RISK');
+  const ozetYedek = snapAlan(analizMetni, 'SUMMARY');
+  const peers = (fmpPeers && fmpPeers.length) ? fmpPeers.slice(0, 4) : [];
 
-  // AI'dan veri çek
-  try {
-    const prompt = `${exchange} borsasındaki "${ticker}"${company ? ` (${company})` : ''} şirketi için kısa profil oluştur.
-
-KRİTİK KURAL: PEERS alanına SADECE bu şirketle AYNI sektörde ve AYNI iş kolunda faaliyet gösteren doğrudan rakipler yaz. Farklı sektörden şirket YAZMA.
-Örnek: THYAO için → PGSUS, TAVHL (havacılık). AEFES, KRDMD gibi farklı sektör şirketleri YASAK.
-Örnek: AKBNK için → GARAN, ISCTR, YKBNK (bankacılık). 
-Örnek: BIMAS için → MGROS, SOKM (perakende).
-
-Kesinlikle sadece şu formatı kullan, başka hiçbir şey yazma:
-
-BUSINESS: [Ne iş yaptığını 2 cümleyle anlat. Sade, anlaşılır Türkçe.]
-SECTOR: [Tek kelime/kısa sektör adı — örn: Havacılık, Bankacılık, Teknoloji]
-MOAT: [Rekabet avantajı 1 cümle — varsa somut belirt, yoksa "Sınırlı hendek" de]
-PEERS: [2-4 AYNI SEKTÖR rakip ticker — farklı sektör YASAK]
-RISK: [En kritik 1 risk cümlesi]`;
-
-    const r = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticker, exchange, prompt })
-    });
-    const data = await r.json();
-    const text = data.result || '';
-
-    const get = (key) => {
-      const m = text.match(new RegExp(`${key}:\\s*([^\n]+)`));
-      return m ? m[1].trim() : '—';
-    };
-
-    const business = get('BUSINESS');
-    const sector   = get('SECTOR');
-    const moat     = get('MOAT');
-    // FMP peer'ları varsa onları kullan (daha doğru), yoksa AI'dan al
-    const peers = fmpPeers.length > 0
-      ? fmpPeers
-      : get('PEERS').split(',').map(p => p.trim()).filter(Boolean);
-    const risk     = get('RISK');
-
-    clearInterval(dotTimer);
-
-    const bodyEl = document.getElementById('snapshotBody');
-    if (!bodyEl) return;
-
-    const isBIST = exchange === 'BIST';
-
-    bodyEl.innerHTML = `
-      <!-- İş açıklaması -->
-      <p style="font-size:12px;color:#ffffff;font-family:'Inter',sans-serif;line-height:1.8;margin:0 0 14px">${business}</p>
-
-      ${!isBIST ? `
-      <!-- Sektör + Hendek grid -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-        <div class="snap-col">
+  const ciz = (isTanim, sektor) => {
+    const el = document.getElementById('snapshotBody');
+    if (!el) return;
+    el.innerHTML = `
+      ${isTanim ? `<p style="font-size:12px;color:#ffffff;font-family:'Inter',sans-serif;line-height:1.8;margin:0 0 14px">${isTanim}</p>` : ''}
+      ${sektor ? `
+      <div style="margin-bottom:12px">
+        <div class="snap-col" style="width:100%">
           <div class="snap-col-lbl">Sektör</div>
-          <div class="snap-col-val">${sector}</div>
+          <div class="snap-col-val">${sektor}</div>
         </div>
-        <div class="snap-col">
-          <div class="snap-col-lbl">Rekabet Avantajı</div>
-          <div class="snap-col-val">${moat}</div>
-        </div>
-      </div>
-      <!-- Rakipler -->
+      </div>` : ''}
       ${peers.length ? `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
         <span style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted-s,#7a8493);font-family:'JetBrains Mono',monospace">Rakipler</span>
         ${peers.map(p => `<button class="snap-peer" onclick="qFill('${p}','','${exchange}')">${p}</button>`).join('')}
       </div>` : ''}
-      ` : `
-      <!-- BIST: Sadece hendek -->
-      <div style="margin-bottom:12px">
-        <div class="snap-col" style="width:100%">
-          <div class="snap-col-lbl">Rekabet Avantajı</div>
-          <div class="snap-col-val">${moat}</div>
-        </div>
-      </div>
-      `}
-
-      <!-- Risk alert -->
-      <div class="snap-alert">⚠ ${risk}</div>
+      ${risk ? `<div class="snap-alert">⚠ ${risk}</div>` : ''}
     `;
-  } catch(e) {
-    clearInterval(dotTimer);
-    const bodyEl = document.getElementById('snapshotBody');
-    if (bodyEl) bodyEl.innerHTML = `<div style="font-size:10px;color:var(--muted-s);font-family:'JetBrains Mono',monospace">Profil yüklenemedi.</div>`;
-  }
-}
+  };
 
-
-// ── 3. X PAYLAŞIM OPTİMİZASYONU ────────────────────────────────
-function dlAndTweet() {
-  dlShare();
-  setTimeout(() => {
-    const fw = FW[curFW];
-    const d  = analysisData;
-    if (!d) return;
-
-    const em         = d.verdict === 'AL' ? '🟢' : d.verdict === 'UZAK_DUR' ? '🔴' : '🟡';
-    const fwEmoji    = curFW === 'buffett' ? '🎩' : curFW === 'lynch' ? '📈' : '🌍';
-    const key        = `${d.ticker}:${curEX}`;
-    const scores     = _masterScores[key] || {};
-    const isMaster   = scores.buffett >= 5 && scores.lynch >= 5;
-    const verdictTR  = d.verdict === 'AL' ? 'AL' : d.verdict === 'UZAK_DUR' ? 'UZAK DUR' : 'BEKLE';
-
-    const passItems = fw.criteria.filter((_,i) => d.statuses[i]==='pass').map(c=>c.name.split(' ')[0]).slice(0,3);
-    const failItems = fw.criteria.filter((_,i) => d.statuses[i]==='fail').map(c=>c.name.split(' ')[0]).slice(0,2);
-
-    const lines = [
-      `${fwEmoji} ${curEX}: $${d.ticker}${curCo ? ' — ' + curCo : ''}`,
-      `${fw.name} Analizi: ${d.score}/${fw.criteria.length} ${em} ${verdictTR}`,
-      isMaster ? '⭐ Master Selection — Buffett + Lynch onayı' : '',
-      '',
-      passItems.length ? '✅ ' + passItems.join(' · ') : '',
-      failItems.length ? '❌ ' + failItems.join(' · ') : '',
-      '',
-      'Barış Investing ile analiz et 👇',
-      'barisinvesting.com',
-      '',
-      `#Borsa #Yatırım #${d.ticker} #${curFW==='buffett'?'Buffett':curFW==='lynch'?'Lynch':'Dalio'}`,
-    ].filter(l => l !== null).join('\n').trim();
-
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(lines)}`, '_blank');
-    closeShr();
-  }, 800);
+  // Önce elde olanla çiz (anında), ansiklopedi özeti gelince tazele
+  ciz(ozetYedek, (fd && fd.sector) || '');
+  try {
+    const r = await fetch(`/api/market?type=ozet&ticker=${encodeURIComponent(ticker)}`);
+    if (r.ok) {
+      const d = await r.json();
+      if (d && (d.ozet || d.sektor)) ciz(d.ozet || ozetYedek, d.sektor || (fd && fd.sector) || '');
+    }
+  } catch (e) { /* özet yoksa analiz özeti kalır */ }
 }
 
 
@@ -415,25 +207,18 @@ const _origParseAndRender = window.parseAndRender;
 window.parseAndRender = function(ticker, company, text, fd, fwKey) {
   _origParseAndRender(ticker, company, text, fd, fwKey);
 
-  const fw    = fwKey || (typeof curFW !== 'undefined' ? curFW : 'buffett');
-  const ex    = typeof curEX !== 'undefined' ? curEX : 'BIST';
-  const sm    = text.match(/TOTAL_SCORE:\s*(\d+)/);
-  const score = sm ? Math.min(7, Math.max(0, parseInt(sm[1]))) : 0;
+  const fw = fwKey || (typeof curFW !== 'undefined' ? curFW : 'baris');
+  const ex = typeof curEX !== 'undefined' ? curEX : 'BIST';
 
-  trackMasterScore(ticker, ex, fw, score);
-
-  // FMP'den peer, website ve logoUrl al
   const fmpPeers = fd?.peers   || [];
   const website  = fd?.website  || null;
   const logoUrl  = fd?.logoUrl  || null;
-  injectCompanySnapshot(ticker, company, ex, fw, fmpPeers, website, logoUrl);
+  injectCompanySnapshot(ticker, company, ex, fw, fmpPeers, website, logoUrl, text, fd);
 
-  // snapshotCard'daki badgeFw'yi güncelle (fwKey değişirse)
+  // Canlı rozeti — gerçek finansal veri geldiyse göster
+  // (#badgeLive gizli stock-hdr'da kaldığı için kartın kendi rozeti kullanılıyor)
   setTimeout(() => {
-    const bfw = document.getElementById('badgeFw');
-    if (bfw) { bfw.textContent = { buffett:'BUFFETT', lynch:'LYNCH', dalio:'DALIO' }[fw] || fw.toUpperCase(); bfw.className = 'badge badge-fw ' + fw; }
-    // Canlı badge — rdGrid görünürse göster
-    const live = document.getElementById('badgeLive');
+    const live = document.getElementById('badgeLiveKart');
     if (live && fd) live.style.display = 'block';
   }, 300);
 };

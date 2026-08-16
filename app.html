@@ -409,8 +409,12 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .news-loading{text-align:center;padding:20px;color:var(--muted);font-size:10px;grid-column:1/-1;font-family:'JetBrains Mono',monospace;}
 .stock-hdr{display:none;background:var(--sidebar);padding:14px 18px;margin-bottom:1px;align-items:center;gap:12px;flex-wrap:wrap;position:relative;border-bottom:3px solid var(--accent2);}
 .stock-hdr.visible{display:flex;}
-.stock-logo{width:34px;height:34px;background:var(--surface2);border:1px solid var(--border-s);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;color:var(--text2);overflow:hidden;flex-shrink:0;}
-.stock-logo img{width:100%;height:100%;object-fit:contain;}
+/* Şirket logosu: marka logolarının çoğu şeffaf zeminli ve koyu yüzeyde
+   kayboluyordu. Açık zemin + iç boşluk + yuvarlak köşe ile logo kendi
+   kartında duruyor; boyut mobildeki okunur haliyle eşitlendi. */
+.stock-logo{width:46px;height:46px;background:#f6f4ef;border:1px solid var(--border-s);border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#3a4150;overflow:hidden;flex-shrink:0;box-shadow:0 2px 10px rgba(0,0,0,.35);}
+.stock-logo img{width:100%;height:100%;object-fit:contain;padding:5px;}
+@media(max-width:560px){.stock-logo{width:40px;height:40px;border-radius:10px;}}
 .hflag{width:22px;height:15px;flex-shrink:0;}
 .sticker{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:var(--text);letter-spacing:2px;}
 .sco{font-size:10px;color:var(--muted);margin-top:2px;}
@@ -486,7 +490,12 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .cklist-icon.fail{color:var(--danger);}
 .cklist-icon.neutral{color:var(--warn);}
 .cklist-name{flex:1;font-size:11px;color:var(--text);font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.cklist-arrow{flex:0 0 auto;font-size:11px;color:var(--muted2);transition:color .15s;}
+/* "DETAY →" rozeti: ok tek başına tıklanabilirliği anlatmıyordu */
+.cklist-arrow{flex:0 0 auto;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;letter-spacing:1.2px;color:var(--muted-s);border:1px solid var(--border-s);border-radius:999px;padding:3px 8px;transition:color .15s,border-color .15s,background .15s;white-space:nowrap;}
+.cklist-row:hover .cklist-arrow{color:var(--accent);border-color:var(--accent2);background:var(--accent-dim);}
+.ck-baslik{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:7px;}
+.ck-baslik-t{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text2);}
+.ck-baslik-i{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.6px;color:var(--accent);background:var(--accent-dim);border:1px solid var(--border-s);border-radius:999px;padding:3px 9px;}
 .sentiment-card{background:var(--surface);border:1px solid var(--glass);padding:10px 12px;display:flex;flex-direction:column;justify-content:center;min-width:0;}
 .sentiment-sub{font-size:8px;color:var(--muted2);margin-bottom:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;}
 .ai-summary-card{background:var(--surface);border:1px solid var(--glass);padding:12px 14px;margin-bottom:1px;}
@@ -498,19 +507,23 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 /* Şirkete özel operasyonel metrikler */
 .ai-metrik{margin:10px 0 4px;border-top:1px solid var(--rule);padding-top:9px;}
 .ai-metrik-b{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted-s);margin-bottom:7px;}
-.ai-metrik-s{display:flex;align-items:baseline;gap:9px;padding:5px 0;border-bottom:1px solid var(--rule);}
+/* Değerler "veri yok, ~%17-19 bandı (2024 sonu itibarıyla)" gibi uzun
+   olabiliyor; sabit genişlikli sütunlarda satır kartı taşırıyordu.
+   Her metrik kendi bloğu: üstte ad + değer, altında yorum. */
+.ai-metrik-s{padding:7px 0;border-bottom:1px solid var(--rule);min-width:0;}
 .ai-metrik-s:last-child{border-bottom:none;}
-.ai-metrik-ad{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.6px;color:var(--text2);min-width:110px;flex-shrink:0;}
-.ai-metrik-d{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);min-width:74px;flex-shrink:0;}
-.ai-metrik-y{font-size:10.5px;color:var(--muted-s);line-height:1.5;}
-@media(max-width:560px){.ai-metrik-s{flex-wrap:wrap;gap:4px 9px;}.ai-metrik-y{flex-basis:100%;}}
+.ai-metrik-ust{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0;}
+.ai-metrik-ad{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted-s);flex-shrink:0;}
+.ai-metrik-d{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);flex:1;min-width:0;overflow-wrap:anywhere;line-height:1.4;}
+.ai-metrik-y{font-size:10.5px;color:var(--muted-s);line-height:1.55;margin-top:3px;overflow-wrap:anywhere;}
 /* Model/token ölçümü — yalnızca admin görür */
 .ai-olcum{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.5px;color:var(--muted2);}
 /* Eşik şeridi — şirketin çerçeve bantlarındaki yeri */
 .esik-blok{margin-top:12px;border-top:1px solid var(--rule);padding-top:11px;}
 .esik-bas{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted-s);margin-bottom:9px;}
 .esik-bas span{margin-left:8px;letter-spacing:.6px;text-transform:none;color:var(--muted2);}
-.esik-sat{display:flex;align-items:center;gap:9px;padding:5px 0;}
+.esik-sat{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--rule);}
+.esik-sat:last-child{border-bottom:none;}
 .esik-ad{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--muted-s);width:104px;flex-shrink:0;}
 .esik-cizgi{position:relative;flex:1;min-width:60px;display:flex;gap:2px;height:7px;}
 .esik-cizgi .eb{flex:1;border-radius:1px;opacity:.32;}
@@ -3616,6 +3629,11 @@ body.pr-kilit{overflow:hidden;}
         <div id="scoreGaugeBox"></div>
       </div>
       <div class="rgr-right">
+        <!-- Satırların tıklanabildiği kendiliğinden anlaşılmıyordu -->
+        <div class="ck-baslik" id="ckBaslik" style="display:none">
+          <span class="ck-baslik-t">Yedi Kriter</span>
+          <span class="ck-baslik-i">satıra tıkla → gerekçesini oku</span>
+        </div>
         <div id="critChecklist" class="crit-checklist"></div>
         <div class="sentiment-card">
           <div class="card-t"><div class="cdot"></div>Topluluk Duyarlılığı</div>
@@ -3916,9 +3934,12 @@ const HIST_KEY='bi_history';
 // ── ANALİZ ONBELLEGİ (3 gun) ────────────────────────────────────
 // v2: BIST carpan verisi genisletildi (PEG/marj/52H/RSI TradingView'den geliyor).
 // Eski anahtardaki bozuk carpanli analizler gosterilmesin diye anahtar degisti.
-const CACHE_KEY = 'bi_analysis_cache_v2';
+// v3: Barış Investing çerçevesine geçildi. Eski analizler Buffett/Lynch
+// anahtarlarıyla (ROE, MOAT, PEGCRIT...) kaydedildiği için yeni kriterlerle
+// eşleşmiyor ve ekranda yedi satır "—" olarak açılıyordu; anahtar değişti.
+const CACHE_KEY = 'bi_analysis_cache_v3';
 const CACHE_TTL = 3 * 24 * 60 * 60 * 1000;
-try { localStorage.removeItem('bi_analysis_cache'); } catch(e) {}
+try { localStorage.removeItem('bi_analysis_cache'); localStorage.removeItem('bi_analysis_cache_v2'); } catch(e) {}
 
 function getCacheKey(ticker, exchange, fw) { return ticker+':'+exchange+':'+fw; }
 
@@ -4019,7 +4040,11 @@ function friendlyError(err) {
   return 'Beklenmedik hata olustu. Tekrar deneyin.';
 }
 
-// ── MASTER SELECTION ROZETİ ──────────────────────────────────────
+/* ── YÜKSEK SKOR ROZETİ ─────────────────────────────────────────
+   Eskiden birden çok çerçeve (Buffett/Lynch/Dalio) vardı ve rozet
+   "iki ekol de onayladı" demek içindi. Tek çerçeveye inince o
+   karşılaştırma anlamını yitirdi: rozet artık sadece 6/7 ve üstünü
+   işaretliyor. */
 function checkMasterBadge(ticker, score, maxScore, fwKey) {
   const badge = document.getElementById('masterBadge');
   const title = document.getElementById('masterTitle');
@@ -4029,34 +4054,11 @@ function checkMasterBadge(ticker, score, maxScore, fwKey) {
   badge.style.borderColor = '';
   if (!title || !text) return;
 
-  const fwNames = {buffett:'Buffett', lynch:'Lynch', dalio:'Dalio', graham:'Graham'};
-  const fwScores = {};
-  fwScores[fwKey] = score;
-
-  try {
-    const store = JSON.parse(localStorage.getItem('bi_analysis_cache') || '{}');
-    ['buffett','lynch','dalio','graham'].forEach(function(fw) {
-      if (fw === fwKey) return;
-      const k = ticker + ':' + curEX + ':' + fw;
-      if (store[k]) {
-        const m2 = (store[k].result || '').match(/TOTAL_SCORE:\s*(\d+)/);
-        if (m2) fwScores[fw] = Math.min(7, parseInt(m2[1]));
-      }
-    });
-  } catch(e) {}
-
-  const highScores = Object.entries(fwScores).filter(function(kv){ return kv[1] >= 5; });
-
-  if (highScores.length >= 2) {
-    const names = highScores.map(function(kv){ return fwNames[kv[0]] || kv[0]; }).join(' + ');
-    const scores = highScores.map(function(kv){ return kv[1]+'/7'; }).join(' ve ');
-    title.textContent = 'MASTER SELECTION';
-    text.textContent = names + ' cercevelerinden ' + scores + ' skor — guclu konsensus.';
-    badge.classList.add('visible');
-  } else if (score >= 6) {
-    title.textContent = 'STRONG CONVICTION';
+  const enAz = Math.max(6, (maxScore || 7) - 1);
+  if (score >= enAz) {
+    title.textContent = 'YÜKSEK KANAAT';
     title.style.color = 'var(--accent)';
-    text.textContent = (fwNames[fwKey] || fwKey) + ' cercevesinden ' + score + '/7 ile olaganustu skor!';
+    text.textContent = (FW[fwKey] ? FW[fwKey].name : 'Barış Investing') + ' çerçevesinde ' + score + '/' + (maxScore || 7) + ' — yedi kriterin neredeyse tamamı geçti.';
     badge.style.borderColor = 'var(--accent)';
     badge.classList.add('visible');
   }
@@ -4798,8 +4800,9 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   if(cklistEl){
     cklistEl.innerHTML=fw.criteria.map((c,i)=>{
       const st=statuses[i]||'neutral';
-      return `<div class="cklist-row" onclick="showPage('crit',${i})"><div class="cklist-icon ${st}">${icon(st)}</div><div class="cklist-name">${esc(c.name)}</div><div class="cklist-arrow">→</div></div>`;
+      return `<div class="cklist-row" onclick="showPage('crit',${i})" title="${esc(c.name)} — gerekçesini oku"><div class="cklist-icon ${st}">${icon(st)}</div><div class="cklist-name">${esc(c.name)}</div><div class="cklist-arrow">DETAY →</div></div>`;
     }).join('');
+    const ckb=document.getElementById('ckBaslik'); if(ckb) ckb.style.display='flex';
   }
   const vbox=document.getElementById('verdictBox');
   vbox.textContent=`${score}/${fw.criteria.length} — ${verdictAd(verdict)}`;
@@ -4828,7 +4831,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
     aiCard.innerHTML=`<div class="ai-tag">${esc(fw.name)} · Tez</div>`+
       (smX?`<div class="ai-summary-text">${esc(smX[1].trim())}</div>`:'')+
       (rkX?`<div class="ai-summary-risk">⚠ ${esc(rkX[1].trim())}</div>`:'')+
-      (metrikler.length?`<div class="ai-metrik"><div class="ai-metrik-b">Şirkete Özel Metrikler</div>${metrikler.map(m=>`<div class="ai-metrik-s"><span class="ai-metrik-ad">${esc(m.ad)}</span><span class="ai-metrik-d">${esc(m.deger)}</span><span class="ai-metrik-y">${esc(m.yorum)}</span></div>`).join('')}</div>`:'')+
+      (metrikler.length?`<div class="ai-metrik"><div class="ai-metrik-b">Şirkete Özel Metrikler</div>${metrikler.map(m=>`<div class="ai-metrik-s"><div class="ai-metrik-ust"><span class="ai-metrik-ad">${esc(m.ad)}</span><span class="ai-metrik-d">${esc(m.deger)}</span></div>${m.yorum?`<div class="ai-metrik-y">${esc(m.yorum)}</div>`:''}</div>`).join('')}</div>`:'')+
       ((giris||izle||portfoy||hedef)?`<div class="ai-tez-grid">${kutu('Adil Giriş Bölgesi',giris)}${kutu('12 Aylık Hedef',hedef)}${kutu('İzlenecek Eşik',izle)}${kutu('Portföydeki Rol',portfoy)}</div>`:'')+
       `<div class="ai-summary-verdict" style="color:${vColor}">Nihai Görüş: ${verdictAd(verdict)}${garpM?` <span class="ai-garp">GARP ${garpM[1]}/100</span>`:''}</div>`+
       olcumSatiri();
@@ -4846,12 +4849,13 @@ function parseAndRender(ticker,company,text,fd,fwKey){
     const lbl=tk.length>=2?tk.substring(0,2):tk;
     logoEl.style.background=col;
     logoEl.style.border='1px solid '+col+'88';
-    logoEl.innerHTML=`<span style="color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0">${lbl}</span>`;
+    logoEl.innerHTML=`<span style="color:#fff;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0">${lbl}</span>`;
   }
   makeAvatar(ticker);
   const _logoImg=new Image();
   _logoImg.alt=ticker;
-  _logoImg.onload=()=>{logoEl.style.background='var(--surface2)';logoEl.style.border='1px solid var(--border-s)';logoEl.innerHTML='';logoEl.appendChild(_logoImg);_logoImg.style.cssText='width:100%;height:100%;object-fit:contain;padding:3px;';};
+  // Logo gelince açık zemine dön — şeffaf logolar koyu zeminde kayboluyor
+  _logoImg.onload=()=>{logoEl.style.background='#f6f4ef';logoEl.style.border='1px solid var(--border-s)';logoEl.innerHTML='';logoEl.appendChild(_logoImg);_logoImg.style.cssText='width:100%;height:100%;object-fit:contain;padding:5px;';};
   _logoImg.onerror=()=>{}; // avatar zaten görünüyor, dokunma
   _logoImg.src='/api/logo?ticker='+encodeURIComponent(ticker)+'&sz=128';
   document.getElementById('hflagUse').setAttribute('href',ex.fh);
