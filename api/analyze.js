@@ -1005,17 +1005,7 @@ METRIKLER_END
 ADIL_GIRIS: [fiyat aralığı] | [tek cümle gerekçe]
 IZLENECEK: [metrik ve eşik] | [ne zaman test edilecek]
 PORTFOY: [portföydeki rol] | [makul ağırlık tavanı]
-HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]
-
-MULTIPLES_START
-PE: [sayı] | [ucuz/adil/pahalı]
-PB: [sayı] | [ucuz/adil/pahalı]
-EV_EBITDA: [sayı] | [ucuz/adil/pahalı]
-PEG: [sayı] | [ucuz/adil/pahalı]
-RSI: [30-70] | [ASIRI_SATIM|NÖTR|ASIRI_ALIM]
-PRICE_52W: [düşük]-[yüksek] | [mevcut]
-ANALYST: [AL%]-[TUT%]-[SAT%] | [konsensüs] | [hedef] | [upside%]
-MULTIPLES_END`;
+HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
 
 
   // Server-side kredi kontrolü
@@ -1098,8 +1088,8 @@ DEĞERLEME REFERANSI (günlük GARP taramamızla aynı bantlar — mekanik kural
 FORMAT (ASLA BOZMA):
 - Düz metin, markdown YOK (#, *, - kullanma). Tüm alan ve anahtar isimlerini şablonla birebir aynı yaz.
 - TOTAL_SCORE: 0-7 tam sayı (PASS sayısıyla tutarlı). GARP_SKOR: 0-100 arası, değerleme+büyüme+kârlılık bantlarına göre kendi hesabın.
-- Her kriter: "KEY: PASS|FAIL|NEUTRAL | açıklama". Açıklama 2-4 CÜMLE ve gerçekten DÜŞÜNÜLMÜŞ olacak: (1) ilgili rakam, (2) o rakamın ne anlama geldiği — sektör ortalamasına, benzer şirkete veya şirketin kendi geçmişine göre, (3) bu okumanın karşı argümanı varsa o, (4) net karar. Rakamı tekrar eden tek cümlelik satır yazma; veri okuyucusu değil analistsin. NEUTRAL'ı sadece veri gerçekten yoksa kullan, o zaman bile neye bakılması gerektiğini yaz.
-- Kriterlerin hepsini aynı derinlikte yazma: tezin kaderini belirleyen 2-3 kriterde uzun düşün, geri kalanında kısa geç. Hangisinin belirleyici olduğuna sen karar ver.
+- Her kriter: "KEY: PASS|FAIL|NEUTRAL | açıklama". Açıklama düşünülmüş olacak: rakam + o rakamın sektöre/geçmişe göre ne anlama geldiği + net karar. Rakamı tekrar eden satır yazma; veri okuyucusu değil analistsin. NEUTRAL'ı sadece veri gerçekten yoksa kullan, o zaman bile neye bakılması gerektiğini yaz.
+- BÜTÇENİ DAĞIT: tezin kaderini belirleyen 2-3 kriterde 3-4 cümle yaz, kalan kriterlerde 1-2 cümleyle geç. Hepsini uzun yazarsan cevap sonuna varamadan kesilir ve adil giriş, izlenecek eşik, metrikler bölümleri boş kalır — bu bölümler tezin en değerli kısmı, onlara mutlaka sıra gelsin.
 - 7 kriterin tamamını bitir. Cevabın kesilmemesi için önce kriterleri, sonra tez alanlarını yaz.
 - SUMMARY: tek cümlede tez — çatışmayı ve net duruşu içersin. RISK: en can alıcı risk, 1 cümle.
 - ADIL_GIRIS: fiyat aralığı + tek cümle gerekçe. IZLENECEK: metrik + eşik + ne zaman test edileceği. PORTFOY: rol + ağırlık tavanı.
@@ -1388,6 +1378,27 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
         aiResult = aiResult.replace(/PRICE_52W:\s*[^\n|]+\|[^\n]*/, `PRICE_52W: ${n2(fd.fiftyTwoWeekLow,2)}-${n2(fd.fiftyTwoWeekHigh,2)} | ${n2(fd.currentPrice,2)}`);
     }
 
+    /* ÇARPAN BLOĞU SUNUCUDA ÜRETİLİYOR — modele yazdırmıyoruz.
+       Değerleri zaten gerçek veriden eziyorduk, yani model bu bloğu her
+       analizde ~120 token harcayıp uydurma riskiyle yazıyordu. O bütçe
+       artık kriterlerin derinliğine gidiyor; blok da hiç kesilmiyor. */
+    if (fd && !/MULTIPLES_START/.test(aiResult)) {
+      const s = (v, d = 1) => (v != null && isFinite(v)) ? Number(v).toFixed(d) : 'N/A';
+      const bant = (v, ucuz, pahali) => v == null || !isFinite(v) ? '—' : v <= ucuz ? 'ucuz' : v >= pahali ? 'pahalı' : 'adil';
+      const rsiEt = fd.rsi == null ? '—' : fd.rsi < 30 ? 'ASIRI_SATIM' : fd.rsi > 70 ? 'ASIRI_ALIM' : 'NÖTR';
+      const upsideStr = (fd.currentPrice && fd.targetMeanPrice)
+        ? `%${(((fd.targetMeanPrice - fd.currentPrice) / fd.currentPrice) * 100).toFixed(1)}` : 'N/A';
+      aiResult += `\n\nMULTIPLES_START
+PE: ${s(fd.peRatio)} | ${bant(fd.peRatio, 18, 28)}
+PB: ${s(fd.pbRatio)} | ${bant(fd.pbRatio, 2, 7)}
+EV_EBITDA: ${s(fd.evEbitda)} | ${bant(fd.evEbitda, 12, 25)}
+PEG: ${s(fd.pegRatio)} | ${bant(fd.pegRatio, 1, 2)}
+RSI: ${fd.rsi != null ? Number(fd.rsi).toFixed(0) : 'N/A'} | ${rsiEt}
+PRICE_52W: ${s(fd.fiftyTwoWeekLow, 2)}-${s(fd.fiftyTwoWeekHigh, 2)} | ${s(fd.currentPrice, 2)}
+ANALYST: — | ${fd.recommendationKey || 'N/A'} | ${s(fd.targetMeanPrice, 2)} | ${upsideStr}
+MULTIPLES_END`;
+    }
+
     /* ── KULLANIM ÖLÇÜMÜ ────────────────────────────────────────────
        Hangi model, kaç token, yaklaşık kaç dolar. Önbellek okuması
        ayrı sayılıyor: cacheOku yüksekse sistem promptu %10 fiyatına
@@ -1397,10 +1408,17 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // Token tavanı doldu ya da süre bütçesi bitti — ikisi de kısmi cevap demek
     const kesildi = data.stop_reason === 'max_tokens' || data.stop_reason === 'sure_doldu';
     const sureDoldu = data.stop_reason === 'sure_doldu';
+    /* Akış süre dolduğu için kesildiyse son "message_delta" hiç gelmez,
+       yani output_tokens eksik kalır (1 gibi anlamsız değer). Böyle
+       durumda metin uzunluğundan tahmin ediyoruz (~4 karakter/token). */
+    const cikisTahmini = Math.round(aiResult.length / 4);
+    const cikisToken = (kullanim.output_tokens && kullanim.output_tokens > 5)
+      ? kullanim.output_tokens : cikisTahmini;
     const olcum = {
       model: servisEdenModel,
       giris: kullanim.input_tokens ?? null,
-      cikis: kullanim.output_tokens ?? null,
+      cikis: cikisToken,
+      cikisTahmini: !(kullanim.output_tokens && kullanim.output_tokens > 5),
       cacheYaz: kullanim.cache_creation_input_tokens ?? 0,
       cacheOku: kullanim.cache_read_input_tokens ?? 0,
       kesildi,

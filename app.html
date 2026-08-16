@@ -4129,7 +4129,7 @@ function olcumSatiri(){
   const yonetici=(typeof curUser!=='undefined')&&curUser&&curUser.is_admin;
   if(!yonetici) return '';
   const bin=v=>v==null?'—':(v>=1000?(v/1000).toFixed(1)+'k':String(v));
-  const parcalar=[o.model, `giriş ${bin(o.giris)}`, `çıkış ${bin(o.cikis)}`];
+  const parcalar=[o.model, `giriş ${bin(o.giris)}`, `çıkış ${bin(o.cikis)}${o.cikisTahmini?'~':''}`];
   if(o.cacheOku) parcalar.push(`önbellek ${bin(o.cacheOku)}`);
   if(o.maliyet!=null) parcalar.push(`~$${o.maliyet}`);
   if(o.yedek) parcalar.push('YEDEK MODEL');
