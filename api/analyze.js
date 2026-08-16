@@ -914,7 +914,7 @@ async function fetchBISTFast(ticker) {
 // ── SIGNAL HELPERS ───────────────────────────────────────────────
 function sigPE(v)  { if(v==null)return'N/A'; if(v<12)return'ucuz'; if(v<22)return'adil'; return'pahalı'; }
 function sigPB(v)  { if(v==null)return'N/A'; if(v<1.5)return'ucuz'; if(v<3)return'adil'; return'pahalı'; }
-function sigPEG(v) { if(v==null)return'N/A'; if(v<1)return'ucuz — Lynch fırsatı'; if(v<1.5)return'adil'; if(v<2)return'dikkatli ol'; return'pahalı'; }
+function sigPEG(v) { if(v==null)return'N/A'; if(v<1)return'ucuz — büyüme fiyatlanmamış'; if(v<1.5)return'adil'; if(v<2)return'dikkatli ol'; return'pahalı'; }
 function sigEV(v)  { if(v==null)return'N/A'; if(v<8)return'ucuz'; if(v<15)return'adil'; return'pahalı'; }
 
 // ── ANA HANDLER ──────────────────────────────────────────────────

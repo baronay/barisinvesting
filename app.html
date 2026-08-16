@@ -3132,17 +3132,8 @@ body.pr-kilit{overflow:hidden;}
     </div>
   </div>
 </div>
-<div class="fw-modal" id="fwModal">
-  <div class="fw-modal-box">
-    <div class="fw-mhdr"><div class="fw-mtag">Barış Investing · Analiz Çerçevesi</div><div class="fw-mtitle">Hangi yatırımcı gözüyle bakmak istersin?</div><div class="fw-msub">Her iki çerçeve de 7 kritere göre hisseyi değerlendirir.</div></div>
-    <div class="fw-opts">
-      <button class="fw-opt buffett" onclick="selFWModal('buffett')"><div class="fw-opt-name">Warren Buffett</div><div class="fw-opt-desc">Değer yatırımı. Güçlü hendek, kaliteli yönetim, makul fiyat.</div><div class="fw-tags-wrap"><span class="fw-tag">ROE</span><span class="fw-tag">Hendek</span><span class="fw-tag">FCF</span><span class="fw-tag">Değerleme</span></div></button>
-      <button class="fw-opt lynch" onclick="selFWModal('lynch')"><div class="fw-opt-name">Peter Lynch</div><div class="fw-opt-desc">Büyüme ve hikaye. Günlük hayatta gözlemlenebilen şirketler, PEG odaklı.</div><div class="fw-tags-wrap"><span class="fw-tag">Saha Avantajı</span><span class="fw-tag">PEG</span><span class="fw-tag">Bilanço</span><span class="fw-tag">Insider</span></div></button>
-    </div>
-    <button class="fw-skip" onclick="closeFWModal()">Şimdi değil — devam et</button>
-  </div>
-</div>
-
+<!-- Çerçeve seçim penceresi (Buffett / Lynch) kaldırıldı: tek çerçeve var,
+     açan da yoktu — ekranda Buffett adı bırakan ölü işaretlemeydi. -->
 <div class="loading-ov" id="loadingOv">
   <div class="loading-t" id="loadingT">—</div>
   <div class="loading-fw" id="loadingFW">—</div>
@@ -3730,7 +3721,7 @@ body.pr-kilit{overflow:hidden;}
 
 <div class="page" id="page-portfolio">
 <div class="page-body">
-  <div class="pt-hdr"><div class="pt-title">Portföy<span>üm</span></div><span id="ptCloudSync" style="font-size:9px;color:var(--muted2);font-family:'JetBrains Mono',monospace;margin-right:auto;margin-left:10px"></span><button class="pt-ana-btn" onclick="analyzeAllPt()" id="ptAnaBtn">▶ Buffett + Lynch</button></div>
+  <div class="pt-hdr"><div class="pt-title">Portföy<span>üm</span></div><span id="ptCloudSync" style="font-size:9px;color:var(--muted2);font-family:'JetBrains Mono',monospace;margin-right:auto;margin-left:10px"></span><button class="pt-ana-btn" onclick="analyzeAllPt()" id="ptAnaBtn">▶ Tümünü Analiz Et</button></div>
   <div class="pt-notifs" id="ptNotifs"></div>
   <div class="pt-add">
     <div class="pt-add-t">Hisse Ekle</div>
@@ -3744,7 +3735,7 @@ body.pr-kilit{overflow:hidden;}
     </div>
     <div id="ptErr" style="font-size:9px;color:var(--danger);margin-top:3px;display:none"></div>
   </div>
-  <div class="empty-pt" id="emptyPt"><div style="font-size:28px;opacity:0.2">📊</div><div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted2)">Portföy Boş</div><div style="font-size:10px;color:var(--muted2);opacity:0.6;max-width:220px;line-height:1.7">Hisselerini ekle. Buffett + Lynch çift analizi yapılır.</div></div>
+  <div class="empty-pt" id="emptyPt"><div style="font-size:28px;opacity:0.2">📊</div><div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted2)">Portföy Boş</div><div style="font-size:10px;color:var(--muted2);opacity:0.6;max-width:220px;line-height:1.7">Hisselerini ekle, hepsini tek seferde analizden geçir.</div></div>
   <div id="ptContent" style="display:none">
     <div class="pt-sum">
       <div class="ps-card"><div class="ps-lbl">Toplam Maliyet</div><div class="ps-vtl" id="psTL" style="display:none">—</div><div class="ps-vusd" id="psUSD" style="display:none">—</div><div class="ps-sub" id="psCurS">—</div></div>
@@ -3887,7 +3878,7 @@ body.pr-kilit{overflow:hidden;}
               Tezler ilham, <span class="accent">analiz</span> karar verdirir.
             </div>
             <div class="tez-cta-banner-desc">
-              Buffett ve Lynch çerçeveleriyle istediğin BIST, NYSE veya NASDAQ hissesini 7 kriterli AI destekli analizden geçir.
+              Barış Investing çerçevesiyle istediğin BIST, NYSE veya NASDAQ hissesini 7 kriterli AI destekli analizden geçir.
             </div>
           </div>
           <button type="button" class="tez-cta-banner-btn" onclick="ctaTezlerToAnaliz('banner')">
@@ -4196,10 +4187,7 @@ function switchTab(t){
   });
 }
 
-// FW MODAL
-function showFWModal(){document.getElementById('fwModal').classList.add('visible');}
-function closeFWModal(){document.getElementById('fwModal').classList.remove('visible');}
-function selFWModal(fw){closeFWModal();selFW(fw);}
+// FW MODAL kaldırıldı (tek çerçeve)
 
 // EXCHANGE
 function selEx(ex){
@@ -4532,7 +4520,7 @@ function renderMult(m){
     if (isNaN(v)) return '—';
     if (type === 'pe')  return v < 12 ? 'UCUZ' : v < 22 ? 'ADİL' : v < 35 ? 'DİKKAT' : 'PAHALI';
     if (type === 'pb')  return v < 1.5 ? 'UCUZ' : v < 3 ? 'ADİL' : v < 6 ? 'DİKKAT' : 'PAHALI';
-    if (type === 'peg') return v < 1 ? 'UCUZ — Lynch fırsatı' : v < 1.5 ? 'ADİL' : v < 2 ? 'DİKKATLİ OL' : 'PAHALI';
+    if (type === 'peg') return v < 1 ? 'UCUZ — büyüme fiyatlanmamış' : v < 1.5 ? 'ADİL' : v < 2 ? 'DİKKATLİ OL' : 'PAHALI';
     if (type === 'ev')  return v < 8 ? 'UCUZ' : v < 15 ? 'ADİL' : v < 20 ? 'DİKKAT' : 'PAHALI';
     return '—';
   }
@@ -5353,9 +5341,9 @@ function dlAndTweet(){
     const fw=FW[curFW];const d=analysisData;
     const pass=fw.criteria.filter((_,i)=>d.statuses[i]==='pass').map(c=>`✅ ${c.name.split(' ')[0]}`);
     const fail=fw.criteria.filter((_,i)=>d.statuses[i]==='fail').map(c=>`❌ ${c.name.split(' ')[0]}`);
-    const em=d.verdict==='AL'?'🟢':d.verdict==='UZAK_DUR'?'🔴':'🟡';
+    const em=d.verdict==='AL'?'🟢':(d.verdict==='UZAK_DUR'||d.verdict==='KACIN')?'🔴':'🟡';
     const text=`📊 ${curEX}: $${d.ticker}${curCo?' — '+curCo:''}
-${fw.name} Skoru: ${d.score}/${fw.criteria.length} ${em} ${d.verdict}
+${fw.name} Skoru: ${d.score}/${fw.criteria.length} ${em} ${verdictAd(d.verdict)}
 
 ${pass.slice(0,3).join(' ')}
 ${fail.slice(0,2).join(' ')}

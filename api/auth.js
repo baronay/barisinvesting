@@ -46,7 +46,7 @@ function welcomeEmailHTML() {
       Listeye eklendin. Bundan sonra <strong style="color:#ece4d4;">yeni yatırım tezleri</strong>, <strong style="color:#ece4d4;">haftalık seçimler</strong> ve piyasa notları doğrudan e-postana gelecek.
     </p>
     <p style="margin:0 0 26px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:#cbd5e1;">
-      Dilersen hemen Terminal'e geçip BIST, NYSE ve NASDAQ hisselerini Buffett ve Lynch çerçeveleriyle analiz etmeye başlayabilirsin.
+      Dilersen hemen Terminal'e geçip BIST, NYSE ve NASDAQ hisselerini Barış Investing çerçevesiyle analiz etmeye başlayabilirsin.
     </p>
     <table role="presentation" cellpadding="0" cellspacing="0"><tr>
       <td style="border-radius:12px;background:#c2ad84;">
