@@ -495,6 +495,17 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .ai-summary-risk{font-size:10px;color:var(--text2);line-height:1.6;padding:7px 9px;background:var(--surface2);border-left:2px solid var(--danger);margin-bottom:8px;}
 .ai-summary-verdict{font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;}
 .ai-garp{margin-left:8px;color:var(--muted-s);}
+/* Şirkete özel operasyonel metrikler */
+.ai-metrik{margin:10px 0 4px;border-top:1px solid var(--rule);padding-top:9px;}
+.ai-metrik-b{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted-s);margin-bottom:7px;}
+.ai-metrik-s{display:flex;align-items:baseline;gap:9px;padding:5px 0;border-bottom:1px solid var(--rule);}
+.ai-metrik-s:last-child{border-bottom:none;}
+.ai-metrik-ad{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.6px;color:var(--text2);min-width:110px;flex-shrink:0;}
+.ai-metrik-d{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);min-width:74px;flex-shrink:0;}
+.ai-metrik-y{font-size:10.5px;color:var(--muted-s);line-height:1.5;}
+@media(max-width:560px){.ai-metrik-s{flex-wrap:wrap;gap:4px 9px;}.ai-metrik-y{flex-basis:100%;}}
+/* Model/token ölçümü — yalnızca admin görür */
+.ai-olcum{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.5px;color:var(--muted2);}
 /* Eşik şeridi — şirketin çerçeve bantlarındaki yeri */
 .esik-blok{margin-top:12px;border-top:1px solid var(--rule);padding-top:11px;}
 .esik-bas{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted-s);margin-bottom:9px;}
@@ -4110,6 +4121,22 @@ function renderCompanyProfile(fd, ticker, exchange) { /* kaldırıldı */ }
 // STATE
 let analysisData=null,ptPie=null,ptScore=null;
 let curFW='baris',curEX='BIST',curTicker='',curCo='';
+/* Model/token ölçümü — sunucudan geliyor, yalnızca admin görüyor.
+   "Hangi model, kaç token, ne tuttu" sorusu ekranda cevaplansın diye. */
+function olcumSatiri(){
+  const o=window.__sonOlcum;
+  if(!o) return '';
+  const yonetici=(typeof curUser!=='undefined')&&curUser&&curUser.is_admin;
+  if(!yonetici) return '';
+  const bin=v=>v==null?'—':(v>=1000?(v/1000).toFixed(1)+'k':String(v));
+  const parcalar=[o.model, `giriş ${bin(o.giris)}`, `çıkış ${bin(o.cikis)}`];
+  if(o.cacheOku) parcalar.push(`önbellek ${bin(o.cacheOku)}`);
+  if(o.maliyet!=null) parcalar.push(`~$${o.maliyet}`);
+  if(o.yedek) parcalar.push('YEDEK MODEL');
+  if(o.kesildi) parcalar.push('KESİLDİ');
+  return `<div class="ai-olcum">${esc(parcalar.join(' · '))}</div>`;
+}
+
 // Karar kodları içeride aynı kalıyor (geçmiş kayıtlar, CSS sınıfları);
 // ekranda tezlerdeki ve günlük taramadaki dil kullanılıyor.
 const VERDICT_AD={AL:'AL',BEKLE:'İZLE',UZAK_DUR:'KAÇIN'};
@@ -4700,6 +4727,7 @@ async function doAnalyze(){
       showToast('⚠ Bazı finansal veriler doğrulanamadı, analiz sınırlı veriyle yapıldı.','warn');
     }
     document.getElementById('ls4').classList.add('done');
+    window.__sonOlcum=data.olcum||null;
     setTimeout(()=>{ov.classList.remove('visible');btn.disabled=false;hasAnalyzed=true;parseAndRender(ticker,company,data.result,data.financialData,curFW);},400);
   }catch(err){ov.classList.remove('visible');btn.disabled=false;eb.textContent=friendlyError(err);eb.classList.add('visible');console.error('Analyze:',err);}
 }
@@ -4787,14 +4815,22 @@ function parseAndRender(ticker,company,text,fd,fwKey){
       return {v:(p[0]||'').trim(), n:(p.slice(1).join('|')||'').trim()};
     };
     const giris=ikili('ADIL_GIRIS'), izle=ikili('IZLENECEK'), portfoy=ikili('PORTFOY'), hedef=ikili('HEDEF');
+    // Şirkete özel operasyonel metrikler: "ad | değer | yorum" satırları
+    const mBlok=text.match(/METRIKLER_START([\s\S]*?)METRIKLER_END/i);
+    const metrikler=mBlok?mBlok[1].split('\n').map(s=>s.trim()).filter(s=>s&&s.includes('|')).map(s=>{
+      const p=s.split('|').map(x=>x.trim());
+      return {ad:p[0], deger:p[1]||'', yorum:p.slice(2).join(' | ')};
+    }).filter(m=>m.ad&&!/^\[/.test(m.ad)).slice(0,4):[];
     const garpM=text.match(/GARP_SKOR:\s*(\d{1,3})/);
     const vColor=verdict==='AL'?'var(--success)':verdict==='UZAK_DUR'?'var(--danger)':'var(--warn)';
     const kutu=(etiket,d)=>d&&d.v?`<div class="ai-tez-k"><div class="ai-tez-l">${etiket}</div><div class="ai-tez-v">${esc(d.v)}</div>${d.n?`<div class="ai-tez-n">${esc(d.n)}</div>`:''}</div>`:'';
     aiCard.innerHTML=`<div class="ai-tag">${esc(fw.name)} · Tez</div>`+
       (smX?`<div class="ai-summary-text">${esc(smX[1].trim())}</div>`:'')+
       (rkX?`<div class="ai-summary-risk">⚠ ${esc(rkX[1].trim())}</div>`:'')+
+      (metrikler.length?`<div class="ai-metrik"><div class="ai-metrik-b">Şirkete Özel Metrikler</div>${metrikler.map(m=>`<div class="ai-metrik-s"><span class="ai-metrik-ad">${esc(m.ad)}</span><span class="ai-metrik-d">${esc(m.deger)}</span><span class="ai-metrik-y">${esc(m.yorum)}</span></div>`).join('')}</div>`:'')+
       ((giris||izle||portfoy||hedef)?`<div class="ai-tez-grid">${kutu('Adil Giriş Bölgesi',giris)}${kutu('12 Aylık Hedef',hedef)}${kutu('İzlenecek Eşik',izle)}${kutu('Portföydeki Rol',portfoy)}</div>`:'')+
-      `<div class="ai-summary-verdict" style="color:${vColor}">Nihai Görüş: ${verdictAd(verdict)}${garpM?` <span class="ai-garp">GARP ${garpM[1]}/100</span>`:''}</div>`;
+      `<div class="ai-summary-verdict" style="color:${vColor}">Nihai Görüş: ${verdictAd(verdict)}${garpM?` <span class="ai-garp">GARP ${garpM[1]}/100</span>`:''}</div>`+
+      olcumSatiri();
   }
 
   // Logo: server-side proxy (/api/logo). Domain listesi ve çoklu kaynak fallback

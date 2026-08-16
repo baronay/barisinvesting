@@ -990,6 +990,12 @@ KATALIZOR: PASS|FAIL|NEUTRAL | [açıklama]
 BOZULMA: PASS|FAIL|NEUTRAL | [açıklama]
 CRITERIA_END
 
+METRIKLER_START
+[metrik adı] | [değer] | [tek cümle yorum]
+[metrik adı] | [değer] | [tek cümle yorum]
+[metrik adı] | [değer] | [tek cümle yorum]
+METRIKLER_END
+
 ADIL_GIRIS: [fiyat aralığı] | [tek cümle gerekçe]
 IZLENECEK: [metrik ve eşik] | [ne zaman test edilecek]
 PORTFOY: [portföydeki rol] | [makul ağırlık tavanı]
@@ -1090,6 +1096,7 @@ FORMAT (ASLA BOZMA):
 - SÜRE KISITI VAR: uzun yazarsan analiz kesilir. Kısa ve yoğun yaz, 7 kriterin tamamını bitir.
 - SUMMARY: tek cümlede tez — çatışmayı ve net duruşu içersin. RISK: en can alıcı risk, 1 cümle.
 - ADIL_GIRIS: fiyat aralığı + tek cümle gerekçe. IZLENECEK: metrik + eşik + ne zaman test edileceği. PORTFOY: rol + ağırlık tavanı.
+- METRIKLER: bu şirketin işini anlatan ÜÇ operasyonel metrik — jenerik oran (F/K, ROE, marj) YAZMA, onlar zaten ekranda. Sektöre göre seç: yazılımda cRPO/ACV/yenileme oranı/net dolar genişlemesi, sigortada bileşik oran/prim üretimi/teknik kâr, bankada net faiz marjı/takip oranı/kredi mevduat, havacılıkta doluluk/birim gelir (RASK)/akaryakıt maliyeti, perakendede aynı mağaza satışı/stok devri/m² başına ciro, yarı iletkende brüt marj/kapasite kullanımı/sipariş defteri, madencilikte tenör/üretim/nakit maliyet, enerjide üretim kapasitesi/spread. Değeri biliyorsan yaz, bilmiyorsan "veri yok" yaz ama metriği yine de göster — hangi metriğe bakılacağını söylemek de bilgidir. Uydurma rakam yazma.
 
 KRİTERLERİN ANLAMI:
 - ANLATI: Piyasanın fiyatladığı hikâye ile rakamlar ayrışıyor mu? Ayrışma senin lehine ise PASS, piyasa haklıysa FAIL.
@@ -1170,8 +1177,8 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // 26-30sn bile yetmeyebiliyor (THYAO 3 denemede de birincilde timeout).
     // Yedek haiku 1100 token tavanıyla en kötü ~70 tok/sn'de bile 18sn'ye sığar
     // (14sn'de THYAO kıl payı kaçırıyordu). Kesilme > boş sonuç.
-    const FALLBACK_MODEL = 'claude-haiku-4-5-20251001';
-    const primaryModel = process.env.ANALYZE_MODEL || 'claude-sonnet-4-5';
+    const FALLBACK_MODEL = 'claude-haiku-4-5';
+    const primaryModel = process.env.ANALYZE_MODEL || 'claude-sonnet-5';
 
     const callModel = async (model, timeoutMs, maxTokens) => {
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1180,9 +1187,16 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
         body: JSON.stringify({
           model,
           // max_tokens bir TAVAN — üretimi yavaşlatmaz, sadece kesilmeyi önler.
-          // Birincilde 1800 (kesilme koruması), yedekte 1100 (süre garantisi).
           max_tokens: maxTokens,
-          system: systemPrompt,
+          /* Sistem promptu sabit (tarih/ticker içermiyor) → önbelleğe alınabilir.
+             İlk çağrı yazma bedeli ödüyor, sonraki analizler o bölümü ~%10
+             fiyatına okuyor. Şirkete özel veri kullanıcı mesajında, yani
+             önbellek önekini bozmuyor. */
+          system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+          /* Düşünme kapalı: çıktı sabit şablon, düşünme hem max_tokens'ı yiyip
+             kriterleri kestiriyor hem de süre bütçesini zorluyordu. Sonnet 5'te
+             parametre verilmezse düşünme AÇIK geliyor — açıkça kapatıyoruz. */
+          thinking: { type: 'disabled' },
           messages: [{ role: 'user', content: enrichedPrompt }]
         }),
         signal: AbortSignal.timeout(timeoutMs),
@@ -1194,13 +1208,13 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
 
     let response, data, usedFallback = false;
     try {
-      ({ resp: response, d: data } = await callModel(primaryModel, 24000, 1800));
+      ({ resp: response, d: data } = await callModel(primaryModel, 24000, 2600));
     } catch (e) {
       // Birincil model ZAMAN AŞIMINA uğradıysa 504 dönme — hızlı haiku'yla kurtar.
       const isTimeout = e.name === 'TimeoutError' || e.name === 'AbortError';
       if (!isTimeout || primaryModel === FALLBACK_MODEL) throw e;
       dlog(`[AI] ${primaryModel} zaman aşımı → ${FALLBACK_MODEL} ile tekrar deneniyor`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 18000, 1100));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 18000, 1400));
       usedFallback = true;
     }
 
@@ -1209,7 +1223,8 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // patlamasın.
     if ((!data || data.error || !response.ok) && !usedFallback && primaryModel !== FALLBACK_MODEL) {
       dlog(`[AI] ${primaryModel} başarısız (${data?.error?.message || response?.status}) → ${FALLBACK_MODEL}`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 18000, 1100));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 18000, 1400));
+      usedFallback = true;
     }
 
     if (!data) return res.status(502).json({ error: 'AI servisinden geçersiz yanıt alındı.' });
@@ -1245,12 +1260,46 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
         aiResult = aiResult.replace(/PRICE_52W:\s*[^\n|]+\|[^\n]*/, `PRICE_52W: ${n2(fd.fiftyTwoWeekLow,2)}-${n2(fd.fiftyTwoWeekHigh,2)} | ${n2(fd.currentPrice,2)}`);
     }
 
+    /* ── KULLANIM ÖLÇÜMÜ ────────────────────────────────────────────
+       Hangi model, kaç token, yaklaşık kaç dolar. Önbellek okuması
+       ayrı sayılıyor: cacheOku yüksekse sistem promptu %10 fiyatına
+       geliyor demektir, düşükse önbellek tutmuyor (bkz. system bloğu). */
+    const kullanim = data.usage || {};
+    const servisEdenModel = data.model || (usedFallback ? FALLBACK_MODEL : primaryModel);
+    const kesildi = data.stop_reason === 'max_tokens';
+    const olcum = {
+      model: servisEdenModel,
+      giris: kullanim.input_tokens ?? null,
+      cikis: kullanim.output_tokens ?? null,
+      cacheYaz: kullanim.cache_creation_input_tokens ?? 0,
+      cacheOku: kullanim.cache_read_input_tokens ?? 0,
+      kesildi,
+      yedek: usedFallback,
+    };
+    // Fiyat/1M token — model değişince buradan güncelle
+    const FIYAT = {
+      'claude-sonnet-5': { g: 2.00, c: 10.00 },   // tanıtım fiyatı (2026-08-31'e kadar; sonrası 3/15)
+      'claude-opus-5':   { g: 5.00, c: 25.00 },
+      'claude-haiku-4-5':{ g: 1.00, c: 5.00 },
+      'claude-sonnet-4-5': { g: 3.00, c: 15.00 },
+    };
+    const f = FIYAT[servisEdenModel] || FIYAT[Object.keys(FIYAT).find(k => servisEdenModel.startsWith(k))] || null;
+    if (f) {
+      // Önbellek yazımı 1,25x, okuması 0,1x
+      olcum.maliyet = Number((
+        ((olcum.giris || 0) * f.g + (olcum.cacheYaz || 0) * f.g * 1.25 + (olcum.cacheOku || 0) * f.g * 0.1
+         + (olcum.cikis || 0) * f.c) / 1e6
+      ).toFixed(4));
+    }
+    console.log(`[AI] ${cleanTicker} ${olcum.model} giriş:${olcum.giris} çıkış:${olcum.cikis} cache(yaz:${olcum.cacheYaz} oku:${olcum.cacheOku})${olcum.maliyet != null ? ` ~$${olcum.maliyet}` : ''}${kesildi ? ' KESİLDİ' : ''}`);
+
     dlog(`✓ ${yahooTicker} | src:${fd?.dataSource} | roe:${fd?.roe} | pb:${fd?.pbRatio}(${fd?.pbSource||'yahoo'}) | len:${aiResult.length}`);
     return res.status(200).json({
       result: aiResult,
       financialData: fd,
       peers: fd?.peers || [],
       dataWarnings: fd?._dataWarnings || [],
+      olcum,
     });
 
   } catch(err) {
