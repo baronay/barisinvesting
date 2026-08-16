@@ -1092,8 +1092,9 @@ DEĞERLEME REFERANSI (günlük GARP taramamızla aynı bantlar — mekanik kural
 FORMAT (ASLA BOZMA):
 - Düz metin, markdown YOK (#, *, - kullanma). Tüm alan ve anahtar isimlerini şablonla birebir aynı yaz.
 - TOTAL_SCORE: 0-7 tam sayı (PASS sayısıyla tutarlı). GARP_SKOR: 0-100 arası, değerleme+büyüme+kârlılık bantlarına göre kendi hesabın.
-- Her kriter: "KEY: PASS|FAIL|NEUTRAL | açıklama" — açıklama EN FAZLA 25 KELİME: rakam + gerekçe + net karar. NEUTRAL'ı sadece veri gerçekten yoksa kullan, o zaman bile tek cümlelik gerekçe yaz.
-- SÜRE KISITI VAR: uzun yazarsan analiz kesilir. Kısa ve yoğun yaz, 7 kriterin tamamını bitir.
+- Her kriter: "KEY: PASS|FAIL|NEUTRAL | açıklama". Açıklama 2-4 CÜMLE ve gerçekten DÜŞÜNÜLMÜŞ olacak: (1) ilgili rakam, (2) o rakamın ne anlama geldiği — sektör ortalamasına, benzer şirkete veya şirketin kendi geçmişine göre, (3) bu okumanın karşı argümanı varsa o, (4) net karar. Rakamı tekrar eden tek cümlelik satır yazma; veri okuyucusu değil analistsin. NEUTRAL'ı sadece veri gerçekten yoksa kullan, o zaman bile neye bakılması gerektiğini yaz.
+- Kriterlerin hepsini aynı derinlikte yazma: tezin kaderini belirleyen 2-3 kriterde uzun düşün, geri kalanında kısa geç. Hangisinin belirleyici olduğuna sen karar ver.
+- 7 kriterin tamamını bitir. Cevabın kesilmemesi için önce kriterleri, sonra tez alanlarını yaz.
 - SUMMARY: tek cümlede tez — çatışmayı ve net duruşu içersin. RISK: en can alıcı risk, 1 cümle.
 - ADIL_GIRIS: fiyat aralığı + tek cümle gerekçe. IZLENECEK: metrik + eşik + ne zaman test edileceği. PORTFOY: rol + ağırlık tavanı.
 - METRIKLER: bu şirketin işini anlatan ÜÇ operasyonel metrik — jenerik oran (F/K, ROE, marj) YAZMA, onlar zaten ekranda. Sektöre göre seç: yazılımda cRPO/ACV/yenileme oranı/net dolar genişlemesi, sigortada bileşik oran/prim üretimi/teknik kâr, bankada net faiz marjı/takip oranı/kredi mevduat, havacılıkta doluluk/birim gelir (RASK)/akaryakıt maliyeti, perakendede aynı mağaza satışı/stok devri/m² başına ciro, yarı iletkende brüt marj/kapasite kullanımı/sipariş defteri, madencilikte tenör/üretim/nakit maliyet, enerjide üretim kapasitesi/spread. Değeri biliyorsan yaz, bilmiyorsan "veri yok" yaz ama metriği yine de göster — hangi metriğe bakılacağını söylemek de bilgidir. Uydurma rakam yazma.
@@ -1167,20 +1168,28 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
   }
 
   enrichedPrompt += prompt;
-  enrichedPrompt += '\n\nKRİTİK KURAL: Yukarıdaki gerçek rakamları kullan, uydurma. Her PASS/FAIL/NEUTRAL satırı pipe (|) ile açıklama içermeli, CRITERIA_START/CRITERIA_END eksiksiz olmalı. Her açıklama 1-2 YOĞUN cümle: en az bir rakam + gerekçeli NET karar, dolgu cümle yok. 7 kriterin TAMAMINI yaz, hiçbirini atlama. ADIL_GIRIS, IZLENECEK ve PORTFOY satırlarını da mutlaka doldur — tezin değeri orada. Olgun ve akıcı yaz, küçümseyici/argo kelime kullanma.';
+  enrichedPrompt += '\n\nKRİTİK KURAL: Yukarıdaki gerçek rakamları kullan, uydurma. Her PASS/FAIL/NEUTRAL satırı pipe (|) ile açıklama içermeli, CRITERIA_START/CRITERIA_END eksiksiz olmalı. 7 kriterin TAMAMINI yaz, hiçbirini atlama. ADIL_GIRIS, IZLENECEK, PORTFOY ve METRIKLER bölümlerini de doldur — tezin değeri orada. Olgun ve akıcı yaz, küçümseyici/argo kelime kullanma.\n\nDÜŞÜNME TALİMATI: Bu bir veri özeti değil, bir tez. Ekrandaki rakamları tekrar etmek analiz değildir — kullanıcı onları zaten görüyor. Senden beklenen: rakamların birbiriyle çeliştiği yeri bulmak (marj düşerken ciro büyüyorsa neden), piyasanın atladığı detayı görmek, ve "bu fiyat neyi varsayıyor, o varsayım tutar mı" sorusunu cevaplamak. Cevabı yazmadan önce hangi iki-üç kriterin bu hissede belirleyici olduğunu kendine sor, derinliği oraya harca.';
   if (!fd) enrichedPrompt += '\n\nVERİ NOTU: Finansal veri alınamadı. Sektör bilgine göre dürüstçe tahmin yürüt, "veri sınırlı" olduğunu açıkça söyle ama yine de net bir görüş ver, analizi yarım bırakma.';
 
   try {
     // Süre bütçesi: vercel.json maxDuration=60sn (Hobby planı 60sn'e izin verir).
-    // Veri çekme ≤8sn + birincil model 24sn + haiku yedeği 18sn = ~50sn < 60sn.
-    // ÜRETİM ÖLÇÜMÜ (2026-07): Sonnet 4.5 yük altında ~40-50 tok/sn'ye düşüyor,
-    // 26-30sn bile yetmeyebiliyor (THYAO 3 denemede de birincilde timeout).
-    // Yedek haiku 1100 token tavanıyla en kötü ~70 tok/sn'de bile 18sn'ye sığar
-    // (14sn'de THYAO kıl payı kaçırıyordu). Kesilme > boş sonuç.
+    // BÜTÇE DAĞILIMI (60 sn'lik fonksiyon penceresi):
+    //   veri çekme ≤8sn + birincil 38sn + haiku yedeği 11sn ≈ 57sn.
+    // Birincil eskiden 24sn alıyordu, yani pencerenin yarısı yalnızca
+    // "belki zaman aşımı olur" diye yedeğe ayrılmış boş bekliyordu. Yedek
+    // nadiren çalışıyor; süreyi asıl işi yapan modele verdik. Düşünme
+    // açıldığı için model artık cevabı yazmadan önce de token harcıyor —
+    // sürenin tamamı ona lazım.
     const FALLBACK_MODEL = 'claude-haiku-4-5';
     const primaryModel = process.env.ANALYZE_MODEL || 'claude-sonnet-5';
 
-    const callModel = async (model, timeoutMs, maxTokens) => {
+    /* Düşünme derinliği: low | medium | high. Düşünme de max_tokens'tan
+       yiyor, dolayısıyla derinlik ↔ metin uzunluğu ↔ süre aynı bütçeyi
+       paylaşıyor. Vercel fonksiyonu 60 sn ile sınırlı (vercel.json), pratik
+       tavan ~3-3,5k token. ANALYZE_EFFORT ile ayarlanabilir. */
+    const effort = ['low', 'medium', 'high'].includes(process.env.ANALYZE_EFFORT) ? process.env.ANALYZE_EFFORT : 'medium';
+
+    const callModel = async (model, timeoutMs, maxTokens, dusun) => {
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
@@ -1193,10 +1202,12 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
              fiyatına okuyor. Şirkete özel veri kullanıcı mesajında, yani
              önbellek önekini bozmuyor. */
           system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-          /* Düşünme kapalı: çıktı sabit şablon, düşünme hem max_tokens'ı yiyip
-             kriterleri kestiriyor hem de süre bütçesini zorluyordu. Sonnet 5'te
-             parametre verilmezse düşünme AÇIK geliyor — açıkça kapatıyoruz. */
-          thinking: { type: 'disabled' },
+          /* Birincil modelde düşünme AÇIK — analiz veri okuması değil tez
+             kurma işi, model cevabı yazmadan önce kafa yorsun. Yedek modelde
+             kapalı: o zaten kurtarma çağrısı, orada tek derdimiz hız. */
+          ...(dusun
+            ? { thinking: { type: 'adaptive' }, output_config: { effort } }
+            : { thinking: { type: 'disabled' } }),
           messages: [{ role: 'user', content: enrichedPrompt }]
         }),
         signal: AbortSignal.timeout(timeoutMs),
@@ -1208,13 +1219,13 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
 
     let response, data, usedFallback = false;
     try {
-      ({ resp: response, d: data } = await callModel(primaryModel, 24000, 2600));
+      ({ resp: response, d: data } = await callModel(primaryModel, 38000, 3400, true));
     } catch (e) {
       // Birincil model ZAMAN AŞIMINA uğradıysa 504 dönme — hızlı haiku'yla kurtar.
       const isTimeout = e.name === 'TimeoutError' || e.name === 'AbortError';
       if (!isTimeout || primaryModel === FALLBACK_MODEL) throw e;
       dlog(`[AI] ${primaryModel} zaman aşımı → ${FALLBACK_MODEL} ile tekrar deneniyor`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 18000, 1400));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 11000, 1200, false));
       usedFallback = true;
     }
 
@@ -1223,7 +1234,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // patlamasın.
     if ((!data || data.error || !response.ok) && !usedFallback && primaryModel !== FALLBACK_MODEL) {
       dlog(`[AI] ${primaryModel} başarısız (${data?.error?.message || response?.status}) → ${FALLBACK_MODEL}`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 18000, 1400));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 11000, 1200, false));
       usedFallback = true;
     }
 
@@ -1243,7 +1254,13 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       return res.status(502).json({ error: `AI_HATA (${status||'?'}/${et||'?'}): ${data.error?.message || 'bilinmeyen'}` });
     }
 
-    let aiResult = data.content?.[0]?.text || '';
+    /* Düşünme açıkken cevabın ilk bloğu "thinking" oluyor; content[0].text
+       almak boş dönerdi. Metin bloklarını süzüp birleştiriyoruz. */
+    let aiResult = (data.content || [])
+      .filter(b => b && b.type === 'text' && typeof b.text === 'string')
+      .map(b => b.text)
+      .join('\n')
+      .trim();
     if (!aiResult) return res.status(502).json({ error: 'AI servisi boş yanıt döndü.' });
     aiResult = aiResult.replace(/TOTAL_SCORE:\s*(\d+)/i, (m, sc) =>
       `TOTAL_SCORE: ${Math.min(7, Math.max(0, parseInt(sc)))}`

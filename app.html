@@ -4967,7 +4967,9 @@ async function analyzeAllPt(){
 
     const doFetch = async (fw) => {
       const _ac=new AbortController();
-      const _to=setTimeout(()=>_ac.abort(),35000);
+      // Sunucu bütçesi 60sn (düşünme açıkken birincil model 38sn'ye kadar
+      // sürebiliyor) — 35sn'lik eski sınır analizi bitmeden kesiyordu.
+      const _to=setTimeout(()=>_ac.abort(),65000);
       try{
         const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:p.ticker,exchange:p.exchange,framework:fw,email:getEmail?.()||null}),signal:_ac.signal});
         const d=await r.json();
