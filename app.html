@@ -4133,7 +4133,8 @@ function olcumSatiri(){
   if(o.cacheOku) parcalar.push(`önbellek ${bin(o.cacheOku)}`);
   if(o.maliyet!=null) parcalar.push(`~$${o.maliyet}`);
   if(o.yedek) parcalar.push('YEDEK MODEL');
-  if(o.kesildi) parcalar.push('KESİLDİ');
+  if(o.sureDoldu) parcalar.push('SÜRE DOLDU — KISMİ');
+  else if(o.kesildi) parcalar.push('TOKEN TAVANI — KISMİ');
   return `<div class="ai-olcum">${esc(parcalar.join(' · '))}</div>`;
 }
 

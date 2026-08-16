@@ -1192,42 +1192,96 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     const FALLBACK_MODEL = 'claude-haiku-4-5';
     const primaryModel = process.env.ANALYZE_MODEL || 'claude-sonnet-5';
 
-    /* Düşünme derinliği: low | medium | high. Düşünme de max_tokens'tan
-       yiyor, dolayısıyla derinlik ↔ metin uzunluğu ↔ süre aynı bütçeyi
-       paylaşıyor. Vercel fonksiyonu 60 sn ile sınırlı (vercel.json), pratik
-       tavan ~3-3,5k token. ANALYZE_EFFORT ile ayarlanabilir. */
-    const effort = ['low', 'medium', 'high'].includes(process.env.ANALYZE_EFFORT) ? process.env.ANALYZE_EFFORT : 'medium';
+    /* DÜŞÜNME VARSAYILAN OLARAK KAPALI — ölçümle alınmış karar.
+       Canlıda düşünme açıkken istek 45 sn'de 504'e düştü: gizli düşünme
+       de saniye yiyor, model 3400 token'ı 34 sn'ye sığdıramıyor (~50 tok/sn
+       ⇒ ~68 sn gerekiyor). 60 sn'lik Vercel penceresinde "gizli düşün +
+       uzun yaz" ikisi birden olmuyor. Derinliği görünür metinden alıyoruz:
+       prompt zaten her kriterde gerekçeli 2-4 cümle istiyor, yani model
+       düşüncesini kullanıcıya yazıyor — hem okunabiliyor hem kesilirse
+       elde kalıyor. Daha uzun pencereye geçilirse ANALYZE_THINKING=1. */
+    const dusunmeAcik = process.env.ANALYZE_THINKING === '1';
+    const effort = ['low', 'medium', 'high'].includes(process.env.ANALYZE_EFFORT) ? process.env.ANALYZE_EFFORT : 'low';
 
-    /* sade=true: düşünme, effort ve önbellek alanları olmadan, en temel
-       gövdeyle çağır. Parametre uyuşmazlığında kurtarma yolu. */
+    /* AKIŞLI ÇAĞRI: yanıtı parça parça topluyoruz. Süre dolarsa akışı kesip
+       O ANA KADAR GELEN METİNLE dönüyoruz — kriterler şablonun başında
+       olduğu için yarım cevap bile kullanılabilir analiz veriyor. Eskiden
+       zaman aşımı = elde hiçbir şey yok = 504 idi.
+       sade=true: düşünme/effort/önbellek alanları olmadan, en temel gövde. */
     const callModel = async (model, timeoutMs, maxTokens, dusun, sade) => {
-      // Süre bütçesini aşma: kalan süreden 2 sn pay bırak
       const sure = Math.max(4000, Math.min(timeoutMs, kalanSure() - 2000));
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({
-          model,
-          // max_tokens bir TAVAN — üretimi yavaşlatmaz, sadece kesilmeyi önler.
-          max_tokens: maxTokens,
-          /* Sistem promptu sabit (tarih/ticker içermiyor) → önbelleğe alınabilir.
-             İlk çağrı yazma bedeli ödüyor, sonraki analizler o bölümü ~%10
-             fiyatına okuyor. Şirkete özel veri kullanıcı mesajında, yani
-             önbellek önekini bozmuyor. */
-          system: sade ? systemPrompt : [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-          /* Birincil modelde düşünme AÇIK — analiz veri okuması değil tez
-             kurma işi, model cevabı yazmadan önce kafa yorsun. Yedek modelde
-             kapalı: o zaten kurtarma çağrısı, orada tek derdimiz hız. */
-          ...(sade ? {} : dusun
-            ? { thinking: { type: 'adaptive' }, output_config: { effort } }
-            : { thinking: { type: 'disabled' } }),
-          messages: [{ role: 'user', content: enrichedPrompt }]
-        }),
-        signal: AbortSignal.timeout(sure),
-      });
-      let d = null;
-      try { d = await resp.json(); } catch {}
-      return { resp, d };
+      const ac = new AbortController();
+      const zamanlayici = setTimeout(() => ac.abort(), sure);
+      try {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({
+            model,
+            max_tokens: maxTokens,
+            /* Sistem promptu sabit (tarih/ticker içermiyor) → önbelleğe
+               alınabilir. Şirkete özel veri kullanıcı mesajında, yani
+               önbellek önekini bozmuyor. */
+            system: sade ? systemPrompt : [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+            ...(sade ? {} : dusun
+              ? { thinking: { type: 'adaptive' }, output_config: { effort } }
+              : { thinking: { type: 'disabled' } }),
+            stream: true,
+            messages: [{ role: 'user', content: enrichedPrompt }]
+          }),
+          signal: ac.signal,
+        });
+
+        // Hata gövdesi akış değil düz JSON gelir
+        if (!resp.ok) {
+          let d = null;
+          try { d = JSON.parse(await resp.text()); } catch {}
+          return { resp, d };
+        }
+
+        let metin = '', kullanim = {}, stopReason = null, kesildi = false;
+        const okuyucu = resp.body.getReader();
+        const cozucu = new TextDecoder();
+        let tampon = '';
+        try {
+          while (true) {
+            const { done, value } = await okuyucu.read();
+            if (done) break;
+            tampon += cozucu.decode(value, { stream: true });
+            const satirlar = tampon.split('\n');
+            tampon = satirlar.pop() || '';
+            for (const satir of satirlar) {
+              if (!satir.startsWith('data:')) continue;
+              const ham = satir.slice(5).trim();
+              if (!ham || ham === '[DONE]') continue;
+              let ev; try { ev = JSON.parse(ham); } catch { continue; }
+              if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') metin += ev.delta.text;
+              else if (ev.type === 'message_start') Object.assign(kullanim, ev.message?.usage || {});
+              else if (ev.type === 'message_delta') { Object.assign(kullanim, ev.usage || {}); stopReason = ev.delta?.stop_reason || stopReason; }
+              else if (ev.type === 'error') return { resp, d: { error: ev.error } };
+            }
+            // Süre bitmek üzere: elimizdekiyle dön, boş dönme
+            if (kalanSure() < 6000) { kesildi = true; break; }
+          }
+        } catch (e) {
+          // Akış kesildi (abort/ağ) — metin varsa onunla devam
+          if (!metin) throw e;
+          kesildi = true;
+        } finally {
+          try { await okuyucu.cancel(); } catch {}
+        }
+
+        return {
+          resp,
+          d: {
+            content: [{ type: 'text', text: metin }],
+            usage: kullanim,
+            stop_reason: kesildi ? 'sure_doldu' : stopReason,
+            model,
+            _kismi: kesildi,
+          },
+        };
+      } finally { clearTimeout(zamanlayici); }
     };
 
     let response, data, usedFallback = false, sadeDenendi = false;
@@ -1239,7 +1293,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     };
 
     try {
-      ({ resp: response, d: data } = await callModel(primaryModel, 34000, 3400, true));
+      ({ resp: response, d: data } = await callModel(primaryModel, 40000, 3000, dusunmeAcik));
       denemeNotu(primaryModel);
     } catch (e) {
       // Birincil model ZAMAN AŞIMINA uğradıysa 504 dönme — hızlı haiku'yla kurtar.
@@ -1247,7 +1301,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       if (!isTimeout || primaryModel === FALLBACK_MODEL) throw e;
       teshis.push(`${primaryModel}:timeout`);
       dlog(`[AI] ${primaryModel} zaman aşımı → ${FALLBACK_MODEL} ile tekrar deneniyor`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 11000, 1200, false));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 10000, 1200, false));
       denemeNotu(FALLBACK_MODEL);
       usedFallback = true;
     }
@@ -1261,7 +1315,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       sadeDenendi = true;
       dlog(`[AI] ${primaryModel} gövdeyi reddetti → sade gövdeyle tekrar`);
       try {
-        ({ resp: response, d: data } = await callModel(primaryModel, 20000, 2600, true, true));
+        ({ resp: response, d: data } = await callModel(primaryModel, 16000, 2200, false, true));
         denemeNotu(`${primaryModel}/sade`);
       } catch (e) { teshis.push(`${primaryModel}/sade:timeout`); }
     }
@@ -1269,7 +1323,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     // Hâlâ hata varsa bilinen-çalışan haiku'ya düş — analiz komple patlamasın.
     if ((!data || data.error || !response?.ok) && !usedFallback && primaryModel !== FALLBACK_MODEL && kalanSure() > 8000) {
       dlog(`[AI] ${primaryModel} başarısız (${data?.error?.message || response?.status}) → ${FALLBACK_MODEL}`);
-      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 11000, 1200, false));
+      ({ resp: response, d: data } = await callModel(FALLBACK_MODEL, 10000, 1200, false));
       denemeNotu(FALLBACK_MODEL);
       usedFallback = true;
     }
@@ -1308,7 +1362,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       teshis.push(`bos_metin(${(data.content || []).map(b => b?.type).join(',') || 'blok yok'}/${data.stop_reason || '?'})`);
       dlog('[AI] metin boş (düşünme tavanı yemiş olabilir) → düşünmesiz tekrar');
       try {
-        ({ resp: response, d: data } = await callModel(primaryModel, 14000, 2000, false));
+        ({ resp: response, d: data } = await callModel(primaryModel, 12000, 1800, false));
         denemeNotu(`${primaryModel}/düşünmesiz`);
         aiResult = metinAl(data);
       } catch (e) { teshis.push(`${primaryModel}/düşünmesiz:timeout`); }
@@ -1340,7 +1394,9 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
        geliyor demektir, düşükse önbellek tutmuyor (bkz. system bloğu). */
     const kullanim = data.usage || {};
     const servisEdenModel = data.model || (usedFallback ? FALLBACK_MODEL : primaryModel);
-    const kesildi = data.stop_reason === 'max_tokens';
+    // Token tavanı doldu ya da süre bütçesi bitti — ikisi de kısmi cevap demek
+    const kesildi = data.stop_reason === 'max_tokens' || data.stop_reason === 'sure_doldu';
+    const sureDoldu = data.stop_reason === 'sure_doldu';
     const olcum = {
       model: servisEdenModel,
       giris: kullanim.input_tokens ?? null,
@@ -1348,6 +1404,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
       cacheYaz: kullanim.cache_creation_input_tokens ?? 0,
       cacheOku: kullanim.cache_read_input_tokens ?? 0,
       kesildi,
+      sureDoldu,
       yedek: usedFallback,
     };
     // Fiyat/1M token — model değişince buradan güncelle
