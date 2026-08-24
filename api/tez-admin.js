@@ -348,7 +348,10 @@ function htmlOnizleme(html, butce) {
   const yigin = [];
   let metin = 0, i = 0, atla = 0, kes = -1, m;
   while ((m = etiket.exec(html)) !== null) {
-    if (!atla) metin += (m.index - i);
+    // Bütçe okunan metne göre: kaynaktaki girinti/satır sonları ham
+    // uzunluğa dahil olunca güzel biçimlendirilmiş tezlerde önizleme
+    // yarı yarıya kısalıyordu (ölçüldü: 495 karakterde kesilen tez).
+    if (!atla) metin += html.slice(i, m.index).replace(/\s+/g, ' ').length;
     i = etiket.lastIndex;
     const ad = m[1].toLowerCase();
     const kapanis = m[0][1] === '/';
