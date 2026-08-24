@@ -216,8 +216,12 @@ async function openTezEditor() {
               <input type="radio" name="tezKategori" value="arastirma" style="accent-color:#c2ad84;"/>
               <span style="font-size:12px;color:#ffffff;">🔬 Şirket Araştırması</span>
             </label>
+            <label style="flex:1;display:flex;align-items:center;gap:8px;background:#13182a;border:1px solid rgba(255,255,255,0.1);padding:9px 12px;border-radius:6px;cursor:pointer;">
+              <input type="radio" name="tezKategori" value="haber" style="accent-color:#c2ad84;"/>
+              <span style="font-size:12px;color:#ffffff;">📰 Haber</span>
+            </label>
           </div>
-          <div style="font-size:9px;color:#3a4150;margin-top:5px;">Tez → Yatırım Tezleri & Sicil · Araştırma → Şirket Araştırmaları bölümü (X'ten paylaşılabilir)</div>
+          <div style="font-size:9px;color:#3a4150;margin-top:5px;">Tez → Yatırım Tezleri &amp; Sicil · Araştırma → Şirket Araştırmaları · Haber → Ana sayfadaki Haberler bölümü ve /haberler. Haberde kapak görseli kartın üstünde büyük çıkar; sinyal/ticker zorunlu değil.</div>
         </div>
 
         <!-- Satır 1: Başlık + Ticker -->
@@ -517,7 +521,7 @@ async function tezListeYukle() {
           <div style="font-size:13px;color:#ffffff;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${baslik}</div>
           <div style="margin-top:3px;display:flex;align-items:center;gap:6px;">
             ${t.ticker ? `<span style="font-size:10px;color:#c2ad84;font-family:'JetBrains Mono',monospace;">${ticker}</span>` : ''}
-            <span style="font-size:9px;color:#8a93a3;border:1px solid rgba(255,255,255,0.12);padding:1px 6px;border-radius:3px;">${t.kategori === 'arastirma' ? '🔬 Araştırma' : '📊 Tez'}</span>
+            <span style="font-size:9px;color:#8a93a3;border:1px solid rgba(255,255,255,0.12);padding:1px 6px;border-radius:3px;">${t.kategori === 'arastirma' ? '🔬 Araştırma' : t.kategori === 'haber' ? '📰 Haber' : '📊 Tez'}</span>
             <span style="font-size:10px;color:${t.yayinda ? '#22c55e' : '#5d6675'};">${t.yayinda ? '● Yayında' : '○ Taslak'}</span>
           </div>
         </div>

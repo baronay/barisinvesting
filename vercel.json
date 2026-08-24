@@ -28,6 +28,9 @@
     { "source": "/tezler/(.*)", "destination": "/app.html" },
     { "source": "/tez/(.*)", "destination": "/app.html" },
     { "source": "/arastirmalar", "destination": "/app.html" },
-    { "source": "/arastirmalar/(.*)", "destination": "/app.html" }
+    { "source": "/arastirmalar/(.*)", "destination": "/app.html" },
+    { "source": "/haberler", "destination": "/app.html" },
+    { "source": "/haberler/(.*)", "destination": "/app.html" },
+    { "source": "/haber/(.*)", "destination": "/app.html" }
   ]
 }

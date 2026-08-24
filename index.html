@@ -216,6 +216,7 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
 .upd-x:hover{color:var(--text);}
 @media(max-width:520px){.upd-bar{right:12px;left:12px;bottom:12px;max-width:none;}}
 .chip-cat{font-family:var(--font-mono);font-size:9px;letter-spacing:1.5px;padding:3px 9px;border-radius:5px;color:var(--text2);background:var(--surface3);border:1px solid var(--border-s);}
+.chip-cat.haber{color:#7cb8e8;background:rgba(90,169,230,.10);border-color:rgba(90,169,230,.3);}
 
 /* ═══════════════ TEZ / ARAŞTIRMA KARTLARI (API) ═══════════════ */
 .tez-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
@@ -380,6 +381,7 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
       <a class="lnk" href="#services">Analiz</a>
       <a class="lnk" href="#pricing">Terminal</a>
       <a class="lnk" href="/arastirmalar">Araştırma</a>
+      <a class="lnk" href="/haberler">Haberler</a>
       <a class="nav-cta" href="/terminal">Terminal'e Giriş</a>
     </div>
     <button class="nav-burger" id="navBurger" aria-label="Menü">
@@ -442,21 +444,6 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
   </div>
 </section>
 
-<!-- ═══════ BUFFETT SÖZÜ ═══════ -->
-<section class="sec bigquote">
-  <div class="container">
-    <span class="kicker rv" style="display:block;margin-bottom:18px">◈ İlke</span>
-    <blockquote class="rv">"Fiyat, <b>ödediğin</b> şeydir. Değer, <b>elde ettiğin</b>."</blockquote>
-    <div class="quote-who rv">
-      <span class="quote-av">WB</span>
-      <div>
-        <div class="quote-n">Warren Buffett</div>
-        <div class="quote-r">Berkshire Hathaway</div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ═══════ ŞİRKET ARAŞTIRMALARI — öne alındı (API) ═══════ -->
 <section class="sec" id="articles">
   <div class="container">
@@ -472,6 +459,38 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
     </div>
   </div>
 </section>
+
+<!-- ═══════ HABERLER (API · kategori=haber) ═══════ -->
+<section class="sec" id="haberler">
+  <div class="container">
+    <div class="sec-head">
+      <div>
+        <span class="kicker rv">◈ Piyasa Notları</span>
+        <h2 class="h-section rv">Haberler &amp; Yorum</h2>
+      </div>
+      <a class="view-all rv" href="/haberler">Tüm haberler <span class="arrow-ic"></span></a>
+    </div>
+    <div class="tez-grid" id="haberGrid">
+      <div class="skel">HABERLER YÜKLENİYOR…</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ BUFFETT SÖZÜ ═══════ -->
+<section class="sec bigquote">
+  <div class="container">
+    <span class="kicker rv" style="display:block;margin-bottom:18px">◈ İlke</span>
+    <blockquote class="rv">"Fiyat, <b>ödediğin</b> şeydir. Değer, <b>elde ettiğin</b>."</blockquote>
+    <div class="quote-who rv">
+      <span class="quote-av">WB</span>
+      <div>
+        <div class="quote-n">Warren Buffett</div>
+        <div class="quote-r">Berkshire Hathaway</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 
 <!-- ═══════ PRICING / TERMINAL ═══════ -->
 <section class="sec" id="pricing">
@@ -768,7 +787,8 @@ function metaHTML(t, opts = {}) {
   return `<div class="meta-row">
     ${t.ticker ? `<span class="chip-ticker">${esc(t.ticker)}</span>` : ''}
     ${opts.cat ? `<span class="chip-cat">ARAŞTIRMA</span>` : ''}
-    ${(opts.cat ? hasSig : true) ? `<span class="chip-sig ${sig[0]}">${sig[1]}</span>` : ''}
+    ${opts.haber ? `<span class="chip-cat haber">HABER</span>` : ''}
+    ${(opts.haber ? false : (opts.cat ? hasSig : true)) ? `<span class="chip-sig ${sig[0]}">${sig[1]}</span>` : ''}
     ${t.guncelleme_sayisi ? `<span class="chip-upd" title="Son güncelleme: ${esc(trDate(t.son_guncelleme))}"><i></i>${t.guncelleme_sayisi} güncelleme</span>` : ''}
     ${t.olusturma ? `<span class="chip-date">${esc(trDate(t.olusturma))}</span>` : ''}
   </div>`;
@@ -793,7 +813,7 @@ function tezCardHTML(t, opts = {}, i = 0) {
       <div class="tez-title">${esc(t.baslik || '')}</div>
       ${t.ozet ? `<div class="tez-sum">${esc(t.ozet)}</div>` : ''}
       <div class="tez-foot">
-        <span class="tez-read">${opts.cat ? 'Araştırmayı Oku' : 'Tezi Oku'} <span class="arrow-ic"></span></span>
+        <span class="tez-read">${opts.haber ? 'Haberi Oku' : opts.cat ? 'Araştırmayı Oku' : 'Tezi Oku'} <span class="arrow-ic"></span></span>
       </div>
     </div>
   </div>`;
@@ -909,12 +929,14 @@ async function loadContent() {
   const feat = document.getElementById('featTez');
   const tezGrid = document.getElementById('tezGrid');
   const arGrid = document.getElementById('arastirmaGrid');
+  const hbGrid = document.getElementById('haberGrid');
   try {
     const all = await getTezler();
     // Güncelleme alan tez başa gelsin — sıra "son hareket"e göre
     const list = hareketSirala(Array.isArray(all) ? all : []);
     const tezler = list.filter(t => (t.kategori || 'tez') === 'tez');
     const arastirmalar = list.filter(t => t.kategori === 'arastirma');
+    const haberler = list.filter(t => t.kategori === 'haber');
     guncellemeBariniGoster(list);
 
     if (tezler.length) {
@@ -930,14 +952,53 @@ async function loadContent() {
       ? arastirmalar.slice(0, 3).map((t, i) => tezCardHTML(t, { cat: true }, i)).join('')
       : '<div class="skel">İLK ARAŞTIRMA YAKINDA YAYINLANACAK.</div>';
 
+    if (hbGrid) hbGrid.innerHTML = haberler.length
+      ? haberler.slice(0, 3).map((t, i) => tezCardHTML(t, { haber: true }, i)).join('')
+      : '<div class="skel">İLK HABER YAKINDA YAYINLANACAK.</div>';
+
     armFly();
   } catch (e) {
     feat.innerHTML = '<div class="feat-card"><div class="feat-inner"><div class="feat-title" style="font-size:20px">İçerik yüklenemedi</div><div class="feat-summary">Tezlere <a href="/tezler" style="color:var(--accent)">buradan</a> ulaşabilirsin.</div></div></div>';
     tezGrid.innerHTML = '<div class="skel" style="color:var(--danger)">TEZLER YÜKLENEMEDİ.</div>';
     arGrid.innerHTML = '<div class="skel" style="color:var(--danger)">ARAŞTIRMALAR YÜKLENEMEDİ.</div>';
+    if (hbGrid) hbGrid.innerHTML = '<div class="skel" style="color:var(--danger)">HABERLER YÜKLENEMEDİ.</div>';
   }
 }
+/* Açılışta hafif kaydırma: hero tüm ekranı kapladığı için ziyaretçi
+   altında tez/araştırma/haber bölümleri olduğunu görmeden çıkabiliyordu.
+   Bir defalık, kısa ve iptal edilebilir bir dürtme — sayfayı ele geçiren
+   bir yönlendirme değil:
+   - oturumda bir kez (sessionStorage),
+   - kullanıcı zaten kaydırdıysa/dokunduysa hiç çalışmaz,
+   - hareket azaltma tercihi açıksa çalışmaz,
+   - derin bağlantıyla (#bolum) gelinmişse çalışmaz. */
+function bolumIpucu() {
+  try {
+    if (sessionStorage.getItem('bi_ipucu')) return;
+    if (location.hash) return;
+    if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    if (window.scrollY > 8) return;
+
+    let iptal = false;
+    const dur = () => { iptal = true; };
+    ['wheel','touchstart','keydown','pointerdown'].forEach(o =>
+      addEventListener(o, dur, { once: true, passive: true }));
+
+    setTimeout(() => {
+      if (iptal || window.scrollY > 8) return;
+      sessionStorage.setItem('bi_ipucu', '1');
+      const hedef = document.getElementById('tezler');
+      // Bölümün üst kenarı ekranın altından görünsün: "aşağıda devamı var"
+      const mesafe = hedef
+        ? Math.min(hedef.getBoundingClientRect().top - innerHeight * 0.62, innerHeight * 0.5)
+        : innerHeight * 0.34;
+      if (mesafe > 40) scrollTo({ top: Math.round(mesafe), behavior: 'smooth' });
+    }, 1400);
+  } catch (_) { /* ipucu kritik degil */ }
+}
+
 loadContent();
+bolumIpucu();   // içerik gelmese de çalışsın
 
 /* ── Canlı piyasa şeridi — gerçek /api/market verisi ── */
 const MKT_DEFS = [

@@ -2112,6 +2112,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .rv{display:none;}
 body.route-tezler   #tezlerRoot{display:block;}
 body.route-arastirmalar #arastirmalarRoot{display:block;}
+body.route-haberler #haberlerRoot{display:block;}
 body.route-tezoku   #tezOkuRoot{display:block;}
 body.route-terminal #terminalRoot{display:block;}
 
@@ -2122,9 +2123,11 @@ body.route-terminal #terminalRoot{display:block;}
 
 /* Tezler & Araştırmalar: üst bar + başlık öğeleri sırayla gelir */
 body.route-tezler #tezlerRoot .pt-topbar,
-body.route-arastirmalar #arastirmalarRoot .pt-topbar{animation:pfxFade .5s ease both;}
+body.route-arastirmalar #arastirmalarRoot .pt-topbar,
+body.route-haberler #haberlerRoot .pt-topbar{animation:pfxFade .5s ease both;}
 body.route-tezler #tezlerRoot .pt-hero > *,
-body.route-arastirmalar #arastirmalarRoot .pt-hero > *{animation:pfxUp .6s cubic-bezier(.4,0,.2,1) both;}
+body.route-arastirmalar #arastirmalarRoot .pt-hero > *,
+body.route-haberler #haberlerRoot .pt-hero > *{animation:pfxUp .6s cubic-bezier(.4,0,.2,1) both;}
 body.route-tezler #tezlerRoot .pt-hero > *:nth-child(1),
 body.route-arastirmalar #arastirmalarRoot .pt-hero > *:nth-child(1){animation-delay:.05s;}
 body.route-tezler #tezlerRoot .pt-hero > *:nth-child(2),
@@ -2368,6 +2371,25 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .tzo-content th{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--accent);text-align:left;padding:11px 14px;border-bottom:1px solid var(--portal-border-s);background:rgba(194,173,132,0.06);white-space:nowrap;}
 .tzo-content td{padding:11px 14px;border-bottom:1px solid var(--portal-border);color:var(--cream);line-height:1.55;vertical-align:top;}
 .tzo-content tr:last-child td{border-bottom:none;}
+.tzo-content caption,.tzt-body caption{caption-side:top;text-align:left;font-family:var(--font-mono);font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--cream2);opacity:.75;padding:11px 14px 9px;border-bottom:1px solid var(--portal-border);}
+/* MOBİLDE TABLO: yatay kaydırma bir tabloyu okunur yapmıyor — dört sütunlu,
+   uzun metinli tablolarda okuyucu sağa kaydırdıkça hangi satırda olduğunu
+   kaybediyordu. 640px altında her satır kendi kartına dönüyor, her hücrenin
+   başına ait olduğu sütun başlığı yazılıyor (JS data-etiket dolduruyor). */
+@media(max-width:640px){
+  .tzo-tbl-scroll{overflow-x:visible;border:none;background:none;margin:18px 0;border-radius:0;}
+  .tzo-tbl-scroll table{width:100%!important;min-width:0!important;display:block;font-size:13px;}
+  .tzo-tbl-scroll thead{display:none;}
+  .tzo-tbl-scroll tbody{display:block;}
+  .tzo-tbl-scroll caption{display:block;padding:0 0 9px;border-bottom:none;}
+  .tzo-tbl-scroll tr{display:block;border:1px solid var(--portal-border);border-radius:10px;background:linear-gradient(160deg,var(--surface) 0%,var(--anthracite2) 100%);padding:4px 12px;margin-bottom:10px;}
+  .tzo-tbl-scroll tr:last-child{margin-bottom:0;}
+  .tzo-tbl-scroll td{display:block;padding:9px 0;border-bottom:1px solid var(--portal-border);white-space:normal;line-height:1.6;}
+  .tzo-tbl-scroll tr td:last-child{border-bottom:none;}
+  .tzo-tbl-scroll td[data-etiket]::before{content:attr(data-etiket);display:block;font-family:var(--font-mono);font-size:8.5px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);opacity:.85;margin-bottom:3px;}
+  /* Başlıksız (ilk sütunu satır adı olan) tablolarda ilk hücre başlık gibi dursun */
+  .tzo-tbl-scroll tr td:first-child:not([data-etiket]){font-weight:600;color:var(--cream);}
+}
 .tzo-note{margin-top:34px;padding:12px 16px;border:1px solid var(--portal-border);border-left:3px solid var(--warn);background:rgba(0,0,0,0.2);border-radius:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.3px;line-height:1.7;color:var(--cream2);opacity:.8;}
 .tzo-ctas{margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
 
@@ -2551,6 +2573,8 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 @media(max-width:980px){.pt-tez-row{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:640px){.pt-tez-row{grid-template-columns:1fr;}}
 .ptz-cat{font-family:var(--font-mono);font-size:8px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:2px 7px;border-radius:2px;background:rgba(194,173,132,0.12);color:var(--accent);border:1px solid rgba(194,173,132,0.35);}
+/* Haber rozeti tezden ayrı bir renkte: kart listesinde ikisi karışmasın */
+.ptz-cat.haber{background:rgba(90,169,230,0.10);color:#7cb8e8;border-color:rgba(90,169,230,0.32);}
 .pt-share-hint{font-family:var(--font-mono);font-size:9px;letter-spacing:.3px;color:var(--cream2);opacity:.55;margin-top:10px;line-height:1.6;}
 
 /* Tez Sicili (track record) */
@@ -3296,6 +3320,44 @@ body.pr-kilit{overflow:hidden;}
   </div>
 </div>
 <!-- /arastirmalarRoot -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     HABERLER  (route: "/haberler")  — piyasa notları / haber yazıları
+     ═══════════════════════════════════════════════════════════ -->
+<div id="haberlerRoot" class="rv">
+  <div class="pt-wrap">
+    <div class="pt-topbar">
+      <div class="pt-brand-lockup" data-route="/" style="cursor:pointer">
+        <div class="pt-brand">
+          <div class="pt-brand-tag">Finansal Arastirma &amp; Medya</div>
+          <div class="pt-brand-name">Bar&#305;&#351; <span>Investing</span></div>
+        </div>
+      </div>
+      <div class="pt-topnav">
+        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">&#8592; Ana Sayfa</a>
+        <a class="pt-sec-link" data-route="/tezler" href="/tezler" style="margin-right:6px">Tezler</a>
+        <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giri&#351; <span class="arr">&#8594;</span></a>
+      </div>
+    </div>
+
+    <div class="pt-hero" style="padding:46px 0 26px">
+      <div class="pt-eyebrow">&#9672; Piyasa Notlar&#305;</div>
+      <h1 class="pt-h1" style="font-size:clamp(30px,4vw,44px)">Haberler &amp; <em>Yorum</em></h1>
+      <p class="pt-lede">G&#252;n&#252;n geli&#351;melerine dair k&#305;sa notlar ve yorumlar &#8212; tezlere d&#246;n&#252;&#351;meyen ama takip edilmesi gereken her &#351;ey.</p>
+      <div class="pt-share-hint">Her haberin payla&#351;&#305;labilir ba&#287;lant&#305;s&#305; vard&#305;r &#8594; <span style="color:var(--accent)">barisinvesting.com/haber?haber=ID</span></div>
+    </div>
+
+    <div class="pt-tez-grid" id="haberlerGridFull">
+      <div class="pt-tez-skel">Haberler y&#252;kleniyor&#8230;</div>
+    </div>
+
+    <div class="pt-foot">
+      <div class="pt-foot-l">&#169; <span id="ptYear4"></span> Bar&#305;&#351; Investing &#183; Ara&#351;t&#305;rma &amp; bilgi ama&#231;l&#305;d&#305;r, yat&#305;r&#305;m tavsiyesi de&#287;ildir.</div>
+      <a class="pt-enter" data-route="/" href="/">&#8592; Ana Sayfa</a>
+    </div>
+  </div>
+</div>
+<!-- /haberlerRoot -->
 
 <!-- ═══════════════════════════════════════════════════════════
      TERMINAL  (route: "/terminal")  — mevcut analiz aracı
@@ -6645,6 +6707,7 @@ function garpAnalizAc(ticker) {
   const TITLE = { portal:'Barış Investing — Finansal Araştırma & Medya',
                   tezler:'Yatırım Tezleri — Barış Investing',
                   arastirmalar:'Şirket Araştırmaları — Barış Investing',
+                  haberler:'Haberler — Barış Investing',
                   tezoku:'Yatırım Tezi — Barış Investing',
                   terminal:'Terminal — Barış Investing' };
 
@@ -6655,17 +6718,20 @@ function garpAnalizAc(ticker) {
     else if (tezMatch) view = 'tezoku';
     else if (/^\/tezler(\/|$)/.test(path)) view = 'tezler';
     else if (/^\/arastirmalar(\/|$)/.test(path)) view = 'arastirmalar';
+    else if (/^\/haberler(\/|$)/.test(path)) view = 'haberler';
     if (view === 'portal'){ location.replace('/'); return; } // eski portal kaldırıldı → yeni landing'e tam yükleme
     document.body.classList.toggle('route-terminal', view==='terminal');
     document.body.classList.toggle('route-tezler',   view==='tezler');
     document.body.classList.toggle('route-arastirmalar', view==='arastirmalar');
+    document.body.classList.toggle('route-haberler', view==='haberler');
     document.body.classList.toggle('route-tezoku',   view==='tezoku');
     document.title = TITLE[view] || TITLE.portal;
-    const norm = view==='terminal' ? '/terminal' : view==='tezler' ? '/tezler' : view==='arastirmalar' ? '/arastirmalar' : ('/tez/'+tezMatch[1]);
+    const norm = view==='terminal' ? '/terminal' : view==='tezler' ? '/tezler' : view==='arastirmalar' ? '/arastirmalar' : view==='haberler' ? '/haberler' : ('/tez/'+tezMatch[1]);
     if (replace) history.replaceState({route:norm}, '', norm + (location.search||''));
     if (view==='terminal'){ window.scrollTo(0,0); }
     else if (view==='tezler'){ window.scrollTo(0,0); loadTezlerPage(); }
     else if (view==='arastirmalar'){ window.scrollTo(0,0); loadArastirmalarPage(); }
+    else if (view==='haberler'){ window.scrollTo(0,0); loadHaberlerPage(); }
     else if (view==='tezoku'){ window.scrollTo(0,0); loadTezOku(parseInt(tezMatch[1],10)); }
     maybeOpenDeepTez();
     if (typeof window.trackEvent === 'function') window.trackEvent('route_view', { route: view });
@@ -6676,7 +6742,7 @@ function garpAnalizAc(ticker) {
   function maybeOpenDeepTez(){
     if (_deepOpened) return;
     const p = new URLSearchParams(location.search);
-    const id = p.get('arastirma') || p.get('tez') || p.get('oku');
+    const id = p.get('haber') || p.get('arastirma') || p.get('tez') || p.get('oku');
     if (!id || !/^\d+$/.test(id)) return;
     _deepOpened = true;
     setTimeout(function(){ navigate('/tez/' + parseInt(id, 10)); }, 50);
@@ -6884,14 +6950,15 @@ function garpAnalizAc(ticker) {
       let icerik = tez.icerik || '';
       if (icerik.includes('<')) icerik = icerik.replace(/\n\n/g,'').replace(/\n/g,'');
       else icerik = esc(icerik).replace(/\n/g,'<br>');
-      const kat = (tez.kategori||'tez')==='arastirma' ? 'arastirma' : 'tez';
-      const backRoute = kat==='arastirma' ? '/arastirmalar' : '/tezler';
-      const backLabel = kat==='arastirma' ? 'Tüm Araştırmalar' : 'Tüm Tezler';
+      const katHam = tez.kategori||'tez';
+      const kat = (katHam==='arastirma'||katHam==='haber') ? katHam : 'tez';
+      const backRoute = kat==='arastirma' ? '/arastirmalar' : kat==='haber' ? '/haberler' : '/tezler';
+      const backLabel = kat==='arastirma' ? 'Tüm Araştırmalar' : kat==='haber' ? 'Tüm Haberler' : 'Tüm Tezler';
       const sig = tez.sinyal && sigMap[tez.sinyal] ? sigMap[tez.sinyal] : null;
       const tarih = trDate(tez.olusturma);
       const guncellemeler = Array.isArray(tez.guncellemeler) ? tez.guncellemeler : [];
       const sonGunc = guncellemeler.length ? guncellemeler[guncellemeler.length - 1] : null;
-      const govdeAd = kat==='arastirma' ? 'İlk Araştırma' : 'İlk Tez';
+      const govdeAd = kat==='arastirma' ? 'İlk Araştırma' : kat==='haber' ? 'Haber' : 'İlk Tez';
       document.title = tez.baslik + ' — Barış Investing';
       art.innerHTML = `
         <span class="tzo-back" data-route="${backRoute}">← ${backLabel}</span>
@@ -6899,6 +6966,7 @@ function garpAnalizAc(ticker) {
         <div class="tzo-meta">
           ${tez.ticker ? `<span class="ptz-ticker">${esc(tez.ticker)}</span>` : ''}
           ${kat==='arastirma' ? '<span class="ptz-cat">Araştırma</span>' : ''}
+          ${kat==='haber' ? '<span class="ptz-cat haber">Haber</span>' : ''}
           ${sig ? `<span class="ptz-sig ${sig[0]}">${sig[1]}</span>` : ''}
           ${tarih ? `<span class="ptz-date" style="margin-left:0">${esc(tarih)}</span>` : ''}
           ${sonGunc ? `<span class="tzo-upd" onclick="window.__tezSeyre()"><span class="pulse"></span>${guncellemeler.length} güncelleme · son ${esc(trDate(sonGunc.tarih))}</span>` : ''}
@@ -6912,17 +6980,42 @@ function garpAnalizAc(ticker) {
           <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'de Analiz Et <span class="arr">→</span></a>
         </div>`;
       tzoTopHesapla();   // sticky sekme şeridinin üst boşluğu
-      // İçerikteki tabloları ferah, mobilde yatay kaydırılabilir sarmalayıcıya al
-      art.querySelectorAll('.tzo-content table, .tzt-body table').forEach(tbl=>{
-        if (tbl.parentElement.classList.contains('tzo-tbl-scroll')) return;
+      tablolariHazirla(art);
+    }catch(e){
+      if (_tzoLast === id) art.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">İçerik yüklenemedi.</div>';
+    }
+  }
+
+  /* Tabloları okunur hale getir: masaüstünde ferah + yatay kaydırma,
+     mobilde her satır kendi kartı. Hücrelere ait oldukları sütun başlığı
+     data-etiket olarak yazılıyor; CSS mobilde onu hücrenin üstüne basıyor.
+     Yatay kaydırma tek başına yetmiyordu — dört sütunlu tabloda okuyucu
+     sağa kaydırdıkça hangi satırda olduğunu kaybediyor. */
+  function tablolariHazirla(kok){
+    if (!kok) return;
+    kok.querySelectorAll('.tzo-content table, .tzt-body table').forEach(tbl=>{
+      if (!tbl.parentElement.classList.contains('tzo-tbl-scroll')){
         const w = document.createElement('div');
         w.className = 'tzo-tbl-scroll';
         tbl.parentNode.insertBefore(w, tbl);
         w.appendChild(tbl);
+      }
+      // Sütun başlıkları: thead varsa oradan, yoksa ilk satırdaki th'lerden
+      const bas = tbl.querySelector('thead tr') || tbl.querySelector('tr');
+      if (!bas) return;
+      const etiketler = [...bas.children].map(h=>(h.textContent||'').trim());
+      const basThMi = bas.querySelector('th');
+      if (!basThMi) return;   // başlık satırı yoksa etiketleyecek bir şey yok
+      tbl.querySelectorAll('tbody tr, tr').forEach(sat=>{
+        if (sat === bas) return;
+        [...sat.children].forEach((h,i)=>{
+          if (h.tagName !== 'TD') return;
+          const e = etiketler[i];
+          // İlk sütun genelde satırın adı; onu etiketlemek gereksiz tekrar olur
+          if (e && i > 0) h.setAttribute('data-etiket', e);
+        });
       });
-    }catch(e){
-      if (_tzoLast === id) art.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">İçerik yüklenemedi.</div>';
-    }
+    });
   }
 
   /* ── TEZLER (tek fetch cache) ── */
@@ -7099,6 +7192,42 @@ function garpAnalizAc(ticker) {
       row.innerHTML = teaser.map(arastirmaCardHTML).join('');
       teaser.filter(t=>t.maliyet_fiyat && t.ticker).forEach(portalTezGetiri);
     }catch(e){ row.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Araştırmalar yüklenemedi.</div>'; }
+  }
+
+  /* Haber kartı: tez/araştırmadan farkı görselin öne çıkması ve
+     sinyal/ticker rozetinin zorunlu olmaması — haber bir pozisyon
+     değil, bir not. */
+  function haberCardHTML(t){
+    return `<div class="pt-tez-card haber" onclick="window.__openTez(${t.id})">
+      ${t.kapak_gorseli ? `<div class="ptz-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+      <div class="ptz-body">
+        <div class="ptz-meta">
+          ${t.ticker ? `<span class="ptz-ticker">${esc(t.ticker)}</span>` : ''}
+          <span class="ptz-cat haber">Haber</span>
+          ${t.olusturma ? `<span class="ptz-date">${esc(trDate(t.olusturma))}</span>` : ''}
+        </div>
+        <div class="ptz-title">${esc(t.baslik||'')}</div>
+        ${t.ozet ? `<div class="ptz-sum">${esc(t.ozet)}</div>` : ''}
+        <div class="ptz-foot"><span class="ptz-read">Haberi Oku →</span></div>
+      </div>
+    </div>`;
+  }
+
+  /* /haberler sayfası: tüm haberler */
+  async function loadHaberlerPage(){
+    const grid = document.getElementById('haberlerGridFull');
+    const y = document.getElementById('ptYear4'); if (y) y.textContent = new Date().getFullYear();
+    if (!grid) return;
+    if (grid.dataset.loaded === '1') return;
+    grid.innerHTML = '<div class="pt-tez-skel">Haberler yükleniyor…</div>';
+    try{
+      const all = await getTezler();
+      const list = (Array.isArray(all)?all:[]).filter(t=>t.kategori==='haber');
+      if (!list.length){ grid.innerHTML = '<div class="pt-tez-skel">Henüz haber yayınlanmadı.</div>'; return; }
+      grid.innerHTML = list.map(haberCardHTML).join('');
+      grid.dataset.loaded = '1';
+      flyGrid(grid);
+    }catch(e){ grid.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Haberler yüklenemedi.</div>'; }
   }
 
   /* /arastirmalar sayfası: tüm araştırmalar */
