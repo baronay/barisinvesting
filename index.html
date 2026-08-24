@@ -72,13 +72,13 @@ img{display:block;}
 @media(max-width:767px){.container{padding:0 22px;}}
 
 /* type presets */
-.h-display{font-size:64px;font-weight:500;letter-spacing:-.03em;line-height:1.08;}
+.h-display{font-size:54px;font-weight:500;letter-spacing:-.03em;line-height:1.08;}
 .h-section{font-size:40px;font-weight:500;letter-spacing:-.02em;line-height:1.15;}
 .t-lede{font-size:18px;font-weight:400;line-height:1.55;color:var(--muted);}
 .t-small{font-size:13px;font-weight:500;line-height:1.4;}
 .kicker{font-family:var(--font-mono);font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);}
-@media(max-width:991px){.h-display{font-size:48px;}.h-section{font-size:32px;}}
-@media(max-width:767px){.h-display{font-size:38px;}.h-section{font-size:28px;}.t-lede{font-size:16px;}}
+@media(max-width:991px){.h-display{font-size:42px;}.h-section{font-size:32px;}}
+@media(max-width:767px){.h-display{font-size:33px;}.h-section{font-size:26px;}.t-lede{font-size:15px;}}
 
 /* reveal animasyonu */
 .rv{opacity:0;transform:translateY(14px);filter:blur(5px);transition:opacity .7s cubic-bezier(.4,0,.2,1),transform .7s cubic-bezier(.4,0,.2,1),filter .7s cubic-bezier(.4,0,.2,1);}
@@ -114,18 +114,33 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
 }
 
 /* ═══════════════ HERO ═══════════════ */
-.hero{padding:150px 0 0;position:relative;}
+/* Hero tek başına ilk ekranı dolduruyordu: kaydırmayan ziyaretçi tek bir
+   içerik görmeden çıkıyordu. Yükseklik ~%35 kısaldı; içerik bandının
+   başlığı artık ilk ekranın altından görünüyor. */
+/* Dikey boşluklar ekran YÜKSEKLİĞİNE bağlı: sabit piksellerde 700px'lik
+   dizüstü ekranlarında hero yine ilk ekranı yiyor, içerik bandından
+   sadece bir şerit görünüyordu (ölçüldü: 156px). vh'li clamp ile kısa
+   ekranda daralıyor, büyük ekranda ferah kalıyor. */
+.hero{padding:clamp(74px,11vh,104px) 0 0;position:relative;}
+/* Kısa ekran (dizüstü 768/720): başlık ve alt şerit bir tık daha daralsın
+   ki üç sütunun başlıkları da ilk ekrana girsin. */
+@media(max-height:780px){
+  .h-display{font-size:44px;}
+  .hero .t-lede{font-size:16px;}
+  .hero-cta{margin-top:14px;}
+  .hero-foot{margin-top:18px;padding:12px 0 12px;}
+}
 .hero::before{content:"";position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:900px;height:600px;background:radial-gradient(ellipse at center,rgba(194,173,132,.07),transparent 65%);pointer-events:none;}
 .badge{display:inline-flex;align-items:center;gap:9px;padding:8px 16px;border:1px solid var(--border-s);border-radius:24px;background:var(--surface);box-shadow:var(--shadow-soft);font-size:13px;font-weight:500;color:var(--text2);}
 .pulse{position:relative;width:10px;height:10px;flex-shrink:0;}
 .pulse .outer{position:absolute;inset:-4px;border-radius:1000px;background:var(--success);opacity:.2;animation:pulse 1.6s ease-out infinite;}
 .pulse .inner{position:absolute;left:50%;top:50%;width:8px;height:8px;transform:translate(-50%,-50%);border-radius:1000px;background:var(--success);}
 @keyframes pulse{0%{transform:scale(.6);opacity:.35;}70%{transform:scale(1.25);opacity:0;}100%{transform:scale(1.25);opacity:0;}}
-.hero h1{margin:26px 0 20px;max-width:720px;}
+.hero h1{margin:clamp(12px,2.2vh,20px) 0 clamp(10px,1.8vh,16px);max-width:720px;}
 .hero h1 em{font-style:italic;font-family:var(--font-head);color:var(--accent);}
 .hero .t-lede{max-width:560px;}
 .hero .t-lede strong{color:var(--cream);font-weight:500;}
-.hero-cta{display:inline-flex;align-items:center;gap:14px;margin-top:34px;padding:8px 22px 8px 8px;background:var(--accent);color:#0b0f15;border:1px solid var(--accent2);border-radius:24px;box-shadow:var(--shadow-btn);transition:transform .2s,background .2s;}
+.hero-cta{display:inline-flex;align-items:center;gap:14px;margin-top:clamp(16px,3vh,26px);padding:8px 22px 8px 8px;background:var(--accent);color:#0b0f15;border:1px solid var(--accent2);border-radius:24px;box-shadow:var(--shadow-btn);transition:transform .2s,background .2s;}
 .hero-cta:hover{transform:scale(1.03);background:var(--cream);}
 .hero-cta .me{width:34px;height:34px;border-radius:1000px;background:#0b0f15;color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:15px;flex-shrink:0;position:relative;overflow:hidden;}
 .hero-cta .me img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;}
@@ -134,7 +149,7 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
 .hero-cta:hover .arr{transform:translateX(3px);}
 
 /* hero footer: ticker */
-.hero-foot{margin-top:72px;border-top:1px solid var(--rule);padding:28px 0 34px;display:flex;align-items:center;gap:40px;flex-wrap:wrap;}
+.hero-foot{margin-top:clamp(22px,4.4vh,44px);border-top:1px solid var(--rule);padding:clamp(12px,2vh,20px) 0 clamp(14px,2.4vh,22px);display:flex;align-items:center;gap:40px;flex-wrap:wrap;}
 .community .t-small{color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
 .ticker-wrap{flex:1;min-width:260px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 12%,#000 88%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0%,#000 12%,#000 88%,transparent 100%);}
 .ticker{display:flex;gap:44px;width:max-content;animation:tick 34s linear infinite;}
@@ -155,9 +170,9 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
 /* ═══════════════ ORTAK BÖLÜM ═══════════════ */
 .sec{padding:96px 0;}
 @media(max-width:767px){
-  .sec{padding:64px 0;}
-  .hero{padding:118px 0 0;}
-  .hero-foot{margin-top:52px;}
+  .sec{padding:52px 0;}
+  .hero{padding:86px 0 0;}
+  .hero-foot{margin-top:30px;padding:16px 0 18px;}
 }
 .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:44px;flex-wrap:wrap;}
 .sec-head .kicker{display:block;margin-bottom:10px;}
@@ -183,6 +198,60 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
 .feat-summary{font-size:15px;line-height:1.6;color:var(--muted);max-width:640px;}
 .feat-cta{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-size:13px;font-weight:600;color:var(--accent);}
 @media(max-width:767px){.feat-inner{padding:22px;}.feat-title{font-size:22px;}}
+
+/* ── İÇERİK MERKEZİ: üç tür tek ekranda ────────────────────────
+   Ölçü: bir sütun 3 satır × ~78px + başlık ≈ 320px, öne çıkan şerit
+   ~130px. Toplam ~500px — hero'nun hemen altında tek ekranda bitiyor.
+   Eskiden aynı içerik üç ayrı bölümde, kaplayan kartlarla ~2200px
+   sürüyordu; ziyaretçi üç türü görmek için üç ekran kaydırıyordu. */
+.sec-icerik{padding:52px 0 64px;}
+.feat-strip{display:flex;align-items:stretch;border:1px solid var(--border-s);border-left:3px solid var(--accent);border-radius:14px;background:linear-gradient(120deg,var(--surface2),var(--surface) 60%);overflow:hidden;transition:border-color .22s,transform .22s;margin-bottom:32px;}
+a.feat-strip:hover{border-color:var(--border-g);transform:translateY(-2px);}
+.fs-cover{flex:0 0 190px;background:var(--surface3);overflow:hidden;}
+.fs-cover img{width:100%;height:100%;object-fit:cover;transition:transform .5s;}
+a.feat-strip:hover .fs-cover img{transform:scale(1.04);}
+.fs-body{flex:1;min-width:0;padding:18px 22px;display:flex;flex-direction:column;justify-content:center;gap:6px;}
+.fs-kick{display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:2px;color:var(--accent);}
+.fs-kick .dot{width:6px;height:6px;border-radius:100%;background:var(--success);animation:blink 1.8s ease infinite;}
+.fs-title{font-family:var(--font-head);font-size:21px;font-weight:600;line-height:1.3;color:var(--text);}
+.fs-sum{font-size:13px;line-height:1.55;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.fs-sum b{color:var(--muted);font-weight:500;}
+.fs-cta{flex:0 0 auto;align-self:center;padding:0 24px;font-size:13px;font-weight:600;color:var(--accent);white-space:nowrap;}
+.feat-strip.guncel .fs-kick{color:var(--accent);}
+.feat-strip.guncel .fs-kick .dot{background:var(--accent);}
+
+.ic-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;}
+.ic-col{min-width:0;}
+.ic-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-bottom:11px;margin-bottom:4px;border-bottom:1px solid var(--rule);}
+.ic-head .kicker{display:block;margin-bottom:5px;}
+.ic-h{font-family:var(--font-head);font-size:20px;font-weight:600;letter-spacing:-.01em;line-height:1.2;color:var(--text);}
+.ic-all{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap;}
+.ic-list{display:flex;flex-direction:column;}
+.ic-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--rule);transition:opacity .18s;}
+.ic-row:last-child{border-bottom:none;}
+.ic-row:hover{opacity:.8;}
+.ic-row:hover .ic-title{color:var(--accent);}
+.ic-thumb{flex:0 0 54px;width:54px;height:54px;border-radius:9px;overflow:hidden;background:var(--surface3);display:flex;align-items:center;justify-content:center;}
+.ic-thumb img{width:100%;height:100%;object-fit:cover;}
+.ic-thumb span{font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--accent);opacity:.55;letter-spacing:1px;}
+.ic-txt{min-width:0;flex:1;}
+.ic-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;}
+.ic-title{font-size:13.5px;font-weight:600;line-height:1.42;color:var(--text2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:color .18s;}
+.ic-list .skel{padding:26px 0;text-align:left;}
+@media(max-width:991px){
+  .ic-grid{grid-template-columns:1fr 1fr;gap:24px;}
+  .ic-col:last-child{grid-column:1/-1;}
+  .fs-cover{flex-basis:150px;}
+  .fs-cta{display:none;}
+}
+@media(max-width:767px){
+  .sec-icerik{padding:34px 0 44px;}
+  .ic-grid{grid-template-columns:1fr;gap:26px;}
+  .ic-col:last-child{grid-column:auto;}
+  .feat-strip{flex-direction:column;margin-bottom:26px;}
+  .fs-cover{flex-basis:auto;aspect-ratio:16/7;}
+  .fs-title{font-size:18px;}
+}
 
 /* meta chip'leri (tez + featured ortak) */
 .meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -422,56 +491,38 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
 <main>
 
 <!-- ═══════ HAFTANIN SEÇİMİ + YATIRIM TEZLERİ (API) ═══════ -->
-<section class="sec" id="tezler">
+<!-- ═══════ İÇERİK MERKEZİ — tez + araştırma + haber TEK EKRANDA ═══════ -->
+<section class="sec sec-icerik" id="icerik">
   <div class="container">
-    <div class="sec-head">
-      <div>
-        <span class="kicker rv">◈ Araştırma</span>
-        <h2 class="h-section rv">Yatırım Tezleri</h2>
+    <!-- Öne çıkan: ekranı kaplayan kart değil, tek satırlık şerit -->
+    <div id="featTez" class="rv">
+      <div class="feat-strip"><div class="fs-body"><div class="skel" style="padding:10px 0;text-align:left">YÜKLENİYOR…</div></div></div>
+    </div>
+
+    <div class="ic-grid">
+      <div class="ic-col rv">
+        <div class="ic-head">
+          <div><span class="kicker">◈ Araştırma</span><h2 class="ic-h">Yatırım Tezleri</h2></div>
+          <a class="ic-all" href="/tezler">Tümü <span class="arrow-ic"></span></a>
+        </div>
+        <div class="ic-list" id="tezGrid"><div class="skel">YÜKLENİYOR…</div></div>
       </div>
-      <a class="view-all rv" href="/tezler">Tüm tezleri gör <span class="arrow-ic"></span></a>
-    </div>
 
-    <!-- Haftanın Seçimi -->
-    <div id="featTez" class="rv" style="margin-bottom:28px">
-      <div class="feat-card"><div class="feat-inner"><div class="skel" style="padding:20px 0">HAFTANIN SEÇİMİ YÜKLENİYOR…</div></div></div>
-    </div>
-
-    <!-- Tez teaser grid -->
-    <div class="tez-grid" id="tezGrid">
-      <div class="skel">TEZLER YÜKLENİYOR…</div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════ ŞİRKET ARAŞTIRMALARI — öne alındı (API) ═══════ -->
-<section class="sec" id="articles">
-  <div class="container">
-    <div class="sec-head">
-      <div>
-        <span class="kicker rv">◈ Derinlemesine</span>
-        <h2 class="h-section rv">Şirket Araştırmaları</h2>
+      <div class="ic-col rv">
+        <div class="ic-head">
+          <div><span class="kicker">◈ Derinlemesine</span><h2 class="ic-h">Şirket Araştırmaları</h2></div>
+          <a class="ic-all" href="/arastirmalar">Tümü <span class="arrow-ic"></span></a>
+        </div>
+        <div class="ic-list" id="arastirmaGrid"><div class="skel">YÜKLENİYOR…</div></div>
       </div>
-      <a class="view-all rv" href="/arastirmalar">Tümünü gör <span class="arrow-ic"></span></a>
-    </div>
-    <div class="tez-grid" id="arastirmaGrid">
-      <div class="skel">ARAŞTIRMALAR YÜKLENİYOR…</div>
-    </div>
-  </div>
-</section>
 
-<!-- ═══════ HABERLER (API · kategori=haber) ═══════ -->
-<section class="sec" id="haberler">
-  <div class="container">
-    <div class="sec-head">
-      <div>
-        <span class="kicker rv">◈ Piyasa Notları</span>
-        <h2 class="h-section rv">Haberler &amp; Yorum</h2>
+      <div class="ic-col rv">
+        <div class="ic-head">
+          <div><span class="kicker">◈ Piyasa Notları</span><h2 class="ic-h">Haberler &amp; Yorum</h2></div>
+          <a class="ic-all" href="/haberler">Tümü <span class="arrow-ic"></span></a>
+        </div>
+        <div class="ic-list" id="haberGrid"><div class="skel">YÜKLENİYOR…</div></div>
       </div>
-      <a class="view-all rv" href="/haberler">Tüm haberler <span class="arrow-ic"></span></a>
-    </div>
-    <div class="tez-grid" id="haberGrid">
-      <div class="skel">HABERLER YÜKLENİYOR…</div>
     </div>
   </div>
 </section>
@@ -778,48 +829,39 @@ async function getTezler() {
   return _tezCache;
 }
 
-function coverHTML(t) {
-  return t.kapak_gorseli
-    ? `<div class="tez-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.classList.add('ph');this.parentNode.innerHTML='<span>${esc(t.ticker||'◈')}</span>'"></div>`
-    : `<div class="tez-cover ph"><span>${esc(t.ticker || '◈')}</span></div>`;
-}
+/* Eski büyük kart yardımcıları (coverHTML/metaHTML/flyStyle) kaldırıldı:
+   içerik bandı kompakt satır kullanıyor. */
 
-function metaHTML(t, opts = {}) {
+/* Kompakt satır: küçük kapak + rozetler + başlık.
+   Eski kart (16:9 kapak + özet + "Tezi Oku" satırı) tek başına ~330px
+   yer kaplıyordu; üç tür tek ekrana ancak bu ölçüyle sığıyor. */
+const kisaTarih = s => s ? new Date(s).toLocaleDateString('tr-TR', { day:'numeric', month:'short' }) : '';
+
+function icRowHTML(t, opts = {}) {
   const hasSig = t.sinyal && sigMap[t.sinyal];
   const sig = sigMap[t.sinyal] || sigMap.NOTR;
-  return `<div class="meta-row">
-    ${t.ticker ? `<span class="chip-ticker">${esc(t.ticker)}</span>` : ''}
-    ${opts.cat ? `<span class="chip-cat">ARAŞTIRMA</span>` : ''}
-    ${opts.haber ? `<span class="chip-cat haber">HABER</span>` : ''}
-    ${(opts.haber ? false : (opts.cat ? hasSig : true)) ? `<span class="chip-sig ${sig[0]}">${sig[1]}</span>` : ''}
-    ${t.guncelleme_sayisi ? `<span class="chip-upd" title="Son güncelleme: ${esc(trDate(t.son_guncelleme))}"><i></i>${t.guncelleme_sayisi} güncelleme</span>` : ''}
-    ${t.olusturma ? `<span class="chip-date">${esc(trDate(t.olusturma))}</span>` : ''}
-  </div>`;
-}
-
-/* orijinal şablondaki savrulmuş başlangıç pozisyonları */
-const FLY = [
-  { x: 340, y: -180, r: 10 },
-  { x: 60,  y: -220, r: 15 },
-  { x: -300, y: -160, r: -6 }
-];
-function flyStyle(i) {
-  const f = FLY[i % FLY.length];
-  return `--fx:${f.x}px;--fy:${f.y}px;--fr:${f.r}deg;--fd:${(i * .09).toFixed(2)}s`;
-}
-
-function tezCardHTML(t, opts = {}, i = 0) {
-  return `<div class="tez-card fly" style="${flyStyle(i)}" onclick="location.href='/tez/${t.id}'">
-    ${coverHTML(t)}
-    <div class="tez-body">
-      ${metaHTML(t, opts)}
-      <div class="tez-title">${esc(t.baslik || '')}</div>
-      ${t.ozet ? `<div class="tez-sum">${esc(t.ozet)}</div>` : ''}
-      <div class="tez-foot">
-        <span class="tez-read">${opts.haber ? 'Haberi Oku' : opts.cat ? 'Araştırmayı Oku' : 'Tezi Oku'} <span class="arrow-ic"></span></span>
+  const kod = esc((t.ticker || '◈').slice(0, 4));
+  return `<a class="ic-row" href="/tez/${t.id}">
+    <div class="ic-thumb">${t.kapak_gorseli
+      ? `<img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.innerHTML='<span>${kod}</span>'">`
+      : `<span>${kod}</span>`}</div>
+    <div class="ic-txt">
+      <div class="ic-meta">
+        ${t.ticker ? `<span class="chip-ticker">${esc(t.ticker)}</span>` : ''}
+        ${(!opts.haber && hasSig) ? `<span class="chip-sig ${sig[0]}">${sig[1]}</span>` : ''}
+        ${t.guncelleme_sayisi ? `<span class="chip-upd" title="Son güncelleme: ${esc(trDate(t.son_guncelleme))}"><i></i>${t.guncelleme_sayisi}</span>` : ''}
+        <span class="chip-date">${esc(kisaTarih(t.olusturma))}</span>
       </div>
+      <div class="ic-title">${esc(t.baslik || '')}</div>
     </div>
-  </div>`;
+  </a>`;
+}
+
+function listeCiz(el, list, opts, bos) {
+  if (!el) return;
+  el.innerHTML = list.length
+    ? list.slice(0, 3).map(t => icRowHTML(t, opts)).join('')
+    : `<div class="skel">${bos}</div>`;
 }
 
 /* Tezin son hareketi: güncelleme varsa onun tarihi, yoksa yayın tarihi.
@@ -837,50 +879,24 @@ function renderFeatured(t) {
   const host = document.getElementById('featTez');
   if (!host || !t) return;
 
-  // Güncelleme almış tez başa geldiyse kart "GÜNCELLEME YAYINDA" formatına döner
+  // Güncelleme almış tez başa geldiyse şerit "GÜNCELLEME YAYINDA" olur
   const g      = guncelMi(t) ? (t.son_guncelleme_bilgi || {}) : null;
   const kapak  = (g && g.gorsel) ? g.gorsel : t.kapak_gorseli;
   const baslik = (g && g.baslik) ? g.baslik : (t.baslik || '');
   const href   = g ? `/tez/${t.id}#tezSeyri` : `/tez/${t.id}`;
+  const alt    = g
+    ? `<b>${esc(t.baslik || '')}</b> tezine eklendi${t.guncelleme_sayisi > 1 ? ` · toplam ${t.guncelleme_sayisi} güncelleme` : ''}`
+    : esc(t.ozet || '');
 
-  host.innerHTML = `<a class="feat-card fly${g ? ' guncel' : ''}" style="--fx:0px;--fy:200px;--fr:-3deg;--fd:0s" href="${href}">
-    ${kapak ? `<div class="feat-cover"><img src="${esc(kapak)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
-    <div class="feat-inner">
-      <div class="feat-kicker">
-        <span class="dot"></span>${g ? 'GÜNCELLEME YAYINDA' : 'HAFTANIN SEÇİMİ'}
-        ${g ? `<span class="feat-updtag">${esc(trDate(t.son_guncelleme))}</span>` : ''}
-      </div>
-      ${metaHTML(t)}
-      <div class="feat-title">${esc(baslik)}</div>
-      ${g
-        ? `<div class="feat-parent"><b>${esc(t.baslik || '')}</b> tezine eklendi${t.guncelleme_sayisi > 1 ? ` · toplam ${t.guncelleme_sayisi} güncelleme` : ''}</div>`
-        : (t.ozet ? `<div class="feat-summary">${esc(t.ozet)}</div>` : '')}
-      <div class="feat-cta">${g ? 'Güncellemeyi Oku' : 'Tezi Oku'} <span class="arrow-ic"></span></div>
+  host.innerHTML = `<a class="feat-strip${g ? ' guncel' : ''}" href="${href}">
+    ${kapak ? `<div class="fs-cover"><img src="${esc(kapak)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+    <div class="fs-body">
+      <div class="fs-kick"><span class="dot"></span>${g ? 'GÜNCELLEME YAYINDA' : 'HAFTANIN SEÇİMİ'}${t.ticker ? ' · ' + esc(t.ticker) : ''}</div>
+      <div class="fs-title">${esc(baslik)}</div>
+      ${alt ? `<div class="fs-sum">${alt}</div>` : ''}
     </div>
+    <span class="fs-cta">${g ? 'Güncellemeyi Oku' : 'Tezi Oku'} <span class="arrow-ic"></span></span>
   </a>`;
-}
-
-/* kartlar görünüme girince uçuşu tetikle (scroll + rect — her ortamda çalışır) */
-function armFly() {
-  const els = [...document.querySelectorAll('.fly:not(.land)')];
-  if (!els.length) return;
-  const land = () => {
-    const vh = innerHeight;
-    for (let i = els.length - 1; i >= 0; i--) {
-      const r = els[i].getBoundingClientRect();
-      if (r.top < vh * .9 && r.bottom > 0) {
-        els[i].classList.add('land');
-        els.splice(i, 1);
-      }
-    }
-    if (!els.length) {
-      removeEventListener('scroll', land);
-      removeEventListener('resize', land);
-    }
-  };
-  addEventListener('scroll', land, { passive: true });
-  addEventListener('resize', land, { passive: true });
-  setTimeout(land, 60);
 }
 
 /* ── Sağ alt güncelleme bildirimi ──
@@ -933,6 +949,8 @@ async function loadContent() {
   const tezGrid = document.getElementById('tezGrid');
   const arGrid = document.getElementById('arastirmaGrid');
   const hbGrid = document.getElementById('haberGrid');
+  const bosSerit = (b, a) =>
+    `<div class="feat-strip"><div class="fs-body"><div class="fs-kick"><span class="dot"></span>HAFTANIN SEÇİMİ</div><div class="fs-title">${b}</div><div class="fs-sum">${a}</div></div></div>`;
   try {
     const all = await getTezler();
     // Güncelleme alan tez başa gelsin — sıra "son hareket"e göre
@@ -944,29 +962,25 @@ async function loadContent() {
 
     if (tezler.length) {
       renderFeatured(tezler[0]);
-      const teaser = tezler.slice(1, 4).length ? tezler.slice(1, 4) : tezler.slice(0, 3);
-      tezGrid.innerHTML = teaser.map((t, i) => tezCardHTML(t, {}, i)).join('');
+      // Öne çıkan zaten şeritte; sütunda tekrar etmesin
+      listeCiz(tezGrid, tezler.length > 1 ? tezler.slice(1) : tezler, {}, 'HENÜZ TEZ YAYINLANMADI.');
     } else {
-      feat.innerHTML = '<div class="feat-card"><div class="feat-inner"><div class="feat-kicker"><span class="dot"></span>HAFTANIN SEÇİMİ</div><div class="feat-title">İlk tez yakında geliyor</div><div class="feat-summary">Yeni araştırma tezleri burada yayınlanacak.</div></div></div>';
-      tezGrid.innerHTML = '<div class="skel">HENÜZ TEZ YAYINLANMADI.</div>';
+      feat.innerHTML = bosSerit('İlk tez yakında geliyor', 'Yeni araştırma tezleri burada yayınlanacak.');
+      listeCiz(tezGrid, [], {}, 'HENÜZ TEZ YAYINLANMADI.');
     }
 
-    arGrid.innerHTML = arastirmalar.length
-      ? arastirmalar.slice(0, 3).map((t, i) => tezCardHTML(t, { cat: true }, i)).join('')
-      : '<div class="skel">İLK ARAŞTIRMA YAKINDA YAYINLANACAK.</div>';
+    listeCiz(arGrid, arastirmalar, { cat: true }, 'İLK ARAŞTIRMA YAKINDA.');
+    listeCiz(hbGrid, haberler, { haber: true }, 'İLK HABER YAKINDA.');
 
-    if (hbGrid) hbGrid.innerHTML = haberler.length
-      ? haberler.slice(0, 3).map((t, i) => tezCardHTML(t, { haber: true }, i)).join('')
-      : '<div class="skel">İLK HABER YAKINDA YAYINLANACAK.</div>';
-
-    armFly();
   } catch (e) {
-    feat.innerHTML = '<div class="feat-card"><div class="feat-inner"><div class="feat-title" style="font-size:20px">İçerik yüklenemedi</div><div class="feat-summary">Tezlere <a href="/tezler" style="color:var(--accent)">buradan</a> ulaşabilirsin.</div></div></div>';
-    tezGrid.innerHTML = '<div class="skel" style="color:var(--danger)">TEZLER YÜKLENEMEDİ.</div>';
-    arGrid.innerHTML = '<div class="skel" style="color:var(--danger)">ARAŞTIRMALAR YÜKLENEMEDİ.</div>';
-    if (hbGrid) hbGrid.innerHTML = '<div class="skel" style="color:var(--danger)">HABERLER YÜKLENEMEDİ.</div>';
+    feat.innerHTML = bosSerit('İçerik yüklenemedi', 'Tezlere <a href="/tezler" style="color:var(--accent)">buradan</a> ulaşabilirsin.');
+    const hata = '<div class="skel" style="color:var(--danger)">YÜKLENEMEDİ.</div>';
+    tezGrid.innerHTML = hata;
+    arGrid.innerHTML = hata;
+    if (hbGrid) hbGrid.innerHTML = hata;
   }
 }
+
 /* Açılışta hafif kaydırma: hero tüm ekranı kapladığı için ziyaretçi
    altında tez/araştırma/haber bölümleri olduğunu görmeden çıkabiliyordu.
    Bir defalık, kısa ve iptal edilebilir bir dürtme — sayfayı ele geçiren
@@ -990,7 +1004,7 @@ function bolumIpucu() {
     setTimeout(() => {
       if (iptal || window.scrollY > 8) return;
       sessionStorage.setItem('bi_ipucu', '1');
-      const hedef = document.getElementById('tezler');
+      const hedef = document.getElementById('icerik');
       // Bölümün üst kenarı ekranın altından görünsün: "aşağıda devamı var"
       const mesafe = hedef
         ? Math.min(hedef.getBoundingClientRect().top - innerHeight * 0.62, innerHeight * 0.5)
