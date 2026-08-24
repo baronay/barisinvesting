@@ -504,18 +504,22 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .ai-summary-risk{font-size:10px;color:var(--text2);line-height:1.6;padding:7px 9px;background:var(--surface2);border-left:2px solid var(--danger);margin-bottom:8px;}
 .ai-summary-verdict{font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;}
 .ai-garp{margin-left:8px;color:var(--muted-s);}
-/* Şirkete özel operasyonel metrikler */
-.ai-metrik{margin:10px 0 4px;border-top:1px solid var(--rule);padding-top:9px;}
-.ai-metrik-b{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted-s);margin-bottom:7px;}
-/* Değerler "veri yok, ~%17-19 bandı (2024 sonu itibarıyla)" gibi uzun
-   olabiliyor; sabit genişlikli sütunlarda satır kartı taşırıyordu.
-   Her metrik kendi bloğu: üstte ad + değer, altında yorum. */
-.ai-metrik-s{padding:7px 0;border-bottom:1px solid var(--rule);min-width:0;}
-.ai-metrik-s:last-child{border-bottom:none;}
-.ai-metrik-ust{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0;}
-.ai-metrik-ad{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted-s);flex-shrink:0;}
-.ai-metrik-d{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);flex:1;min-width:0;overflow-wrap:anywhere;line-height:1.4;}
-.ai-metrik-y{font-size:10.5px;color:var(--muted-s);line-height:1.55;margin-top:3px;overflow-wrap:anywhere;}
+/* Şirkete özel operasyonel metrikler.
+   KURAL: tek aralıklı yazı tipi + altın renk RAKAM içindir, cümle için
+   değil. Model değer alanına çoğu zaman cümle yazıyor ("veri yok, segment
+   kırılımı elimde değil"); bunu 12px mono altınla basınca ekran bağırıyor.
+   Kısa değer sağda rakam gibi, uzun değer alt satırda düz metin olarak
+   (.uzun sınıfı) çiziliyor. */
+.ai-metrik{margin:12px 0 4px;border-top:1px solid var(--rule);padding-top:11px;}
+.ai-metrik-b{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted-s);margin-bottom:2px;}
+.ai-metrik-s{padding:10px 0;border-bottom:1px solid var(--rule);min-width:0;}
+.ai-metrik-s:last-child{border-bottom:none;padding-bottom:2px;}
+.ai-metrik-ust{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;min-width:0;}
+.ai-metrik-ad{font-size:11px;font-weight:600;color:var(--text2);line-height:1.4;min-width:0;}
+.ai-metrik-d{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600;color:var(--accent);white-space:nowrap;flex-shrink:0;}
+.ai-metrik-d.uzun{font-family:inherit;font-size:10.5px;font-weight:500;color:var(--muted-s);white-space:normal;flex:1 0 100%;line-height:1.55;margin-top:4px;overflow-wrap:anywhere;}
+.ai-metrik-y{font-size:10.5px;color:var(--muted-s);line-height:1.6;margin-top:5px;overflow-wrap:anywhere;}
+.ai-metrik-s .ai-metrik-d.uzun+.ai-metrik-y{margin-top:4px;}
 /* Model/token ölçümü — yalnızca admin görür */
 .ai-olcum{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.5px;color:var(--muted2);}
 /* Eşik şeridi — şirketin çerçeve bantlarındaki yeri */
@@ -544,12 +548,16 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .crit-s-karar.pos{color:var(--success);border-color:rgba(34,197,94,.35);}
 .crit-s-karar.neu{color:var(--warn);border-color:rgba(184,155,106,.35);}
 .crit-s-karar.neg{color:var(--danger);border-color:rgba(240,82,82,.35);}
-/* Tezin aksiyona dönen kısmı: nereden alınır, ne izlenir, ne kadar tutulur */
-.ai-tez-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0 9px;}
-.ai-tez-k{background:var(--surface2);border:1px solid var(--border-s);border-top:2px solid var(--accent2);padding:9px 11px;}
-.ai-tez-l{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted-s);margin-bottom:5px;}
-.ai-tez-v{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);line-height:1.35;}
-.ai-tez-n{font-size:10px;color:var(--text2);line-height:1.5;margin-top:4px;}
+/* Tezin aksiyona dönen kısmı: nereden alınır, ne izlenir, ne kadar tutulur.
+   Metriklerdeki kural burada da geçerli — "210-230 USD" rakamdır, mono
+   altın; "AWS segment büyüme oranı %15'in altına inerse…" cümledir, düz
+   metin. Kutular ikişerli sabit ızgarada: dördü de aynı hizada başlıyor. */
+.ai-tez-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin:12px 0 10px;}
+.ai-tez-k{background:var(--surface2);border:1px solid var(--border-s);border-left:2px solid var(--accent2);padding:10px 12px;min-width:0;}
+.ai-tez-l{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted-s);margin-bottom:6px;}
+.ai-tez-v{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;color:var(--accent);line-height:1.35;overflow-wrap:anywhere;}
+.ai-tez-v.uzun{font-family:inherit;font-size:11px;font-weight:600;color:var(--text);line-height:1.55;}
+.ai-tez-n{font-size:10px;color:var(--muted-s);line-height:1.6;margin-top:5px;}
 /* Sidebar'daki çerçeve rozeti — eskiden Buffett/Lynch seçicisiydi */
 .fw-marka{flex:1;background:var(--accent-dim);border:1px solid var(--accent2);padding:8px 11px;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:1.2px;color:var(--accent);}
 .fw-marka span{display:block;margin-top:3px;font-size:8px;font-weight:400;letter-spacing:.8px;color:var(--muted-s);text-transform:none;}
@@ -4815,11 +4823,17 @@ function parseAndRender(ticker,company,text,fd,fwKey){
     }).filter(m=>m.ad&&!/^\[/.test(m.ad)).slice(0,4):[];
     const garpM=text.match(/GARP_SKOR:\s*(\d{1,3})/);
     const vColor=verdict==='AL'?'var(--success)':verdict==='UZAK_DUR'?'var(--danger)':'var(--warn)';
-    const kutu=(etiket,d)=>d&&d.v?`<div class="ai-tez-k"><div class="ai-tez-l">${etiket}</div><div class="ai-tez-v">${esc(d.v)}</div>${d.n?`<div class="ai-tez-n">${esc(d.n)}</div>`:''}</div>`:'';
+    /* Rakam mı cümle mi? Rakamsa tek aralıklı altın, cümleyse düz metin.
+       Ölçüt uzunluk değil türdür: "210-230 USD bandı" rakamdır, aynı
+       uzunluktaki "iki çeyrek üst üste daralırsa" cümledir. Boşluk sayısı
+       ikisini ayırmaya yetiyor. */
+    const rakamMi=(s)=>{const t=String(s||'').trim();return t.length<=26&&(t.split(/\s+/).length<=4)&&/[0-9]/.test(t);};
+    const dSinif=(s)=>rakamMi(s)?'':' uzun';
+    const kutu=(etiket,d)=>d&&d.v?`<div class="ai-tez-k"><div class="ai-tez-l">${etiket}</div><div class="ai-tez-v${dSinif(d.v)}">${esc(d.v)}</div>${d.n?`<div class="ai-tez-n">${esc(d.n)}</div>`:''}</div>`:'';
     aiCard.innerHTML=`<div class="ai-tag">${esc(fw.name)} · Tez</div>`+
       (smX?`<div class="ai-summary-text">${esc(smX[1].trim())}</div>`:'')+
       (rkX?`<div class="ai-summary-risk">⚠ ${esc(rkX[1].trim())}</div>`:'')+
-      (metrikler.length?`<div class="ai-metrik"><div class="ai-metrik-b">Şirkete Özel Metrikler</div>${metrikler.map(m=>`<div class="ai-metrik-s"><div class="ai-metrik-ust"><span class="ai-metrik-ad">${esc(m.ad)}</span><span class="ai-metrik-d">${esc(m.deger)}</span></div>${m.yorum?`<div class="ai-metrik-y">${esc(m.yorum)}</div>`:''}</div>`).join('')}</div>`:'')+
+      (metrikler.length?`<div class="ai-metrik"><div class="ai-metrik-b">Şirkete Özel Metrikler</div>${metrikler.map(m=>`<div class="ai-metrik-s"><div class="ai-metrik-ust"><span class="ai-metrik-ad">${esc(m.ad)}</span>${m.deger?`<span class="ai-metrik-d${dSinif(m.deger)}">${esc(m.deger)}</span>`:''}</div>${m.yorum?`<div class="ai-metrik-y">${esc(m.yorum)}</div>`:''}</div>`).join('')}</div>`:'')+
       ((giris||izle||portfoy||hedef)?`<div class="ai-tez-grid">${kutu('Adil Giriş Bölgesi',giris)}${kutu('12 Aylık Hedef',hedef)}${kutu('İzlenecek Eşik',izle)}${kutu('Portföydeki Rol',portfoy)}</div>`:'')+
       `<div class="ai-summary-verdict" style="color:${vColor}">Nihai Görüş: ${verdictAd(verdict)}${garpM?` <span class="ai-garp">GARP ${garpM[1]}/100</span>`:''}</div>`+
       olcumSatiri();

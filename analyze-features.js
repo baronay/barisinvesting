@@ -27,19 +27,22 @@
     }
     #snapshotCard { animation: snapIn 0.35s ease forwards; }
 
-    #snapshotCard .snap-col {
-      background:var(--sidebar2,#222840);
-      border:1px solid var(--border-s,#3a4260);
-      padding:10px 14px;
+    #snapshotCard .snap-tanim {
+      font-size:12px;color:rgba(255,255,255,0.86);font-family:'Inter',sans-serif;
+      line-height:1.75;margin:0 0 12px;max-width:74ch;
     }
-    #snapshotCard .snap-col-lbl {
+    #snapshotCard .snap-meta {
+      display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;
+    }
+    #snapshotCard .snap-meta-l {
       font-size:8px;letter-spacing:2px;text-transform:uppercase;
       color:var(--muted-s,#7a8493);font-family:'JetBrains Mono',monospace;
-      margin-bottom:5px;
+      margin-left:4px;
     }
-    #snapshotCard .snap-col-val {
-      font-size:12px;color:#ffffff;font-weight:500;
-      font-family:'Inter',sans-serif;line-height:1.5;
+    #snapshotCard .snap-sektor {
+      font-size:9px;letter-spacing:1px;font-family:'JetBrains Mono',monospace;
+      color:var(--gold,#d4a843);background:rgba(194,173,132,0.10);
+      border:1px solid rgba(194,173,132,0.25);border-radius:3px;padding:3px 8px;
     }
     #snapshotCard .snap-peer {
       font-size:9px;padding:3px 8px;
@@ -100,12 +103,17 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
   const flagMap = { BIST: '🇹🇷', NYSE: '🇺🇸', NASDAQ: '🇺🇸', NAS: '🇺🇸' };
   const flag = flagMap[exchange] || '🌐';
 
+  /* Kart, sonuç ızgarasının "şirket" sütununun en üstüne giriyor.
+     Eskiden #analysisSection'a ekleniyordu; o blok haber akışının ALTINDA
+     durduğu için şirket kartı sayfanın en dibinde kalıyordu. */
+  const kap = document.getElementById('resultAnalysisCol') || document.getElementById('analysisSection');
+
   const card = document.createElement('div');
   card.id = 'snapshotCard';
   card.style.cssText = `
     background:var(--sidebar,#0e1220);
-    border-bottom:2px solid var(--gold,#d4a843);
-    margin-bottom:1px;
+    border-bottom:2px solid var(--accent2,#d4a843);
+    margin:-14px -14px 14px;
     padding:16px 20px 0;
   `;
 
@@ -161,8 +169,7 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
   body.style.cssText = 'padding:0 0 14px;';
   card.appendChild(body);
 
-  const aSection = document.getElementById('analysisSection');
-  if (aSection) aSection.prepend(card);
+  if (kap) kap.prepend(card);
 
   // ── Gövde: ne yapıyor + sektör + rakipler + risk ──
   const risk = snapAlan(analizMetni, 'RISK');
@@ -172,19 +179,14 @@ async function injectCompanySnapshot(ticker, company, exchange, fwKey, fmpPeers 
   const ciz = (isTanim, sektor) => {
     const el = document.getElementById('snapshotBody');
     if (!el) return;
+    /* Sektör eskiden tek başına koca bir kutuydu — iki kelime için bir
+       çerçeve. Artık rakiplerle aynı satırda küçük bir etiket. */
     el.innerHTML = `
-      ${isTanim ? `<p style="font-size:12px;color:#ffffff;font-family:'Inter',sans-serif;line-height:1.8;margin:0 0 14px">${isTanim}</p>` : ''}
-      ${sektor ? `
-      <div style="margin-bottom:12px">
-        <div class="snap-col" style="width:100%">
-          <div class="snap-col-lbl">Sektör</div>
-          <div class="snap-col-val">${sektor}</div>
-        </div>
-      </div>` : ''}
-      ${peers.length ? `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <span style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted-s,#7a8493);font-family:'JetBrains Mono',monospace">Rakipler</span>
-        ${peers.map(p => `<button class="snap-peer" onclick="qFill('${p}','','${exchange}')">${p}</button>`).join('')}
+      ${isTanim ? `<p class="snap-tanim">${isTanim}</p>` : ''}
+      ${(sektor || peers.length) ? `
+      <div class="snap-meta">
+        ${sektor ? `<span class="snap-sektor">${sektor}</span>` : ''}
+        ${peers.length ? `<span class="snap-meta-l">Rakipler</span>${peers.map(p => `<button class="snap-peer" onclick="qFill('${p}','','${exchange}')">${p}</button>`).join('')}` : ''}
       </div>` : ''}
       ${risk ? `<div class="snap-alert">⚠ ${risk}</div>` : ''}
     `;
