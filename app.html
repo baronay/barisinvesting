@@ -220,6 +220,11 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .nav-num{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--muted2);width:18px;flex-shrink:0;}
 .nav-item.active .nav-num{color:var(--accent);}
 .nav-status{margin-left:auto;font-size:11px;flex-shrink:0;}
+/* İçerik bağlantıları: terminal sayfalarından ayrışsın (dış sayfa oku) */
+.nav-item.nav-dis{text-decoration:none;}
+.nav-item.nav-dis .nav-num{color:var(--accent);opacity:.6;font-size:8px;}
+.nav-ok{margin-left:auto;font-size:10px;color:var(--muted2);flex-shrink:0;transition:transform .15s,color .15s;}
+.nav-item.nav-dis:hover .nav-ok{color:var(--accent);transform:translate(2px,-2px);}
 .verdict-sec{padding:10px 20px;margin-top:auto;border-top:1px solid var(--border-s);}
 .tb-getiri{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;}
 .tb-getiri.pos{color:var(--success);background:var(--success-dim);}
@@ -3233,6 +3238,8 @@ body.pr-kilit{overflow:hidden;}
       </div>
       <div class="pt-topnav">
         <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">← Ana Sayfa</a>
+        <a class="pt-sec-link" data-route="/arastirmalar" href="/arastirmalar" style="margin-right:6px">Araştırmalar</a>
+        <a class="pt-sec-link" data-route="/haberler" href="/haberler" style="margin-right:6px">Haberler</a>
         <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
       </div>
     </div>
@@ -3295,6 +3302,9 @@ body.pr-kilit{overflow:hidden;}
       </div>
       <div class="pt-topnav">
         <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">← Ana Sayfa</a>
+        <a class="pt-sec-link" data-route="/tezler" href="/tezler" style="margin-right:6px">Tezler</a>
+        <a class="pt-sec-link" data-route="/arastirmalar" href="/arastirmalar" style="margin-right:6px">Araştırmalar</a>
+        <a class="pt-sec-link" data-route="/haberler" href="/haberler" style="margin-right:6px">Haberler</a>
         <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
       </div>
     </div>
@@ -3326,6 +3336,7 @@ body.pr-kilit{overflow:hidden;}
       <div class="pt-topnav">
         <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">← Ana Sayfa</a>
         <a class="pt-sec-link" data-route="/tezler" href="/tezler" style="margin-right:6px">Tezler</a>
+        <a class="pt-sec-link" data-route="/haberler" href="/haberler" style="margin-right:6px">Haberler</a>
         <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
       </div>
     </div>
@@ -3362,9 +3373,10 @@ body.pr-kilit{overflow:hidden;}
         </div>
       </div>
       <div class="pt-topnav">
-        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">&#8592; Ana Sayfa</a>
+        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">← Ana Sayfa</a>
         <a class="pt-sec-link" data-route="/tezler" href="/tezler" style="margin-right:6px">Tezler</a>
-        <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giri&#351; <span class="arr">&#8594;</span></a>
+        <a class="pt-sec-link" data-route="/arastirmalar" href="/arastirmalar" style="margin-right:6px">Araştırmalar</a>
+        <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
       </div>
     </div>
 
@@ -3463,6 +3475,23 @@ body.pr-kilit{overflow:hidden;}
     <div class="nav-item" id="nav-portfolio-entry" onclick="showPage('portfolio');closeSidebar();">
       <span class="nav-num">05</span>Portföy İzleyici
     </div>
+
+    <!-- İçerik bölümleri: terminale giren kullanıcı tez/araştırma/haber
+         tarafına dönemiyordu — menüde hiçbir bağlantı yoktu, tek çıkış
+         tarayıcının geri tuşuydu. Bunlar SPA rotaları (data-route). -->
+    <div class="nav-lbl">İçerik</div>
+    <a class="nav-item nav-dis" data-route="/tezler" href="/tezler" onclick="closeSidebar()">
+      <span class="nav-num">◈</span>Yatırım Tezleri<span class="nav-ok">↗</span>
+    </a>
+    <a class="nav-item nav-dis" data-route="/arastirmalar" href="/arastirmalar" onclick="closeSidebar()">
+      <span class="nav-num">◈</span>Şirket Araştırmaları<span class="nav-ok">↗</span>
+    </a>
+    <a class="nav-item nav-dis" data-route="/haberler" href="/haberler" onclick="closeSidebar()">
+      <span class="nav-num">◈</span>Haberler<span class="nav-ok">↗</span>
+    </a>
+    <a class="nav-item nav-dis" href="/" onclick="closeSidebar()">
+      <span class="nav-num">←</span>Ana Sayfa<span class="nav-ok">↗</span>
+    </a>
     <!-- Kriter listesi sidebar'dan kaldırıldı — kriterlere artık "Analiz Sonuçları"
          kartındaki checklist'ten tıklanarak ulaşılıyor. navList JS'te hâlâ
          dolduruluyor (ns-i durum ikonları başka yerde okunuyor), sadece gizli. -->
