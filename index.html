@@ -744,6 +744,9 @@ async function subscribeNewsletter() {
     const data = await r.json().catch(() => ({}));
     const saved = r.ok && !data.warning && !(data.user && data.user.offline);
     if (!saved) throw new Error(data.warning || ('HTTP ' + r.status));
+    // Kimliği yerelde tut: okuma sayfasındaki e-posta duvarı bunu görüp
+    // aboneye metnin tamamını açıyor, aynı kişiden ikinci kez mail istemiyor.
+    try { localStorage.setItem('bi_email', email); } catch (_) {}
     document.getElementById('newsForm').style.display = 'none';
     const done = document.getElementById('newsDone');
     document.getElementById('newsDoneSub').textContent = email + ' listeye eklendi.';

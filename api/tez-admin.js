@@ -64,6 +64,32 @@ export default async function handler(req, res) {
       if (!tez) return res.status(200).json(null);
       // Pozisyon geçmişi — yayındaki güncellemeler, eskiden yeniye
       tez.guncellemeler = await fetchGuncellemeler(headers, idNum, true);
+
+      /* ── E-POSTA DUVARI ──────────────────────────────────────────
+         İçeriğin girişi herkese açık, gerisi kayıtlı okura. Kesme
+         sunucuda yapılıyor: istemci tarafında gizlemek, metni yine de
+         ağdan indirip DOM'a koymak demekti — hem duvar delik olurdu
+         hem 30-40 KB gövde boşuna inerdi. Kimlik bu uygulamada zaten
+         e-posta: users tablosunda kaydı varsa tam metin gider. */
+      const okur = await kayitliOkur(headers, req.query.email);
+      res.setHeader('Cache-Control', 'private, no-store');   // kilitli/açık sürüm CDN'de karışmasın
+      if (!okur) {
+        const tam = String(tez.icerik || '');
+        // Haber kısa yazılıyor: tez bütçesiyle kesilse çoğu haber hiç
+        // kilitlenmez, duvar sadece uzun tezlerde çalışırdı.
+        const butce = tez.kategori === 'haber' ? 420 : 950;
+        const onizleme = htmlOnizleme(tam, butce);
+        tez.kilit = onizleme.kesildi;
+        if (onizleme.kesildi) {
+          tez.icerik = onizleme.html;
+          tez.kilitli_guncelleme = tez.guncellemeler.length;
+          // Güncellemelerin başlığı/tarihi kalsın (neyin beklediği görünsün), gövdesi gitsin
+          tez.guncellemeler = tez.guncellemeler.map(g => ({
+            id: g.id, tez_id: g.tez_id, baslik: g.baslik, tarih: g.tarih,
+            tur: g.tur, sinyal: g.sinyal, fiyat: g.fiyat, kilit: true, icerik: null, gorsel: null,
+          }));
+        }
+      }
       return res.status(200).json(tez);
     }
 
@@ -279,6 +305,77 @@ export default async function handler(req, res) {
   }
 
   return res.status(405).json({ error: 'Method not allowed' });
+}
+
+// ── E-posta duvarı yardımcıları ─────────────────────────────────
+
+/* Okur kayıtlı mı? users tablosunda e-posta varsa evet.
+   Şifre/oturum yok — bu uygulamada kimlik zaten e-posta. */
+async function kayitliOkur(headers, email) {
+  const em = String(email || '').toLowerCase().trim();
+  if (!em || !em.includes('@') || em.length > 200) return false;
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(em)}&select=email&limit=1`,
+      { headers }
+    );
+    if (!r.ok) return false;
+    const d = await r.json();
+    return Array.isArray(d) && d.length > 0;
+  } catch (_) {
+    return false;   // doğrulayamıyorsak duvar kapalı kalsın
+  }
+}
+
+/* HTML'i etiket bütünlüğünü bozmadan kes.
+
+   Tezler tam bir HTML belgesi olarak yapıştırılıyor: <head> içinde ~7 KB
+   <style>, ardından <article> içinde onlarca <section>. Bu yüzden kesim
+   iki şeye dikkat ediyor:
+   1) Bütçe yalnızca OKUNAN metni sayıyor — <style>/<script> içeriği
+      sayılsaydı önizleme daha ilk paragrafa gelmeden dolardı.
+   2) Kesim noktasında açık kalan tüm ataların kapanış etiketleri
+      ekleniyor; yoksa <article>/<section> yarım kalır, sayfanın kalan
+      düzeni bozulurdu.
+   Kesim her zaman bir blok öğesinin (p, section, table…) bitiminde. */
+function htmlOnizleme(html, butce) {
+  if (!html) return { html: '', kesildi: false };
+  const BOS  = new Set(['br','hr','img','input','meta','link','source','col','area','base','embed','track','wbr']);
+  const ATLA = new Set(['style','script','head','title']);       // metni okunmuyor
+  const AKIS = new Set(['p','section','article','h1','h2','h3','h4','ul','ol','table','blockquote','figure','div','pre']);
+  const etiket = /<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*?(\/?)>/g;
+
+  const yigin = [];
+  let metin = 0, i = 0, atla = 0, kes = -1, m;
+  while ((m = etiket.exec(html)) !== null) {
+    if (!atla) metin += (m.index - i);
+    i = etiket.lastIndex;
+    const ad = m[1].toLowerCase();
+    const kapanis = m[0][1] === '/';
+    if (m[2] === '/' || BOS.has(ad)) continue;
+    if (kapanis) {
+      if (ATLA.has(ad) && atla) atla--;
+      for (let k = yigin.length - 1; k >= 0; k--) {
+        if (yigin[k] === ad) { yigin.length = k; break; }
+      }
+      // Bütçe dolduysa ve hâlâ bir kabın (article/body) içindeysek burada kes
+      if (metin >= butce && AKIS.has(ad) && yigin.length) { kes = etiket.lastIndex; break; }
+    } else {
+      if (ATLA.has(ad)) atla++;
+      yigin.push(ad);
+    }
+  }
+
+  if (kes < 0) {
+    // Etiketsiz düz metin: kelime sınırında kes
+    if (!/<[a-zA-Z]/.test(html) && html.length > butce * 1.5) {
+      const p = html.lastIndexOf(' ', butce);
+      return { html: html.slice(0, p > 0 ? p : butce), kesildi: true };
+    }
+    return { html, kesildi: false };
+  }
+  const kapat = yigin.slice().reverse().map(t => `</${t}>`).join('');
+  return { html: html.slice(0, kes) + kapat, kesildi: true };
 }
 
 // ── Güncelleme yardımcıları ─────────────────────────────────────

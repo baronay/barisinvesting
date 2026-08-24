@@ -2390,6 +2390,34 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   /* Başlıksız (ilk sütunu satır adı olan) tablolarda ilk hücre başlık gibi dursun */
   .tzo-tbl-scroll tr td:first-child:not([data-etiket]){font-weight:600;color:var(--cream);}
 }
+/* ── E-posta duvarı ──
+   Kesim noktası sert bir kenarla bitmesin: son paragraf söner, hemen
+   altında form gelir. Sönme yalnızca kilitliyken uygulanıyor. */
+body.tzo-kilitli .tzo-content{position:relative;}
+body.tzo-kilitli .tzo-content::after{content:'';position:absolute;left:0;right:0;bottom:0;height:150px;background:linear-gradient(to bottom,rgba(11,15,21,0) 0%,var(--anthracite) 92%);pointer-events:none;}
+.tzo-duvar{margin-top:-26px;position:relative;z-index:1;}
+.tzo-duvar-kart{border:1px solid rgba(194,173,132,.3);border-top:2px solid var(--accent);border-radius:14px;background:linear-gradient(165deg,rgba(194,173,132,.07) 0%,rgba(16,21,30,.96) 55%);padding:26px 26px 22px;box-shadow:0 18px 40px rgba(0,0,0,.35);}
+.tzo-duvar-kick{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+.tzo-duvar-h{font-family:var(--font-head,'Playfair Display',serif);font-size:23px;font-weight:700;line-height:1.3;color:var(--cream);margin-bottom:9px;letter-spacing:-.01em;}
+.tzo-duvar-p{font-size:13.5px;line-height:1.75;color:var(--cream2);opacity:.85;margin-bottom:16px;max-width:62ch;}
+.tzo-duvar-form{display:flex;gap:9px;flex-wrap:wrap;}
+.tzo-duvar-in{flex:1 1 240px;min-width:0;background:rgba(0,0,0,.35);border:1px solid var(--portal-border-s);border-radius:9px;padding:13px 15px;color:var(--cream);font-size:14px;font-family:inherit;outline:none;transition:border-color .18s;}
+.tzo-duvar-in:focus{border-color:var(--accent);}
+.tzo-duvar-in::placeholder{color:var(--cream2);opacity:.4;}
+.tzo-duvar-btn{flex:0 0 auto;background:var(--accent);color:#0b0f15;border:none;border-radius:9px;padding:13px 22px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .18s,opacity .18s;}
+.tzo-duvar-btn:hover{transform:translateY(-1px);}
+.tzo-duvar-btn:disabled{opacity:.55;cursor:default;transform:none;}
+.tzo-duvar-msg{min-height:16px;margin-top:9px;font-size:12px;line-height:1.5;}
+.tzo-duvar-msg.err{color:var(--danger);}
+.tzo-duvar-msg.ok{color:var(--success);}
+.tzo-duvar-not{margin-top:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.6px;color:var(--cream2);opacity:.55;}
+.tzt-kilitli{color:var(--accent);opacity:.9;}
+@media(max-width:640px){
+  .tzo-duvar-kart{padding:20px 18px 18px;border-radius:12px;}
+  .tzo-duvar-h{font-size:19px;}
+  .tzo-duvar-p{font-size:13px;}
+  .tzo-duvar-btn{width:100%;}
+}
 .tzo-note{margin-top:34px;padding:12px 16px;border:1px solid var(--portal-border);border-left:3px solid var(--warn);background:rgba(0,0,0,0.2);border-radius:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.3px;line-height:1.7;color:var(--cream2);opacity:.8;}
 .tzo-ctas{margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
 
@@ -6855,32 +6883,99 @@ function garpAnalizAc(ticker) {
         <span class="tzt-chev">▾</span>
       </div>
       <div class="tzt-accbody">
-        ${body ? `<div class="tzt-body">${body}</div>` : '<div class="tzt-bos">Bu güncellemede ek açıklama yok.</div>'}
+        ${g.kilit
+          ? '<div class="tzt-bos tzt-kilitli">🔒 Bu güncellemenin içeriği kayıtlı okurlara açık — aşağıdan mailini bırak.</div>'
+          : (body ? `<div class="tzt-body">${body}</div>` : '<div class="tzt-bos">Bu güncellemede ek açıklama yok.</div>')}
       </div>
     </div>`;
   }
 
+  /* ── E-POSTA DUVARI ─────────────────────────────────────────────
+     Metnin girişi herkese açık, gerisi mail bırakan okura. Kesme
+     sunucuda yapılıyor (api/tez-admin.js): burada yalnızca kesildiği
+     yeri yumuşatıp formu gösteriyoruz. */
+  function duvarHTML(kat, guncSayisi){
+    const ad = kat==='arastirma' ? 'araştırmanın' : kat==='haber' ? 'haberin' : 'tezin';
+    const artik = kat==='arastirma' ? 'Araştırmanın devamında' : kat==='haber' ? 'Haberin devamında' : 'Tezin devamında';
+    return `<div class="tzo-duvar" id="tzoDuvar">
+      <div class="tzo-duvar-kart">
+        <div class="tzo-duvar-kick">◈ Kayıtlı Okur</div>
+        <div class="tzo-duvar-h">Bu ${ad} devamı mail bırakanlara açık</div>
+        <div class="tzo-duvar-p">${artik} değerleme bandı, sayısal tablolar, izlenecek eşikler${guncSayisi ? ` ve ${guncSayisi} güncelleme` : ''} var. Mailini bırak, tamamı açılsın — yeni tezler de doğrudan sana gelsin.</div>
+        <div class="tzo-duvar-form">
+          <input class="tzo-duvar-in" id="tzoDuvarIn" type="email" inputmode="email" autocomplete="email" placeholder="ornek@email.com" spellcheck="false">
+          <button class="tzo-duvar-btn" id="tzoDuvarBtn" type="button">Devamını Oku →</button>
+        </div>
+        <div class="tzo-duvar-msg" id="tzoDuvarMsg"></div>
+        <div class="tzo-duvar-not">Ücretsiz · Kart istemiyoruz · İstediğin an çık</div>
+      </div>
+    </div>`;
+  }
+
+  /* Formu bağla — innerHTML sonrası çağrılıyor */
+  function duvariBagla(id){
+    const btn = document.getElementById('tzoDuvarBtn');
+    const inp = document.getElementById('tzoDuvarIn');
+    const msg = document.getElementById('tzoDuvarMsg');
+    if (!btn || !inp) return;
+    const gonder = async () => {
+      const email = (inp.value||'').trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
+        msg.textContent = 'Geçerli bir e-posta gir.'; msg.className = 'tzo-duvar-msg err'; inp.focus(); return;
+      }
+      btn.disabled = true; inp.disabled = true;
+      const eskiTxt = btn.textContent; btn.textContent = 'Açılıyor…';
+      msg.textContent = ''; msg.className = 'tzo-duvar-msg';
+      try{
+        const r = await fetch('/api/auth?action=login', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ email, marketingConsent:true })
+        });
+        const d = await r.json().catch(()=>({}));
+        // Kayıt gerçekten düştü mü? Çevrimdışı/uyarılı yanıtta duvarı açmıyoruz:
+        // açsak sunucu bir sonraki istekte yine kilitli metni döndürürdü.
+        if (!r.ok || d.warning || (d.user && d.user.offline)) throw new Error(d.warning || ('HTTP '+r.status));
+        localStorage.setItem('bi_email', email);
+        if (typeof curUser !== 'undefined' && d.user) curUser = d.user;
+        if (typeof updateSidebarUserUI === 'function') updateSidebarUserUI();
+        msg.textContent = '✓ Kaydedildi, metnin tamamı açılıyor…'; msg.className = 'tzo-duvar-msg ok';
+        _tzoLast = null;                 // önbelleği atla, tam metni çek
+        setTimeout(()=>loadTezOku(id), 400);
+      }catch(e){
+        btn.disabled = false; inp.disabled = false; btn.textContent = eskiTxt;
+        msg.textContent = 'Kaydedemedik — birazdan tekrar dene.'; msg.className = 'tzo-duvar-msg err';
+      }
+    };
+    btn.addEventListener('click', gonder);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') gonder(); });
+  }
+
   /* Sekmeli yapı: [Güncellemeler] [İlk Tez] — okur kaydırmakla uğraşmasın */
-  function tezPanelleriHTML(list, ilkTarih, icerik, govdeAd){
+  function tezPanelleriHTML(list, ilkTarih, icerik, govdeAd, kilit){
     if (!Array.isArray(list) || !list.length){
       return `<div class="tzo-content">${icerik}</div>`;
     }
     const yeniden = list.slice().reverse();   // en yeni en üstte
     const n = list.length;
+    /* Kilitliyken açık sekme GÖVDE olsun: güncellemelerin hepsi kilitli
+       olduğu için varsayılan "Güncellemeler" sekmesinde okura tek satır
+       serbest metin görünmüyor, doğrudan duvara çarpıyordu. */
+    const g = kilit ? '' : ' active';
+    const i = kilit ? ' active' : '';
     return `<div class="tzo-tabs" id="tezSeyri">
-        <button type="button" class="tzo-tab active" onclick="window.__tezTab('guncel')" id="tezTabGuncel">
+        <button type="button" class="tzo-tab${g}" onclick="window.__tezTab('guncel')" id="tezTabGuncel">
           Güncellemeler <span class="tzo-tab-n">${n}</span>
         </button>
-        <button type="button" class="tzo-tab" onclick="window.__tezTab('ilk')" id="tezTabIlk">${govdeAd}</button>
+        <button type="button" class="tzo-tab${i}" onclick="window.__tezTab('ilk')" id="tezTabIlk">${govdeAd}</button>
       </div>
-      <div class="tzo-panel active" id="tezPanelGuncel">
+      <div class="tzo-panel${g}" id="tezPanelGuncel">
         <div class="tzt-head">
           <span class="tzt-kicker"><span class="tzt-live"></span>Tezin Seyri</span>
           <span class="tzt-sub">en yeni üstte · başlığa tıkla, açılsın</span>
         </div>
         ${yeniden.map((g,i)=>guncAccHTML(g, i===0, i)).join('')}
       </div>
-      <div class="tzo-panel" id="tezPanelIlk">
+      <div class="tzo-panel${i}" id="tezPanelIlk">
         <p class="tzo-govde-not">Aşağıdaki metin ${esc(ilkTarih||'')} tarihinde yayınlandığı hâliyle duruyor; sonradan değiştirilmedi. Güncellemeler bu tezin üzerine eklendi.</p>
         <div class="tzo-content">${icerik}</div>
       </div>`;
@@ -6943,7 +7038,8 @@ function garpAnalizAc(ticker) {
     const y = document.getElementById('ptYear3'); if (y) y.textContent = new Date().getFullYear();
     art.innerHTML = '<div class="pt-tez-skel">Yükleniyor…</div>';
     try{
-      const r = await fetch('/api/tez-admin?pub=1&id=' + id);
+      const em = (typeof getEmail === 'function' ? getEmail() : null) || localStorage.getItem('bi_email');
+      const r = await fetch('/api/tez-admin?pub=1&id=' + id + (em ? '&email=' + encodeURIComponent(em) : ''));
       const tez = await r.json();
       if (_tzoLast !== id) return; // bu arada başka içeriğe geçildi
       if (!tez || !tez.baslik){ art.innerHTML = '<div class="pt-tez-skel">İçerik bulunamadı.</div>'; return; }
@@ -6973,7 +7069,8 @@ function garpAnalizAc(ticker) {
         </div>
         <h1 class="tzo-title">${esc(tez.baslik)}</h1>
         ${tez.ozet ? `<p class="tzo-lede">${esc(tez.ozet)}</p>` : ''}
-        ${tezPanelleriHTML(guncellemeler, tarih, icerik, govdeAd)}
+        ${tezPanelleriHTML(guncellemeler, tarih, icerik, govdeAd, !!tez.kilit)}
+        ${tez.kilit ? duvarHTML(kat, tez.kilitli_guncelleme || 0) : ''}
         <div class="tzo-note">Bu içerik araştırma ve bilgi amaçlıdır; yatırım tavsiyesi değildir. Tüm projeksiyonlar tahmin içermektedir.</div>
         <div class="tzo-ctas">
           <span class="tzo-back" data-route="${backRoute}" style="margin:0">← ${backLabel}</span>
@@ -6981,6 +7078,8 @@ function garpAnalizAc(ticker) {
         </div>`;
       tzoTopHesapla();   // sticky sekme şeridinin üst boşluğu
       tablolariHazirla(art);
+      document.body.classList.toggle('tzo-kilitli', !!tez.kilit);
+      if (tez.kilit) duvariBagla(id);
     }catch(e){
       if (_tzoLast === id) art.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">İçerik yüklenemedi.</div>';
     }
