@@ -343,7 +343,10 @@ function htmlOnizleme(html, butce) {
   const BOS  = new Set(['br','hr','img','input','meta','link','source','col','area','base','embed','track','wbr']);
   const ATLA = new Set(['style','script','head','title']);       // metni okunmuyor
   const AKIS = new Set(['p','section','article','h1','h2','h3','h4','ul','ol','table','blockquote','figure','div','pre']);
-  const etiket = /<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*?(\/?)>/g;
+  // Yorum blokları da eşleşsin: eşleşmezlerse metin sayılıp bütçeyi
+  // yiyorlardı (ölçüldü: bir tezde 390 karakterlik ayraç yorumları
+  // önizlemeyi 563 karaktere düşürmüştü).
+  const etiket = /<!--[\s\S]*?-->|<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*?(\/?)>/g;
 
   const yigin = [];
   let metin = 0, i = 0, atla = 0, kes = -1, m;
@@ -353,6 +356,7 @@ function htmlOnizleme(html, butce) {
     // yarı yarıya kısalıyordu (ölçüldü: 495 karakterde kesilen tez).
     if (!atla) metin += html.slice(i, m.index).replace(/\s+/g, ' ').length;
     i = etiket.lastIndex;
+    if (!m[1]) continue;                       // yorum bloğu: atlandı, sayılmadı
     const ad = m[1].toLowerCase();
     const kapanis = m[0][1] === '/';
     if (m[2] === '/' || BOS.has(ad)) continue;
