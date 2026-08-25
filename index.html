@@ -85,8 +85,13 @@ img{display:block;}
 .rv.in{opacity:1;transform:none;filter:blur(0);}
 
 /* ═══════════════ NAV ═══════════════ */
-.nav-wrap{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100;width:min(720px,calc(100vw - 32px));}
-nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 8px 8px 12px;border:1px solid var(--border-g);border-radius:32px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);background:rgba(8,11,16,.78);color:var(--text);transition:transform .35s ease;}
+/* Nav eskiden ortada yüzen bir haptı. Hero kalkınca içerik sayfanın en
+   üstünden başladı ve hap manşetin kapağıyla "Son Eklenenler" başlığının
+   üstüne bindi. Artık haber sitelerindeki gibi tam genişlik, akışta
+   duran, yapışkan bir başlık: hiçbir şeyin üstüne binmiyor. */
+.nav-wrap{position:sticky;top:0;z-index:100;width:100%;background:rgba(8,11,16,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--rule);}
+nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:1080px;margin:0 auto;padding:10px 56px;color:var(--text);}
+@media(max-width:767px){nav.pill{padding:8px 22px;}}
 .nav-brand{display:flex;align-items:center;gap:10px;}
 .nav-logo{width:34px;height:34px;border-radius:1000px;background:radial-gradient(circle at 32% 28%,#2e3648,#0f141d 72%);border:1px solid var(--border-g);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:var(--accent);font-family:var(--font-head);position:relative;overflow:hidden;flex-shrink:0;}
 .nav-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;}
@@ -101,7 +106,9 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
 .nav-burger{display:none;background:none;border:0;cursor:pointer;padding:8px;flex-direction:column;gap:5px;}
 .nav-burger span{display:block;width:20px;height:2px;background:var(--text);transition:transform .25s,opacity .25s;}
 @media(max-width:767px){
-  .nav-links{display:none;position:absolute;top:calc(100% + 8px);left:0;right:0;flex-direction:column;align-items:stretch;gap:0;background:rgba(8,11,16,.97);backdrop-filter:blur(10px);border:1px solid var(--border-g);border-radius:20px;padding:10px;}
+  /* Başlık artık tam genişlik: açılır menü de sayfanın iki kenarına
+     yaslanıyor, yuvarlak hap kenarlığı kalktı. */
+  .nav-links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:0;background:rgba(8,11,16,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--rule);padding:10px 16px 14px;}
   .nav-links.open{display:flex;}
   .nav-links a.lnk{padding:12px 14px;border-radius:12px;}
   .nav-links a.lnk:hover{background:var(--accent-dim);}
@@ -217,19 +224,19 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
 .mn-grid{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:34px;align-items:start;}
 .mn-lead{min-width:0;}
 .lead-card{display:block;}
-.lead-cover{aspect-ratio:16/8;border-radius:14px;overflow:hidden;background:var(--surface3);margin-bottom:16px;}
+.lead-cover{aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:var(--surface3);margin-bottom:15px;}
 .lead-cover img{width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.2,.8,.2,1);}
 .lead-card:hover .lead-cover img{transform:scale(1.035);}
 .lead-kick{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:2.4px;color:var(--accent);margin-bottom:10px;}
 .lead-kick .dot{width:6px;height:6px;border-radius:100%;background:var(--success);animation:blink 1.8s ease infinite;}
 .lead-title{font-family:var(--font-head);font-size:clamp(26px,3vw,38px);font-weight:600;line-height:1.2;letter-spacing:-.01em;color:var(--text);margin-bottom:10px;transition:color .2s;}
 .lead-card:hover .lead-title{color:var(--accent);}
-.lead-sum{font-size:15px;line-height:1.65;color:var(--muted);max-width:62ch;margin-bottom:12px;}
+.lead-sum{font-size:14.5px;line-height:1.6;color:var(--muted);max-width:62ch;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .lead-sum b{color:var(--text2);font-weight:500;}
 
 .mn-rail{min-width:0;border-left:1px solid var(--rule);padding-left:26px;}
-.rail-head{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--text2);padding-bottom:12px;border-bottom:2px solid var(--accent);margin-bottom:4px;}
-.rail-row{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--rule);align-items:flex-start;}
+.rail-head{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--text2);line-height:1;padding-bottom:11px;border-bottom:2px solid var(--accent);margin-bottom:2px;}
+.rail-row{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--rule);align-items:flex-start;}
 .rail-row:hover .rail-title{color:var(--accent);}
 .rail-time{flex:0 0 52px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.4px;color:var(--muted2);padding-top:2px;}
 .rail-title{font-size:13px;font-weight:600;line-height:1.45;color:var(--text2);transition:color .18s;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
@@ -238,6 +245,12 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
 .rail-tur.arastirma{color:#9fb8c9;background:rgba(159,184,201,.1);}
 .rail-tur.haber{color:#7cb8e8;background:rgba(90,169,230,.1);}
 .rail-all{display:inline-flex;align-items:center;gap:7px;margin-top:14px;font-size:12px;font-weight:600;color:var(--accent);}
+.rail-promo{display:block;margin-top:22px;padding:16px 18px;border:1px solid var(--border-s);border-top:2px solid var(--accent);border-radius:12px;background:linear-gradient(160deg,var(--surface2),var(--surface) 70%);transition:border-color .2s,transform .2s;}
+.rail-promo:hover{border-color:var(--border-g);transform:translateY(-2px);}
+.rp-kick{display:block;font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--accent);margin-bottom:7px;}
+.rp-title{display:block;font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:6px;}
+.rp-sub{display:block;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:11px;}
+.rp-cta{display:inline-block;font-size:12px;font-weight:600;color:var(--accent);}
 @media(max-width:991px){
   .mn-grid{grid-template-columns:1fr;gap:26px;}
   .mn-rail{border-left:none;padding-left:0;border-top:1px solid var(--rule);padding-top:20px;}
@@ -548,6 +561,13 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
         <div class="rail-head">Son Eklenenler</div>
         <div class="rail-list" id="railList"><div class="skel">YÜKLENİYOR…</div></div>
         <a class="rail-all" href="/haberler">Tüm haberler <span class="arrow-ic"></span></a>
+        <!-- Sağ sütun manşetten kısa kalıyor; boşluğu aracın kendisi doldursun -->
+        <a class="rail-promo" href="/terminal">
+          <span class="rp-kick">◈ Terminal</span>
+          <span class="rp-title">Kendi hissenle dene</span>
+          <span class="rp-sub">BIST, NYSE ve NASDAQ'ta yedi kriterli analiz — anlatı ile bilanço ayrışıyor mu?</span>
+          <span class="rp-cta">Terminal'e Giriş →</span>
+        </a>
       </aside>
     </div>
   </div>
@@ -1082,7 +1102,7 @@ async function loadContent() {
 
     // Sağ şerit: manşetten sonraki 6 içerik, türler karışık
     rail.innerHTML = list.length > 1
-      ? list.slice(1, 7).map(railHTML).join('')
+      ? list.slice(1, 9).map(railHTML).join('')
       : '<div class="skel">YAKINDA</div>';
 
     // Üç sütun: başta kapaklı kart, altında iki kompakt satır
