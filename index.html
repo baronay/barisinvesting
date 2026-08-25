@@ -6,8 +6,8 @@
 <title>Barış Investing — Sistematik Yatırımın Yeni Merkezi</title>
 <meta name="description" content="BIST ve global piyasalar üzerine derin yatırım tezleri, haftalık seçimler ve içerik. Tüm analiz araçları profesyonel Terminal'de.">
 <meta name="theme-color" content="#0b0f15">
-<link rel="icon" type="image/jpeg" href="/baris.jpg">
-<link rel="apple-touch-icon" href="/baris.jpg">
+<link rel="icon" type="image/svg+xml" href="/marka.svg">
+<link rel="apple-touch-icon" href="/marka.svg">
 <!-- Sosyal paylaşım kartları -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Barış Investing">
@@ -92,10 +92,16 @@ img{display:block;}
 .nav-wrap{position:sticky;top:0;z-index:100;width:100%;background:rgba(8,11,16,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--rule);}
 nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:1080px;margin:0 auto;padding:10px 56px;color:var(--text);}
 @media(max-width:767px){nav.pill{padding:8px 22px;}}
-.nav-brand{display:flex;align-items:center;gap:10px;}
-.nav-logo{width:34px;height:34px;border-radius:1000px;background:radial-gradient(circle at 32% 28%,#2e3648,#0f141d 72%);border:1px solid var(--border-g);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:var(--accent);font-family:var(--font-head);position:relative;overflow:hidden;flex-shrink:0;}
-.nav-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;}
-.nav-brand span{font-size:14px;font-weight:600;}
+/* MARKA — yuvarlak vesikalık yerine tipografik kelime markası.
+   Barron's/WSJ mantığı: gazetenin adı bir yazı karakteridir, bir resim
+   değil. Serif, büyük harf, geniş harf aralığı; "Investing" italik ve
+   altın, ikisinin arasında ince bir ayraç. */
+.nav-brand{display:inline-flex;align-items:baseline;gap:0;flex-shrink:0;}
+.wm{font-family:var(--font-head);font-size:19px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--cream,#ece4d4);line-height:1;white-space:nowrap;transition:opacity .2s;}
+.wm-i{font-style:italic;text-transform:none;letter-spacing:.01em;color:var(--accent);margin-left:9px;padding-left:10px;border-left:1px solid rgba(194,173,132,.4);}
+.nav-brand:hover .wm{opacity:.82;}
+@media(max-width:900px){.wm{font-size:17px;}}
+@media(max-width:420px){.wm-i{margin-left:7px;padding-left:8px;}}
 .nav-links{display:flex;align-items:center;gap:22px;}
 .nav-links a.lnk{font-size:14px;font-weight:500;color:var(--text2);position:relative;transition:color .2s;}
 .nav-links a.lnk:hover{color:var(--accent);}
@@ -507,9 +513,8 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
 <!-- ═══════ NAV ═══════ -->
 <div class="nav-wrap">
   <nav class="pill" id="pillNav">
-    <a class="nav-brand" href="/">
-      <span class="nav-logo"><span>B</span><img src="/baris.jpg" alt="Barış" onerror="this.style.display='none'"></span>
-      <span>Barış Investing</span>
+    <a class="nav-brand" href="/" aria-label="Barış Investing — ana sayfa">
+      <span class="wm">Barış<span class="wm-i">Investing</span></span>
     </a>
     <div class="nav-links" id="navLinks">
       <a class="lnk" href="/tezler">Tezler</a>

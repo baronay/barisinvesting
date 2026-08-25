@@ -2213,8 +2213,10 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .pt-brand-lockup{display:flex;align-items:center;gap:13px;}
 .pt-brand{display:flex;flex-direction:column;line-height:1;}
 .pt-brand-tag{font-family:var(--font-mono);font-size:9px;letter-spacing:3.5px;color:var(--cream2);opacity:.7;text-transform:uppercase;margin-bottom:7px;}
-.pt-brand-name{font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--cream);}
-.pt-brand-name span{color:var(--accent);}
+/* Marka kimliği ana sayfadakiyle aynı: serif, büyük harf, "Investing"
+   italik ve altın, arada ince ayraç. */
+.pt-brand-name{font-family:var(--font-head);font-size:21px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--cream);line-height:1;}
+.pt-brand-name span{font-style:italic;text-transform:none;letter-spacing:.01em;color:var(--accent);margin-left:8px;padding-left:9px;border-left:1px solid rgba(194,173,132,.4);}
 .pt-topnav{display:flex;align-items:center;gap:10px;}
 .pt-soc{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid var(--portal-border-s);color:var(--cream2);text-decoration:none;transition:all .22s;font-size:12px;border-radius:2px;}
 .pt-soc:hover{border-color:var(--accent);color:var(--accent);box-shadow:0 0 16px var(--accent-glow);transform:translateY(-1px);}
