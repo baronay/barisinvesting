@@ -959,7 +959,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Çok fazla istek. Lütfen bekleyin.' });
   }
 
-  const { ticker, exchange, email, framework } = req.body || {};
+  const { ticker, exchange, email, framework, oturum } = req.body || {};
 
   // Ticker sanitize — sadece harf/rakam/nokta, max 12 karakter
   if (!ticker) return res.status(400).json({ error: 'Ticker gerekli' });
@@ -1011,6 +1011,33 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
   // Server-side kredi kontrolü
   const SB_URL = process.env.SUPABASE_URL;
   const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
+
+  /* ── ANALİZ KAYDI ────────────────────────────────────────────────
+     Kota kapısı yalnızca "kaç analiz yapıldı" sayıyordu (total_used);
+     hangi hisseye bakıldığı hiçbir yere yazılmıyordu. Her istek —
+     başarılı da hatalı da — analiz_kayitlari tablosuna düşüyor.
+     Yanıtı bekletmiyoruz: insert hata verse bile analiz dönmeli. */
+  const istekBasi = Date.now();
+  const kayitYaz = (alanlar) => {
+    if (!SB_URL || !SB_KEY) return;
+    const govde = {
+      ticker: cleanTicker,
+      exchange: exLabel,
+      email: email ? String(email).toLowerCase().trim().slice(0, 200) : null,
+      oturum: oturum ? String(oturum).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40) : null,
+      sure_ms: Date.now() - istekBasi,
+      ...alanlar,
+    };
+    fetch(`${SB_URL}/rest/v1/analiz_kayitlari`, {
+      method: 'POST',
+      headers: {
+        apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json', Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(govde),
+      signal: AbortSignal.timeout(3000),
+    }).catch((e) => dlog('[kayit] yazilamadi:', e.message));
+  };
   const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim();
   const em = email ? String(email).toLowerCase().trim() : null;
   const isAdmin = em && ADMIN_EMAIL && em === ADMIN_EMAIL;
@@ -1025,6 +1052,7 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
         const rows = await r.json();
         const user = rows?.[0];
         if (user && !user.is_admin && (user.credits || 0) <= 0) {
+          kayitYaz({ durum: 'hata', hata: 'kota_doldu' });
           return res.status(403).json({ error: 'Analiz hakkınız doldu.' });
         }
       }
@@ -1443,6 +1471,20 @@ MULTIPLES_END`;
     console.log(`[AI] ${cleanTicker} ${olcum.model} giriş:${olcum.giris} çıkış:${olcum.cikis} cache(yaz:${olcum.cacheYaz} oku:${olcum.cacheOku})${olcum.maliyet != null ? ` ~$${olcum.maliyet}` : ''}${kesildi ? ' KESİLDİ' : ''}`);
 
     dlog(`✓ ${yahooTicker} | src:${fd?.dataSource} | roe:${fd?.roe} | pb:${fd?.pbRatio}(${fd?.pbSource||'yahoo'}) | len:${aiResult.length}`);
+
+    const sayi = (re) => { const m = aiResult.match(re); return m ? parseInt(m[1], 10) : null; };
+    kayitYaz({
+      sirket: fd?.shortName || fd?.longName || null,
+      verdict: (aiResult.match(/^VERDICT:\s*([A-Z_]+)/m) || [])[1] || null,
+      skor: sayi(/^TOTAL_SCORE:\s*(\d+)/m),
+      garp: sayi(/^GARP_SKOR:\s*(\d{1,3})/m),
+      model: olcum.model,
+      giris_token: olcum.giris,
+      cikis_token: olcum.cikis,
+      maliyet: olcum.maliyet ?? null,
+      durum: sureDoldu ? 'sure_doldu' : 'ok',
+    });
+
     return res.status(200).json({
       result: aiResult,
       financialData: fd,
@@ -1454,6 +1496,7 @@ MULTIPLES_END`;
   } catch(err) {
     const isTimeout = err.name === 'TimeoutError' || err.name === 'AbortError';
     console.error('Analyze error:', err.message);
+    kayitYaz({ durum: isTimeout ? 'sure_doldu' : 'hata', hata: String(err.message || '').slice(0, 300) });
     return res.status(isTimeout ? 504 : 500).json({
       error: isTimeout ? 'AI servisi zaman aşımına uğradı. Lütfen tekrar deneyin.' : err.message,
     });

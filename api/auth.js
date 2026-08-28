@@ -370,6 +370,58 @@ export default async function handler(req, res) {
     }
   }
 
+  /* ── ADMIN: analiz kayıtları ─────────────────────────────────────
+     "Hangi hisseye bakılıyor" sorusunun cevabı. users.total_used sadece
+     adet sayıyordu; ticker bilgisi analiz_kayitlari tablosunda.
+     Dönüş: son istekler + en çok analiz edilenler + günlük dağılım. */
+  if (action === 'admin_analiz' && req.method === 'POST') {
+    const { email, secret, gun } = req.body || {};
+    if (!isAdminRequest(email, secret)) return res.status(403).json({ error: 'Yetkisiz erişim' });
+    const pencere = Math.min(365, Math.max(1, parseInt(gun, 10) || 30));
+    const baslangic = new Date(Date.now() - pencere * 86400000).toISOString();
+    try {
+      const kayitlar = await sb('GET', 'analiz_kayitlari', {
+        'select': 'ticker,exchange,email,oturum,verdict,skor,durum,maliyet,olusturma',
+        'olusturma': `gte.${baslangic}`,
+        'order': 'olusturma.desc',
+        'limit': '2000',
+      });
+      const liste = Array.isArray(kayitlar) ? kayitlar : [];
+
+      const hisseler = {};
+      const gunler = {};
+      const oturumlar = new Set();
+      for (const k of liste) {
+        const anahtar = `${k.ticker}|${k.exchange || ''}`;
+        const h = hisseler[anahtar] || (hisseler[anahtar] = { ticker: k.ticker, exchange: k.exchange, adet: 0, son: k.olusturma, kisi: new Set() });
+        h.adet++;
+        if (k.olusturma > h.son) h.son = k.olusturma;
+        h.kisi.add(k.email || k.oturum || '?');
+        const g = String(k.olusturma).slice(0, 10);
+        gunler[g] = (gunler[g] || 0) + 1;
+        oturumlar.add(k.email || k.oturum || '?');
+      }
+
+      return res.status(200).json({
+        pencereGun: pencere,
+        toplam: liste.length,
+        tekilKisi: oturumlar.size,
+        hatali: liste.filter(k => k.durum && k.durum !== 'ok').length,
+        maliyet: Number(liste.reduce((t, k) => t + (Number(k.maliyet) || 0), 0).toFixed(2)),
+        hisseler: Object.values(hisseler)
+          .map(h => ({ ...h, kisi: h.kisi.size }))
+          .sort((a, b) => b.adet - a.adet)
+          .slice(0, 40),
+        gunluk: Object.entries(gunler).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 30)
+          .map(([gun, adet]) => ({ gun, adet })),
+        son: liste.slice(0, 60),
+      });
+    } catch (e) {
+      // Tablo henüz kurulmadıysa panel kırılmasın
+      return res.status(200).json({ hata: e.message, kurulum: "sql/analiz-kayitlari.sql dosyasini Supabase SQL Editor'de calistir." });
+    }
+  }
+
   // ── ADMIN: hak ekle ──
   if (action === 'admin_credits' && req.method === 'POST') {
     const { email, secret, targetEmail, credits } = req.body || {};

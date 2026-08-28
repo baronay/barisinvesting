@@ -15,6 +15,74 @@ function closeAdmin() {
   document.getElementById('adminModal').style.display = 'none';
 }
 
+/* ── ANALİZ KAYITLARI ────────────────────────────────────────────
+   "Hangi hisseye bakılıyor" — analiz_kayitlari tablosundan. Kullanıcı
+   listesi yüklenirken beraber çağrılıyor; tablo henüz kurulmadıysa
+   uyarı gösterip panelin kalanını bozmuyor. */
+let _adminAnaliz = null;
+
+async function loadAdminAnaliz() {
+  const email  = getEmail();
+  const secret = _adminSecret;
+  if (!secret) return;
+  const gun  = document.getElementById('adminAnalizGun')?.value || '30';
+  const body = document.getElementById('adminAnalizBody');
+  const ozet = document.getElementById('adminAnalizOzet');
+  if (body) body.innerHTML = '<tr><td colspan="5" style="padding:14px;color:#5d6675">Yükleniyor…</td></tr>';
+  try {
+    const r = await fetch('/api/auth?action=admin_analiz', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, secret, gun })
+    });
+    const d = await r.json();
+    _adminAnaliz = d;
+
+    if (d.error || d.hata) {
+      if (ozet) ozet.textContent = d.kurulum ? ('⚠ ' + d.kurulum) : ('⚠ ' + (d.error || d.hata));
+      if (body) body.innerHTML = '<tr><td colspan="5" style="padding:14px;color:#8a93a3">Kayıt yok.</td></tr>';
+      return;
+    }
+
+    if (ozet) {
+      ozet.textContent = `${d.pencereGun} günde ${d.toplam} analiz · ${d.tekilKisi} tekil kişi`
+        + (d.hatali ? ` · ${d.hatali} hatalı` : '')
+        + (d.maliyet ? ` · ~$${d.maliyet}` : '');
+    }
+    if (!d.hisseler || !d.hisseler.length) {
+      if (body) body.innerHTML = '<tr><td colspan="5" style="padding:14px;color:#8a93a3">Bu aralıkta analiz yok.</td></tr>';
+      return;
+    }
+    const tr = (t) => new Date(t).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    if (body) body.innerHTML = d.hisseler.map(h => `<tr>
+      <td style="font-family:'JetBrains Mono',monospace;color:#c2ad84;font-weight:600">${h.ticker}</td>
+      <td style="color:#8a93a3">${h.exchange || '—'}</td>
+      <td style="font-weight:600">${h.adet}</td>
+      <td style="color:#8a93a3">${h.kisi}</td>
+      <td style="color:#8a93a3;font-size:11px">${tr(h.son)}</td>
+    </tr>`).join('');
+  } catch (e) {
+    if (ozet) ozet.textContent = '⚠ Analiz kayıtları yüklenemedi: ' + e.message;
+  }
+}
+
+/* Ham kayıtları CSV olarak indir — Excel'de kendi kırılımını yapmak için */
+function adminAnalizCSV() {
+  const d = _adminAnaliz;
+  if (!d || !d.son || !d.son.length) return;
+  const bas = ['tarih', 'ticker', 'borsa', 'kisi', 'verdict', 'skor', 'durum', 'maliyet'];
+  const satir = d.son.map(k => [
+    k.olusturma, k.ticker, k.exchange || '', k.email || k.oturum || '',
+    k.verdict || '', k.skor ?? '', k.durum || '', k.maliyet ?? ''
+  ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+  const bom = String.fromCharCode(0xFEFF);   // Excel Türkçe karakterleri doğru okusun
+  const blob = new Blob([bom + [bas.join(','), ...satir].join(String.fromCharCode(10))], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `analizler-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 // ── Kullanıcı listesini yükle ──
 async function loadAdminUsers() {
   const email  = getEmail();
@@ -52,6 +120,7 @@ async function loadAdminUsers() {
     set('aStatConsent',   s.marketingConsent);
 
     if (note) note.textContent = `Toplam ${s.total} kullanıcı · ${s.marketingConsent} mail izni`;
+    loadAdminAnaliz();
 
     const exportBtn = document.getElementById('adminExportEmailsBtn');
     if (exportBtn) {
