@@ -4871,6 +4871,14 @@ async function doAnalyze(){
     if (_ca) {
       document.getElementById('ls4').classList.add('done');
       showToast('⚡ Önbellekten yüklendi (3 gün geçerli)');
+      /* Önbellekten açılan analiz sunucuya hiç uğramıyor; "bugün kim
+         neye baktı" tablosunda bu bakışlar eksik kalıyordu. */
+      try{
+        const _v=(_ca.result.match(/VERDICT:\s*([A-Z_]+)/)||[])[1];
+        const _s=(_ca.result.match(/TOTAL_SCORE:\s*(\d+)/)||[])[1];
+        fetch('/api/auth?action=analiz_ping',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ticker,exchange:curEX,email:getEmail?.()||null,oturum:oturumId(),verdict:_v,skor:_s})});
+      }catch(_){}
       setTimeout(()=>{ov.classList.remove('visible');btn.disabled=false;hasAnalyzed=true;parseAndRender(ticker,company,_ca.result,_ca.financialData,curFW);},300);
       return;
     }

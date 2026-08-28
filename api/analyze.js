@@ -1018,7 +1018,11 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
      başarılı da hatalı da — analiz_kayitlari tablosuna düşüyor.
      Yanıtı bekletmiyoruz: insert hata verse bile analiz dönmeli. */
   const istekBasi = Date.now();
-  const kayitYaz = (alanlar) => {
+  /* NOT: bu çağrı BEKLENMELİ. Sunucusuz ortamda yanıt döndüğü anda
+     örnek donduruluyor; beklenmeyen fetch bazen Supabase'e hiç
+     ulaşmıyordu (kayıtların bir kısmı düşüyor, bir kısmı düşmüyordu).
+     ~100 ms'lik gecikme, eksik veriye tercih edilir. */
+  const kayitYaz = async (alanlar) => {
     if (!SB_URL || !SB_KEY) return;
     const govde = {
       ticker: cleanTicker,
@@ -1028,15 +1032,20 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
       sure_ms: Date.now() - istekBasi,
       ...alanlar,
     };
-    fetch(`${SB_URL}/rest/v1/analiz_kayitlari`, {
-      method: 'POST',
-      headers: {
-        apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`,
-        'Content-Type': 'application/json', Prefer: 'return=minimal',
-      },
-      body: JSON.stringify(govde),
-      signal: AbortSignal.timeout(3000),
-    }).catch((e) => dlog('[kayit] yazilamadi:', e.message));
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/analiz_kayitlari`, {
+        method: 'POST',
+        headers: {
+          apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`,
+          'Content-Type': 'application/json', Prefer: 'return=minimal',
+        },
+        body: JSON.stringify(govde),
+        signal: AbortSignal.timeout(3000),
+      });
+      if (!r.ok) dlog('[kayit] reddedildi:', r.status, (await r.text()).slice(0, 200));
+    } catch (e) {
+      dlog('[kayit] yazilamadi:', e.message);   // kayıt hatası analizi asla bozmaz
+    }
   };
   const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim();
   const em = email ? String(email).toLowerCase().trim() : null;
@@ -1052,7 +1061,7 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
         const rows = await r.json();
         const user = rows?.[0];
         if (user && !user.is_admin && (user.credits || 0) <= 0) {
-          kayitYaz({ durum: 'hata', hata: 'kota_doldu' });
+          await kayitYaz({ durum: 'hata', hata: 'kota_doldu' });
           return res.status(403).json({ error: 'Analiz hakkınız doldu.' });
         }
       }
@@ -1473,7 +1482,7 @@ MULTIPLES_END`;
     dlog(`✓ ${yahooTicker} | src:${fd?.dataSource} | roe:${fd?.roe} | pb:${fd?.pbRatio}(${fd?.pbSource||'yahoo'}) | len:${aiResult.length}`);
 
     const sayi = (re) => { const m = aiResult.match(re); return m ? parseInt(m[1], 10) : null; };
-    kayitYaz({
+    await kayitYaz({
       sirket: fd?.shortName || fd?.longName || null,
       verdict: (aiResult.match(/^VERDICT:\s*([A-Z_]+)/m) || [])[1] || null,
       skor: sayi(/^TOTAL_SCORE:\s*(\d+)/m),
@@ -1496,7 +1505,7 @@ MULTIPLES_END`;
   } catch(err) {
     const isTimeout = err.name === 'TimeoutError' || err.name === 'AbortError';
     console.error('Analyze error:', err.message);
-    kayitYaz({ durum: isTimeout ? 'sure_doldu' : 'hata', hata: String(err.message || '').slice(0, 300) });
+    await kayitYaz({ durum: isTimeout ? 'sure_doldu' : 'hata', hata: String(err.message || '').slice(0, 300) });
     return res.status(isTimeout ? 504 : 500).json({
       error: isTimeout ? 'AI servisi zaman aşımına uğradı. Lütfen tekrar deneyin.' : err.message,
     });

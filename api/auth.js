@@ -112,6 +112,28 @@ async function sb(method, table, params = {}, body = null) {
   return text ? JSON.parse(text) : null;
 }
 
+/* analiz_kayitlari'na yaz. 'kaynak' sütunu henüz eklenmediyse (ikinci
+   göç dosyası çalıştırılmadıysa) satır tamamen kaybolmasın diye o alan
+   olmadan bir kez daha denenir. */
+async function sbEkle(tablo, govde) {
+  const yaz = (g) => fetch(`${SB_URL}/rest/v1/${tablo}`, {
+    method: 'POST',
+    headers: {
+      apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`,
+      'Content-Type': 'application/json', Prefer: 'return=minimal',
+    },
+    body: JSON.stringify(g),
+  });
+  let r = await yaz(govde);
+  if (!r.ok && govde.kaynak) {
+    const metin = await r.text();
+    if (metin.includes("'kaynak'")) { const { kaynak, ...sade } = govde; r = await yaz(sade); }
+    else throw new Error(metin.slice(0, 200));
+  }
+  if (!r.ok) throw new Error((await r.text()).slice(0, 200));
+  return true;
+}
+
 async function getUser(email) {
   const rows = await sb('GET', 'users', { 'email': `eq.${email}`, 'select': '*' });
   return rows?.[0] || null;
@@ -423,11 +445,53 @@ export default async function handler(req, res) {
       });
       if (!r.ok) {
         const detay = await r.text();
+        // 'kaynak' sütunu yoksa (ikinci göç dosyası çalıştırılmadıysa)
+        // kayıtlar kaybolmasın: o alan olmadan tekrar dene.
+        if (detay.includes("'kaynak'")) {
+          const sade = satirlar.map(({ kaynak, ...k }) => k);
+          const r2 = await fetch(`${SB_URL}/rest/v1/analiz_kayitlari`, {
+            method: 'POST',
+            headers: {
+              apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`,
+              'Content-Type': 'application/json', Prefer: 'return=minimal',
+            },
+            body: JSON.stringify(sade),
+          });
+          if (r2.ok) return res.status(200).json({ eklendi: sade.length, not: 'kaynak sutunu yok' });
+          return res.status(200).json({ eklendi: 0, uyari: (await r2.text()).slice(0, 200) });
+        }
         return res.status(200).json({ eklendi: 0, uyari: detay.slice(0, 200) });
       }
       return res.status(200).json({ eklendi: satirlar.length });
     } catch (e) {
       return res.status(200).json({ eklendi: 0, uyari: e.message });
+    }
+  }
+
+  /* ── ÖNBELLEKTEN AÇILAN ANALİZ ───────────────────────────────────
+     Aynı hisseye 3 gün içinde tekrar bakılırsa istemci sonucu kendi
+     önbelleğinden gösteriyor ve /api/analyze'a hiç gitmiyor. O bakışlar
+     kayda düşmüyordu: "bugün kim neye baktı" tablosunda eksik kalan
+     asıl kısım buydu. Tek satırlık ping ile sayılıyor. */
+  if (action === 'analiz_ping' && req.method === 'POST') {
+    const { ticker, exchange, email, oturum, verdict, skor } = req.body || {};
+    const tk = String(ticker || '').toUpperCase().replace(/[^A-Z0-9.]/g, '').slice(0, 12);
+    if (!tk) return res.status(400).json({ error: 'ticker gerekli' });
+    const govde = {
+      ticker: tk,
+      exchange: ['BIST', 'NYSE', 'NASDAQ'].includes(exchange) ? exchange : null,
+      email: email && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) ? norm(email).slice(0, 200) : null,
+      oturum: String(oturum || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40) || null,
+      verdict: ['AL', 'BEKLE', 'UZAK_DUR', 'KACIN'].includes(verdict) ? verdict : null,
+      skor: Number.isFinite(Number(skor)) ? Math.max(0, Math.min(7, parseInt(skor, 10))) : null,
+      durum: 'ok',
+      kaynak: 'onbellek',
+    };
+    try {
+      await sbEkle('analiz_kayitlari', govde);
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      return res.status(200).json({ ok: false, uyari: String(e.message).slice(0, 160) });
     }
   }
 
