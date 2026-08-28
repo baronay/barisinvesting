@@ -45,6 +45,7 @@ async function loadAdminAnaliz() {
 
     if (ozet) {
       ozet.textContent = `${d.pencereGun} günde ${d.toplam} analiz · ${d.tekilKisi} tekil kişi`
+        + (d.gecmisten ? ` · ${d.gecmisten}'i geçmişten kurtarıldı` : '')
         + (d.hatali ? ` · ${d.hatali} hatalı` : '')
         + (d.maliyet ? ` · ~$${d.maliyet}` : '');
     }

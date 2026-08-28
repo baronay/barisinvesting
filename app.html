@@ -4111,6 +4111,30 @@ function saveToHistory(ticker,company,exchange,fw,score,maxScore,verdict){
   try{localStorage.setItem(HIST_KEY,JSON.stringify(hist));}catch{}
   renderHistory();
 }
+/* ── GEÇMİŞİ SUNUCUYA TAŞI (bir kez) ─────────────────────────────
+   Sunucu tarafında geçmiş analiz kaydı yok; kayıt tutma yeni eklendi.
+   Ama bu tarayıcıdaki bi_history listesi kullanıcının geçmiş
+   analizlerini tutuyor: ticker, borsa, skor, karar, tarih. Terminale
+   her girişte bir kez gönderiliyor, sunucu tekrarları eliyor.
+   Kişisel bir şey taşımıyor; e-posta ancak kullanıcı zaten
+   bıraktıysa gidiyor. */
+async function gecmisiGonder(){
+  try{
+    if (localStorage.getItem('bi_gecmis_gonderildi')) return;
+    const hist = loadHistory();
+    if (!hist.length) { localStorage.setItem('bi_gecmis_gonderildi','1'); return; }
+    const kayitlar = hist.filter(h=>h && h.ticker && h.ts).map(h=>({
+      ticker:h.ticker, exchange:h.exchange, sirket:h.company,
+      verdict:h.verdict, skor:h.score, ts:h.ts,
+    }));
+    const r = await fetch('/api/auth?action=gecmis_yukle', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ oturum: oturumId(), email: getEmail?.()||null, kayitlar })
+    });
+    if (r.ok) localStorage.setItem('bi_gecmis_gonderildi','1');
+  }catch(_){ /* geçmiş taşıma kritik değil */ }
+}
+
 function clearHistory(){
   try{localStorage.removeItem(HIST_KEY);}catch{}
   renderHistory();
@@ -5793,6 +5817,7 @@ function renderWatchlist(stocks) {
 // AUTH STATE
 // ══════════════════════════════════════════════
 buildNav(); buildChips(); setupAC(); loadMkt(); loadNews(); renderHistory();
+setTimeout(gecmisiGonder, 2500);   // açılışı yavaşlatmasın, bir kez çalışır
 
 // ── PAYLAŞILABILIR URL PARAMETRELERİ ──────────────────────────────
 // barisinvesting.com/?t=THYAO&fw=buffett&ex=BIST

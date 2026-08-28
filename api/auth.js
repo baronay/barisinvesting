@@ -370,6 +370,67 @@ export default async function handler(req, res) {
     }
   }
 
+  /* ── GEÇMİŞ ANALİZLERİ KURTAR ────────────────────────────────────
+     Sunucuda geçmiş yok (istek gövdeyle geliyor, erişim logunda ticker
+     durmuyor). Ama ziyaretçinin tarayıcısında duruyor: terminal her
+     analizi localStorage'a yazıyor. İstemci bu listeyi bir kez buraya
+     gönderiyor, geçmiş geri dönen her ziyaretçiyle birlikte doluyor.
+
+     Dışarıya açık bir yazma ucu olduğu için dar tutuldu: istek başına
+     en fazla 60 satır, ticker/kod temizleniyor, tarih gelecekte ya da
+     iki yıldan eski olamaz, satırlar 'gecmis' olarak işaretleniyor ve
+     tekil indeks sayesinde aynı kayıt iki kez düşmüyor. */
+  if (action === 'gecmis_yukle' && req.method === 'POST') {
+    const { oturum, email, kayitlar } = req.body || {};
+    const ot = String(oturum || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40);
+    if (!ot) return res.status(400).json({ error: 'oturum gerekli' });
+    if (!Array.isArray(kayitlar) || !kayitlar.length) return res.status(200).json({ eklendi: 0 });
+
+    const simdi = Date.now();
+    const enEski = simdi - 730 * 86400000;   // 2 yıl
+    const em = email && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) ? norm(email).slice(0, 200) : null;
+
+    const satirlar = kayitlar.slice(0, 60).map(k => {
+      const ticker = String(k.ticker || '').toUpperCase().replace(/[^A-Z0-9.]/g, '').slice(0, 12);
+      const ts = Number(k.ts);
+      if (!ticker || !Number.isFinite(ts) || ts > simdi || ts < enEski) return null;
+      const skor = Number.isFinite(Number(k.skor)) ? Math.max(0, Math.min(7, parseInt(k.skor, 10))) : null;
+      return {
+        ticker,
+        exchange: ['BIST', 'NYSE', 'NASDAQ'].includes(k.exchange) ? k.exchange : null,
+        email: em,
+        oturum: ot,
+        sirket: k.sirket ? String(k.sirket).slice(0, 120) : null,
+        verdict: ['AL', 'BEKLE', 'UZAK_DUR', 'KACIN'].includes(k.verdict) ? k.verdict : null,
+        skor,
+        durum: 'ok',
+        kaynak: 'gecmis',
+        olusturma: new Date(ts).toISOString(),
+      };
+    }).filter(Boolean);
+
+    if (!satirlar.length) return res.status(200).json({ eklendi: 0 });
+
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/analiz_kayitlari?on_conflict=oturum,ticker,olusturma`, {
+        method: 'POST',
+        headers: {
+          apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal,resolution=ignore-duplicates',
+        },
+        body: JSON.stringify(satirlar),
+      });
+      if (!r.ok) {
+        const detay = await r.text();
+        return res.status(200).json({ eklendi: 0, uyari: detay.slice(0, 200) });
+      }
+      return res.status(200).json({ eklendi: satirlar.length });
+    } catch (e) {
+      return res.status(200).json({ eklendi: 0, uyari: e.message });
+    }
+  }
+
   /* ── ADMIN: analiz kayıtları ─────────────────────────────────────
      "Hangi hisseye bakılıyor" sorusunun cevabı. users.total_used sadece
      adet sayıyordu; ticker bilgisi analiz_kayitlari tablosunda.
@@ -381,7 +442,7 @@ export default async function handler(req, res) {
     const baslangic = new Date(Date.now() - pencere * 86400000).toISOString();
     try {
       const kayitlar = await sb('GET', 'analiz_kayitlari', {
-        'select': 'ticker,exchange,email,oturum,verdict,skor,durum,maliyet,olusturma',
+        'select': 'ticker,exchange,email,oturum,verdict,skor,durum,maliyet,olusturma,kaynak',
         'olusturma': `gte.${baslangic}`,
         'order': 'olusturma.desc',
         'limit': '2000',
@@ -407,6 +468,7 @@ export default async function handler(req, res) {
         toplam: liste.length,
         tekilKisi: oturumlar.size,
         hatali: liste.filter(k => k.durum && k.durum !== 'ok').length,
+        gecmisten: liste.filter(k => k.kaynak === 'gecmis').length,
         maliyet: Number(liste.reduce((t, k) => t + (Number(k.maliyet) || 0), 0).toFixed(2)),
         hisseler: Object.values(hisseler)
           .map(h => ({ ...h, kisi: h.kisi.size }))
