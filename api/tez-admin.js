@@ -105,16 +105,22 @@ export default async function handler(req, res) {
 
     // Liste kartlari sadece ozet alanlarini kullanir — tez govdesini (icerik) cekme, payload kucuk kalsin
     const listCols = 'id,kategori,ticker,sinyal,baslik,ozet,kapak_gorseli,olusturma,maliyet_fiyat,exchange';
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/tezler?yayinda=eq.true&order=olusturma.desc&select=${listCols}`, { headers });
+    /* İki sorgu PARALEL: güncelleme rozetleri liste gelmeden de çekilebilir.
+       Art arda beklemek soğuk isteği gereksiz yere ikiye katlıyordu
+       (ölçüldü: soğuk yanıt ~2,0 sn). */
+    const GU = `${SUPABASE_URL}/rest/v1/tez_guncellemeler?yayinda=eq.true&order=tarih.desc&select=`;
+    const [r, grIlk] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/tezler?yayinda=eq.true&order=olusturma.desc&select=${listCols}`, { headers }),
+      fetch(GU + 'tez_id,tarih,baslik,tur,gorsel,sinyal', { headers }).catch(() => null),
+    ]);
     const list = await r.json();
 
-    // Kartlarda "N guncelleme" rozeti icin ozet bilgi — tek ek sorgu, govde cekilmez
+    // Kartlarda "N guncelleme" rozeti icin ozet bilgi — govde cekilmez
     if (Array.isArray(list) && list.length) {
       try {
-        const GU = `${SUPABASE_URL}/rest/v1/tez_guncellemeler?yayinda=eq.true&order=tarih.desc&select=`;
-        let gr = await fetch(GU + 'tez_id,tarih,baslik,tur,gorsel,sinyal', { headers });
+        let gr = grIlk;
         // gorsel sutunu henuz eklenmediyse rozetler tamamen kaybolmasin
-        if (!gr.ok) gr = await fetch(GU + 'tez_id,tarih,baslik,tur,sinyal', { headers });
+        if (!gr || !gr.ok) gr = await fetch(GU + 'tez_id,tarih,baslik,tur,sinyal', { headers });
         const gs = await gr.json();
         if (Array.isArray(gs)) {
           const byTez = {};
@@ -140,8 +146,12 @@ export default async function handler(req, res) {
       } catch (_) { /* guncelleme tablosu yoksa liste yine calissin */ }
     }
 
-    // CDN kenar cache: tekrar acilislar aninda gelsin, yeni tez ~30sn'de yansisin
-    res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120');
+    /* CDN kenar cache. Eskiden s-maxage=30 idi: her 30 saniyede bir
+       ziyaretçi soğuk isteği (~2 sn) sırtlıyor ve "yükleniyor" yazısını
+       o kadar süre görüyordu. stale-while-revalidate ile artık bayat
+       sürüm anında veriliyor, tazeleme arkada yapılıyor; yeni içerik
+       en geç bir sonraki ziyaretçide görünür. */
+    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=86400');
     return res.status(200).json(list);
   }
 

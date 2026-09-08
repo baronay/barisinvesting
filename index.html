@@ -902,12 +902,34 @@ const sigMap = { AL:['al','AL'], IZLE:['izle','İZLE'], KACIN:['uzak','UZAK DUR'
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const trDate = s => s ? new Date(s).toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' }) : '';
 
+/* ── İÇERİK: önce yereldeki kopya, sonra tazesi ────────────────────
+   "Yükleniyor" yazısı tekrar gelen ziyaretçide de görünüyordu; oysa
+   liste elimizde. Artık son yanıt localStorage'da tutuluyor: sayfa
+   yerel kopyayla ANINDA çiziliyor, ağdan gelen taze liste sessizce
+   üstüne yazılıyor. Ölçülen soğuk yanıt ~2 sn idi; tekrar ziyarette
+   artık 0. */
+const ICERIK_ANAHTAR = 'bi_icerik_v1';
+const ICERIK_TTL = 24 * 60 * 60 * 1000;   // bir günden eskisini gösterme
+
+function icerikYerelOku() {
+  try {
+    const h = JSON.parse(localStorage.getItem(ICERIK_ANAHTAR) || 'null');
+    if (!h || !Array.isArray(h.liste) || !h.liste.length) return null;
+    if (Date.now() - h.ts > ICERIK_TTL) return null;
+    return h.liste;
+  } catch (_) { return null; }
+}
+function icerikYerelYaz(liste) {
+  try { localStorage.setItem(ICERIK_ANAHTAR, JSON.stringify({ ts: Date.now(), liste })); } catch (_) {}
+}
+
 let _tezCache = null;
 async function getTezler() {
   if (_tezCache) return _tezCache;
   const r = await fetch('/api/tez-admin?pub=1');
   if (!r.ok) throw new Error('api ' + r.status);
   _tezCache = await r.json();
+  icerikYerelYaz(_tezCache);
   return _tezCache;
 }
 
@@ -1088,49 +1110,62 @@ function guncellemeBariniGoster(list) {
   } catch (_) { /* bildirim kritik degil */ }
 }
 
-async function loadContent() {
+/* Listeyi ekrana bas — hem yerel kopya hem taze veri aynı yoldan geçer */
+function icerigiCiz(list, tazeMi) {
   const feat = document.getElementById('featTez');
   const rail = document.getElementById('railList');
   const kartlar = { tez:'tezKart', arastirma:'arastirmaKart', haber:'haberKart' };
   const listeler = { tez:'tezGrid', arastirma:'arastirmaGrid', haber:'haberGrid' };
+
+  if (list.length) renderFeatured(list[0]);
+  else if (feat) feat.innerHTML = '<div class="lead-kick"><span class="dot"></span>HENÜZ İÇERİK YOK</div><div class="lead-title">İlk içerik yakında yayınlanacak</div>';
+
+  if (rail) rail.innerHTML = list.length > 1
+    ? list.slice(1, 9).map(railHTML).join('')
+    : '<div class="skel">YAKINDA</div>';
+
+  let i = 1;
+  for (const tur of ['tez', 'arastirma', 'haber']) {
+    const grup = list.filter(t => (t.kategori || 'tez') === tur);
+    const kart = document.getElementById(kartlar[tur]);
+    const liste = document.getElementById(listeler[tur]);
+    if (grup.length) {
+      if (kart) kart.innerHTML = ikKartHTML(grup[0], i++);
+      listeCiz(liste, grup.slice(1), { haber: tur === 'haber', cat: tur === 'arastirma' },
+               tur === 'tez' ? 'BAŞKA TEZ YOK.' : tur === 'arastirma' ? 'BAŞKA ARAŞTIRMA YOK.' : 'BAŞKA HABER YOK.');
+    } else {
+      if (kart) kart.innerHTML = '';
+      listeCiz(liste, [], {}, tur === 'tez' ? 'HENÜZ TEZ YAYINLANMADI.' : tur === 'arastirma' ? 'İLK ARAŞTIRMA YAKINDA.' : 'İLK HABER YAKINDA.');
+    }
+  }
+  armFly();
+  if (tazeMi) guncellemeBariniGoster(list);
+}
+
+async function loadContent() {
+  const feat = document.getElementById('featTez');
+  const rail = document.getElementById('railList');
+  const listeler = { tez:'tezGrid', arastirma:'arastirmaGrid', haber:'haberGrid' };
+
+  // 1) Yereldeki kopya varsa hemen çiz — "yükleniyor" hiç görünmesin
+  const yerel = icerikYerelOku();
+  if (yerel) icerigiCiz(hareketSirala(yerel), false);
+
+  // 2) Tazesini getir, sessizce üstüne yaz
   try {
     const all = await getTezler();
-    const list = hareketSirala(Array.isArray(all) ? all : []);   // en yeni hareket başta
-    guncellemeBariniGoster(list);
-
-    // Manşet: en taze içerik (tür fark etmez)
-    if (list.length) renderFeatured(list[0]);
-    else feat.innerHTML = '<div class="lead-kick"><span class="dot"></span>HENÜZ İÇERİK YOK</div><div class="lead-title">İlk içerik yakında yayınlanacak</div>';
-
-    // Sağ şerit: manşetten sonraki 6 içerik, türler karışık
-    rail.innerHTML = list.length > 1
-      ? list.slice(1, 9).map(railHTML).join('')
-      : '<div class="skel">YAKINDA</div>';
-
-    // Üç sütun: başta kapaklı kart, altında iki kompakt satır
-    let i = 1;
-    for (const tur of ['tez', 'arastirma', 'haber']) {
-      const grup = list.filter(t => (t.kategori || 'tez') === tur);
-      const kart = document.getElementById(kartlar[tur]);
-      const liste = document.getElementById(listeler[tur]);
-      if (grup.length) {
-        if (kart) kart.innerHTML = ikKartHTML(grup[0], i++);
-        listeCiz(liste, grup.slice(1), { haber: tur === 'haber', cat: tur === 'arastirma' },
-                 tur === 'tez' ? 'BAŞKA TEZ YOK.' : tur === 'arastirma' ? 'BAŞKA ARAŞTIRMA YOK.' : 'BAŞKA HABER YOK.');
-      } else {
-        if (kart) kart.innerHTML = '';
-        listeCiz(liste, [], {}, tur === 'tez' ? 'HENÜZ TEZ YAYINLANMADI.' : tur === 'arastirma' ? 'İLK ARAŞTIRMA YAKINDA.' : 'İLK HABER YAKINDA.');
-      }
-    }
-
-    armFly();
+    const list = hareketSirala(Array.isArray(all) ? all : []);
+    icerigiCiz(list, true);
+    return;
   } catch (e) {
+    if (yerel) return;   // taze gelmediyse yerel kopya ekranda kalsın
     const hata = '<div class="skel" style="color:var(--danger)">YÜKLENEMEDİ.</div>';
-    if (feat) feat.innerHTML = `<div class="lead-title">İçerik yüklenemedi</div><div class="lead-sum">Tezlere <a href="/tezler" style="color:var(--accent)">buradan</a> ulaşabilirsin.</div>`;
+    if (feat) feat.innerHTML = '<div class="lead-title">İçerik yüklenemedi</div><div class="lead-sum">Tezlere <a href="/tezler" style="color:var(--accent)">buradan</a> ulaşabilirsin.</div>';
     if (rail) rail.innerHTML = hata;
     Object.values(listeler).forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = hata; });
   }
 }
+
 
 /* Kaydırma ipucu kaldırıldı: hero gidince içerik zaten ilk ekranda
    başlıyor, sayfayı kendiliğinden kaydırmanın anlamı kalmadı. */

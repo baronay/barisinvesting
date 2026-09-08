@@ -7213,6 +7213,21 @@ function garpAnalizAc(ticker) {
   }
 
   /* ── TEZLER (tek fetch cache) ── */
+  /* Liste önce yereldeki kopyadan, sonra ağdan. "Yükleniyor" yazısı
+     tekrar açılışlarda da görünüyordu; oysa liste elimizde duruyor.
+     Ölçülen soğuk API yanıtı ~2 sn; yerel kopyayla o bekleme kalkıyor.
+     Yerel kopya bir günden eskiyse kullanılmıyor. */
+  const ICERIK_ANAHTAR = 'bi_icerik_v1';
+  const ICERIK_TTL = 24 * 60 * 60 * 1000;
+  function icerikYerelOku(){
+    try{
+      const h = JSON.parse(localStorage.getItem(ICERIK_ANAHTAR) || 'null');
+      if (!h || !Array.isArray(h.liste) || !h.liste.length) return null;
+      if (Date.now() - h.ts > ICERIK_TTL) return null;
+      return hareketSirala(h.liste);
+    }catch(_){ return null; }
+  }
+
   let _tezCache = null;
   async function getTezler(){
     if (_tezCache) return _tezCache;
@@ -7220,7 +7235,29 @@ function garpAnalizAc(ticker) {
     const d = await r.json();
     // Güncelleme alan tez başa gelsin — sıra "son hareket"e göre
     _tezCache = Array.isArray(d) ? hareketSirala(d) : d;
+    try{ localStorage.setItem(ICERIK_ANAHTAR, JSON.stringify({ ts: Date.now(), liste: _tezCache })); }catch(_){}
     return _tezCache;
+  }
+
+  /* Sayfa yükleyicilerinin ortak iskeleti: yerel kopyayla hemen çiz,
+     taze liste gelince yeniden çiz. */
+  async function listeYukle(grid, sinif, ciz, bosMetin){
+    if (!grid) return;
+    const bas = (liste) => {
+      const sec = liste.filter(t => sinif(t));
+      grid.innerHTML = sec.length ? sec.map(ciz).join('') : `<div class="pt-tez-skel">${bosMetin}</div>`;
+      flyGrid(grid);
+      sec.filter(t=>t.maliyet_fiyat && t.ticker).forEach(portalTezGetiri);
+    };
+    const yerel = icerikYerelOku();
+    if (yerel) bas(yerel);
+    else grid.innerHTML = '<div class="pt-tez-skel">Yükleniyor…</div>';
+    try{
+      bas(await getTezler());
+      grid.dataset.loaded = '1';
+    }catch(e){
+      if (!yerel) grid.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Yüklenemedi.</div>';
+    }
   }
 
   /* Tezin son hareketi: güncelleme varsa onun tarihi, yoksa yayın tarihi.
@@ -7357,21 +7394,10 @@ function garpAnalizAc(ticker) {
 
   /* /tezler sayfası: tüm tezler */
   async function loadTezlerPage(){
-    const grid = document.getElementById('tezlerGridFull');
     const y = document.getElementById('ptYear2'); if (y) y.textContent = new Date().getFullYear();
     loadTrackRecord();
-    if (!grid) return;
-    if (grid.dataset.loaded === '1') return;
-    grid.innerHTML = '<div class="pt-tez-skel">Tezler yükleniyor…</div>';
-    try{
-      const all = await getTezler();
-      const list = (Array.isArray(all)?all:[]).filter(t=>(t.kategori||'tez')==='tez');
-      if (!list.length){ grid.innerHTML = '<div class="pt-tez-skel">Henüz tez yayınlanmadı.</div>'; return; }
-      grid.innerHTML = list.map(tezCardHTML).join('');
-      grid.dataset.loaded = '1';
-      flyGrid(grid);
-      list.filter(t=>t.maliyet_fiyat && t.ticker).forEach(portalTezGetiri);
-    }catch(e){ grid.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Tezler yüklenemedi.</div>'; }
+    await listeYukle(document.getElementById('tezlerGridFull'),
+      t => (t.kategori || 'tez') === 'tez', tezCardHTML, 'Henüz tez yayınlanmadı.');
   }
 
   /* Portal: Şirket Araştırmaları teaser (ilk 3) */
@@ -7409,37 +7435,16 @@ function garpAnalizAc(ticker) {
 
   /* /haberler sayfası: tüm haberler */
   async function loadHaberlerPage(){
-    const grid = document.getElementById('haberlerGridFull');
     const y = document.getElementById('ptYear4'); if (y) y.textContent = new Date().getFullYear();
-    if (!grid) return;
-    if (grid.dataset.loaded === '1') return;
-    grid.innerHTML = '<div class="pt-tez-skel">Haberler yükleniyor…</div>';
-    try{
-      const all = await getTezler();
-      const list = (Array.isArray(all)?all:[]).filter(t=>t.kategori==='haber');
-      if (!list.length){ grid.innerHTML = '<div class="pt-tez-skel">Henüz haber yayınlanmadı.</div>'; return; }
-      grid.innerHTML = list.map(haberCardHTML).join('');
-      grid.dataset.loaded = '1';
-      flyGrid(grid);
-    }catch(e){ grid.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Haberler yüklenemedi.</div>'; }
+    await listeYukle(document.getElementById('haberlerGridFull'),
+      t => t.kategori === 'haber', haberCardHTML, 'Henüz haber yayınlanmadı.');
   }
 
   /* /arastirmalar sayfası: tüm araştırmalar */
   async function loadArastirmalarPage(){
-    const grid = document.getElementById('arastirmalarGridFull');
     const y = document.getElementById('ptYear3'); if (y) y.textContent = new Date().getFullYear();
-    if (!grid) return;
-    if (grid.dataset.loaded === '1') return;
-    grid.innerHTML = '<div class="pt-tez-skel">Araştırmalar yükleniyor…</div>';
-    try{
-      const all = await getTezler();
-      const list = (Array.isArray(all)?all:[]).filter(t=>t.kategori==='arastirma');
-      if (!list.length){ grid.innerHTML = '<div class="pt-tez-skel">Henüz araştırma yayınlanmadı.</div>'; return; }
-      grid.innerHTML = list.map(arastirmaCardHTML).join('');
-      grid.dataset.loaded = '1';
-      flyGrid(grid);
-      list.filter(t=>t.maliyet_fiyat && t.ticker).forEach(portalTezGetiri);
-    }catch(e){ grid.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">Araştırmalar yüklenemedi.</div>'; }
+    await listeYukle(document.getElementById('arastirmalarGridFull'),
+      t => t.kategori === 'arastirma', arastirmaCardHTML, 'Henüz araştırma yayınlanmadı.');
   }
 
   function renderFeatured(t){
