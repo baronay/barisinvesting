@@ -5,6 +5,8 @@
     "api/bist-ratios.js":       { "maxDuration": 15 },
     "api/tez-admin.js":         { "maxDuration": 60 },
     "api/market.js":            { "maxDuration": 30 },
+    "api/profil.js":            { "maxDuration": 45 },
+    "api/fair-value.js":        { "maxDuration": 20 },
     "api/garp-bildirim.js":     { "maxDuration": 10 },
     "api/haftalik-secimler.js": { "maxDuration": 10 },
     "api/forum.js":             { "maxDuration": 10 },

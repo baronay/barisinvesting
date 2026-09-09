@@ -668,6 +668,58 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
 }
 
 
+
+/* ── MOBİL: GÖRSEL HİYERARŞİSİ ─────────────────────────────────
+   Sorun (canlıda 375px'te ölçüldü): alt alta beş kapak — manşet
+   375x163 tam genişlik, ardından 331x144'lük dört tane daha (öne
+   çıkan tez + üç bölüm kartı). Hepsi aynı genişlik, aynı oran,
+   aynı ağırlık olduğu için hiçbiri diğerinden önemli görünmüyor;
+   sayfa "önce şunu oku" sinyali veremiyor.
+
+   Kural: telefonda TEK büyük görsel var — manşet, tam genişlik.
+   Diğer bütün kapaklar satırın sağında 104px'lik künye görseline
+   iner. Küçük boy da kapağın kendi oranında (2.3:1) duruyor:
+   bunlar 1920x820 tasarım kartları, 64px'lik kare kutuda contain
+   ile üstte-altta boşluk bırakıp eziliyorlardı.
+   Masaüstü düzeni bu bloktan etkilenmiyor. */
+@media(max-width:767px){
+  /* Tek ölçü: sayfadaki her küçük görsel bu boyda ve bu oranda */
+  .ort-kapak,.ik-cover,.ic-thumb{
+    width:104px;flex:0 0 104px;height:auto;aspect-ratio:2.3/1;
+    border-radius:5px;margin:0;background:var(--surface3);
+  }
+  .ort-kapak img,.ik-cover img,.ic-thumb img{object-fit:contain;}
+  .ic-thumb span{font-size:13px;}
+
+  /* Öne çıkan tez: kapak başlığın sağına geçiyor. Kapak yoksa
+     (ya da onerror ile gizlenirse) ikinci sütun kendiliğinden
+     kapanıyor — auto genişlik. */
+  .mn-orta{border-top:none;padding-top:16px;}
+  .mn-orta > a{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:14px;align-items:start;}
+  .ort-kapak{grid-area:1/2/3/3;}
+  .ort-kick{grid-area:1/1/2/2;margin-bottom:7px;}
+  .ort-baslik{grid-area:2/1/3/2;font-size:20px;line-height:1.26;margin-bottom:0;}
+  .ort-ozet{grid-column:1/-1;margin:9px 0 0;font-size:13.5px;-webkit-line-clamp:2;}
+  .mn-orta .meta-row{grid-column:1/-1;margin-top:10px;}
+  .ort-l{font-family:var(--font-head);font-size:16.5px;padding:12px 0;}
+
+  /* Bölüm başı kartları (Tezler/Araştırmalar/Haberler) aynı düzende */
+  .ik-card{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:14px;align-items:start;}
+  .ik-card .meta-row{grid-area:1/1/2/2;margin-bottom:6px;}
+  .ik-cover{grid-area:1/2/3/3;}
+  .ik-title{grid-area:2/1/3/2;font-size:17px;line-height:1.28;}
+  .ik-sum{grid-column:1/-1;margin-top:8px;-webkit-line-clamp:2;}
+
+  /* Liste satırları: künye görseli artık geniş, üstten hizalansın */
+  .ic-row{align-items:flex-start;}
+  .ic-thumb{margin-top:3px;}
+
+  /* Son Eklenenler: masaüstünde kenar sütunu, mobilde 8 satır x ~81px
+     = 980px'lik bir duvara dönüşüyor ve manşet ile bölümlerin arasını
+     kesiyordu. Beş başlık yeter; hemen altındaki "Tüm haberler" zaten
+     tam listeye götürüyor. */
+  .rail-row:nth-of-type(n+6){display:none;}
+}
 </style>
 </head>
 <body>
