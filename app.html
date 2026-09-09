@@ -2966,7 +2966,10 @@ body.pr-kilit{overflow:hidden;}
   /* Okuma sayfası: gazete makalesi */
   .tzo-title{font-size:27px!important;line-height:1.18;}
   .tzo-lede{font-size:15px;}
-  .tzo-cover{margin:0 -22px 14px;border-radius:0;border-left:none;border-right:none;}
+  /* width:100% (satir 2360) negatif marjin kutuyu genisletmesini
+     engelliyordu: kapak tam genislige gitmek yerine sola kayip sagda
+     bosluk birakiyordu (olculdu: 331x144, x=0). */
+  .tzo-cover{width:auto;margin:0 -22px 14px;border-radius:0;border-left:none;border-right:none;}
 
   /* Hareket yok: telefonda sayfa oynamasın */
   .pfly,.pfly.pland{opacity:1!important;transform:none!important;transition:none!important;}
