@@ -104,7 +104,7 @@ export default async function handler(req, res) {
     }
 
     // Liste kartlari sadece ozet alanlarini kullanir — tez govdesini (icerik) cekme, payload kucuk kalsin
-    const listCols = 'id,kategori,ticker,sinyal,baslik,ozet,kapak_gorseli,olusturma,maliyet_fiyat,exchange';
+    const listCols = 'id,kategori,ticker,sinyal,baslik,ozet,kapak_gorseli,olusturma,maliyet_fiyat,exchange,durum,ozet_fark';
     /* İki sorgu PARALEL: güncelleme rozetleri liste gelmeden de çekilebilir.
        Art arda beklemek soğuk isteği gereksiz yere ikiye katlıyordu
        (ölçüldü: soğuk yanıt ~2,0 sn). */

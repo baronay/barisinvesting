@@ -259,6 +259,32 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
   .mn-rail{border-left:none;padding-left:0;border-top:1px solid var(--rule);padding-top:20px;}
 }
 
+/* ── TEZ TAKİBİ ŞERİDİ ──
+   Her tez bir kutucuk: ticker, görüş rozeti, son hareketin ne kadar
+   eski olduğu. Yatayda akar, mobilde kaydırılır. Amaç 30 saniyede
+   "neyi izliyor" sorusunu yanıtlamak. */
+.sec-takip{padding:6px 0 0;}
+.tk-bas{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--rule);margin-bottom:14px;}
+.tk-kick{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--accent);}
+.tk-not{font-size:12px;color:var(--muted2);}
+.tk-serit{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:10px;}
+.tk-kart{display:block;border:1px solid var(--border-s);border-radius:10px;background:var(--surface);padding:12px 14px;transition:border-color .18s,transform .18s,background .18s;}
+.tk-kart:hover{border-color:var(--border-g);transform:translateY(-2px);background:var(--surface2);}
+.tk-ust{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;}
+.tk-tk{font-family:var(--font-mono);font-size:14px;font-weight:700;letter-spacing:.5px;color:var(--text);}
+.tk-nokta{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.tk-nokta.al{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.15);}
+.tk-nokta.izle{background:var(--accent);box-shadow:0 0 0 3px rgba(194,173,132,.15);}
+.tk-nokta.notr{background:#8a93a3;}
+.tk-nokta.uzak{background:#f05252;box-shadow:0 0 0 3px rgba(240,82,82,.15);}
+.tk-gorus{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:1.4px;margin-bottom:5px;}
+.tk-gorus.al{color:#4ade80;} .tk-gorus.izle{color:var(--accent);}
+.tk-gorus.notr{color:var(--muted);} .tk-gorus.uzak{color:#f0705f;}
+.tk-satir{font-size:11.5px;line-height:1.45;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:33px;}
+.tk-alt{margin-top:8px;padding-top:8px;border-top:1px solid var(--rule);font-family:var(--font-mono);font-size:9px;letter-spacing:.4px;color:var(--muted2);display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.tk-guncel{color:var(--accent);}
+@media(max-width:520px){.tk-serit{grid-template-columns:1fr 1fr;gap:8px;}.tk-kart{padding:10px 12px;}}
+
 /* ── İÇERİK MERKEZİ: üç tür tek ekranda ────────────────────────
    Ölçü: bir sütun 3 satır × ~78px + başlık ≈ 320px, öne çıkan şerit
    ~130px. Toplam ~500px — hero'nun hemen altında tek ekranda bitiyor.
@@ -572,6 +598,20 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
         </a>
       </aside>
     </div>
+  </div>
+</section>
+
+<!-- ═══════ TEZ TAKİBİ — "şu an neyi düşünüyorum" ═══════
+     Ziyaretçi 20 dakikalık araştırmayı okumadan da açık tezleri ve
+     görüşü görebilsin. Tamamen mevcut veriden türüyor (ticker, sinyal,
+     son hareket) — doldurulacak yeni bir alan yok. -->
+<section class="sec sec-takip" id="takip">
+  <div class="container">
+    <div class="tk-bas">
+      <span class="tk-kick">◈ Açık Tezler</span>
+      <span class="tk-not">şu an takip ettiğim şirketler ve görüşüm</span>
+    </div>
+    <div class="tk-serit" id="tkSerit"></div>
   </div>
 </section>
 
@@ -1110,6 +1150,31 @@ function guncellemeBariniGoster(list) {
   } catch (_) { /* bildirim kritik degil */ }
 }
 
+/* Açık tezler şeridi: yalnızca 'tez' kategorisi, en son hareket edenden
+   başlayarak. Sinyali olmayan tez de görünsün — görüş yerine tarih. */
+const GORUS_AD = { AL:['al','AL'], IZLE:['izle','İZLE'], NOTR:['notr','NÖTR'], KACIN:['uzak','KAÇIN'] };
+function takipCiz(list) {
+  const el = document.getElementById('tkSerit');
+  if (!el) return;
+  const tezler = list.filter(t => (t.kategori || 'tez') === 'tez' && t.durum !== 'kapandi').slice(0, 8);
+  if (!tezler.length) { el.innerHTML = '<div class="skel" style="text-align:left">AÇIK TEZ YOK.</div>'; return; }
+  el.innerHTML = tezler.map(t => {
+    const g = GORUS_AD[t.sinyal] || null;
+    const hareket = sonHareket(t);
+    const gun = hareket ? Math.round((Date.now() - new Date(hareket).getTime()) / 86400000) : null;
+    const ne = gun == null ? '' : gun <= 1 ? 'bugün' : gun < 30 ? gun + ' gün önce' : Math.round(gun / 30) + ' ay önce';
+    return `<a class="tk-kart" href="/tez/${t.id}">
+      <div class="tk-ust">
+        <span class="tk-tk">${esc(t.ticker || '◈')}</span>
+        <span class="tk-nokta ${g ? g[0] : 'notr'}"></span>
+      </div>
+      ${g ? `<div class="tk-gorus ${g[0]}">${g[1]}</div>` : ''}
+      <div class="tk-satir">${esc(t.ozet_fark || t.ozet || t.baslik || '')}</div>
+      <div class="tk-alt"><span>${ne}</span>${guncelMi(t) ? '<span class="tk-guncel">güncellendi</span>' : ''}</div>
+    </a>`;
+  }).join('');
+}
+
 /* Listeyi ekrana bas — hem yerel kopya hem taze veri aynı yoldan geçer */
 function icerigiCiz(list, tazeMi) {
   const feat = document.getElementById('featTez');
@@ -1138,6 +1203,7 @@ function icerigiCiz(list, tazeMi) {
       listeCiz(liste, [], {}, tur === 'tez' ? 'HENÜZ TEZ YAYINLANMADI.' : tur === 'arastirma' ? 'İLK ARAŞTIRMA YAKINDA.' : 'İLK HABER YAKINDA.');
     }
   }
+  takipCiz(list);
   armFly();
   if (tazeMi) guncellemeBariniGoster(list);
 }

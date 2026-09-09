@@ -2396,6 +2396,54 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   /* Başlıksız (ilk sütunu satır adı olan) tablolarda ilk hücre başlık gibi dursun */
   .tzo-tbl-scroll tr td:first-child:not([data-etiket]){font-weight:600;color:var(--cream);}
 }
+/* ── TEZ KÜNYESİ ──
+   Başlığın hemen altında ince bir bilgi şeridi: tez açık mı, görüş ne,
+   yayından bu yana ne oldu, en son ne zaman dokunuldu. Kart değil şerit;
+   makalenin önüne geçmesin diye tipografi küçük ve tek satır. */
+.tzk{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin:18px 0 4px;padding:11px 0;border-top:1px solid var(--portal-border);border-bottom:1px solid var(--portal-border);font-family:var(--font-mono);font-size:10.5px;}
+.tzk-durum{display:inline-flex;align-items:center;gap:7px;letter-spacing:1.4px;font-weight:600;padding-right:16px;margin-right:16px;border-right:1px solid var(--portal-border);}
+.tzk-durum i{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.tzk-durum.aktif{color:#4ade80;}
+.tzk-durum.aktif i{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.16);animation:tzkNabiz 2.4s ease-in-out infinite;}
+.tzk-durum.kapali{color:var(--cream2);opacity:.75;}
+.tzk-durum.kapali i{background:var(--cream2);}
+@keyframes tzkNabiz{0%,100%{box-shadow:0 0 0 3px rgba(34,197,94,.16);}50%{box-shadow:0 0 0 6px rgba(34,197,94,0);}}
+.tzk-p{display:inline-flex;align-items:baseline;gap:7px;color:var(--cream);padding-right:16px;margin-right:16px;border-right:1px solid var(--portal-border);}
+.tzk-p:last-child{border-right:none;margin-right:0;padding-right:0;}
+.tzk-p b{font-weight:400;letter-spacing:1.2px;text-transform:uppercase;font-size:8.5px;color:var(--cream2);opacity:.65;}
+.tzk-bek{opacity:.45;}
+.tzk-getiri{font-weight:600;}
+.tzk-getiri.arti{color:#4ade80;} .tzk-getiri.eksi{color:#f0705f;}
+.tzk-tik{cursor:pointer;transition:color .15s;}
+.tzk-tik:hover{color:var(--accent);}
+@media(max-width:640px){
+  .tzk{font-size:10px;gap:6px 0;}
+  .tzk-p,.tzk-durum{padding-right:11px;margin-right:11px;}
+}
+
+/* ── 3 DAKİKADA TEZ ──
+   Gazetedeki "dek" mantığı: uzun yazının önünde duran, tek bakışta
+   okunan özet. Etiketler solda sabit sütunda, cümleler sağda; göz
+   satır satır tarayabilsin. "Tez nerede kırılır" ayrı vurguda çünkü
+   tezin en değerli cümlesi o. */
+.uc-dk{margin:22px 0 26px;border:1px solid var(--portal-border-s);border-left:2px solid var(--accent);border-radius:12px;background:linear-gradient(165deg,rgba(194,173,132,.05),rgba(16,21,30,.5) 65%);padding:16px 20px 6px;}
+.uc-dk-bas{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-bottom:12px;margin-bottom:4px;border-bottom:1px solid var(--portal-border);}
+.uc-dk-t{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:2.2px;text-transform:uppercase;color:var(--accent);}
+.uc-dk-i{font-family:var(--font-mono);font-size:9px;letter-spacing:.8px;color:var(--cream2);opacity:.5;}
+.uc-dk-s,.uc-dk-kir{display:grid;grid-template-columns:118px minmax(0,1fr);gap:16px;padding:11px 0;border-bottom:1px solid var(--portal-border);}
+.uc-dk-s:last-of-type{border-bottom:none;}
+.uc-dk-ad{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:1.3px;text-transform:uppercase;color:var(--cream2);opacity:.7;padding-top:3px;}
+.uc-dk-v{font-size:14px;line-height:1.65;color:var(--cream);}
+.uc-dk-kir{border-top:1px solid var(--portal-border);border-bottom:none;margin-top:2px;background:rgba(194,173,132,.05);margin-left:-20px;margin-right:-20px;padding:13px 20px;border-radius:0 0 10px 10px;}
+.uc-dk-kir .uc-dk-ad{color:var(--accent);opacity:1;}
+.uc-dk-kir .uc-dk-v{color:var(--cream);}
+@media(max-width:640px){
+  .uc-dk{padding:14px 16px 4px;margin:18px 0 22px;}
+  .uc-dk-s,.uc-dk-kir{grid-template-columns:1fr;gap:4px;padding:10px 0;}
+  .uc-dk-kir{margin-left:-16px;margin-right:-16px;padding:12px 16px;}
+  .uc-dk-v{font-size:13.5px;}
+}
+
 /* ── E-posta duvarı ──
    Kesim noktası sert bir kenarla bitmesin: son paragraf söner, hemen
    altında form gelir. Sönme yalnızca kilitliyken uygulanıyor. */
@@ -6985,6 +7033,63 @@ function garpAnalizAc(ticker) {
     </div>`;
   }
 
+  /* ── TEZ KÜNYESİ ────────────────────────────────────────────────
+     Tez "yayınlandı ve bitti" gibi durmasın: durumu, sinyali, yayından
+     bu yana getirisi ve kaç kez güncellendiği tek şeritte. Hepsi elde
+     olan veriden türüyor — ek bir alan doldurulmuyor. Getiri canlı
+     fiyattan hesaplanıyor, geldiğinde yerine yazılıyor. */
+  function kunyeHTML(tez, guncellemeler){
+    const kapali = tez.durum === 'kapandi';
+    const sig = tez.sinyal && sigMap[tez.sinyal] ? sigMap[tez.sinyal] : null;
+    const n = guncellemeler.length;
+    const son = n ? guncellemeler[n-1] : null;
+    const gun = son ? Math.round((Date.now() - new Date(son.tarih).getTime())/86400000)
+                    : Math.round((Date.now() - new Date(tez.olusturma).getTime())/86400000);
+    const tazelik = gun <= 1 ? 'bugün' : gun < 30 ? `${gun} gün önce` : `${Math.round(gun/30)} ay önce`;
+    return `<div class="tzk">
+      <span class="tzk-durum ${kapali?'kapali':'aktif'}"><i></i>${kapali?'TEZ KAPANDI':'TEZ AÇIK'}</span>
+      ${sig ? `<span class="tzk-p"><b>Görüş</b>${sig[1]}</span>` : ''}
+      ${tez.maliyet_fiyat && tez.ticker ? `<span class="tzk-p" id="tzkGetiri"><b>Yayından bu yana</b><span class="tzk-bek">hesaplanıyor…</span></span>` : ''}
+      <span class="tzk-p"><b>${n ? 'Son hareket' : 'Yayın'}</b>${tazelik}</span>
+      ${n ? `<span class="tzk-p tzk-tik" onclick="window.__tezSeyre()"><b>Güncelleme</b>${n} kayıt →</span>` : ''}
+    </div>`;
+  }
+
+  /* Künyedeki getiriyi canlı fiyatla doldur (fiyat gecikmeli gelir) */
+  async function kunyeGetiri(tez){
+    const el = document.getElementById('tzkGetiri');
+    if (!el || !tez.maliyet_fiyat || !tez.ticker) return;
+    try{
+      const q = await getPrice(tez.ticker, tez.exchange || 'BIST');
+      const cost = parseFloat(tez.maliyet_fiyat);
+      if (!q || !q.price || !cost) { el.remove(); return; }
+      const yuzde = (q.price - cost) / cost * 100;
+      const yon = yuzde >= 0 ? 'arti' : 'eksi';
+      el.innerHTML = `<b>Yayından bu yana</b><span class="tzk-getiri ${yon}">${yuzde>=0?'+':''}${yuzde.toFixed(1)}%</span>`;
+    }catch(_){ el.remove(); }
+  }
+
+  /* ── 3 DAKİKADA TEZ ─────────────────────────────────────────────
+     Tezler makale uzunluğunda; giriş bariyerini bu kutu düşürüyor.
+     Alanlar tezin kendi metninden çıkarılıp veritabanında duruyor
+     (api/tez-ozet.js), yani okurken üretilmiyor. Alan boşsa kutu hiç
+     çizilmiyor — yarım dolu bir kutu göstermektense hiç göstermemek. */
+  function ucDakikaHTML(tez){
+    const satirlar = [
+      ['Boğa tarafı',   tez.ozet_boga],
+      ['Ayı tarafı',    tez.ozet_ayi],
+      ['Benim farkım',  tez.ozet_fark],
+      ['Fiyat',         tez.ozet_fiyat],
+    ].filter(([, v]) => v && v.trim() && v.trim() !== '—');
+    const kirilma = (tez.ozet_kirilma || '').trim();
+    if (!satirlar.length && (!kirilma || kirilma === '—')) return '';
+    return `<div class="uc-dk">
+      <div class="uc-dk-bas"><span class="uc-dk-t">3 dakikada tez</span><span class="uc-dk-i">tamamı aşağıda</span></div>
+      ${satirlar.map(([ad, v]) => `<div class="uc-dk-s"><span class="uc-dk-ad">${ad}</span><span class="uc-dk-v">${esc(v)}</span></div>`).join('')}
+      ${(kirilma && kirilma !== '—') ? `<div class="uc-dk-kir"><span class="uc-dk-ad">Tez nerede kırılır</span><span class="uc-dk-v">${esc(kirilma)}</span></div>` : ''}
+    </div>`;
+  }
+
   /* ── E-POSTA DUVARI ─────────────────────────────────────────────
      Metnin girişi herkese açık, gerisi mail bırakan okura. Kesme
      sunucuda yapılıyor (api/tez-admin.js): burada yalnızca kesildiği
@@ -7164,6 +7269,8 @@ function garpAnalizAc(ticker) {
         </div>
         <h1 class="tzo-title">${esc(tez.baslik)}</h1>
         ${tez.ozet ? `<p class="tzo-lede">${esc(tez.ozet)}</p>` : ''}
+        ${kat==='tez' ? kunyeHTML(tez, guncellemeler) : ''}
+        ${ucDakikaHTML(tez)}
         ${tezPanelleriHTML(guncellemeler, tarih, icerik, govdeAd, !!tez.kilit)}
         ${tez.kilit ? duvarHTML(kat, tez.kilitli_guncelleme || 0) : ''}
         <div class="tzo-note">Bu içerik araştırma ve bilgi amaçlıdır; yatırım tavsiyesi değildir. Tüm projeksiyonlar tahmin içermektedir.</div>
@@ -7173,6 +7280,7 @@ function garpAnalizAc(ticker) {
         </div>`;
       tzoTopHesapla();   // sticky sekme şeridinin üst boşluğu
       tablolariHazirla(art);
+      kunyeGetiri(tez);
       document.body.classList.toggle('tzo-kilitli', !!tez.kilit);
       if (tez.kilit) duvariBagla(id);
     }catch(e){

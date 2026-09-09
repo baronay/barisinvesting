@@ -386,6 +386,7 @@ async function openTezEditor() {
         <!-- Butonlar -->
         <div style="display:flex;gap:8px;">
           <button onclick="tezKaydet()" style="background:#c2ad84;border:none;color:#fff;padding:10px 22px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">Kaydet</button>
+          <button id="tezOzetBtn" onclick="tezOzetUret()" style="display:none;background:rgba(194,173,132,0.12);border:1px solid rgba(194,173,132,0.4);color:#c2ad84;padding:10px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;" title="Tezin kendi metninden 3 dakikalık özeti çıkarır">✨ 3 Dakikalık Özeti Üret</button>
           <button id="tezSilBtn" onclick="tezSil()" style="display:none;background:none;border:1px solid #f05252;color:#f05252;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:13px;">Sil</button>
           <span id="tezKaydetDurum" style="font-size:12px;color:#5d6675;align-self:center;margin-left:8px;"></span>
         </div>
@@ -649,6 +650,12 @@ function tezFormAc(tez) {
     const _dEl = document.getElementById('tezOlusturma');
     if (_dEl && tez.olusturma) _dEl.value = tez.olusturma.split('T')[0];
     document.getElementById('tezSilBtn').style.display = 'inline-block';
+    const _oBtn = document.getElementById('tezOzetBtn');
+    if (_oBtn) {
+      _oBtn.style.display = 'inline-block';
+      // Özet daha önce üretildiyse belli olsun
+      _oBtn.textContent = tez.ozet_boga ? '✨ 3 Dakikalık Özeti Yenile' : '✨ 3 Dakikalık Özeti Üret';
+    }
 
     // Mevcut kapak görseli varsa göster
     if (tez.kapak_gorseli) {
@@ -678,6 +685,44 @@ function tezFormAc(tez) {
     document.getElementById('tezSilBtn').style.display = 'none';
     if (kapakDurum)  { kapakDurum.textContent = 'Henüz seçilmedi'; kapakDurum.style.color = '#5d6675'; }
     if (kapakMevcut) kapakMevcut.value = '';
+  }
+}
+
+/* "3 dakikada tez" özetini tezin KENDİ metninden çıkar.
+   Elle doldurulacak yeni bir alan olmasın diye böyle: yazıyı zaten
+   yazdın, kutu ondan türüyor. Sonuç veritabanına yazılıyor, okuma
+   sayfasında başlığın altında görünüyor. Beğenmezsen tekrar üret ya da
+   Supabase'den elle düzelt. */
+async function tezOzetUret() {
+  const id = document.getElementById('tezFormId')?.value;
+  const durum = document.getElementById('tezKaydetDurum');
+  const btn = document.getElementById('tezOzetBtn');
+  if (!id) { if (durum) durum.textContent = 'Önce tezi kaydet.'; return; }
+  const secret = _tezSecret || _adminSecret || prompt('Admin şifresi:');
+  if (!secret) return;
+  _tezSecret = secret;
+
+  const eskiTxt = btn.textContent;
+  btn.disabled = true; btn.textContent = '✨ Okunuyor…';
+  if (durum) { durum.style.color = '#5d6675'; durum.textContent = 'Tez metni okunuyor, özet çıkarılıyor (~20 sn)…'; }
+  try {
+    const r = await fetch('/api/tez-ozet', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, email: getEmail(), secret })
+    });
+    const d = await r.json();
+    if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+    const o = d.ozet || {};
+    if (durum) {
+      durum.style.color = '#22c55e';
+      durum.textContent = '✓ Özet hazır: ' + (o.ozet_fark ? o.ozet_fark.slice(0, 70) + '…' : 'kaydedildi');
+    }
+    btn.textContent = '✨ 3 Dakikalık Özeti Yenile';
+  } catch (e) {
+    if (durum) { durum.style.color = '#f05252'; durum.textContent = '⚠ ' + e.message; }
+    btn.textContent = eskiTxt;
+  } finally {
+    btn.disabled = false;
   }
 }
 
