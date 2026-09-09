@@ -97,12 +97,11 @@ img{display:block;}
    akışta duruyor (kaydırınca yukarı çıkar), bölüm menüsü yapışıyor —
    WSJ'deki davranışın aynısı: marka bir kez görünür, gezinme hep elde. */
 .kunye{border-bottom:1px solid var(--rule);background:var(--bg);}
-.kunye-ic{position:relative;display:flex;align-items:center;justify-content:center;padding:22px 56px 8px;min-height:52px;}
+.kunye-ic{position:relative;display:flex;align-items:center;justify-content:center;padding:20px 56px 18px;min-height:52px;}
 .kunye-marka .wm{font-size:32px;letter-spacing:.01em;}
 .kunye-sag{position:absolute;right:56px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:12px;}
 .kunye-cta{background:var(--accent);color:#0b0f15;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:700;white-space:nowrap;transition:background .18s;}
 .kunye-cta:hover{background:var(--cream);}
-.kunye-alt{text-align:center;padding-bottom:14px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);}
 
 /* Bölüm menüsü — yapışkan, tam genişlik */
 .nav-wrap{position:sticky;top:0;z-index:100;width:100%;background:rgba(8,11,16,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--rule);}
@@ -296,7 +295,15 @@ nav.pill{display:flex;align-items:center;justify-content:center;gap:16px;max-wid
 .rail-tur.arastirma{color:#9fb8c9;background:rgba(159,184,201,.1);}
 .rail-tur.haber{color:#7cb8e8;background:rgba(90,169,230,.1);}
 .rail-all{display:inline-flex;align-items:center;gap:7px;margin-top:14px;font-size:12px;font-weight:600;color:var(--accent);}
-.rail-promo{display:block;margin-top:22px;padding:16px 18px;border:1px solid var(--border-s);border-top:2px solid var(--accent);border-radius:12px;background:linear-gradient(160deg,var(--surface2),var(--surface) 70%);transition:border-color .2s,transform .2s;}
+.rail-yt{display:flex;align-items:center;gap:12px;margin-top:18px;padding:13px 14px;border:1px solid var(--border-s);border-left:2px solid #f0322c;border-radius:10px;background:var(--surface);transition:border-color .2s,transform .2s,background .2s;}
+.rail-yt:hover{border-color:rgba(240,50,44,.5);transform:translateY(-2px);background:var(--surface2);}
+.yt-play{flex:0 0 34px;width:34px;height:34px;border-radius:8px;background:rgba(240,50,44,.12);color:#f0554f;display:flex;align-items:center;justify-content:center;}
+.yt-play svg{width:19px;height:19px;}
+.yt-txt{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.yt-kick{font-family:var(--font-mono);font-size:8.5px;letter-spacing:1.8px;color:var(--muted2);}
+.yt-baslik{font-size:13.5px;font-weight:600;color:var(--text);line-height:1.3;}
+.yt-alt{font-size:11.5px;font-weight:600;color:#f0554f;}
+.rail-promo{display:block;margin-top:14px;padding:16px 18px;border:1px solid var(--border-s);border-top:2px solid var(--accent);border-radius:12px;background:linear-gradient(160deg,var(--surface2),var(--surface) 70%);transition:border-color .2s,transform .2s;}
 .rail-promo:hover{border-color:var(--border-g);transform:translateY(-2px);}
 .rp-kick{display:block;font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--accent);margin-bottom:7px;}
 .rp-title{display:block;font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:6px;}
@@ -603,7 +610,6 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
   .kunye-ic{padding:12px 16px 8px;min-height:auto;}
   .kunye-marka .wm{font-size:21px;}
   .kunye-sag{display:none;}          /* mobilde tek giriş: sekme şeridindeki "Terminal" */
-  .kunye-alt{display:none;}
   .nav-burger{position:absolute;right:12px;top:50%;transform:translateY(-50%);padding:6px;}
   .nav-links{top:100%;position:absolute;}
 
@@ -697,7 +703,6 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
       <span></span><span></span><span></span>
     </button>
   </div>
-  <div class="kunye-alt">Bağımsız finansal araştırma · Canlı yatırım tezleri</div>
 </header>
 
 <!-- 3) Bölüm menüsü — yapışkan -->
@@ -742,6 +747,19 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
         <div class="rail-head">Son Eklenenler</div>
         <div class="rail-list" id="railList"><div class="skel">YÜKLENİYOR…</div></div>
         <a class="rail-all" href="/haberler">Tüm haberler <span class="arrow-ic"></span></a>
+        <!-- YouTube: sayfanın dibinde kalıyordu, ilk ekranda görünsün.
+             Şeritte kompakt kart — içeriği aşağı itmiyor. -->
+        <a class="rail-yt" href="https://youtube.com/@barisinvesting" target="_blank" rel="noopener">
+          <span class="yt-play" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.5 15.6V8.4L15.8 12l-6.3 3.6z"/></svg>
+          </span>
+          <span class="yt-txt">
+            <span class="yt-kick">◈ YouTube</span>
+            <span class="yt-baslik">Tezlerin arkasındaki düşünce</span>
+            <span class="yt-alt">Kanalda anlatıyorum →</span>
+          </span>
+        </a>
+
         <!-- Sağ sütun manşetten kısa kalıyor; boşluğu aracın kendisi doldursun -->
         <a class="rail-promo" href="/terminal">
           <span class="rp-kick">◈ Terminal</span>
