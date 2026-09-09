@@ -716,7 +716,11 @@ async function tezOzetUret() {
     const o = d.ozet || {};
     if (durum) {
       durum.style.color = '#22c55e';
-      durum.textContent = '✓ Özet hazır: ' + (o.ozet_fark ? o.ozet_fark.slice(0, 70) + '…' : 'kaydedildi');
+      // Kaç güncellemenin özete girdiğini göster: kutunun güncel mi
+      // yoksa ilk metinde mi kaldığı buradan anlaşılsın.
+      const gs = d.guncelleme_sayisi || 0;
+      durum.textContent = '✓ Özet hazır' + (gs ? ` (${gs} güncelleme dahil)` : ' (güncelleme yok)')
+        + ': ' + (o.ozet_fark ? o.ozet_fark.slice(0, 70) + '…' : 'kaydedildi');
     }
     btn.textContent = '✨ 3 Dakikalık Özeti Yenile';
   } catch (e) {

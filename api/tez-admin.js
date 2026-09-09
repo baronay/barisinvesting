@@ -244,13 +244,39 @@ export default async function handler(req, res) {
 
     try {
       const tr = await fetch(
-        `${SUPABASE_URL}/rest/v1/tezler?id=eq.${idNum}&select=id,ticker,baslik,ozet,icerik,exchange`,
+        `${SUPABASE_URL}/rest/v1/tezler?id=eq.${idNum}&select=id,ticker,baslik,ozet,icerik,exchange,olusturma`,
         { headers });
       const tez = (await tr.json())?.[0];
       if (!tez) return res.status(404).json({ error: 'Tez bulunamadı' });
 
       const govde = duzMetin(tez.icerik).slice(0, 45000);
       if (govde.length < 400) return res.status(400).json({ error: 'Tez metni özet için fazla kısa' });
+
+      /* Güncellemeler de özete girsin: tez canlı bir belge, yazar bir
+         iddiasını geri çekmiş ya da bandını değiştirmiş olabilir. Yalnız
+         ilk metni okuyan model geri çekilmiş bir tezi hâlâ geçerliymiş
+         gibi yazıyordu (AVGO/17: "kilitli duopol" iddiası güncellemede
+         geri çekilmesine rağmen kutuda duruyordu — üstelik özet
+         güncellemeden SONRA üretilmişti, yani sorun tekrar üretmemek
+         değil, güncellemenin modele hiç gitmemesiydi).
+         Bütçe aşılırsa en ESKİ güncellemeler düşer: kutuyu belirleyen
+         taraf en yenisi. */
+      const guncellemeler = await fetchGuncellemeler(headers, idNum, true);
+      const guncParcalar = [];
+      let guncButce = 24000;
+      for (let i = guncellemeler.length - 1; i >= 0; i--) {
+        const g = guncellemeler[i];
+        const parca = [
+          `[${i + 1}] ${String(g.tarih || '').slice(0, 10)} · ${g.tur || 'not'}` +
+            `${g.sinyal ? ` · sinyal: ${g.sinyal}` : ''}${g.fiyat != null ? ` · fiyat: ${g.fiyat}` : ''}`,
+          `BAŞLIK: ${g.baslik || ''}`,
+          duzMetin(g.icerik).slice(0, 8000),
+        ].join('\n');
+        if (parca.length > guncButce) break;
+        guncParcalar.unshift(parca);
+        guncButce -= parca.length;
+      }
+      const guncMetin = guncParcalar.join('\n\n');
 
       const sistem = [
         'Sen Barış Investing\'in editörüsün. Sana verilen yatırım tezinin KENDİ İÇİNDEKİ bilgiyi kullanarak "3 dakikada tez" kutusunu hazırlıyorsun.',
@@ -261,6 +287,8 @@ export default async function handler(req, res) {
         '- Her satır TEK cümle, en fazla 25 kelime. Süs yok, doğrudan söyle.',
         '- Metinde bir alanın karşılığı gerçekten yoksa o satıra sadece "—" yaz.',
         '- Türkçe yaz.',
+        '- Tez canlı bir belge: ilk metinden sonra yayımlanan güncellemeler onu günceller. Bir konuda ilk metin ile güncelleme çelişiyorsa GÜNCELLEME geçerlidir.',
+        '- Kutu yazarın BUGÜNKÜ görüşünü anlatmalı: güncellemede geri çekilmiş bir iddiayı hâlâ geçerliymiş gibi yazma, değişmiş bir fiyat bandını eski hâliyle verme.',
         '',
         'BİÇİM (tam olarak bu beş satır, başka hiçbir şey yazma):',
         'BOGA: [tezin çalışması için gereken şey — piyasanın da gördüğü iyimser taraf]',
@@ -275,8 +303,9 @@ export default async function handler(req, res) {
         `BAŞLIK: ${tez.baslik || ''}`,
         tez.ozet ? `GİRİŞ: ${tez.ozet}` : '',
         '',
-        'TEZ METNİ:',
+        `İLK TEZ METNİ${tez.olusturma ? ` (${String(tez.olusturma).slice(0, 10)})` : ''}:`,
         govde,
+        ...(guncMetin ? ['', 'SONRAKİ GÜNCELLEMELER (eskiden yeniye — çelişki olursa EN YENİSİ geçerlidir):', guncMetin] : []),
       ].join('\n');
 
       const ac = new AbortController();
@@ -316,7 +345,7 @@ export default async function handler(req, res) {
         method: 'PATCH', headers, body: JSON.stringify(alanlar),
       });
       if (!kaydet.ok) return res.status(500).json({ error: 'Kaydedilemedi', detay: (await kaydet.text()).slice(0, 200) });
-      return res.status(200).json({ ok: true, ozet: alanlar });
+      return res.status(200).json({ ok: true, ozet: alanlar, guncelleme_sayisi: guncParcalar.length });
     } catch (e) {
       const zamanAsimi = e.name === 'AbortError' || e.name === 'TimeoutError';
       return res.status(zamanAsimi ? 504 : 500).json({ error: zamanAsimi ? 'Süre doldu, tekrar dene' : e.message });
