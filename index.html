@@ -529,6 +529,75 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
   .news-row{flex-direction:column;}
   .news-btn{width:100%;}
 }
+/* ── MOBİL: GAZETE ARAYÜZÜ (WSJ düzeni) ────────────────────────
+   Telefonda kart/kutu yerine gazete listesi: ortalı serif logo, altında
+   yatay bölüm şeridi, sonra manşet ve ince çizgilerle ayrılmış başlıklar.
+   Masthead ile bölüm şeridi aynı sabit kapsayıcıda duruyor; sayfa
+   kayarken üst çerçeve yerinden oynamıyor. */
+.mob-sek{display:none;}
+@media(max-width:767px){
+  /* Masthead: logo ortada, menü sağda — gazete künyesi gibi */
+  nav.pill{position:relative;justify-content:center;padding:11px 16px;min-height:46px;}
+  .nav-brand{position:static;}
+  .wm{font-size:19px;letter-spacing:.02em;}
+  .nav-burger{position:absolute;right:12px;top:50%;transform:translateY(-50%);padding:6px;}
+  .nav-links{top:100%;}
+
+  /* Bölüm şeridi: yatay kaydırılır, kaydırma çubuğu gizli */
+  .mob-sek{display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    border-top:1px solid var(--rule);scrollbar-width:none;background:rgba(8,11,16,.92);}
+  .mob-sek::-webkit-scrollbar{display:none;}
+  .ms-l{flex:0 0 auto;padding:11px 14px;font-size:14px;font-weight:600;color:var(--muted);
+    white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
+  .ms-l.aktif{color:var(--text);border-bottom-color:var(--accent);}
+  .ms-l:active{color:var(--accent);}
+  .ms-cta{color:var(--accent);}
+
+  /* HAREKET YOK: kartların uçarak gelmesi ve bulanık açılış telefonda
+     sayfayı oynatıyordu. İçerik olduğu yerde, tek seferde belirsin. */
+  .fly,.fly.land{opacity:1!important;transform:none!important;transition:none!important;}
+  .rv{opacity:1!important;transform:none!important;filter:none!important;}
+
+  /* ── Manşet: tam genişlik görsel + büyük serif başlık ── */
+  .sec-manset{padding:16px 0 4px;}
+  .mn-grid{gap:0;}
+  .lead-cover{border-radius:0;margin:0 -22px 13px;aspect-ratio:16/10;}
+  .lead-kick{font-size:9.5px;letter-spacing:2px;margin-bottom:8px;}
+  .lead-title{font-size:29px;line-height:1.14;letter-spacing:-.015em;margin-bottom:9px;}
+  .lead-sum{font-size:15px;line-height:1.55;color:var(--muted);-webkit-line-clamp:4;}
+  .mn-lead{padding-bottom:18px;border-bottom:1px solid var(--rule);}
+  .mn-rail{border-top:none;padding-top:16px;}
+
+  /* ── Liste satırları: kutu yok, ince çizgi var ── */
+  .rail-head{font-size:9.5px;letter-spacing:2px;padding-bottom:9px;}
+  .rail-row{padding:14px 0;gap:10px;align-items:flex-start;}
+  .rail-time{flex-basis:46px;font-size:9px;padding-top:4px;}
+  .rail-title{font-family:var(--font-head);font-size:17px;font-weight:600;line-height:1.3;color:var(--text);-webkit-line-clamp:3;}
+  .rail-promo{margin-top:16px;}
+
+  /* ── Bölümler: sütun değil, akış ── */
+  .sec-icerik{padding:22px 0 34px;}
+  .ic-grid{gap:30px;}
+  .ic-head{padding-bottom:9px;margin-bottom:0;border-bottom:2px solid var(--accent);}
+  .ic-h{font-size:19px;}
+  .ic-kart{margin-bottom:0;}
+  .ik-card{padding:14px 0 15px;border-bottom:1px solid var(--rule);}
+  .ik-cover{border-radius:6px;margin:11px 0 10px;}
+  .ik-title{font-family:var(--font-head);font-size:20px;font-weight:600;line-height:1.25;letter-spacing:-.01em;}
+  .ik-sum{font-size:13.5px;-webkit-line-clamp:3;}
+  .ic-row{padding:14px 0;gap:12px;}
+  .ic-thumb{flex:0 0 64px;width:64px;height:64px;border-radius:4px;order:2;}
+  .ic-txt{order:1;}
+  .ic-title{font-family:var(--font-head);font-size:16.5px;font-weight:600;line-height:1.3;color:var(--text);}
+  .ic-meta{margin-bottom:5px;}
+
+  /* Açık tezler: iki sütun kutucuk, gazete rengiyle */
+  .sec-takip{padding:20px 0 0;}
+  .tk-bas{padding-bottom:9px;margin-bottom:12px;}
+  .tk-kart{border-radius:6px;}
+}
+
+
 </style>
 </head>
 <body>
@@ -550,6 +619,16 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
     <button class="nav-burger" id="navBurger" aria-label="Menü">
       <span></span><span></span><span></span>
     </button>
+  </nav>
+  <!-- Mobil bölüm şeridi (WSJ'deki Top Stories/Markets/Opinion sırası).
+       Masthead ile aynı sabit kapsayıcıda: kaydırırken ikisi de yerinde
+       kalıyor, sayfa altta kayarken üst çerçeve oynamıyor. -->
+  <nav class="mob-sek" aria-label="Bölümler">
+    <a class="ms-l aktif" href="/">Öne Çıkan</a>
+    <a class="ms-l" href="/tezler">Tezler</a>
+    <a class="ms-l" href="/arastirmalar">Araştırmalar</a>
+    <a class="ms-l" href="/haberler">Haberler</a>
+    <a class="ms-l ms-cta" href="/terminal">Terminal</a>
   </nav>
 </div>
 
