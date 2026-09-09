@@ -706,9 +706,10 @@ async function tezOzetUret() {
   btn.disabled = true; btn.textContent = '✨ Okunuyor…';
   if (durum) { durum.style.color = '#5d6675'; durum.textContent = 'Tez metni okunuyor, özet çıkarılıyor (~20 sn)…'; }
   try {
-    const r = await fetch('/api/tez-ozet', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, email: getEmail(), secret })
+    const r = await fetch('/api/tez-admin?action=ozet_uret', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + secret },
+      body: JSON.stringify({ id })
     });
     const d = await r.json();
     if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));

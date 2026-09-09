@@ -215,6 +215,114 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  /* ── "3 DAKİKADA TEZ" ÖZETİ (admin) ───────────────────────────
+     POST /api/tez-admin?action=ozet_uret   body: { id }
+
+     Özet için ayrıca yazı yazmak yeni bir iş yükü olurdu; bu uç tezin
+     KENDİ gövdesini okuyup beş satırı çıkarıyor — boğa, ayı, "benim
+     farkım", fiyat bandı ve tezin kırıldığı eşik. Hepsi metinde zaten
+     var, yalnızca yüzeye çıkarılıyor. Sonuç tabloda saklanıyor, her
+     okuyucuda yeniden üretilmiyor.
+
+     NOT: Önce ayrı dosya (api/tez-ozet.js) olarak yazılmıştı ama Vercel
+     Hobby planı dağıtım başına 12 fonksiyona izin veriyor; 13. dosya
+     derlemeyi düşürdü. Bu yüzden tez CRUD'unun yanına alındı. */
+  if (req.method === 'POST' && req.query.action === 'ozet_uret') {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY eksik' });
+    const idNum = String(req.body?.id || '').replace(/[^0-9]/g, '');
+    if (!idNum) return res.status(400).json({ error: 'id gerekli' });
+
+    // Gövdeyi düz metne indir: model yazının kendisini okusun, işaretlemeyi değil
+    const duzMetin = (html) => String(html || '')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<head[\s\S]*?<\/head>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/\s+/g, ' ').trim();
+
+    try {
+      const tr = await fetch(
+        `${SUPABASE_URL}/rest/v1/tezler?id=eq.${idNum}&select=id,ticker,baslik,ozet,icerik,exchange`,
+        { headers });
+      const tez = (await tr.json())?.[0];
+      if (!tez) return res.status(404).json({ error: 'Tez bulunamadı' });
+
+      const govde = duzMetin(tez.icerik).slice(0, 45000);
+      if (govde.length < 400) return res.status(400).json({ error: 'Tez metni özet için fazla kısa' });
+
+      const sistem = [
+        'Sen Barış Investing\'in editörüsün. Sana verilen yatırım tezinin KENDİ İÇİNDEKİ bilgiyi kullanarak "3 dakikada tez" kutusunu hazırlıyorsun.',
+        '',
+        'KURALLAR',
+        '- Metinde olmayan hiçbir şey yazma. Rakam uydurma, tahmin ekleme.',
+        '- Yazarın ağzından, birinci tekil şahısla yaz ("izliyorum", "tartıştığım şey…").',
+        '- Her satır TEK cümle, en fazla 25 kelime. Süs yok, doğrudan söyle.',
+        '- Metinde bir alanın karşılığı gerçekten yoksa o satıra sadece "—" yaz.',
+        '- Türkçe yaz.',
+        '',
+        'BİÇİM (tam olarak bu beş satır, başka hiçbir şey yazma):',
+        'BOGA: [tezin çalışması için gereken şey — piyasanın da gördüğü iyimser taraf]',
+        'AYI: [en ciddi karşı argüman, tezin en zayıf yeri]',
+        'FARK: [yazarın piyasadan/konsensüsten ayrıştığı nokta — "benim farkım" budur]',
+        'FIYAT: [metinde geçen izleme/giriş/hedef bandı; yoksa "—"]',
+        'KIRILMA: [tezi çürütecek somut eşik: hangi metrik, hangi seviyeye gelirse]',
+      ].join('\n');
+
+      const istek = [
+        `ŞİRKET: ${tez.ticker || '—'} (${tez.exchange || '—'})`,
+        `BAŞLIK: ${tez.baslik || ''}`,
+        tez.ozet ? `GİRİŞ: ${tez.ozet}` : '',
+        '',
+        'TEZ METNİ:',
+        govde,
+      ].join('\n');
+
+      const ac = new AbortController();
+      const zamanlayici = setTimeout(() => ac.abort(), 40000);
+      let ai;
+      try {
+        ai = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+          body: JSON.stringify({
+            model: process.env.OZET_MODEL || 'claude-sonnet-5',
+            max_tokens: 700,
+            thinking: { type: 'disabled' },
+            system: sistem,
+            messages: [{ role: 'user', content: istek }],
+          }),
+          signal: ac.signal,
+        });
+      } finally { clearTimeout(zamanlayici); }
+
+      const d = await ai.json();
+      if (!ai.ok || d.error) return res.status(502).json({ error: `AI hatası: ${d?.error?.type || ai.status}` });
+
+      const metin = (d.content || []).filter(b => b && b.type === 'text').map(b => b.text).join('\n');
+      const ALAN = { BOGA: 'ozet_boga', AYI: 'ozet_ayi', FARK: 'ozet_fark', FIYAT: 'ozet_fiyat', KIRILMA: 'ozet_kirilma' };
+      const alanlar = {};
+      for (const anahtar of Object.keys(ALAN)) {
+        const m = metin.match(new RegExp('^' + anahtar + ':\\s*([^\\n]+)', 'm'));
+        if (m) alanlar[ALAN[anahtar]] = m[1].trim().slice(0, 400);
+      }
+      if (!Object.keys(alanlar).length) {
+        return res.status(502).json({ error: 'Özet ayrıştırılamadı', ham: metin.slice(0, 300) });
+      }
+      alanlar.ozet_tarih = new Date().toISOString();
+
+      const kaydet = await fetch(`${SUPABASE_URL}/rest/v1/tezler?id=eq.${idNum}`, {
+        method: 'PATCH', headers, body: JSON.stringify(alanlar),
+      });
+      if (!kaydet.ok) return res.status(500).json({ error: 'Kaydedilemedi', detay: (await kaydet.text()).slice(0, 200) });
+      return res.status(200).json({ ok: true, ozet: alanlar });
+    } catch (e) {
+      const zamanAsimi = e.name === 'AbortError' || e.name === 'TimeoutError';
+      return res.status(zamanAsimi ? 504 : 500).json({ error: zamanAsimi ? 'Süre doldu, tekrar dene' : e.message });
+    }
+  }
+
   // ── GÖRSEL UPLOAD (admin) ─────────────────────────────────────
   // POST /api/tez-admin?action=upload_image
   // body: { filename, base64 }  (base64 = "data:image/png;base64,...")
