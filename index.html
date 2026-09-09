@@ -65,7 +65,14 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
-body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+/* Yatay kayma kilidi: mobilde parmakla sağa-sola kaydırma olmasın.
+   overflow-x:clip yapışkan başlığı bozmuyor (hidden bazı tarayıcılarda
+   sticky'yi kırabiliyor); desteklemeyen tarayıcı için hidden yedekte. */
+html{overflow-x:hidden;}
+@supports (overflow:clip){html{overflow-x:clip;}}
+body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;max-width:100vw;}
+@supports (overflow:clip){body{overflow-x:clip;}}
+img,video,svg,iframe{max-width:100%;}
 a{color:inherit;text-decoration:none;}
 img{display:block;}
 .container{max-width:1080px;margin:0 auto;padding:0 56px;}
@@ -85,13 +92,26 @@ img{display:block;}
 .rv.in{opacity:1;transform:none;filter:blur(0);}
 
 /* ═══════════════ NAV ═══════════════ */
-/* Nav eskiden ortada yüzen bir haptı. Hero kalkınca içerik sayfanın en
-   üstünden başladı ve hap manşetin kapağıyla "Son Eklenenler" başlığının
-   üstüne bindi. Artık haber sitelerindeki gibi tam genişlik, akışta
-   duran, yapışkan bir başlık: hiçbir şeyin üstüne binmiyor. */
-.nav-wrap{position:sticky;top:0;z-index:100;width:100%;background:rgba(8,11,16,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--rule);}
-nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:1080px;margin:0 auto;padding:10px 56px;color:var(--text);}
-@media(max-width:767px){nav.pill{padding:8px 22px;}}
+/* ── KÜNYE (masthead) ──
+   Gazete sırası: piyasa şeridi → ortalı künye → bölüm menüsü. Künye
+   akışta duruyor (kaydırınca yukarı çıkar), bölüm menüsü yapışıyor —
+   WSJ'deki davranışın aynısı: marka bir kez görünür, gezinme hep elde. */
+.kunye{border-bottom:1px solid var(--rule);background:var(--bg);}
+.kunye-ic{position:relative;display:flex;align-items:center;justify-content:center;padding:22px 56px 8px;min-height:52px;}
+.kunye-marka .wm{font-size:32px;letter-spacing:.01em;}
+.kunye-sag{position:absolute;right:56px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:12px;}
+.kunye-cta{background:var(--accent);color:#0b0f15;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:700;white-space:nowrap;transition:background .18s;}
+.kunye-cta:hover{background:var(--cream);}
+.kunye-alt{text-align:center;padding-bottom:14px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);}
+
+/* Bölüm menüsü — yapışkan, tam genişlik */
+.nav-wrap{position:sticky;top:0;z-index:100;width:100%;background:rgba(8,11,16,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--rule);}
+nav.pill{display:flex;align-items:center;justify-content:center;gap:16px;max-width:1080px;margin:0 auto;padding:0 56px;color:var(--text);}
+.nav-links{gap:26px;}
+.nav-links a.lnk{padding:12px 0;font-size:13.5px;font-weight:600;letter-spacing:.01em;border-bottom:2px solid transparent;}
+.nav-links a.lnk:hover{border-bottom-color:var(--accent);}
+.nav-cta{display:none;}   /* künyede zaten var, menüde tekrar etmesin */
+@media(max-width:767px){nav.pill{display:none;}}
 /* MARKA — sade serif kelime markası (fotoğraf yok, süs yok):
    "Barış" krem, "Investing" altın. Tek satır, tek boy. */
 .nav-brand{display:inline-flex;align-items:baseline;flex-shrink:0;}
@@ -224,15 +244,35 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
    Haber sitesi düzeni: ziyaretçi sayfayı açtığı anda bir manşet ve
    yanında akış görüyor; slogan ekranı yemiyor. */
 .sec-manset{padding:30px 0 10px;}
-.mn-grid{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:34px;align-items:start;}
+.mn-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,.95fr);gap:30px;align-items:start;}
+.mn-orta{min-width:0;padding:0 30px;border-left:1px solid var(--rule);border-right:1px solid var(--rule);}
+/* Orta sütun: öne çıkan tez, görsel önde — sayfanın görsel çapası */
+.ort-kapak{aspect-ratio:16/10;border-radius:10px;overflow:hidden;background:var(--surface3);margin-bottom:14px;}
+.ort-kapak img{width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.2,.8,.2,1);}
+.mn-orta a:hover .ort-kapak img{transform:scale(1.035);}
+.ort-kick{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:2.2px;color:var(--accent);margin-bottom:9px;}
+.ort-baslik{font-family:var(--font-head);font-size:27px;font-weight:600;line-height:1.22;letter-spacing:-.01em;color:var(--text);margin-bottom:9px;transition:color .2s;}
+.mn-orta a:hover .ort-baslik{color:var(--accent);}
+.ort-ozet{font-size:13.5px;line-height:1.6;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:10px;}
+.ort-alt{margin-top:14px;padding-top:12px;border-top:1px solid var(--rule);}
+.ort-l{display:block;padding:9px 0;font-family:var(--font-head);font-size:15px;font-weight:600;line-height:1.32;color:var(--text2);border-bottom:1px solid var(--rule);transition:color .15s;}
+.ort-l:last-child{border-bottom:none;}
+.ort-l:hover{color:var(--accent);}
+@media(max-width:1100px){
+  .mn-grid{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);}
+  .mn-orta{grid-column:1/-1;border-left:none;border-right:none;padding:22px 0 0;border-top:1px solid var(--rule);}
+}
 .mn-lead{min-width:0;}
 .lead-card{display:block;}
-.lead-cover{aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:var(--surface3);margin-bottom:15px;}
+/* Sol sütun metin önde (WSJ'de manşet önce okunur, görsel sonra) */
+.lead-cover{aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:var(--surface3);margin:14px 0 0;order:2;}
+.lead-card{display:flex;flex-direction:column;}
+.lead-kick,.lead-title,.lead-sum,.lead-card .meta-row{order:1;}
 .lead-cover img{width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.2,.8,.2,1);}
 .lead-card:hover .lead-cover img{transform:scale(1.035);}
 .lead-kick{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:2.4px;color:var(--accent);margin-bottom:10px;}
 .lead-kick .dot{width:6px;height:6px;border-radius:100%;background:var(--success);animation:blink 1.8s ease infinite;}
-.lead-title{font-family:var(--font-head);font-size:clamp(26px,3vw,38px);font-weight:600;line-height:1.2;letter-spacing:-.01em;color:var(--text);margin-bottom:10px;transition:color .2s;}
+.lead-title{font-family:var(--font-head);font-size:clamp(24px,2.2vw,31px);font-weight:600;line-height:1.2;letter-spacing:-.01em;color:var(--text);margin-bottom:10px;transition:color .2s;}
 .lead-card:hover .lead-title{color:var(--accent);}
 .lead-sum{font-size:14.5px;line-height:1.6;color:var(--muted);max-width:62ch;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .lead-sum b{color:var(--text2);font-weight:500;}
@@ -256,6 +296,7 @@ nav.pill{display:flex;align-items:center;justify-content:space-between;gap:16px;
 .rp-cta{display:inline-block;font-size:12px;font-weight:600;color:var(--accent);}
 @media(max-width:991px){
   .mn-grid{grid-template-columns:1fr;gap:26px;}
+  .mn-orta{grid-column:auto;padding:20px 0 0;border:none;border-top:1px solid var(--rule);}
   .mn-rail{border-left:none;padding-left:0;border-top:1px solid var(--rule);padding-top:20px;}
 }
 
@@ -536,12 +577,13 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
    kayarken üst çerçeve yerinden oynamıyor. */
 .mob-sek{display:none;}
 @media(max-width:767px){
-  /* Masthead: logo ortada, menü sağda — gazete künyesi gibi */
-  nav.pill{position:relative;justify-content:center;padding:11px 16px;min-height:46px;}
-  .nav-brand{position:static;}
-  .wm{font-size:19px;letter-spacing:.02em;}
+  /* Künye: logo ortada, menü sağda — gazete künyesi gibi */
+  .kunye-ic{padding:12px 16px 8px;min-height:auto;}
+  .kunye-marka .wm{font-size:21px;}
+  .kunye-sag{display:none;}          /* Terminal zaten sekme şeridinde */
+  .kunye-alt{display:none;}
   .nav-burger{position:absolute;right:12px;top:50%;transform:translateY(-50%);padding:6px;}
-  .nav-links{top:100%;}
+  .nav-links{top:100%;position:absolute;}
 
   /* Bölüm şeridi: yatay kaydırılır, kaydırma çubuğu gizli */
   .mob-sek{display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;
@@ -602,41 +644,12 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
 </head>
 <body>
 
-<!-- ═══════ NAV ═══════ -->
-<div class="nav-wrap">
-  <nav class="pill" id="pillNav">
-    <a class="nav-brand" href="/" aria-label="Barış Investing — ana sayfa">
-      <span class="wm">Barış<span class="wm-i">Investing</span></span>
-    </a>
-    <div class="nav-links" id="navLinks">
-      <a class="lnk" href="/tezler">Tezler</a>
-      <a class="lnk" href="#services">Analiz</a>
-      <a class="lnk" href="#pricing">Terminal</a>
-      <a class="lnk" href="/arastirmalar">Araştırma</a>
-      <a class="lnk" href="/haberler">Haberler</a>
-      <a class="nav-cta" href="/terminal">Terminal'e Giriş</a>
-    </div>
-    <button class="nav-burger" id="navBurger" aria-label="Menü">
-      <span></span><span></span><span></span>
-    </button>
-  </nav>
-  <!-- Mobil bölüm şeridi (WSJ'deki Top Stories/Markets/Opinion sırası).
-       Masthead ile aynı sabit kapsayıcıda: kaydırırken ikisi de yerinde
-       kalıyor, sayfa altta kayarken üst çerçeve oynamıyor. -->
-  <nav class="mob-sek" aria-label="Bölümler">
-    <a class="ms-l aktif" href="/">Öne Çıkan</a>
-    <a class="ms-l" href="/tezler">Tezler</a>
-    <a class="ms-l" href="/arastirmalar">Araştırmalar</a>
-    <a class="ms-l" href="/haberler">Haberler</a>
-    <a class="ms-l ms-cta" href="/terminal">Terminal</a>
-  </nav>
-</div>
+<!-- ═══════ ÜST BLOK — gazete sırası ═══════
+     WSJ düzeni: en üstte piyasa şeridi, altında ortalı künye, en altta
+     bölüm menüsü. Bölüm menüsü ve mobil sekme şeridi yapışkan; sayfa
+     kayarken üst çerçeve yerinden oynamıyor. -->
 
-<!-- ═══════ PİYASA ŞERİDİ ═══════
-     Eski hero ("Sistematik Yatırımın Yeni Merkezi") kaldırıldı: her
-     ziyarette aynı slogan ilk ekranı kaplıyor, içerik ancak kaydırınca
-     geliyordu. Haber sitesi düzeni gibi doğrudan içerikle açılıyoruz;
-     canlı piyasa şeridi nav'ın hemen altında ince bir bant. -->
+<!-- 1) Piyasa şeridi — sayfanın en üstü -->
 <div class="mkt-strip">
   <div class="container mkt-inner">
     <span class="mkt-lbl">◈ Canlı Piyasa</span>
@@ -650,6 +663,44 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
   </div>
 </div>
 
+<!-- 2) Künye — ortalı, gazete başlığı gibi -->
+<header class="kunye">
+  <div class="container kunye-ic">
+    <a class="kunye-marka" href="/" aria-label="Barış Investing — ana sayfa">
+      <span class="wm">Barış<span class="wm-i">Investing</span></span>
+    </a>
+    <div class="kunye-sag">
+      <a class="kunye-cta" href="/terminal">Terminal'e Giriş</a>
+    </div>
+    <button class="nav-burger" id="navBurger" aria-label="Menü">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="kunye-alt">Bağımsız finansal araştırma · Canlı yatırım tezleri</div>
+</header>
+
+<!-- 3) Bölüm menüsü — yapışkan -->
+<div class="nav-wrap">
+  <nav class="pill" id="pillNav">
+    <div class="nav-links" id="navLinks">
+      <a class="lnk" href="/">Öne Çıkan</a>
+      <a class="lnk" href="/tezler">Tezler</a>
+      <a class="lnk" href="/arastirmalar">Araştırmalar</a>
+      <a class="lnk" href="/haberler">Haberler</a>
+      <a class="lnk" href="#pricing">Nasıl Çalışır</a>
+      <a class="nav-cta" href="/terminal">Terminal'e Giriş</a>
+    </div>
+  </nav>
+  <!-- Mobil bölüm şeridi: yatay kaydırılır, künyeyle birlikte yapışır -->
+  <nav class="mob-sek" aria-label="Bölümler">
+    <a class="ms-l aktif" href="/">Öne Çıkan</a>
+    <a class="ms-l" href="/tezler">Tezler</a>
+    <a class="ms-l" href="/arastirmalar">Araştırmalar</a>
+    <a class="ms-l" href="/haberler">Haberler</a>
+    <a class="ms-l ms-cta" href="/terminal">Terminal</a>
+  </nav>
+</div>
+
 <main>
 
 <!-- ═══════ HAFTANIN SEÇİMİ + YATIRIM TEZLERİ (API) ═══════ -->
@@ -660,10 +711,13 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
      düzeninin karşılığı. -->
 <section class="sec sec-manset" id="icerik">
   <div class="container">
+    <!-- WSJ ana sayfası gibi üç sütun: solda manşet (metin önde),
+         ortada öne çıkan tez (görsel önde), sağda akış. -->
     <div class="mn-grid">
       <div class="mn-lead" id="featTez">
         <div class="lead-skel skel">MANŞET YÜKLENİYOR…</div>
       </div>
+      <div class="mn-orta" id="ortaTez"></div>
       <aside class="mn-rail rv">
         <div class="rail-head">Son Eklenenler</div>
         <div class="rail-list" id="railList"><div class="skel">YÜKLENİYOR…</div></div>
@@ -1164,6 +1218,28 @@ function renderFeatured(t) {
   </a>`;
 }
 
+/* ORTA SÜTUN: öne çıkan tez, görsel önde. Manşet en taze içeriği
+   gösteriyor (çoğu zaman haber); tezler sitenin asıl ürünü olduğu için
+   sayfanın görsel merkezine en son tez konuyor. Altında iki başlık daha. */
+function ortaCiz(list) {
+  const el = document.getElementById('ortaTez');
+  if (!el) return;
+  const tezler = list.filter(t => (t.kategori || 'tez') === 'tez');
+  if (!tezler.length) { el.innerHTML = ''; return; }
+  const [bas, ...kalan] = tezler;
+  const g = guncelMi(bas) ? (bas.son_guncelleme_bilgi || {}) : null;
+  const kapak = (g && g.gorsel) ? g.gorsel : bas.kapak_gorseli;
+  el.innerHTML = `<a href="/tez/${bas.id}${g ? '#tezSeyri' : ''}">
+      ${kapak ? `<div class="ort-kapak"><img src="${esc(kapak)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+      <div class="ort-kick"><span class="dot"></span>${g ? 'GÜNCELLEME YAYINDA' : 'AÇIK TEZ'}${bas.ticker ? ' · ' + esc(bas.ticker) : ''}</div>
+      <div class="ort-baslik">${esc((g && g.baslik) || bas.baslik || '')}</div>
+      ${bas.ozet_fark || bas.ozet ? `<div class="ort-ozet">${esc(bas.ozet_fark || bas.ozet)}</div>` : ''}
+      ${metaHTML(bas)}
+    </a>
+    ${kalan.length ? `<div class="ort-alt">${kalan.slice(0, 2).map(t =>
+      `<a class="ort-l" href="/tez/${t.id}">${esc(t.baslik || '')}</a>`).join('')}</div>` : ''}`;
+}
+
 /* SAĞ ŞERİT: tüm türler karışık, en yeniden eskiye */
 const TUR_AD = { tez:'TEZ', arastirma:'ARAŞTIRMA', haber:'HABER' };
 function railHTML(t) {
@@ -1282,6 +1358,7 @@ function icerigiCiz(list, tazeMi) {
       listeCiz(liste, [], {}, tur === 'tez' ? 'HENÜZ TEZ YAYINLANMADI.' : tur === 'arastirma' ? 'İLK ARAŞTIRMA YAKINDA.' : 'İLK HABER YAKINDA.');
     }
   }
+  ortaCiz(list);
   takipCiz(list);
   armFly();
   if (tazeMi) guncellemeBariniGoster(list);
