@@ -254,8 +254,11 @@ nav.pill{display:flex;align-items:center;justify-content:center;gap:16px;max-wid
    2) Zıplama yok: yükseklik "auto" bırakılınca görsel yüklenene kadar
       kutu 0 piksel oluyor, görsel gelince sayfa aşağı sıçrıyordu
       (özellikle lazy yüklenen alt kartlarda). Oran şimdiden ayrılıyor.
-   Oran 1.91: kapaklar 1200x628 (OG ölçüsü) üretiliyor, tam oturuyor. */
-.ort-kapak{aspect-ratio:1.91/1;border-radius:10px;overflow:hidden;background:var(--surface3);margin-bottom:14px;}
+   Oran 2.3: canlıdaki kapaklar ölçüldü — 8 kapağın 7'si 1920x820 veya
+   3200x1400, yani 2,29-2,34 bandında. Ev ölçüsü bu; kapaklar kutuya
+   neredeyse birebir oturuyor, farklı oranda bir kapak gelirse kırpılmak
+   yerine kenarında ince boşluk kalıyor. */
+.ort-kapak{aspect-ratio:2.3/1;border-radius:10px;overflow:hidden;background:var(--surface3);margin-bottom:14px;}
 .ort-kapak img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .7s cubic-bezier(.2,.8,.2,1);}
 .mn-orta a:hover .ort-kapak img{transform:scale(1.035);}
 .ort-kick{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:2.2px;color:var(--accent);margin-bottom:9px;}
@@ -273,7 +276,7 @@ nav.pill{display:flex;align-items:center;justify-content:center;gap:16px;max-wid
 .mn-lead{min-width:0;}
 .lead-card{display:block;}
 /* Sol sütun metin önde (WSJ'de manşet önce okunur, görsel sonra) */
-.lead-cover{aspect-ratio:1.91/1;border-radius:8px;overflow:hidden;background:var(--surface3);margin:14px 0 0;order:2;}
+.lead-cover{aspect-ratio:2.3/1;border-radius:8px;overflow:hidden;background:var(--surface3);margin:14px 0 0;order:2;}
 .lead-card{display:flex;flex-direction:column;}
 .lead-kick,.lead-title,.lead-sum,.lead-card .meta-row{order:1;}
 .lead-cover img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .7s cubic-bezier(.2,.8,.2,1);}
@@ -376,7 +379,7 @@ a.feat-strip:hover .fs-cover img{transform:scale(1.04);}
 /* Sütun başındaki kapaklı kart — "temiz kart" görünümü burada duruyor */
 .ic-kart{margin-bottom:4px;}
 .ik-card{display:block;padding-bottom:14px;border-bottom:1px solid var(--rule);}
-.ik-cover{aspect-ratio:1.91/1;border-radius:10px;overflow:hidden;background:var(--surface3);margin:14px 0 11px;}
+.ik-cover{aspect-ratio:2.3/1;border-radius:10px;overflow:hidden;background:var(--surface3);margin:14px 0 11px;}
 .ik-cover img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .6s cubic-bezier(.2,.8,.2,1);}
 .ik-card:hover .ik-cover img{transform:scale(1.05);}
 .ik-title{font-size:16px;font-weight:600;line-height:1.35;color:var(--text);letter-spacing:-.01em;transition:color .18s;}
