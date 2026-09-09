@@ -2966,12 +2966,76 @@ body.pr-kilit{overflow:hidden;}
   /* Okuma sayfası: gazete makalesi */
   .tzo-title{font-size:27px!important;line-height:1.18;}
   .tzo-lede{font-size:15px;}
-  .tzo-cover{margin:0 -16px 14px;border-radius:0;border-left:none;border-right:none;}
+  .tzo-cover{margin:0 -22px 14px;border-radius:0;border-left:none;border-right:none;}
 
   /* Hareket yok: telefonda sayfa oynamasın */
   .pfly,.pfly.pland{opacity:1!important;transform:none!important;transition:none!important;}
 }
 
+
+/* ── MOBİL: PORTAL SAYFALARI ANA SAYFAYLA AYNI ÇERÇEVEDE ─────────
+   375px'te iki sayfa yan yana ölçüldü. Ana sayfa: künye akışta duruyor
+   ve yalnız sekme şeridi yapışıyor (14px/600, bulunulan sekmenin altında
+   altın çizgi), kenar boşluğu 22px, içerikte tek büyük görsel + 104px
+   künye görselleri. Portal sayfaları: künyenin tamamı yapışıyordu, şerit
+   12px'ti ve bulunulan bölüm işaretli değildi, boşluk 16px'ti ve
+   /tezler'de yedi adet 343x149 tam genişlik kapak alt alta diziliyordu.
+   Sekmeye geçince başka bir siteye girilmiş gibi hissettiren fark buydu;
+   ana sayfanın ölçüleri buraya birebir taşındı. */
+@media(max-width:767px){
+  /* Kenar boşluğu ana sayfayla aynı */
+  .pt-wrap{padding:0 22px 60px;}
+
+  /* Künye yukarı kayıp çıksın, geriye yalnız sekme şeridi yapışsın:
+     ana sayfada künye akışta, .nav-wrap yapışkan. Aynı davranışı tek
+     kapsayıcıyla vermek için künye yüksekliği kadar negatif top. */
+  .pt-topbar{position:sticky;top:-45px;z-index:60;margin:0 -22px;padding:0;
+    border-bottom:none;background:rgba(11,15,21,.95);}
+  .pt-brand-lockup{height:45px;padding:0 22px;justify-content:center;
+    border-bottom:1px solid var(--portal-border);}
+
+  /* Sekme şeridi: ana sayfadaki .mob-sek ölçüleri */
+  .pt-topnav{padding:0 6px;border-top:none;}
+  .pt-topnav .pt-sec-link{font-size:14px;font-weight:600;padding:11px 14px;
+    color:var(--cream2);}
+  .pt-topnav .pt-enter{background:none;border:none;box-shadow:none;border-radius:0;
+    color:var(--accent);font-family:var(--font);font-size:14px;font-weight:600;
+    letter-spacing:0;text-transform:none;padding:11px 14px;margin:0!important;}
+  .pt-topnav .pt-enter .arr{display:none;}
+  /* Bulunulan bölüm işaretli — ana sayfadaki .ms-l.aktif ile aynı */
+  body.route-tezler       #tezlerRoot       .pt-topnav a[data-route="/tezler"],
+  body.route-arastirmalar #arastirmalarRoot .pt-topnav a[data-route="/arastirmalar"],
+  body.route-haberler     #haberlerRoot     .pt-topnav a[data-route="/haberler"]{
+    color:var(--cream);border-bottom-color:var(--accent);}
+
+  /* TEK BÜYÜK GÖRSEL KURALI (ana sayfayla aynı): kapaklar satırın
+     sağında 104px künye görseli, kendi 2.3:1 oranında. */
+  .pt-tez-card{display:flex;flex-direction:row;align-items:flex-start;gap:14px;}
+  .ptz-cover{order:2;flex:0 0 104px;width:104px;height:auto;aspect-ratio:2.3/1;
+    border-radius:5px;margin:0;}
+  .ptz-cover::after{display:none;}   /* kart için yapılmış karartma; künyede gereksiz */
+  .ptz-cover img{opacity:1;}
+  .ptz-body{order:1;flex:1;min-width:0;}
+  .ptz-title{font-size:17px;line-height:1.28;}
+  .ptz-sum{margin-bottom:10px;}
+
+  /* İlk kart ana sayfadaki manşet: metin önde, görsel tam genişlik */
+  /* align-items:stretch şart: kart flex-start ile hizalı olduğu için
+     column yönünde kapak genişliği 0 kalıyordu (ölçüldü: 0x0). */
+  .pt-tez-grid > .pt-tez-card:first-child{flex-direction:column;gap:0;align-items:stretch;}
+  .pt-tez-grid > .pt-tez-card:first-child .ptz-body{order:1;}
+  .pt-tez-grid > .pt-tez-card:first-child .ptz-cover{order:2;flex:none;width:auto;
+    margin:13px -22px 0;border-radius:0;}
+  .pt-tez-grid > .pt-tez-card:first-child .ptz-title{font-size:26px;line-height:1.18;}
+  .pt-tez-grid > .pt-tez-card:first-child .ptz-sum{font-size:15px;-webkit-line-clamp:3;}
+}
+/* Masaüstü değişmesin: sayfa kendi bölüm bağlantısını göstermiyordu,
+   o bağlantı yalnızca mobildeki aktif sekme için eklendi. */
+@media(min-width:768px){
+  body.route-tezler       #tezlerRoot       .pt-topnav a[data-route="/tezler"],
+  body.route-arastirmalar #arastirmalarRoot .pt-topnav a[data-route="/arastirmalar"],
+  body.route-haberler     #haberlerRoot     .pt-topnav a[data-route="/haberler"]{display:none;}
+}
 /* Yatay kayma kilidi — parmakla sağa sola kaymasın */
 html{overflow-x:hidden;}
 @supports (overflow:clip){html{overflow-x:clip;}}
@@ -3358,7 +3422,8 @@ body{overflow-x:hidden;max-width:100vw;}
         </div>
       </div>
       <div class="pt-topnav">
-        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">← Ana Sayfa</a>
+        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">Öne Çıkan</a>
+        <a class="pt-sec-link" data-route="/tezler" href="/tezler" style="margin-right:6px">Tezler</a>
         <a class="pt-sec-link" data-route="/arastirmalar" href="/arastirmalar" style="margin-right:6px">Araştırmalar</a>
         <a class="pt-sec-link" data-route="/haberler" href="/haberler" style="margin-right:6px">Haberler</a>
         <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
@@ -3422,7 +3487,7 @@ body{overflow-x:hidden;max-width:100vw;}
         </div>
       </div>
       <div class="pt-topnav">
-        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">← Ana Sayfa</a>
+        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">Öne Çıkan</a>
         <a class="pt-sec-link" data-route="/tezler" href="/tezler" style="margin-right:6px">Tezler</a>
         <a class="pt-sec-link" data-route="/arastirmalar" href="/arastirmalar" style="margin-right:6px">Araştırmalar</a>
         <a class="pt-sec-link" data-route="/haberler" href="/haberler" style="margin-right:6px">Haberler</a>
@@ -3455,8 +3520,9 @@ body{overflow-x:hidden;max-width:100vw;}
         </div>
       </div>
       <div class="pt-topnav">
-        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">← Ana Sayfa</a>
+        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">Öne Çıkan</a>
         <a class="pt-sec-link" data-route="/tezler" href="/tezler" style="margin-right:6px">Tezler</a>
+        <a class="pt-sec-link" data-route="/arastirmalar" href="/arastirmalar" style="margin-right:6px">Araştırmalar</a>
         <a class="pt-sec-link" data-route="/haberler" href="/haberler" style="margin-right:6px">Haberler</a>
         <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
       </div>
@@ -3494,9 +3560,10 @@ body{overflow-x:hidden;max-width:100vw;}
         </div>
       </div>
       <div class="pt-topnav">
-        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">← Ana Sayfa</a>
+        <a class="pt-sec-link" data-route="/" href="/" style="margin-right:6px">Öne Çıkan</a>
         <a class="pt-sec-link" data-route="/tezler" href="/tezler" style="margin-right:6px">Tezler</a>
         <a class="pt-sec-link" data-route="/arastirmalar" href="/arastirmalar" style="margin-right:6px">Araştırmalar</a>
+        <a class="pt-sec-link" data-route="/haberler" href="/haberler" style="margin-right:6px">Haberler</a>
         <a class="pt-enter" data-route="/terminal" href="/terminal">Terminal'e Giriş <span class="arr">→</span></a>
       </div>
     </div>
