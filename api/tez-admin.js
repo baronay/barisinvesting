@@ -86,7 +86,10 @@ export default async function handler(req, res) {
           // Güncellemelerin başlığı/tarihi kalsın (neyin beklediği görünsün), gövdesi gitsin
           tez.guncellemeler = tez.guncellemeler.map(g => ({
             id: g.id, tez_id: g.tez_id, baslik: g.baslik, tarih: g.tarih,
-            tur: g.tur, sinyal: g.sinyal, fiyat: g.fiyat, kilit: true, icerik: null, gorsel: null,
+            tur: g.tur, sinyal: g.sinyal, fiyat: g.fiyat, kilit: true, icerik: null,
+            // Görsel kalsın: ana sayfa listesinde zaten herkese açık
+            // (son_guncelleme_bilgi.gorsel); okuma sayfasının kapağı buradan geliyor.
+            gorsel: g.gorsel || null,
           }));
         }
       }

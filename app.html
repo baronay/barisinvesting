@@ -7379,11 +7379,14 @@ function garpAnalizAc(ticker) {
       const tarih = trDate(tez.olusturma);
       const guncellemeler = Array.isArray(tez.guncellemeler) ? tez.guncellemeler : [];
       const sonGunc = guncellemeler.length ? guncellemeler[guncellemeler.length - 1] : null;
+      // Kapak: son güncellemenin görseli varsa o — ana sayfadaki manşet onu
+      // gösteriyor, tıklayınca eski kapak çıkıyordu. Yoksa tezin kendi kapağı.
+      const tzoKapak = (guncellemeler.slice().reverse().find(g => g && g.gorsel) || {}).gorsel || tez.kapak_gorseli;
       const govdeAd = kat==='arastirma' ? 'İlk Araştırma' : kat==='haber' ? 'Haber' : 'İlk Tez';
       document.title = tez.baslik + ' — Barış Investing';
       art.innerHTML = `
         <span class="tzo-back" data-route="${backRoute}">← ${backLabel}</span>
-        ${tez.kapak_gorseli ? `<div class="tzo-cover"><img src="${esc(tez.kapak_gorseli)}" alt="" onerror="this.parentElement.style.display='none'"></div>` : ''}
+        ${tzoKapak ? `<div class="tzo-cover"><img src="${esc(tzoKapak)}" alt="" onerror="this.parentElement.style.display='none'"></div>` : ''}
         <div class="tzo-meta">
           ${tez.ticker ? `<span class="ptz-ticker">${esc(tez.ticker)}</span>` : ''}
           ${kat==='arastirma' ? '<span class="ptz-cat">Araştırma</span>' : ''}

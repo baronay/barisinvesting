@@ -422,6 +422,9 @@ a.feat-strip:hover .fs-cover img{transform:scale(1.04);}
 .feat-card.guncel .feat-kicker .dot{background:var(--accent);}
 .feat-parent{font-size:13px;line-height:1.6;color:var(--muted2);margin-top:10px;}
 .feat-parent b{color:var(--muted);font-weight:500;}
+/* Manşette güncellemenin hangi teze ait olduğu: lead-card flex sütun ve
+   görsel order:2 ile sona gidiyor; bu satır da metinle birlikte kalsın. */
+.lead-card .feat-parent{order:1;margin:-2px 0 10px;}
 .feat-updtag{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--accent);border:1px solid var(--border-g);background:var(--accent-dim);padding:2px 8px;border-radius:5px;margin-left:auto;}
 
 /* ── Sağ alt güncelleme bildirimi ── */
@@ -1295,14 +1298,19 @@ function renderFeatured(t) {
   const href   = g ? `/tez/${t.id}#tezSeyri` : `/tez/${t.id}`;
   const kick   = g ? 'GÜNCELLEME YAYINDA' : (t.kategori === 'haber' ? 'SON HABER'
                : t.kategori === 'arastirma' ? 'YENİ ARAŞTIRMA' : 'HAFTANIN SEÇİMİ');
-  const alt    = g
-    ? `<b>${esc(t.baslik || '')}</b> tezine eklendi${t.guncelleme_sayisi > 1 ? ` · toplam ${t.guncelleme_sayisi} güncelleme` : ''}`
-    : esc(t.ozet || '');
+  // Güncellemede de açıklama görünsün: eskiden burada yalnızca "X tezine
+  // eklendi" yazıyordu, ne değiştiği okunmuyordu. ozet_fark tezin güncel
+  // görüşü (özet üretimi güncellemeleri de okuyor); yoksa tezin girişi.
+  const alt    = esc(g ? (t.ozet_fark || t.ozet || '') : (t.ozet || ''));
+  const ust    = g
+    ? `<b>${esc(t.baslik || '')}</b> tezinin güncellemesi${t.guncelleme_sayisi > 1 ? ` · toplam ${t.guncelleme_sayisi} güncelleme` : ''}`
+    : '';
 
   host.innerHTML = `<a class="lead-card fly" style="${flyStyle(0)}" href="${href}">
     ${kapak ? `<div class="lead-cover"><img src="${esc(kapak)}" alt="" onerror="this.parentNode.style.display='none'"></div>` : ''}
     <div class="lead-kick"><span class="dot"></span>${kick}${t.ticker ? ' · ' + esc(t.ticker) : ''}</div>
     <div class="lead-title">${esc(baslik)}</div>
+    ${ust ? `<div class="feat-parent">${ust}</div>` : ''}
     ${alt ? `<div class="lead-sum">${alt}</div>` : ''}
     ${metaHTML(t)}
   </a>`;
@@ -1314,7 +1322,11 @@ function renderFeatured(t) {
 function ortaCiz(list) {
   const el = document.getElementById('ortaTez');
   if (!el) return;
-  const tezler = list.filter(t => (t.kategori || 'tez') === 'tez');
+  // Manşetteki kaydı hariç tut: en taze içerik bir tez güncellemesi
+  // olunca manşet (list[0]) ile buradaki ilk tez aynı kayıt oluyor ve
+  // aynı başlık + aynı kapak yan yana iki kez çıkıyordu (NOW, 10 Eylül).
+  const mansetId = list[0] && list[0].id;
+  const tezler = list.filter(t => (t.kategori || 'tez') === 'tez' && t.id !== mansetId);
   if (!tezler.length) { el.innerHTML = ''; return; }
   const [bas, ...kalan] = tezler;
   const g = guncelMi(bas) ? (bas.son_guncelleme_bilgi || {}) : null;
