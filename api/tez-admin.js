@@ -271,7 +271,7 @@ export default async function handler(req, res) {
         const g = guncellemeler[i];
         const parca = [
           `[${i + 1}] ${String(g.tarih || '').slice(0, 10)} · ${g.tur || 'not'}` +
-            `${g.sinyal ? ` · sinyal: ${g.sinyal}` : ''}${g.fiyat != null ? ` · fiyat: ${g.fiyat}` : ''}`,
+            `${g.sinyal ? ` · görüş: ${({ AL: 'AL', IZLE: 'İZLE', NOTR: 'TUT', KACIN: 'UZAK DUR' })[g.sinyal] || g.sinyal}` : ''}${g.fiyat != null ? ` · fiyat: ${g.fiyat}` : ''}`,
           `BAŞLIK: ${g.baslik || ''}`,
           duzMetin(g.icerik).slice(0, 8000),
         ].join('\n');

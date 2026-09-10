@@ -5254,7 +5254,7 @@ async function tezBildirimKontrol(ticker) {
     _tezBildirimId = tez.id;
     const sEl = document.getElementById('tezBildirimSinyal');
     const sRenk = {AL:'#22c55e',IZLE:'#b89b6a',KACIN:'#f05252',NOTR:'#9aa3b2'};
-    const sLabel = {AL:'AL',IZLE:'İZLE',KACIN:'UZAK DUR',NOTR:'NÖTR'};
+    const sLabel = {AL:'AL',IZLE:'İZLE',KACIN:'UZAK DUR',NOTR:'TUT'};
     if (sEl && tez.sinyal) {
       const rc = sRenk[tez.sinyal]||'#9aa3b2';
       sEl.innerHTML = `<span style="color:${rc};background:${rc}18;border:1px solid ${rc}44;padding:1px 5px;border-radius:3px;font-weight:700;">${sLabel[tez.sinyal]||tez.sinyal}</span>`;
@@ -5760,7 +5760,7 @@ async function renderTezler() {
     }
 
     grid.innerHTML = tezler.map(tez => {
-      const verdictLabel = tez.sinyal === 'AL' ? 'AL' : tez.sinyal === 'IZLE' ? 'İZLE' : tez.sinyal === 'KACIN' ? 'UZAK DUR' : 'NÖTR';
+      const verdictLabel = tez.sinyal === 'AL' ? 'AL' : tez.sinyal === 'IZLE' ? 'İZLE' : tez.sinyal === 'KACIN' ? 'UZAK DUR' : 'TUT';
       const verdictClass = tez.sinyal === 'AL' ? 'al' : tez.sinyal === 'IZLE' ? 'izle' : 'uzak';
       const tarih = tez.olusturma ? new Date(tez.olusturma).toLocaleDateString('tr-TR', {month:'long',year:'numeric'}) : '';
       const tezKapak = (tez.son_guncelleme && tez.son_guncelleme > tez.olusturma && tez.son_guncelleme_bilgi && tez.son_guncelleme_bilgi.gorsel) || tez.kapak_gorseli;
@@ -7082,7 +7082,7 @@ function garpAnalizAc(ticker) {
     renderTweets();
   }
 
-  const sigMap = { AL:['al','AL'], IZLE:['izle','İZLE'], KACIN:['uzak','UZAK DUR'], NOTR:['notr','NÖTR'] };
+  const sigMap = { AL:['al','AL'], IZLE:['izle','İZLE'], KACIN:['uzak','UZAK DUR'], NOTR:['notr','TUT'] };
   function trDate(s){ return s ? new Date(s).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : ''; }
 
   /* Kart uçuş efekti — landing'deki savrulmuş girişin aynısı */

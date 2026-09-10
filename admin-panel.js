@@ -314,7 +314,7 @@ async function openTezEditor() {
               <option value="">—</option>
               <option value="AL">AL</option>
               <option value="IZLE">İZLE</option>
-              <option value="NOTR">NÖTR</option>
+              <option value="NOTR">TUT</option>
               <option value="KACIN">KAÇIN</option>
             </select>
           </div>
@@ -433,7 +433,7 @@ async function openTezEditor() {
                 <option value="">— değişmedi</option>
                 <option value="AL">AL</option>
                 <option value="IZLE">İZLE</option>
-                <option value="NOTR">NÖTR</option>
+                <option value="NOTR">TUT</option>
                 <option value="KACIN">KAÇIN</option>
               </select>
               <div style="font-size:9px;color:#3a4150;margin-top:3px;">Seçersen tezin sinyali de değişir</div>

@@ -1164,7 +1164,7 @@ document.getElementById('newsEmail').addEventListener('keydown', e => { if (e.ke
     id, kategori, ticker, sinyal, baslik, ozet,
     kapak_gorseli, olusturma)
    ════════════════════════════════════════════ */
-const sigMap = { AL:['al','AL'], IZLE:['izle','İZLE'], KACIN:['uzak','UZAK DUR'], NOTR:['notr','NÖTR'] };
+const sigMap = { AL:['al','AL'], IZLE:['izle','İZLE'], KACIN:['uzak','UZAK DUR'], NOTR:['notr','TUT'] };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const trDate = s => s ? new Date(s).toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' }) : '';
 
@@ -1416,7 +1416,7 @@ function guncellemeBariniGoster(list) {
 
 /* Açık tezler şeridi: yalnızca 'tez' kategorisi, en son hareket edenden
    başlayarak. Sinyali olmayan tez de görünsün — görüş yerine tarih. */
-const GORUS_AD = { AL:['al','AL'], IZLE:['izle','İZLE'], NOTR:['notr','NÖTR'], KACIN:['uzak','KAÇIN'] };
+const GORUS_AD = { AL:['al','AL'], IZLE:['izle','İZLE'], NOTR:['notr','TUT'], KACIN:['uzak','KAÇIN'] };
 function takipCiz(list) {
   const el = document.getElementById('tkSerit');
   if (!el) return;
