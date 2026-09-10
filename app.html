@@ -5763,11 +5763,12 @@ async function renderTezler() {
       const verdictLabel = tez.sinyal === 'AL' ? 'AL' : tez.sinyal === 'IZLE' ? 'İZLE' : tez.sinyal === 'KACIN' ? 'UZAK DUR' : 'NÖTR';
       const verdictClass = tez.sinyal === 'AL' ? 'al' : tez.sinyal === 'IZLE' ? 'izle' : 'uzak';
       const tarih = tez.olusturma ? new Date(tez.olusturma).toLocaleDateString('tr-TR', {month:'long',year:'numeric'}) : '';
+      const tezKapak = (tez.son_guncelleme && tez.son_guncelleme > tez.olusturma && tez.son_guncelleme_bilgi && tez.son_guncelleme_bilgi.gorsel) || tez.kapak_gorseli;
       const etiketler = (tez.etiketler || []).map(t => `<span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);border:1px solid var(--border);padding:1px 6px">${t}</span>`).join('');
 
       return `
       <div class="tez-card" onclick="openTezSupabase(${tez.id})">
-        ${tez.kapak_gorseli ? `<img class="tez-cover" src="${tez.kapak_gorseli}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+        ${tezKapak ? `<img class="tez-cover" src="${tezKapak}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
         <div class="tez-card-header">
           <div class="tez-card-meta">
             ${tez.ticker ? `<span class="tez-ticker">${tez.ticker}</span>` : ''}
@@ -7503,6 +7504,8 @@ function garpAnalizAc(ticker) {
     return (g && g > t.olusturma) ? g : (t.olusturma || '');
   }
   function guncelMi(t){ return !!(t.son_guncelleme && t.son_guncelleme > t.olusturma); }
+  // Güncel kapak: son güncellemenin görseli varsa o, yoksa ilk kapak (ana sayfayla aynı kural)
+  function guncelKapak(t){ const g = guncelMi(t) && t.son_guncelleme_bilgi; return (g && g.gorsel) || t.kapak_gorseli || ''; }
   function hareketSirala(list){
     return list.slice().sort((a,b)=> String(sonHareket(b)).localeCompare(String(sonHareket(a))));
   }
@@ -7563,7 +7566,7 @@ function garpAnalizAc(ticker) {
   function tezCardHTML(t){
     const sig = sigMap[t.sinyal] || sigMap.NOTR;
     return `<div class="pt-tez-card" onclick="window.__openTez(${t.id})">
-      ${t.kapak_gorseli ? `<div class="ptz-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+      ${guncelKapak(t) ? `<div class="ptz-cover"><img src="${esc(guncelKapak(t))}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
       <div class="ptz-body">
         <div class="ptz-meta">
           ${t.ticker ? `<span class="ptz-ticker">${esc(t.ticker)}</span>` : ''}
@@ -7584,7 +7587,7 @@ function garpAnalizAc(ticker) {
     const hasSig = t.sinyal && sigMap[t.sinyal];
     const sig = sigMap[t.sinyal] || sigMap.NOTR;
     return `<div class="pt-tez-card" onclick="window.__openTez(${t.id})">
-      ${t.kapak_gorseli ? `<div class="ptz-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+      ${guncelKapak(t) ? `<div class="ptz-cover"><img src="${esc(guncelKapak(t))}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
       <div class="ptz-body">
         <div class="ptz-meta">
           ${t.ticker ? `<span class="ptz-ticker">${esc(t.ticker)}</span>` : ''}
@@ -7655,7 +7658,7 @@ function garpAnalizAc(ticker) {
      değil, bir not. */
   function haberCardHTML(t){
     return `<div class="pt-tez-card haber" onclick="window.__openTez(${t.id})">
-      ${t.kapak_gorseli ? `<div class="ptz-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+      ${guncelKapak(t) ? `<div class="ptz-cover"><img src="${esc(guncelKapak(t))}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
       <div class="ptz-body">
         <div class="ptz-meta">
           ${t.ticker ? `<span class="ptz-ticker">${esc(t.ticker)}</span>` : ''}

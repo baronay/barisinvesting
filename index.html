@@ -1254,8 +1254,8 @@ function icRowHTML(t, opts = {}) {
   const sig = sigMap[t.sinyal] || sigMap.NOTR;
   const kod = esc((t.ticker || '◈').slice(0, 4));
   return `<a class="ic-row" href="/tez/${t.id}">
-    <div class="ic-thumb">${t.kapak_gorseli
-      ? `<img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.innerHTML='<span>${kod}</span>'">`
+    <div class="ic-thumb">${guncelKapak(t)
+      ? `<img src="${esc(guncelKapak(t))}" alt="" loading="lazy" onerror="this.parentNode.innerHTML='<span>${kod}</span>'">`
       : `<span>${kod}</span>`}</div>
     <div class="ic-txt">
       <div class="ic-meta">
@@ -1283,6 +1283,13 @@ function sonHareket(t) {
   return (g && g > t.olusturma) ? g : (t.olusturma || '');
 }
 function guncelMi(t) { return !!(t.son_guncelleme && t.son_guncelleme > t.olusturma); }
+/* Tezin güncel kapağı: son güncellemenin görseli varsa o, yoksa ilk kapak.
+   Manşet ve orta sütun bunu zaten yapıyordu; bölüm kartları ve liste
+   satırları ilk kapakta kalıyordu (NOW, 10 Eylül). */
+function guncelKapak(t) {
+  const g = guncelMi(t) && t.son_guncelleme_bilgi;
+  return (g && g.gorsel) || t.kapak_gorseli || '';
+}
 function hareketSirala(list) {
   return list.slice().sort((a, b) => String(sonHareket(b)).localeCompare(String(sonHareket(a))));
 }
@@ -1356,7 +1363,7 @@ function railHTML(t) {
 function ikKartHTML(t, i) {
   return `<a class="ik-card fly" style="${flyStyle(i)}" href="/tez/${t.id}">
     ${metaHTML(t)}
-    ${t.kapak_gorseli ? `<div class="ik-cover"><img src="${esc(t.kapak_gorseli)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+    ${guncelKapak(t) ? `<div class="ik-cover"><img src="${esc(guncelKapak(t))}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
     <div class="ik-title">${esc(t.baslik || '')}</div>
     ${t.ozet ? `<div class="ik-sum">${esc(t.ozet)}</div>` : ''}
   </a>`;
