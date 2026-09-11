@@ -82,15 +82,26 @@ export default async function handler(req, res) {
         tez.kilit = onizleme.kesildi;
         if (onizleme.kesildi) {
           tez.icerik = onizleme.html;
-          tez.kilitli_guncelleme = tez.guncellemeler.length;
-          // Güncellemelerin başlığı/tarihi kalsın (neyin beklediği görünsün), gövdesi gitsin
-          tez.guncellemeler = tez.guncellemeler.map(g => ({
-            id: g.id, tez_id: g.tez_id, baslik: g.baslik, tarih: g.tarih,
-            tur: g.tur, sinyal: g.sinyal, fiyat: g.fiyat, kilit: true, icerik: null,
-            // Görsel kalsın: ana sayfa listesinde zaten herkese açık
-            // (son_guncelleme_bilgi.gorsel); okuma sayfasının kapağı buradan geliyor.
-            gorsel: g.gorsel || null,
-          }));
+          // Güncellemelerin başlığı/tarihi kalsın (neyin beklediği görünsün).
+          // EN YENİ güncellemenin girişi açık: okur bu linke çoğu zaman
+          // güncellemeyi okumak için geliyor (manşet /tez/:id#tezSeyri'ye
+          // gidiyor). Eskiden bütün güncellemeler kilitliydi, açık sekme ilk
+          // tez oluyordu ve okur güncellenmemiş eski metni görüyordu.
+          // Eski güncellemeler yine yalnızca başlık; ilk tezin girişi de açık.
+          const sonIdx = tez.guncellemeler.length - 1;
+          tez.guncellemeler = tez.guncellemeler.map((g, idx) => {
+            const ortak = {
+              id: g.id, tez_id: g.tez_id, baslik: g.baslik, tarih: g.tarih,
+              tur: g.tur, sinyal: g.sinyal, fiyat: g.fiyat,
+              // Görsel kalsın: ana sayfa listesinde zaten herkese açık
+              // (son_guncelleme_bilgi.gorsel); okuma sayfasının kapağı buradan geliyor.
+              gorsel: g.gorsel || null,
+            };
+            if (idx !== sonIdx) return { ...ortak, kilit: true, icerik: null };
+            const o = htmlOnizleme(String(g.icerik || ''), butce);
+            return { ...ortak, kilit: o.kesildi, icerik: o.html || null };
+          });
+          tez.kilitli_guncelleme = tez.guncellemeler.filter(g => g.kilit).length;
         }
       }
       return res.status(200).json(tez);

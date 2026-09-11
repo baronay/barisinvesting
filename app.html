@@ -2468,6 +2468,10 @@ body.tzo-kilitli .tzo-content::after{content:'';position:absolute;left:0;right:0
 .tzo-duvar-msg.ok{color:var(--success);}
 .tzo-duvar-not{margin-top:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.6px;color:var(--cream2);opacity:.55;}
 .tzt-kilitli{color:var(--accent);opacity:.9;}
+.tzt-kilitli a{color:inherit;text-decoration:underline;text-underline-offset:3px;}
+/* Kilitli okura en yeni güncellemenin girişi: alt kenarı sönerek biter,
+   hemen altında devam çağrısı duruyor. */
+.tzt-onizleme{-webkit-mask-image:linear-gradient(to bottom,#000 70%,transparent);mask-image:linear-gradient(to bottom,#000 70%,transparent);}
 @media(max-width:640px){
   .tzo-duvar-kart{padding:20px 18px 18px;border-radius:12px;}
   .tzo-duvar-h{font-size:19px;}
@@ -7153,7 +7157,10 @@ function garpAnalizAc(ticker) {
         <span class="tzt-chev">▾</span>
       </div>
       <div class="tzt-accbody">
-        ${g.kilit
+        ${g.kilit && body
+          ? `<div class="tzt-body tzt-onizleme">${body}</div>
+             <div class="tzt-bos tzt-kilitli">🔒 Güncellemenin devamı kayıtlı okurlara açık — <a href="#tzoDuvar" onclick="event.preventDefault();document.getElementById('tzoDuvar')?.scrollIntoView({behavior:'smooth',block:'center'})">mailini bırak, tamamı açılsın</a>.</div>`
+          : g.kilit
           ? '<div class="tzt-bos tzt-kilitli">🔒 Bu güncellemenin içeriği kayıtlı okurlara açık — aşağıdan mailini bırak.</div>'
           : (body ? `<div class="tzt-body">${body}</div>` : '<div class="tzt-bos">Bu güncellemede ek açıklama yok.</div>')}
       </div>
@@ -7284,11 +7291,14 @@ function garpAnalizAc(ticker) {
     }
     const yeniden = list.slice().reverse();   // en yeni en üstte
     const n = list.length;
-    /* Kilitliyken açık sekme GÖVDE olsun: güncellemelerin hepsi kilitli
-       olduğu için varsayılan "Güncellemeler" sekmesinde okura tek satır
-       serbest metin görünmüyor, doğrudan duvara çarpıyordu. */
-    const g = kilit ? '' : ' active';
-    const i = kilit ? ' active' : '';
+    /* Açık sekme GÜNCELLEMELER: okur bu sayfaya çoğu zaman güncellemeyi
+       okumak için geliyor. Kilitliyken de en yeni güncellemenin girişi
+       geliyor (API önizlemesi). Yalnızca o da okunamıyorsa ilk teze düş —
+       okur tek satır metin görmeden doğrudan duvara çarpmasın. */
+    const sonOkunur = !!(yeniden[0] && yeniden[0].icerik);
+    const guncelOnde = !kilit || sonOkunur;
+    const g = guncelOnde ? ' active' : '';
+    const i = guncelOnde ? '' : ' active';
     return `<div class="tzo-tabs" id="tezSeyri">
         <button type="button" class="tzo-tab${g}" onclick="window.__tezTab('guncel')" id="tezTabGuncel">
           Güncellemeler <span class="tzo-tab-n">${n}</span>
