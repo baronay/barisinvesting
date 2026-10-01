@@ -240,8 +240,11 @@ nav.pill{display:flex;align-items:center;justify-content:center;gap:16px;max-wid
    Haber sitesi düzeni: ziyaretçi sayfayı açtığı anda bir manşet ve
    yanında akış görüyor; slogan ekranı yemiyor. */
 .sec-manset{padding:30px 0 10px;}
-.mn-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,.95fr);gap:30px;align-items:start;}
+.mn-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px;align-items:start;}
 .mn-orta{min-width:0;padding:0 30px;border-left:1px solid var(--rule);border-right:1px solid var(--rule);}
+/* Üçüncü sütun orta ile aynı biçimi kullanıyor (mn-orta sınıfı onda da
+   var); dikey çizgiler ortanın iki yanından geldiği için burada yok. */
+.mn-uc{padding:0;border:none;}
 /* Orta sütun: öne çıkan tez, görsel önde — sayfanın görsel çapası */
 /* KAPAK KURALI — iki sorunu birden çözüyor:
    1) Kırpma yok: bunlar fotoğraf değil, üzerinde ticker/başlık/metrik
@@ -266,8 +269,12 @@ nav.pill{display:flex;align-items:center;justify-content:center;gap:16px;max-wid
 .ort-l:last-child{border-bottom:none;}
 .ort-l:hover{color:var(--accent);}
 @media(max-width:1100px){
-  .mn-grid{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);}
-  .mn-orta{grid-column:1/-1;border-left:none;border-right:none;padding:22px 0 0;border-top:1px solid var(--rule);}
+  /* Üç büyük haber bu genişlikte sıkışıyor: manşet tam genişlik, altında
+     öne çıkan tez ile üçüncü haber yan yana. */
+  .mn-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .mn-lead{grid-column:1/-1;padding-bottom:22px;border-bottom:1px solid var(--rule);}
+  .mn-orta{grid-column:auto;border-left:none;border-right:1px solid var(--rule);padding:0 26px 0 0;}
+  .mn-uc{padding:0;border:none;}
 }
 .mn-lead{min-width:0;}
 .lead-card{display:block;}
@@ -309,6 +316,28 @@ nav.pill{display:flex;align-items:center;justify-content:center;gap:16px;max-wid
 .rp-title{display:block;font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:6px;}
 .rp-sub{display:block;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:11px;}
 .rp-cta{display:inline-block;font-size:12px;font-weight:600;color:var(--accent);}
+/* ── SON EKLENENLER: manşet bandının altında yatay şerit ──
+   Üst bant üç büyük habere dönünce sağ sütun buraya indi. İçerik aynı;
+   satırlar dört sütuna akıyor, altında "tüm haberler" bağlantısı ile
+   YouTube ve Terminal kartları duruyor. */
+.sec-son{padding:22px 0 0;}
+.sec-son .mn-rail{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:26px;align-items:start;border-left:none;padding-left:0;border-top:1px solid var(--rule);padding-top:16px;}
+.sec-son .rail-head{grid-column:1/-1;margin-bottom:6px;}
+.sec-son .rail-list{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:26px;}
+.sec-son .rail-all{grid-column:1/3;justify-self:start;}
+.sec-son .rail-yt{grid-column:3/4;margin-top:14px;}
+.sec-son .rail-promo{grid-column:4/5;margin-top:14px;}
+@media(max-width:991px){
+  .sec-son .mn-rail{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sec-son .rail-list{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sec-son .rail-all{grid-column:1/-1;}
+  .sec-son .rail-yt{grid-column:1/2;}
+  .sec-son .rail-promo{grid-column:2/3;}
+}
+@media(max-width:767px){
+  .sec-son{padding:14px 0 0;}
+  .sec-son .mn-rail,.sec-son .rail-list{display:block;}
+}
 @media(max-width:991px){
   .mn-grid{grid-template-columns:1fr;gap:26px;}
   .mn-orta{grid-column:auto;padding:20px 0 0;border:none;border-top:1px solid var(--rule);}
@@ -596,7 +625,7 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
    okumayı zorlaştırır. */
 @media(min-width:1400px){
   .mkt-inner,.kunye-ic,nav.pill,
-  #icerik > .container,#takip > .container,#bolumler > .container{max-width:1300px;}
+  #icerik > .container,#takip > .container,#bolumler > .container,#sonEklenenler > .container{max-width:1300px;}
   .mn-grid{gap:38px;}
   .lead-title{font-size:34px;}
   .ort-baslik{font-size:29px;}
@@ -798,7 +827,19 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
         <div class="lead-skel skel">MANŞET YÜKLENİYOR…</div>
       </div>
       <div class="mn-orta" id="ortaTez"></div>
-      <aside class="mn-rail rv">
+      <!-- Üçüncü büyük haber: orta sütunla aynı biçim. Dikey çizgiler
+           ortanın iki yanından geldiği için bunun kendi çizgisi yok. -->
+      <div class="mn-orta mn-uc" id="ucuncuTez"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ SON EKLENENLER ═══════
+     Eskiden manşetin sağ sütunuydu; üst bant üç büyük habere dönünce
+     bandın altına indi. İçerik aynı, yalnızca yerleşim yatay. -->
+<section class="sec sec-son" id="sonEklenenler">
+  <div class="container">
+    <aside class="mn-rail rv">
         <div class="rail-head">Son Eklenenler</div>
         <div class="rail-list" id="railList"><div class="skel">YÜKLENİYOR…</div></div>
         <a class="rail-all" href="/haberler">Tüm haberler <span class="arrow-ic"></span></a>
@@ -822,8 +863,7 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
           <span class="rp-sub">BIST, NYSE ve NASDAQ'ta yedi kriterli analiz — anlatı ile bilanço ayrışıyor mu?</span>
           <span class="rp-cta">Hisseni analiz et →</span>
         </a>
-      </aside>
-    </div>
+    </aside>
   </div>
 </section>
 
@@ -1349,7 +1389,39 @@ function ortaCiz(list) {
       `<a class="ort-l" href="/tez/${t.id}">${esc(t.baslik || '')}</a>`).join('')}</div>` : ''}`;
 }
 
-/* SAĞ ŞERİT: tüm türler karışık, en yeniden eskiye */
+/* Üst banttaki üç büyük haber tek yerden seçiliyor: manşet en taze
+   içerik, orta en taze tez (manşet o değilse), üçüncü de kalanların en
+   tazesi. Aynı kayıt iki sütunda çıkmasın diye hepsi buradan türüyor. */
+function ustUcId(list) {
+  const manset = list[0];
+  if (!manset) return [];
+  const orta = list.find(t => (t.kategori || 'tez') === 'tez' && t.id !== manset.id);
+  const ucuncu = list.find(t => t.id !== manset.id && (!orta || t.id !== orta.id));
+  return [manset, orta, ucuncu].filter(Boolean).map(t => t.id);
+}
+
+/* ÜÇÜNCÜ SÜTUN: orta sütunla aynı biçim, altında ek başlık yok. */
+function ucuncuCiz(list) {
+  const el = document.getElementById('ucuncuTez');
+  if (!el) return;
+  const t = list.find(x => x.id === ustUcId(list)[2]);
+  if (!t) { el.innerHTML = ''; return; }
+  const g = guncelMi(t) ? (t.son_guncelleme_bilgi || {}) : null;
+  const kapak = guncelKapak(t);
+  const tur = t.kategori || 'tez';
+  const kick = g ? 'GÜNCELLEME YAYINDA'
+             : tur === 'haber' ? 'SON HABER'
+             : tur === 'arastirma' ? 'YENİ ARAŞTIRMA' : 'AÇIK TEZ';
+  el.innerHTML = `<a href="/tez/${t.id}${g ? '#tezSeyri' : ''}">
+      ${kapak ? `<div class="ort-kapak"><img src="${esc(kapak)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+      <div class="ort-kick"><span class="dot"></span>${kick}${t.ticker ? ' · ' + esc(t.ticker) : ''}</div>
+      <div class="ort-baslik">${esc((g && g.baslik) || t.baslik || '')}</div>
+      ${t.ozet_fark || t.ozet ? `<div class="ort-ozet">${esc(t.ozet_fark || t.ozet)}</div>` : ''}
+      ${metaHTML(t)}
+    </a>`;
+}
+
+/* SON EKLENENLER ŞERİDİ: tüm türler karışık, en yeniden eskiye */
 const TUR_AD = { tez:'TEZ', arastirma:'ARAŞTIRMA', haber:'HABER' };
 function railHTML(t) {
   const tur = (t.kategori || 'tez');
@@ -1449,8 +1521,11 @@ function icerigiCiz(list, tazeMi) {
   if (list.length) renderFeatured(list[0]);
   else if (feat) feat.innerHTML = '<div class="lead-kick"><span class="dot"></span>HENÜZ İÇERİK YOK</div><div class="lead-title">İlk içerik yakında yayınlanacak</div>';
 
-  if (rail) rail.innerHTML = list.length > 1
-    ? list.slice(1, 9).map(railHTML).join('')
+  // Üstteki üç büyük haber şeritte tekrar etmesin
+  const buyukler = new Set(ustUcId(list));
+  const kalanlar = list.filter(t => !buyukler.has(t.id));
+  if (rail) rail.innerHTML = kalanlar.length
+    ? kalanlar.slice(0, 8).map(railHTML).join('')
     : '<div class="skel">YAKINDA</div>';
 
   let i = 1;
@@ -1468,6 +1543,7 @@ function icerigiCiz(list, tazeMi) {
     }
   }
   ortaCiz(list);
+  ucuncuCiz(list);
   takipCiz(list);
   armFly();
   if (tazeMi) guncellemeBariniGoster(list);
