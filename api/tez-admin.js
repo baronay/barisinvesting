@@ -104,10 +104,21 @@ export default async function handler(req, res) {
             // (ölçüldü: 21.945 karakter görünen metin, bütçe 950 — duvar
             // deliniyordu). Sarmalayıcıyı burada ekliyoruz; yine de sonucu
             // ölçüp, kesilmemişse ham metin olarak kesiyoruz.
+            // Okunan metin: <style>/<script> GÖVDESİ de atılmalı. Yalnızca
+            // etiketleri silmek yetmiyordu — CSS kaynağı metin sayılıp hem
+            // ölçümü şişiriyor hem de önizlemenin sonunda okura CSS olarak
+            // görünüyordu (ölçüldü: "font-family:var(--sans) !important…").
+            const duzAl = (h) => String(h || '')
+              .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+              .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+              .replace(/<[^>]+>/g, ' ')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
             const o = htmlOnizleme(`<div>${String(g.icerik || '')}</div>`, butce);
-            const gorunen = String(o.html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            const gorunen = duzAl(o.html);
             if (gorunen.length > butce * 2) {
-              const duz = String(g.icerik || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+              const duz = duzAl(g.icerik);
               const p = duz.lastIndexOf(' ', butce);
               return { ...ortak, kilit: duz.length > butce, icerik: `<p>${duz.slice(0, p > 0 ? p : butce)}…</p>` };
             }
