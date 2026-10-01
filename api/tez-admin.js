@@ -98,7 +98,19 @@ export default async function handler(req, res) {
               gorsel: g.gorsel || null,
             };
             if (idx !== sonIdx) return { ...ortak, kilit: true, icerik: null };
-            const o = htmlOnizleme(String(g.icerik || ''), butce);
+            // htmlOnizleme kesme noktasını yalnızca bir KABIN içindeyken
+            // bulabiliyor (yigin.length kontrolü). Güncelleme gövdeleri
+            // sarmalayıcısız geldiği için hiç kesilmiyor, tamamı dönüyordu
+            // (ölçüldü: 21.945 karakter görünen metin, bütçe 950 — duvar
+            // deliniyordu). Sarmalayıcıyı burada ekliyoruz; yine de sonucu
+            // ölçüp, kesilmemişse ham metin olarak kesiyoruz.
+            const o = htmlOnizleme(`<div>${String(g.icerik || '')}</div>`, butce);
+            const gorunen = String(o.html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            if (gorunen.length > butce * 2) {
+              const duz = String(g.icerik || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+              const p = duz.lastIndexOf(' ', butce);
+              return { ...ortak, kilit: duz.length > butce, icerik: `<p>${duz.slice(0, p > 0 ? p : butce)}…</p>` };
+            }
             return { ...ortak, kilit: o.kesildi, icerik: o.html || null };
           });
           tez.kilitli_guncelleme = tez.guncellemeler.filter(g => g.kilit).length;
