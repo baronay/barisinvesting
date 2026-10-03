@@ -41,6 +41,21 @@
     return `rgb(${c[0]},${c[1]},${c[2]})`;
   }
 
+  /* Şerit rozeti tonu: dolu renk bloğu yerine saydam ton + ince renkli
+     kenarlık. Yoğunluk yine ±%3'te doyuma ulaşan k katsayısından geliyor,
+     yani bilgi aynı; yalnızca sunum rozet formatına geçiyor. */
+  function renkTon(d) {
+    const t = Math.max(-1, Math.min(1, (d || 0) / 3));
+    const k = Math.pow(Math.abs(t), 0.7);
+    const art = (d || 0) >= 0;
+    const rgb = art ? '16,185,129' : '239,68,68';
+    return {
+      bg: `rgba(${rgb},${(0.06 + k * 0.16).toFixed(3)})`,
+      bd: `rgba(${rgb},${(0.20 + k * 0.34).toFixed(3)})`,
+      fg: art ? '#34D399' : '#F87171',
+    };
+  }
+
   function yuzde(d) {
     if (d == null || !isFinite(d)) return '—';
     return `${d >= 0 ? '+' : ''}${d.toFixed(2)}%`;
@@ -477,11 +492,14 @@
     try {
       const veri = await getir('us', '1g');
       const sirali = veri.sektorler.slice().sort((a, b) => b.d - a.d);
-      el.innerHTML = sirali.map(s => `
-        <div class="hm-mini-kutu" data-sektor="${esc(s.ad)}" style="background:${renk(s.d)}" title="${esc(s.ad)} ${yuzde(s.d)} — sektör detayı">
+      el.innerHTML = sirali.map(s => {
+        const t = renkTon(s.d);
+        return `
+        <div class="hm-mini-kutu" data-sektor="${esc(s.ad)}" style="background:${t.bg};border-color:${t.bd}" title="${esc(s.ad)} ${yuzde(s.d)} — sektör detayı">
           <span class="hm-mini-ad">${esc(s.ad)}</span>
-          <span class="hm-mini-d">${yuzde(s.d)}</span>
-        </div>`).join('');
+          <span class="hm-mini-d" style="color:${t.fg}">${yuzde(s.d)}</span>
+        </div>`;
+      }).join('');
       const not = document.getElementById('hmMiniNot');
       if (not) not.textContent = `ABD · günlük · ${veri.hisseSayisi} hisse`;
     } catch (e) {
