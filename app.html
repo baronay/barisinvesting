@@ -6050,15 +6050,47 @@ setTimeout(gecmisiGonder, 2500);   // açılışı yavaşlatmasın, bir kez çal
 
 // Çerçeve seçim kipi kaldırıldı: tek çerçeve var, seçtirecek bir şey yok.
 </script>
+<!-- auth-logic her rotada lazım: oturum durumu, krediler, bildirimler. -->
 <script src="/auth-logic.js"></script>
-<script src="/admin-panel.js"></script>
-<script src="/analyze-features.js"></script>
-<script src="/score-gauge.js"></script>
-<script src="/arama.js"></script>
-<script src="/heatmap.js"></script>
-<script src="/market-data.js"></script>
-<script src="/profil.js"></script>
-<script src="/dashboard.js"></script>
+<!-- Terminal dosyaları (8 dosya, ~54 KB sıkıştırılmış) yalnızca terminal
+     rotasında yüklensin. /tezler, /haberler, /arastirmalar ve /tez/:id
+     bunların hiçbirini kullanmıyor: bu dosyaların tanımladığı semboller
+     (openAdmin, renderScoreGauge, pvYenile, prAra, prGrafikKapat …)
+     yalnızca #terminalRoot içindeki arayüzden çağrılıyor. showPage, qFill
+     ve parseAndRender ise zaten bu dosyada tanımlı — 8 dosya onları
+     yalnızca typeof korumasıyla çağırıyor, yani tersi bir bağımlılık yok.
+
+     Doğrudan /terminal açılışında document.write kullanılıyor: yükleme
+     bugünküyle birebir aynı kalsın (sıralı, senkron, aşağıdaki gömülü
+     script'lerden önce). SPA içinden terminale geçişte applyRoute
+     __terminalJS'i çağırıyor. -->
+<script>
+(function(){
+  var D = ['/admin-panel.js','/analyze-features.js','/score-gauge.js','/arama.js',
+           '/heatmap.js','/market-data.js','/profil.js','/dashboard.js'];
+  var basladi = false;
+  window.__terminalJS = function(){
+    if (basladi) return;
+    basladi = true;
+    // Sırayla: dosyalar birbirinin global'ini kullanabiliyor
+    D.reduce(function(z, src){
+      return z.then(function(){
+        return new Promise(function(ok){
+          var s = document.createElement('script');
+          s.src = src; s.onload = ok; s.onerror = ok;
+          document.head.appendChild(s);
+        });
+      });
+    }, Promise.resolve());
+  };
+  if (/^\/terminal(\/|$)/.test(location.pathname)) {
+    basladi = true;
+    document.write(D.map(function(s){
+      return '<scr' + 'ipt src="' + s + '"></scr' + 'ipt>';
+    }).join(''));
+  }
+})();
+</script>
 
 <!-- MOBILE HESAP SHEET -->
 <div id="mobileAccountSheet" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.5)" onclick="closeMobileAccount()">
@@ -7038,7 +7070,8 @@ function garpAnalizAc(ticker) {
     document.title = TITLE[view] || TITLE.portal;
     const norm = view==='terminal' ? '/terminal' : view==='tezler' ? '/tezler' : view==='arastirmalar' ? '/arastirmalar' : view==='haberler' ? '/haberler' : ('/tez/'+tezMatch[1]);
     if (replace) history.replaceState({route:norm}, '', norm + (location.search||''));
-    if (view==='terminal'){ window.scrollTo(0,0); }
+    // Terminal dosyaları bu rotaya girilince yükleniyor (bkz. __terminalJS)
+    if (view==='terminal'){ window.scrollTo(0,0); if (typeof window.__terminalJS === 'function') window.__terminalJS(); }
     else if (view==='tezler'){ window.scrollTo(0,0); loadTezlerPage(); }
     else if (view==='arastirmalar'){ window.scrollTo(0,0); loadArastirmalarPage(); }
     else if (view==='haberler'){ window.scrollTo(0,0); loadHaberlerPage(); }
