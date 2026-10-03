@@ -136,8 +136,13 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .sb-reopen{display:none;}
 @media(min-width:769px){
   .sb-collapse-btn{display:flex;}
-  .sidebar{transition:width .25s ease,opacity .2s ease;}
-  .app.sb-collapsed .sidebar{width:0;min-width:0;opacity:0;border-right:none;overflow:hidden;pointer-events:none;}
+  .sidebar{transition:width .25s ease,flex-basis .25s ease,opacity .2s ease;}
+  /* flex-basis ŞART: .sidebar bir flex öğesi, taban boyutu flex-basis'ten
+     geliyor. Yalnızca width:0 yazınca kural uygulanıyor (opacity sönüyor)
+     ama öğe 272 px yer işgal etmeye devam ediyordu — menü kapanmış
+     görünüyor, yeri boş duruyordu. Ölçüldü: sınıf tek başına 272 px,
+     width:0 eklenince yine 272 px, flex-basis:0 ile 0 px. */
+  .app.sb-collapsed .sidebar{width:0;min-width:0;flex-basis:0;opacity:0;border-right:none;overflow:hidden;pointer-events:none;}
   .sb-reopen{position:fixed;left:0;top:14px;z-index:1100;background:var(--surface);border:1px solid var(--border-s);border-left:none;color:var(--accent);width:24px;height:36px;cursor:pointer;font-size:13px;border-radius:0 7px 7px 0;align-items:center;justify-content:center;box-shadow:2px 2px 12px rgba(0,0,0,0.4);}
   .app.sb-collapsed .sb-reopen{display:flex;}
 }
