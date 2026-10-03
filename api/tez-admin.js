@@ -146,6 +146,10 @@ export default async function handler(req, res) {
        Art arda beklemek soğuk isteği gereksiz yere ikiye katlıyordu
        (ölçüldü: soğuk yanıt ~2,0 sn). */
     const GU = `${SUPABASE_URL}/rest/v1/tez_guncellemeler?yayinda=eq.true&order=tarih.desc&select=`;
+    // Sürenin nereye gittiğini ölçmek için: cache ıskası ~800 ms sürüyor
+    // ama fonksiyonu Frankfurt'a taşımak değiştirmedi. Server-Timing ile
+    // Supabase'e giden kısmı ayrı görüyoruz (yanıt başlığında db;dur=...).
+    const _t0 = Date.now();
     const [r, grIlk] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/tezler?yayinda=eq.true&order=olusturma.desc&select=${listCols}`, { headers }),
       fetch(GU + 'tez_id,tarih,baslik,tur,gorsel,sinyal', { headers }).catch(() => null),
@@ -191,6 +195,7 @@ export default async function handler(req, res) {
     /* s-maxage 120 -> 600: taze pencere 2 dakikaydi, seyrek trafikte kopya
        surekli bayatliyor ve o anki ziyaretci iskayi sirtliyordu. Icerik
        gunde birkac kez degistigi icin 10 dakika fazlasiyla yeterli. */
+    res.setHeader('Server-Timing', `db;dur=${Date.now() - _t0}`);
     res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=86400');
     return res.status(200).json(list);
   }
