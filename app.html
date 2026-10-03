@@ -2395,6 +2395,10 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 /* Kapak: kırpma yok (tasarım kartı), zıplama yok (oran şimdiden ayrılıyor) */
 .ptz-cover{aspect-ratio:2.3/1;overflow:hidden;background:var(--anthracite2);position:relative;flex-shrink:0;}
 .ptz-cover img{width:100%;height:100%;object-fit:contain;display:block;opacity:.82;transition:transform .4s;}
+/* ══ KAPAK-KARARTMA-GECICI ══ koyu kapaklar gelince bu iki kural silinecek
+   (ana sayfadaki blokla aynı gerekçe; detay index.html'de). */
+.ptz-cover img,.tzo-cover img{filter:brightness(.86) saturate(.94);}
+.pt-tez-card:hover .ptz-cover img{filter:brightness(.98) saturate(1);}
 .pt-tez-card:hover .ptz-cover img{transform:scale(1.05);}
 .ptz-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,var(--surface),transparent 60%);}
 .ptz-body{padding:16px 18px 18px;display:flex;flex-direction:column;flex:1;}
