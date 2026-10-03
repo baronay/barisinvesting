@@ -7,7 +7,15 @@
 <title>Yatırım Analiz Merkezi — Barış Investing</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1220'/%3E%3Crect x='0.8' y='0.8' width='30.4' height='30.4' rx='6.2' fill='none' stroke='%23c2ad84' stroke-opacity='0.55'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-weight='700' font-size='21' fill='%23c2ad84' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
 <link rel="shortcut icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1220'/%3E%3Crect x='0.8' y='0.8' width='30.4' height='30.4' rx='6.2' fill='none' stroke='%23c2ad84' stroke-opacity='0.55'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-weight='700' font-size='21' fill='%23c2ad84' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<!-- İçerik isteği sayfanın EN BAŞINDA başlasın. Ölçüldü: /tezler için
+     125 KB HTML + 54 KB JS ayrıştırılıyor ve istek ancak ondan SONRA
+     sıraya giriyordu; liste 1-2 sn sonra çiziliyordu. Artık ağ isteği
+     ayrıştırmayla paralel akıyor. Hata yutuluyor — getTezler() gerekirse
+     kendi isteğini atar, yani bu satır bozulsa da sayfa çalışır. -->
+<script>try{window.__icerikP=fetch('/api/tez-admin?pub=1').then(r=>r.ok?r.json():null).catch(()=>null);}catch(_){}</script>
+<!-- Chart.js yalnızca portföy grafiklerinde kullanılıyor (2 yer);
+     başlıkta render'ı bloklamasına gerek yok. -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 <!-- ══ UMAMI ANALYTICS — Cookieless, GDPR/KVKK uyumlu ══ -->
 <script
@@ -7479,8 +7487,9 @@ function garpAnalizAc(ticker) {
   let _tezCache = null;
   async function getTezler(){
     if (_tezCache) return _tezCache;
-    const r = await fetch('/api/tez-admin?pub=1');
-    const d = await r.json();
+    // Sayfa başında başlatılan istek varsa onu bekle (bkz. <head>)
+    let d = window.__icerikP ? await window.__icerikP : null;
+    if (!d) { const r = await fetch('/api/tez-admin?pub=1'); d = await r.json(); }
     // Güncelleme alan tez başa gelsin — sıra "son hareket"e göre
     _tezCache = Array.isArray(d) ? hareketSirala(d) : d;
     try{ localStorage.setItem(ICERIK_ANAHTAR, JSON.stringify({ ts: Date.now(), liste: _tezCache })); }catch(_){}

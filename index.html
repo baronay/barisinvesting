@@ -6,6 +6,10 @@
 <title>Barış Investing — Sistematik Yatırımın Yeni Merkezi</title>
 <meta name="description" content="BIST ve global piyasalar üzerine derin yatırım tezleri, haftalık seçimler ve içerik. Tüm analiz araçları profesyonel Terminal'de.">
 <meta name="theme-color" content="#0b0f15">
+<!-- İçerik isteği sayfanın EN BAŞINDA başlasın; ağ isteği HTML/JS
+     ayrıştırmasıyla paralel aksın. Hata yutuluyor, getTezler() gerekirse
+     kendi isteğini atıyor. -->
+<script>try{window.__icerikP=fetch('/api/tez-admin?pub=1').then(r=>r.ok?r.json():null).catch(()=>null);}catch(_){}</script>
 <link rel="icon" type="image/svg+xml" href="/marka.svg">
 <link rel="apple-touch-icon" href="/marka.svg">
 <!-- Sosyal paylaşım kartları -->
@@ -1236,6 +1240,9 @@ function icerikYerelYaz(liste) {
 let _tezCache = null;
 async function getTezler() {
   if (_tezCache) return _tezCache;
+  // Sayfa başında başlatılan istek varsa onu bekle (bkz. <head>)
+  const erken = window.__icerikP ? await window.__icerikP : null;
+  if (erken) { _tezCache = erken; icerikYerelYaz(_tezCache); return _tezCache; }
   const r = await fetch('/api/tez-admin?pub=1');
   if (!r.ok) throw new Error('api ' + r.status);
   _tezCache = await r.json();

@@ -188,7 +188,10 @@ export default async function handler(req, res) {
        o kadar süre görüyordu. stale-while-revalidate ile artık bayat
        sürüm anında veriliyor, tazeleme arkada yapılıyor; yeni içerik
        en geç bir sonraki ziyaretçide görünür. */
-    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=86400');
+    /* s-maxage 120 -> 600: taze pencere 2 dakikaydi, seyrek trafikte kopya
+       surekli bayatliyor ve o anki ziyaretci iskayi sirtliyordu. Icerik
+       gunde birkac kez degistigi icin 10 dakika fazlasiyla yeterli. */
+    res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=86400');
     return res.status(200).json(list);
   }
 

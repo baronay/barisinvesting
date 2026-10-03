@@ -1,0 +1,25 @@
+# İçerik API'sini sıcak tutar.
+#
+# Neden: site trafiği seyrek. Edge'deki kopya düşünce o anki ziyaretçi
+# faturayı ödüyordu — ölçüldü: cache isabeti 165 ms, ıska 800 ms, fonksiyon
+# soğukken 2.200 ms. Bu iş fonksiyonu uyanık ve kopyayı taze tutuyor.
+#
+# Not: GitHub runner'ları ABD'de, yani bu istek Frankfurt edge kopyasını
+# tazelemez; derdi soğuk başlangıcı önlemek.
+name: API sıcak tut
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # 15 dakikada bir
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: İçerik API'sini çağır
+        run: |
+          curl -s -o /dev/null -w "tez-admin: %{http_code} %{time_total}s\n" \
+            "https://www.barisinvesting.com/api/tez-admin?pub=1"
+          curl -s -o /dev/null -w "ana sayfa: %{http_code} %{time_total}s\n" \
+            "https://www.barisinvesting.com/"
