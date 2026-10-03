@@ -15,6 +15,10 @@
 <script>try{window.__icerikP=fetch('/api/tez-admin?pub=1').then(r=>r.ok?r.json():null).catch(()=>null);}catch(_){}</script>
 <!-- Chart.js yalnızca portföy grafiklerinde kullanılıyor (2 yer);
      başlıkta render'ı bloklamasına gerek yok. -->
+<!-- Switzer: ana sayfanın gövde fontu. Terminal ve portal sayfaları Inter
+     kullanıyordu, yani site iki ayrı fontla çiziliyordu. -->
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 <!-- ══ UMAMI ANALYTICS — Cookieless, GDPR/KVKK uyumlu ══ -->
@@ -30,7 +34,7 @@
 
 :root{
   --font-head:'Playfair Display',Georgia,serif;
-  --font-body:'Inter',system-ui,sans-serif;
+  --font-body:'Switzer','Inter',system-ui,sans-serif;
   --font-mono:'JetBrains Mono',ui-monospace,monospace;
 
   --bg:#0b0f15;
@@ -131,6 +135,50 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 .app{display:flex;min-height:100vh;}
+
+/* ══ TERMİNAL YÜZEY KATMANLARI ══════════════════════════════════════
+   Düz kapkara yerine derinlik veren yüzey katmanları, 1px keskin
+   kenarlık, doygun ama çiğ olmayan yeşil/kırmızı.
+   Değişkenler .app ÜZERİNDE tanımlı: yalnızca terminali etkiliyor.
+   Portal sayfaları (#tezlerRoot, #haberlerRoot …) .app'in dışında
+   olduğu için ana sayfayla aynı zeminde kalmaya devam ediyor. */
+.app{
+  --bg:#090A0F;
+  --bg2:#07080C;
+  --surface:#13161C;
+  --surface2:#161922;
+  --surface3:#1C2029;
+  --sidebar:#0B0C10;
+  --sidebar2:#13161C;
+  --sidebar3:#1C2029;
+
+  --border:rgba(255,255,255,0.08);
+  --border2:rgba(255,255,255,0.06);
+  --border-s:rgba(255,255,255,0.08);
+  --rule:rgba(255,255,255,0.06);
+  --glass:rgba(255,255,255,0.05);
+
+  --success:#10B981;
+  --success-dim:rgba(16,185,129,0.14);
+  --danger:#EF4444;
+  --danger-dim:rgba(239,68,68,0.14);
+
+  /* Üç seviyeli kontrast: değer → etiket → ikincil açıklama */
+  --text:#F3F4F6;
+  --text2:#E5E7EB;
+  --muted-s:#9CA3AF;
+  --muted:#6B7280;
+  --muted2:#4B5563;
+
+  background:var(--bg);
+  /* Rakamlar alt alta listelenince veya canlı güncellenince kaymasın.
+     Kalıtsal özellik: terminaldeki bütün torunlara iniyor. */
+  font-variant-numeric:tabular-nums;
+}
+/* Terminalde serif başlık yok — Playfair editoryal sayfalara (tez,
+   araştırma, haber) kalsın, terminal teknik dokusunda dursun. */
+.app .brand-name{font-family:var(--font-body);font-size:17px;font-weight:600;letter-spacing:-.2px;}
+.app .brand-tag{color:var(--muted-s);}
 .sb-collapse-btn{display:none;background:none;border:1px solid var(--border-s);color:var(--muted);width:26px;height:26px;cursor:pointer;font-size:13px;align-items:center;justify-content:center;border-radius:4px;transition:all .2s;}
 .sb-collapse-btn:hover{color:var(--accent);border-color:var(--accent);}
 .sb-reopen{display:none;}
@@ -3172,11 +3220,16 @@ body{overflow-x:hidden;max-width:100vw;}
 .db-tape-bos{display:flex;align-items:center;height:34px;padding:0 14px;font-family:var(--font-mono);font-size:9px;letter-spacing:1.5px;color:var(--muted2);}
 .db-up{color:var(--success);}.db-down{color:var(--danger);}.db-flat{color:var(--muted-s);}.db-warn{color:var(--warn);}
 
-.db-rejim{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:18px;}
-.db-rj-h{background:var(--surface);padding:9px 12px;min-width:0;}
-.db-rj-l{font-family:var(--font-mono);font-size:8px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted-s);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.db-rj-v{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.db-rj-alt{font-size:9px;font-weight:400;color:var(--muted);margin-left:5px;}
+/* ══ MAKRO MİKRO-KPI ŞERİDİ ══
+   Kutular arası boşluk yerine dikey ayırıcı çizgi; tek bir yüzey üstünde
+   duran kompakt kartlar. Rakamlar tabular-nums (.app'ten miras). */
+.db-rejim{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:18px;}
+.db-rj-h{background:transparent;padding:11px 15px;min-width:0;border-right:1px solid rgba(255,255,255,0.06);transition:background .15s;}
+.db-rj-h:last-child{border-right:none;}
+.db-rj-h:hover{background:rgba(255,255,255,0.025);}
+.db-rj-l{font-family:var(--font-mono);font-size:8.5px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted-s);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.db-rj-v{font-family:var(--font-mono);font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.db-rj-alt{font-family:var(--font-body);font-size:9.5px;font-weight:400;color:var(--muted);margin-left:6px;letter-spacing:.2px;}
 
 /* Dashboard şirket arama şeridi */
 /* Arama önerileri — her arama kutusunun altına açılan şirket listesi
@@ -3205,15 +3258,24 @@ body{overflow-x:hidden;max-width:100vw;}
 .db-ara-bas{display:flex;align-items:baseline;gap:9px;margin-bottom:9px;}
 .db-ara-lbl{font-family:var(--font-mono);font-size:9.5px;font-weight:600;letter-spacing:2.2px;text-transform:uppercase;color:var(--accent);flex-shrink:0;}
 .db-ara-not{font-family:var(--font-mono);font-size:9px;letter-spacing:.8px;color:var(--muted-s);}
-.db-ara-sat{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;}
-.db-ara-kutu{flex:1;min-width:220px;display:flex;align-items:center;gap:9px;background:var(--bg);border:1px solid var(--border);padding:0 12px;transition:border-color .15s,box-shadow .15s;}
-.db-ara-kutu:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim);}
-.db-ara-ikon{font-size:14px;color:var(--accent);line-height:1;flex-shrink:0;}
-.db-ara-in{flex:1;min-width:0;background:none;border:none;color:var(--text);font-family:var(--font-mono);font-size:14px;letter-spacing:1.4px;text-transform:uppercase;padding:12px 0;outline:none;}
-.db-ara-in::placeholder{color:var(--muted-s);font-size:12.5px;text-transform:none;letter-spacing:.3px;}
-.db-ara-btn{background:var(--accent-dim);border:1px solid var(--accent2);color:var(--accent);font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:1.4px;padding:0 18px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap;}
-.db-ara-btn:hover{background:var(--accent);color:var(--bg);}
-@media(max-width:560px){.db-ara-btn{padding:11px 14px;width:100%;}}
+/* ══ SPOTLIGHT / COMMAND BAR ══
+   Klasik form kutusu yerine tek satırlık komut çubuğu: solda SVG
+   büyüteç, sağda kısayol rozeti ve gömülü aksiyon. Dış buton kaldırıldı,
+   aksiyon kutunun içine alındı. */
+.db-ara-sat{display:flex;align-items:stretch;gap:10px;}
+.db-ara-kutu{flex:1;min-width:0;display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:0 8px 0 13px;transition:border-color .15s,box-shadow .15s,background .15s;}
+.db-ara-kutu:hover{border-color:rgba(255,255,255,0.14);}
+.db-ara-kutu:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);background:var(--surface);}
+.db-ara-ikon{width:16px;height:16px;color:var(--muted-s);flex-shrink:0;transition:color .15s;}
+.db-ara-kutu:focus-within .db-ara-ikon{color:var(--accent);}
+.db-ara-in{flex:1;min-width:0;background:none;border:none;color:var(--text);font-family:var(--font-mono);font-size:14px;letter-spacing:1.4px;text-transform:uppercase;padding:13px 0;outline:none;}
+.db-ara-in::placeholder{color:var(--muted);font-size:12.5px;text-transform:none;letter-spacing:.3px;}
+/* Kısayol rozeti: odaklanınca görevi bittiği için siliniyor */
+.db-ara-kbd{flex-shrink:0;font-family:var(--font-mono);font-size:9.5px;font-weight:600;letter-spacing:.8px;color:var(--muted-s);background:var(--glass);border:1px solid var(--border);border-radius:5px;padding:3px 7px;line-height:1;transition:opacity .15s;}
+.db-ara-kutu:focus-within .db-ara-kbd{opacity:0;}
+.db-ara-git{flex-shrink:0;background:var(--accent-dim);border:1px solid rgba(194,173,132,0.35);border-radius:6px;color:var(--accent);font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:1.2px;padding:7px 13px;cursor:pointer;transition:background .15s,color .15s,border-color .15s;white-space:nowrap;}
+.db-ara-git:hover{background:var(--accent);border-color:var(--accent);color:#090A0F;}
+@media(max-width:560px){.db-ara-kbd{display:none;}}
 
 /* Dashboard takip kartı */
 .db-tk-ekle{display:flex;gap:6px;margin-bottom:10px;}
@@ -3789,12 +3851,31 @@ body{overflow-x:hidden;max-width:100vw;}
     <div class="db-ara-bas"><span class="db-ara-lbl">Şirket Ara</span></div>
     <div class="db-ara-sat">
       <div class="db-ara-kutu">
-        <span class="db-ara-ikon">⌕</span>
+        <svg class="db-ara-ikon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
         <input class="db-ara-in" id="dbAra" placeholder="Hisse kodu gir — AAPL, NVDA, THYAO…" autocomplete="off" spellcheck="false"/>
+        <kbd class="db-ara-kbd" id="dbAraKbd">Ctrl K</kbd>
+        <button class="db-ara-git" onclick="dbAraGit()">Aç →</button>
       </div>
-      <button class="db-ara-btn" onclick="dbAraGit()">ŞİRKET KARTINI AÇ →</button>
     </div>
   </div>
+
+  <!-- Cmd/Ctrl+K komut çubuğuna odaklanır. Rozet platforma göre yazılıyor.
+       Terminal görünmüyorsa (portal rotaları) kısayol devreye girmiyor. -->
+  <script>
+  (function(){
+    var mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    var kbd = document.getElementById('dbAraKbd');
+    if (kbd) kbd.textContent = mac ? '⌘ K' : 'Ctrl K';
+    document.addEventListener('keydown', function(e){
+      if (!(e.metaKey || e.ctrlKey) || (e.key !== 'k' && e.key !== 'K')) return;
+      var el = document.getElementById('dbAra');
+      if (!el || !el.offsetParent) return;
+      e.preventDefault();
+      el.focus();
+      el.select();
+    });
+  })();
+  </script>
 
   <!-- Rejim satırı -->
   <div class="db-rejim" id="dbRejim"></div>
