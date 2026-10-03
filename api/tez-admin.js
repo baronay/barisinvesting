@@ -149,46 +149,72 @@ export default async function handler(req, res) {
     // Sürenin nereye gittiğini ölçmek için: cache ıskası ~800 ms sürüyor
     // ama fonksiyonu Frankfurt'a taşımak değiştirmedi. Server-Timing ile
     // Supabase'e giden kısmı ayrı görüyoruz (yanıt başlığında db;dur=...).
+    /* TEK SORGU: güncellemeler gömülü geliyor (tez_guncellemeler'in tezler'e
+       FK'si var). Ölçüldü: iki istek paralel atılmasına rağmen ikincisi
+       ısrarla ~370 ms'de bitiyordu, ilki 131-234 ms'de — ikinci istek
+       Supabase tarafında sıra bekliyor görünüyordu. Tek round-trip bunu
+       ortadan kaldırıyor. Gömülü sorgu çalışmazsa (ilişki adı değişir,
+       sütun eksilir) aşağıdaki eski iki sorgulu yola düşülüyor; hangi yolun
+       kullanıldığı Server-Timing'de desc olarak görünüyor. */
     const _t0 = Date.now();
-    let _t1 = 0, _t2 = 0;
-    const [r, grIlk] = await Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/tezler?yayinda=eq.true&order=olusturma.desc&select=${listCols}`, { headers })
-        .then(x => { _t1 = Date.now() - _t0; return x; }),
-      fetch(GU + 'tez_id,tarih,baslik,tur,gorsel,sinyal', { headers })
-        .then(x => { _t2 = Date.now() - _t0; return x; })
-        .catch(() => null),
-    ]);
-    const list = await r.json();
+    let _yol = 'gomulu';
+    const GOMULU = `${SUPABASE_URL}/rest/v1/tezler?yayinda=eq.true&order=olusturma.desc`
+      + `&select=${listCols},tez_guncellemeler(tez_id,tarih,baslik,tur,gorsel,sinyal)`
+      + `&tez_guncellemeler.yayinda=eq.true&tez_guncellemeler.order=tarih.desc`;
+    let list = null, gs = null;
+    try {
+      const rg = await fetch(GOMULU, { headers });
+      if (rg.ok) {
+        const d = await rg.json();
+        if (Array.isArray(d)) {
+          list = d;
+          gs = [];
+          for (const t of list) {
+            const arr = Array.isArray(t.tez_guncellemeler) ? t.tez_guncellemeler : [];
+            for (const g of arr) gs.push(g.tez_id ? g : { ...g, tez_id: t.id });
+            delete t.tez_guncellemeler;   // ham güncelleme listesi istemciye gitmesin
+          }
+        }
+      }
+    } catch (_) { /* eski yola düşülecek */ }
 
-    // Kartlarda "N guncelleme" rozeti icin ozet bilgi — govde cekilmez
-    if (Array.isArray(list) && list.length) {
+    if (!list) {
+      _yol = 'ikili';
+      const [r, grIlk] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/tezler?yayinda=eq.true&order=olusturma.desc&select=${listCols}`, { headers }),
+        fetch(GU + 'tez_id,tarih,baslik,tur,gorsel,sinyal', { headers }).catch(() => null),
+      ]);
+      list = await r.json();
       try {
         let gr = grIlk;
         // gorsel sutunu henuz eklenmediyse rozetler tamamen kaybolmasin
         if (!gr || !gr.ok) gr = await fetch(GU + 'tez_id,tarih,baslik,tur,sinyal', { headers });
-        const gs = await gr.json();
-        if (Array.isArray(gs)) {
-          const byTez = {};
-          for (const g of gs) {
-            const k = g.tez_id;
-            if (!byTez[k]) byTez[k] = { n: 0, son: null };
-            byTez[k].n++;
-            // order=tarih.desc geldigi icin ilk gorulen en yenisi
-            if (!byTez[k].son || g.tarih > byTez[k].son.tarih) byTez[k].son = g;
-          }
-          for (const t of list) {
-            const s = byTez[t.id];
-            t.guncelleme_sayisi = s ? s.n : 0;
-            t.son_guncelleme    = s ? s.son.tarih : null;
-            t.son_guncelleme_bilgi = s ? {
-              baslik: s.son.baslik,
-              tur:    s.son.tur,
-              gorsel: s.son.gorsel || null,
-              sinyal: s.son.sinyal || null,
-            } : null;
-          }
-        }
+        const d = await gr.json();
+        if (Array.isArray(d)) gs = d;
       } catch (_) { /* guncelleme tablosu yoksa liste yine calissin */ }
+    }
+
+    // Kartlarda "N guncelleme" rozeti icin ozet bilgi — govde cekilmez
+    if (Array.isArray(list) && list.length && Array.isArray(gs)) {
+      const byTez = {};
+      for (const g of gs) {
+        const k = g.tez_id;
+        if (!byTez[k]) byTez[k] = { n: 0, son: null };
+        byTez[k].n++;
+        // en yenisi kazansin (gomulu sorguda da tarih.desc istendi)
+        if (!byTez[k].son || g.tarih > byTez[k].son.tarih) byTez[k].son = g;
+      }
+      for (const t of list) {
+        const s = byTez[t.id];
+        t.guncelleme_sayisi = s ? s.n : 0;
+        t.son_guncelleme    = s ? s.son.tarih : null;
+        t.son_guncelleme_bilgi = s ? {
+          baslik: s.son.baslik,
+          tur:    s.son.tur,
+          gorsel: s.son.gorsel || null,
+          sinyal: s.son.sinyal || null,
+        } : null;
+      }
     }
 
     /* CDN kenar cache. Eskiden s-maxage=30 idi: her 30 saniyede bir
@@ -202,7 +228,7 @@ export default async function handler(req, res) {
     // tezler ve guncellemeler sorgulari ayri ayri: hangisi uzunsa onu
     // optimize etmek gerekiyor, ikisi paralel kostugu icin toplam degil
     // uzun olan belirleyici.
-    res.setHeader('Server-Timing', `db;dur=${Date.now() - _t0}, tezler;dur=${_t1}, gunc;dur=${_t2}`);
+    res.setHeader('Server-Timing', `db;dur=${Date.now() - _t0};desc="${_yol}"`);
     res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=86400');
     return res.status(200).json(list);
   }
