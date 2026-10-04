@@ -3445,6 +3445,22 @@ body{overflow-x:hidden;max-width:100vw;}
 .trk-summary{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.6px;color:var(--cream2);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:4px 11px;white-space:nowrap;}
 .news-toggle{background:transparent;border:1px solid transparent;color:var(--cream2);font-size:10px;letter-spacing:.8px;padding:5px 10px;border-radius:6px;opacity:.75;transition:background .15s,color .15s,opacity .15s;}
 .news-toggle:hover{background:rgba(255,255,255,0.05);border-color:transparent;color:var(--cream);opacity:1;}
+
+/* ══ MAKALE İÇİ TERMİNAL WIDGET'I ══
+   Tez ile terminal arasındaki köprü; künyenin hemen altında duruyor.
+   Hisseyi terminale taşıyor, analizi başlatmıyor (kredi harcıyor). */
+.tzo-term{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:16px 0 4px;padding:14px 18px;border:1px solid var(--portal-border);border-left:2px solid var(--accent);border-radius:10px;background:linear-gradient(120deg,rgba(194,173,132,.07),transparent 65%);transition:border-color .2s,transform .2s,background .2s;}
+.tzo-term:hover{border-color:rgba(194,173,132,.45);transform:translateY(-1px);background:linear-gradient(120deg,rgba(194,173,132,.12),transparent 65%);}
+.tzo-term-l{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.tzo-term-k{font-family:var(--font-mono);font-size:8.5px;letter-spacing:2px;color:var(--accent);}
+.tzo-term-t{font-size:14px;font-weight:600;color:var(--cream);line-height:1.3;}
+.tzo-term-s{font-family:var(--font-mono);font-size:10.5px;color:var(--cream2);opacity:.75;line-height:1.5;}
+.tzo-term-b{flex-shrink:0;display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid rgba(194,173,132,.38);border-radius:6px;background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:600;white-space:nowrap;}
+.tzo-term:hover .tzo-term-b{background:var(--accent);border-color:var(--accent);color:#090A0F;}
+@media(max-width:620px){
+  .tzo-term{flex-direction:column;align-items:stretch;gap:12px;}
+  .tzo-term-b{justify-content:center;}
+}
 </style>
 <body>
 <div id="globalToast"><span class="toast-dot"></span><span class="toast-msg"></span></div>
@@ -7431,6 +7447,25 @@ function garpAnalizAc(ticker) {
     </div>`;
   }
 
+  /* ── MAKALE → TERMİNAL KÖPRÜSÜ ──────────────────────────────────
+     Tezdeki hisseyi terminalde açar. Analizi OTOMATİK BAŞLATMIYOR —
+     analiz kredi harcıyor, yalnızca arama kutusu dolduruluyor,
+     kullanıcı kendisi başlatıyor. Bağlantı data-route taşımıyor:
+     router'ın rota deseni sorgu dizesiyle eşleşmiyor, bu yüzden tam
+     sayfa yüklemesiyle gidiyor ve parametre orada okunuyor. */
+  function terminalWidgetHTML(tez){
+    const ex = tez.exchange || 'BIST';
+    const q = '/terminal?t=' + encodeURIComponent(tez.ticker) + '&ex=' + encodeURIComponent(ex);
+    return `<a class="tzo-term" href="${q}">
+      <span class="tzo-term-l">
+        <span class="tzo-term-k">◈ Terminal</span>
+        <span class="tzo-term-t">Bu hisseyi terminalde canlı filtrele</span>
+        <span class="tzo-term-s">${esc(tez.ticker)} · ${esc(ex)} — canlı fiyat, çarpanlar ve yedi kriterli analiz</span>
+      </span>
+      <span class="tzo-term-b">Terminalde aç <span class="arr">→</span></span>
+    </a>`;
+  }
+
   /* ── E-POSTA DUVARI ─────────────────────────────────────────────
      Metnin girişi herkese açık, gerisi mail bırakan okura. Kesme
      sunucuda yapılıyor (api/tez-admin.js): burada yalnızca kesildiği
@@ -7617,6 +7652,7 @@ function garpAnalizAc(ticker) {
         <h1 class="tzo-title">${esc(tez.baslik)}</h1>
         ${tez.ozet ? `<p class="tzo-lede">${esc(tez.ozet)}</p>` : ''}
         ${kat==='tez' ? kunyeHTML(tez, guncellemeler) : ''}
+        ${tez.ticker ? terminalWidgetHTML(tez) : ''}
         ${ucDakikaHTML(tez)}
         ${tezPanelleriHTML(guncellemeler, tarih, icerik, govdeAd, !!tez.kilit)}
         ${tez.kilit ? duvarHTML(kat, tez.kilitli_guncelleme || 0) : ''}
@@ -8435,6 +8471,23 @@ document.addEventListener('DOMContentLoaded', function(){
   w.style.zIndex = 'auto';
   w.style.fontFamily = 'inherit';
   sag.appendChild(w);
+});
+</script>
+<script>
+/* Tez sayfasındaki "Terminalde aç" bağlantısıyla gelindiğinde arama
+   kutusunu doldurur. Analizi başlatmaz: analiz kredi harcıyor, kararı
+   kullanıcı versin. Terminal arayüzü kurulsun diye kısa gecikme var. */
+document.addEventListener('DOMContentLoaded', function(){
+  if (!/^\/terminal(\/|$)/.test(location.pathname)) return;
+  var p = new URLSearchParams(location.search);
+  var t = (p.get('t') || '').trim().toUpperCase();
+  if (!t) return;
+  var ex = (p.get('ex') || 'BIST').toUpperCase();
+  setTimeout(function(){
+    if (typeof window.qFill === 'function') { window.qFill(t, '', ex); }
+    var el = document.getElementById('tickerIn');
+    if (el) { el.value = t; el.focus(); }
+  }, 300);
 });
 </script>
 </body>
