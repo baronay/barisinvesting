@@ -787,8 +787,13 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
 /* ══ HERO — kompakt değer teklifi ══════════════════════════════════
    Dikey boşluklar ekran yüksekliğine bağlı: kısa ekranda daralıyor,
    altındaki karar masası ilk ekranda kalıyor. */
-.hero-k{padding:clamp(26px,4.5vh,46px) 0 clamp(18px,3vh,30px);border-bottom:1px solid var(--rule);}
-.hero-k-h{font-family:var(--font-head);font-size:clamp(28px,3.6vw,44px);font-weight:600;line-height:1.14;letter-spacing:-.02em;color:var(--text);max-width:19ch;}
+/* İki kolon: sol metin %45, sağ veri %55. Dikey boşluk ekran yüksekliğine
+   bağlı — 1080p'de bu alan bitince manşet bandının üstü görünüyor. */
+.split-hero{padding:clamp(20px,3.4vh,34px) 0 clamp(16px,2.6vh,26px);border-bottom:1px solid var(--rule);}
+.sh-grid{display:grid;grid-template-columns:minmax(0,45fr) minmax(0,55fr);gap:38px;align-items:center;}
+.sh-sol{min-width:0;}
+.sh-sag{min-width:0;}
+.hero-k-h{font-family:var(--font-head);font-size:clamp(1.75rem,3vw,2.25rem);font-weight:600;line-height:1.14;letter-spacing:-.02em;color:var(--text);max-width:19ch;}
 .hero-k-h em{font-style:italic;color:var(--accent);}
 .hero-k-p{margin-top:12px;font-size:clamp(14px,1.2vw,16px);line-height:1.6;color:#9CA3AF;max-width:58ch;}
 .hero-k-cta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:20px;}
@@ -805,12 +810,17 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
 /* ══ CANLI KARAR MASASI ══
    Veri tablosu düzeni: ticker, görüş, başlık, referans → güncel fiyat,
    getiri, aksiyon. Rakamlar tabular-nums ile kaymıyor. */
-.sec-karar{padding:22px 0 0;}
+/* Sağ kolondaki karar masası bir kart: başlık şeridi + satırlar + alt link */
+.km-tum{display:inline-flex;align-items:center;gap:7px;margin-top:10px;font-size:11.5px;font-weight:600;color:var(--accent);}
+.km-tum:hover{opacity:.82;}
 .km-bas{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:11px;border-bottom:2px solid var(--accent);}
 .km-kick{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--accent);}
 .km-not{font-size:12px;color:var(--muted);}
 .km-tablo{border:1px solid rgba(255,255,255,0.07);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;}
-.km-satir{display:grid;grid-template-columns:84px 74px minmax(0,1fr) 124px 84px 104px;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.055);border-left:2px solid transparent;transition:background .15s,border-left-color .15s;}
+/* Kompakt veri satırı: dar kolona sığsın diye "Tezi İncele" sütunu yok —
+   onun yerine tablonun altında tek bir "Tüm Sicili İncele" bağlantısı var. */
+.km-satir{display:grid;grid-template-columns:66px 58px minmax(0,1fr) 116px 74px;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.055);border-left:2px solid transparent;transition:background .15s,border-left-color .15s;}
+.km-git{display:none;}
 .km-satir:last-child{border-bottom:none;}
 .km-satir:hover{background:rgba(255,255,255,0.03);border-left-color:var(--accent);}
 .km-tk{font-family:var(--font-mono);font-size:13px;font-weight:600;letter-spacing:.8px;color:var(--text);}
@@ -840,10 +850,18 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
   .km-git{display:none;}
 }
 @media(max-width:767px){
-  .hero-k{padding:20px 0 16px;}
+  .split-hero{padding:18px 0 14px;}
   .hero-k-h{max-width:none;font-size:30px;}
   .hero-k-b1,.hero-k-b2{flex:1;justify-content:center;}
-  .sec-karar{padding:16px 0 0;}
+
+}
+
+/* Split hero: dar ekranda tek kolona düşüyor, veri masası metnin altına */
+@media(max-width:1000px){
+  .sh-grid{grid-template-columns:1fr;gap:24px;align-items:start;}
+}
+@media(max-width:900px){
+  .km-satir{grid-template-columns:auto auto minmax(0,1fr);}
 }
 </style>
 </head>
@@ -905,41 +923,42 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
 
 <main>
 
-<!-- ═══════ HERO — kompakt değer teklifi ═══════
-     Eski tam ekran hero kaldırılmıştı: manşeti ekranın altına itiyor,
-     kaydırmayan ziyaretçi tek bir içerik görmeden çıkıyordu. Bu sürüm
-     kasten alçak — dikey boşluklar ekran yüksekliğine bağlı (clamp),
-     altındaki karar masası ilk ekranda kalmaya devam ediyor. -->
-<section class="sec hero-k" id="hero">
-  <div class="container">
-    <h1 class="hero-k-h">Gürültüyü değil, <em>bilançoyu</em> fiyatlayanlar için.</h1>
-    <p class="hero-k-p">Derinlemesine hisse araştırma tezleri ve gerçek zamanlı interaktif piyasa terminali.</p>
-    <div class="hero-k-cta">
-      <a class="hero-k-b1" id="heroSonTez" href="/tezler">Son Tezi Oku <span class="arrow-ic"></span></a>
-      <a class="hero-k-b2" href="/terminal">Terminali Aç <kbd class="hero-k-kbd">⌘K</kbd></a>
-    </div>
-    <div class="hero-k-rozet">
-      <span class="hk-r"><i class="hk-dot"></i>Şeffaf Sicil</span>
-      <span class="hk-s">·</span>
-      <span class="hk-r" id="hkTakip">Aktif Takip Listesi</span>
-      <span class="hk-s">·</span>
-      <span class="hk-r">Canlı Piyasa Verisi</span>
-    </div>
-  </div>
-</section>
+<!-- ═══════ SPLIT HERO — solda manifesto, sağda canlı karar masası ═══════
+     Önce alt alta duruyorlardı: ikisi birden ilk ekranı yiyor, solda uzun
+     bir boşluk kalıyordu. Tek ızgaraya alındılar — sol %45 metin, sağ %55
+     veri. Yükseklik kasten düşük: altındaki manşet bandının üstü 1080p'de
+     ilk ekranda görünüp aşağı kaydırmaya davet etsin.
+     Karar masası burada yalnızca en güncel 3 tezi gösteriyor; tamamı
+     /tezler sayfasındaki sicilde. Fiyatlar ilk boyamadan SONRA
+     dolduruluyor (kararFiyatlari). -->
+<section class="sec split-hero" id="hero">
+  <div class="container sh-grid">
 
-<!-- ═══════ CANLI KARAR MASASI ═══════
-     Tez sicili yalnızca /tezler sayfasındaydı; güven sinyali olduğu için
-     ana sayfaya, hero'nun hemen altına alındı. Eski "Açık Tezler" şeridinin
-     yerini aldı — ikisi aynı veriyi gösteriyordu, biri fiyatsızdı.
-     Fiyatlar ilk boyamadan SONRA dolduruluyor (kararFiyatlari). -->
-<section class="sec sec-karar" id="takip">
-  <div class="container">
-    <div class="km-bas">
-      <span class="km-kick">◈ Canlı Karar Masası</span>
-      <span class="km-not">açık tezler · referans fiyat → güncel fiyat · getiri</span>
+    <div class="sh-sol">
+      <h1 class="hero-k-h">Gürültüyü değil, <em>bilançoyu</em> fiyatlayanlar için.</h1>
+      <p class="hero-k-p">Derinlemesine hisse araştırma tezleri ve gerçek zamanlı interaktif piyasa terminali.</p>
+      <div class="hero-k-cta">
+        <a class="hero-k-b1" id="heroSonTez" href="/tezler">Son Tezi Oku <span class="arrow-ic"></span></a>
+        <a class="hero-k-b2" href="/terminal">Terminali Aç <kbd class="hero-k-kbd">⌘K</kbd></a>
+      </div>
+      <div class="hero-k-rozet">
+        <span class="hk-r"><i class="hk-dot"></i>Şeffaf Sicil</span>
+        <span class="hk-s">·</span>
+        <span class="hk-r" id="hkTakip">Aktif Takip Listesi</span>
+        <span class="hk-s">·</span>
+        <span class="hk-r">Canlı Veri</span>
+      </div>
     </div>
-    <div class="km-tablo" id="kmTablo"><div class="km-bos">YÜKLENİYOR…</div></div>
+
+    <aside class="sh-sag" id="takip">
+      <div class="km-bas">
+        <span class="km-kick">◈ Canlı Karar Masası</span>
+        <span class="km-not">referans → güncel</span>
+      </div>
+      <div class="km-tablo" id="kmTablo"><div class="km-bos">YÜKLENİYOR…</div></div>
+      <a class="km-tum" id="kmTum" href="/tezler">Tüm Sicili İncele <span class="arrow-ic"></span></a>
+    </aside>
+
   </div>
 </section>
 
@@ -1616,7 +1635,11 @@ const GORUS_AD = { AL:['al','AL'], IZLE:['izle','İZLE'], NOTR:['notr','TUT'], K
 function takipCiz(list) {
   const el = document.getElementById('kmTablo');
   if (!el) return;
-  const tezler = list.filter(t => (t.kategori || 'tez') === 'tez' && t.durum !== 'kapandi').slice(0, 6);
+  // Masada yalnızca en güncel üç tez; tamamı /tezler'deki sicilde.
+  const acik = list.filter(t => (t.kategori || 'tez') === 'tez' && t.durum !== 'kapandi');
+  const tezler = acik.slice(0, 3);
+  const tumLink = document.getElementById('kmTum');
+  if (tumLink) tumLink.innerHTML = `Tüm Sicili İncele (${acik.length} Tez) <span class="arrow-ic"></span>`;
   if (!tezler.length) { el.innerHTML = '<div class="km-bos">AÇIK TEZ YOK.</div>'; return; }
   el.innerHTML = tezler.map(t => {
     const g = GORUS_AD[t.sinyal] || null;
