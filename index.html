@@ -426,21 +426,6 @@ a.feat-strip:hover .fs-cover img{transform:scale(1.04);}
 .ic-thumb{border:1px solid rgba(255,255,255,0.08);}
 .ic-bos{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--accent);}
 
-/* ══ KAPAK-KARARTMA-GECICI ════════════════════════════════════════
-   GEÇİCİ BLOK — KOYU KAPAKLAR YÜKLENİNCE SİLİNECEK.
-   Mevcut kapak PNG'leri aydınlık zeminli; koyu sayfada göz patlatıyor.
-   Kalıcı çözüm kapak şablonunun koyu varyantı. Yeni görseller gelince
-   bu bloğu silmek yeter — görsellere veya markup'a dokunulmadı, yalnızca
-   CSS filtresi. Kaldırmak için: grep -n "KAPAK-KARARTMA-GECICI"
-   Fareyle üstüne gelince görsel kendi parlaklığına yaklaşıyor. */
-.lead-cover img,.ort-kapak img,.ik-cover img,.ic-thumb img{
-  filter:brightness(.86) saturate(.94);
-  transition:transform .7s cubic-bezier(.2,.8,.2,1),filter .25s ease;
-}
-.lead-card:hover .lead-cover img,
-.mn-orta a:hover .ort-kapak img,
-.ik-card:hover .ik-cover img,
-.ic-row:hover .ic-thumb img{filter:brightness(.98) saturate(1);}
 /* Sütun başındaki kapaklı kart — "temiz kart" görünümü burada duruyor */
 .ic-kart{margin-bottom:4px;}
 .ik-card{display:block;padding-bottom:14px;border-bottom:1px solid var(--rule);}
