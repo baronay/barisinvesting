@@ -113,6 +113,14 @@ h1{font-size:30px;font-weight:700;}
 h2{font-size:23px;}
 h3{font-size:18px;}
 
+/* Bağlantı sıfırlaması — index.html'de vardı, app.html'de yoktu. Sınıfıyla
+   boyanmayan her <a> tarayıcı varsayılanına (mavi + altı çizili) düşüyordu;
+   tez sayfasındaki terminal widget'ı böyle bozulmuştu. */
+a{color:inherit;text-decoration:none;}
+/* Makale gövdesindeki bağlantılar link gibi görünmeye devam etsin. Tezin
+   kendi stili varsa (içerik HTML'i kendi <style>'ını taşıyor) o kazanır:
+   aynı özgüllükte ve belgede daha sonra geliyor. */
+.tzo-content a{color:var(--accent);text-decoration:underline;text-underline-offset:3px;}
 input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:var(--text);}
 
 .mono,code,kbd,samp,pre{
