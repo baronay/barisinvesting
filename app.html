@@ -3041,9 +3041,12 @@ body.pr-kilit{overflow:hidden;}
   .ptz-cover::after{display:none;}
   .ptz-cover img{opacity:1;}
   .ptz-body{padding:0!important;display:block!important;}
-  .ptz-title{font-family:var(--font-head);font-size:1.15rem;line-height:1.3;letter-spacing:-.01em;}
-  .ptz-sum{font-size:14px;line-height:1.55;}
-  .ptz-date{font-size:11px;}
+  /* !important şart: temel kart kuralları dosyada bu bloğun ALTINDA
+     duruyor; eşit özgüllükte sonraki kural kazanıyor ve mobil ölçüler
+     eziliyordu (başlık 1.15rem yerine 1.35rem çiziliyordu). */
+  .ptz-title{font-family:var(--font-head);font-size:1.15rem!important;line-height:1.3;letter-spacing:-.01em;}
+  .ptz-sum{font-size:14px!important;line-height:1.55;}
+  .ptz-date{font-size:11px!important;}
   .ptz-foot{padding-top:2px;}
 
   /* Okuma sayfası: gazete makalesi */
