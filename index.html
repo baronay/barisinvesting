@@ -379,12 +379,17 @@ a.feat-strip:hover .fs-cover img{transform:scale(1.04);}
 .feat-strip.guncel .fs-kick .dot{background:var(--accent);}
 
 .ic-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;}
-.ic-col{min-width:0;}
+/* Sütun esnek: liste alanı kalan yüksekliği doldursun, içerik azsa
+   boşluk yerine arşiv bloğu gerilsin. */
+.ic-col{min-width:0;display:flex;flex-direction:column;}
 .ic-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-bottom:11px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.06);}
 .ic-head .kicker{display:block;margin-bottom:5px;}
 .ic-h{font-family:var(--font-head);font-size:20px;font-weight:600;letter-spacing:-.01em;line-height:1.2;color:var(--text);}
 .ic-all{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap;}
-.ic-list{display:flex;flex-direction:column;}
+.ic-list{display:flex;flex-direction:column;flex:1;}
+/* İçerik bittiğinde: yumuşak çerçeveli, dikeyde ortalanmış arşiv bloğu */
+.ic-bosblok{flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:10px;min-height:120px;margin-top:14px;padding:20px;border:1px dashed rgba(255,255,255,0.08);border-radius:12px;background:rgba(255,255,255,0.015);}
+.ic-bosblok-t{font-size:13px;line-height:1.5;color:#9CA3AF;}
 .ic-row{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--rule);transition:opacity .18s;}
 .ic-row:last-child{border-bottom:none;}
 .ic-row:hover{opacity:.8;}
@@ -1446,11 +1451,15 @@ function icRowHTML(t, opts = {}) {
   </a>`;
 }
 
+/* Sütunda listelenecek içerik kalmadığında boşluk bırakmak yerine kasıtlı
+   bir blok çiziliyor: üç sütun ızgarada aynı yüksekliğe geriliyor ve az
+   içerikli kategori (ör. tek haber varsa) altında koca bir boşluk
+   bırakıyordu. Blok kalan yüksekliği dolduruyor. */
 function listeCiz(el, list, opts, bos) {
   if (!el) return;
   el.innerHTML = list.length
     ? list.slice(0, 3).map(t => icRowHTML(t, opts)).join('')
-    : `<div class="skel">${bos}</div>`;
+    : `<div class="ic-bosblok">${bos}</div>`;
 }
 
 /* Tezin son hareketi: güncelleme varsa onun tarihi, yoksa yayın tarihi.
@@ -1729,9 +1738,9 @@ function icerigiCiz(list, tazeMi) {
     if (grup.length) {
       if (kart) kart.innerHTML = ikKartHTML(grup[0], i++);
       listeCiz(liste, grup.slice(1), { haber: tur === 'haber', cat: tur === 'arastirma' },
-               tur === 'tez' ? '<a class="ic-bos" href="/tezler">Tez arşivi <span class="arrow-ic"></span></a>'
-             : tur === 'arastirma' ? '<a class="ic-bos" href="/arastirmalar">Araştırma arşivi <span class="arrow-ic"></span></a>'
-             : '<a class="ic-bos" href="/haberler">Haber arşivi <span class="arrow-ic"></span></a>');
+               tur === 'tez' ? '<span class="ic-bosblok-t">Bu bölümdeki diğer tezler arşivde.</span><a class="ic-bos" href="/tezler">Tez arşivi <span class="arrow-ic"></span></a>'
+             : tur === 'arastirma' ? '<span class="ic-bosblok-t">Bu bölümdeki diğer araştırmalar arşivde.</span><a class="ic-bos" href="/arastirmalar">Araştırma arşivi <span class="arrow-ic"></span></a>'
+             : '<span class="ic-bosblok-t">Bu bölümdeki diğer haberler arşivde.</span><a class="ic-bos" href="/haberler">Haber arşivi <span class="arrow-ic"></span></a>');
     } else {
       if (kart) kart.innerHTML = '';
       listeCiz(liste, [], {}, tur === 'tez' ? 'HENÜZ TEZ YAYINLANMADI.' : tur === 'arastirma' ? 'İLK ARAŞTIRMA YAKINDA.' : 'İLK HABER YAKINDA.');
