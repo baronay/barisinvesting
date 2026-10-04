@@ -356,19 +356,6 @@ nav.pill{display:flex;align-items:center;justify-content:center;gap:16px;max-wid
    Her tez bir kutucuk: ticker, görüş rozeti, son hareketin ne kadar
    eski olduğu. Yatayda akar, mobilde kaydırılır. Amaç 30 saniyede
    "neyi izliyor" sorusunu yanıtlamak. */
-.sec-takip{padding:6px 0 0;}
-.tk-bas{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--rule);margin-bottom:14px;}
-.tk-kick{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--accent);}
-.tk-not{font-size:12px;color:var(--muted2);}
-.tk-serit{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:10px;}
-.tk-kart{display:block;border:1px solid var(--border-s);border-radius:10px;background:var(--surface);padding:12px 14px;transition:border-color .18s,transform .18s,background .18s;}
-.tk-kart:hover{border-color:rgba(255,255,255,0.18);transform:translateY(-2px);background:var(--surface2);}
-.tk-ust{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;}
-.tk-tk{font-family:var(--font-mono);font-size:14px;font-weight:700;letter-spacing:.5px;color:var(--text);}
-.tk-satir{font-size:11.5px;line-height:1.45;color:#9CA3AF;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:33px;}
-.tk-alt{margin-top:8px;padding-top:8px;border-top:1px solid var(--rule);font-family:var(--font-mono);font-size:9px;letter-spacing:.4px;color:var(--muted2);display:flex;align-items:center;justify-content:space-between;gap:6px;}
-.tk-guncel{color:var(--accent);}
-@media(max-width:520px){.tk-serit{grid-template-columns:1fr 1fr;gap:8px;}.tk-kart{padding:10px 12px;}}
 
 /* ── İÇERİK MERKEZİ: üç tür tek ekranda ────────────────────────
    Ölçü: bir sütun 3 satır × ~78px + başlık ≈ 320px, öne çıkan şerit
@@ -421,11 +408,6 @@ a.feat-strip:hover .fs-cover img{transform:scale(1.04);}
 .ort-kick{font-size:8.5px;letter-spacing:1.8px;}
 
 /* Açık tezler: çıplak daire yerine durum rozeti */
-.tk-rozet{font-family:var(--font-mono);font-size:8.5px;font-weight:600;letter-spacing:1.2px;padding:3px 8px;border-radius:20px;border:1px solid transparent;flex-shrink:0;}
-.tk-rozet.al{color:#4ade80;background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.30);}
-.tk-rozet.izle{color:var(--accent);background:var(--accent-dim);border-color:rgba(194,173,132,.30);}
-.tk-rozet.notr{color:#60a5fa;background:rgba(96,165,250,.12);border-color:rgba(96,165,250,.30);}
-.tk-rozet.uzak{color:#f0705f;background:rgba(240,82,82,.12);border-color:rgba(240,82,82,.30);}
 
 /* Banner'lar: köşeden sızan hafif ortam ışığı. Işık ::before'da,
    içerik position:relative ile üstte kalıyor. */
@@ -590,11 +572,14 @@ a.feat-strip:hover .fs-cover img{transform:scale(1.04);}
 .iptal-chip{display:inline-block;padding:7px 14px;border:1px solid var(--border-s);border-radius:24px;background:var(--surface2);color:var(--text2);box-shadow:var(--shadow-soft);font-size:12px;font-weight:500;}
 
 /* bülten formu */
-.news-row{display:flex;gap:10px;}
-.news-in{flex:1;min-width:0;background:var(--bg2);border:1px solid var(--border-s);border-radius:14px;padding:13px 16px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:border-color .2s;}
+/* Bülten: yatay kompakt bileşen — solda input, sağda buton. Başlık bir
+   cümle olduğu için kart başlığından küçük. */
+.news-h{font-size:19px;line-height:1.35;letter-spacing:-.01em;}
+.news-row{display:flex;gap:8px;}
+.news-in{flex:1;min-width:0;background:var(--bg2);border:1px solid var(--border-s);border-radius:8px;padding:11px 15px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:border-color .2s;}
 .news-in::placeholder{color:var(--muted2);}
 .news-in:focus{border-color:var(--accent);}
-.news-btn{background:var(--accent);color:#0b0f15;border:1px solid var(--accent2);border-radius:14px;padding:13px 22px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;box-shadow:var(--shadow-btn);transition:transform .2s,background .2s;white-space:nowrap;}
+.news-btn{background:var(--accent);color:#0b0f15;border:1px solid var(--accent2);border-radius:8px;padding:11px 22px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;box-shadow:var(--shadow-btn);transition:transform .2s,background .2s;white-space:nowrap;}
 .news-btn:hover{transform:scale(1.03);background:var(--cream);}
 .news-btn:disabled{opacity:.55;cursor:default;transform:none;}
 .news-msg{font-size:12px;margin-top:10px;color:var(--muted);min-height:14px;}
@@ -743,10 +728,6 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
   .ic-title{font-family:var(--font-head);font-size:16.5px;font-weight:600;line-height:1.3;color:var(--text);}
   .ic-meta{margin-bottom:5px;}
 
-  /* Açık tezler: iki sütun kutucuk, gazete rengiyle */
-  .sec-takip{padding:20px 0 0;}
-  .tk-bas{padding-bottom:9px;margin-bottom:12px;}
-  .tk-kart{border-radius:6px;}
 }
 
 
@@ -801,6 +782,68 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
      kesiyordu. Beş başlık yeter; hemen altındaki "Tüm haberler" zaten
      tam listeye götürüyor. */
   .rail-row:nth-of-type(n+6){display:none;}
+}
+
+/* ══ HERO — kompakt değer teklifi ══════════════════════════════════
+   Dikey boşluklar ekran yüksekliğine bağlı: kısa ekranda daralıyor,
+   altındaki karar masası ilk ekranda kalıyor. */
+.hero-k{padding:clamp(26px,4.5vh,46px) 0 clamp(18px,3vh,30px);border-bottom:1px solid var(--rule);}
+.hero-k-h{font-family:var(--font-head);font-size:clamp(28px,3.6vw,44px);font-weight:600;line-height:1.14;letter-spacing:-.02em;color:var(--text);max-width:19ch;}
+.hero-k-h em{font-style:italic;color:var(--accent);}
+.hero-k-p{margin-top:12px;font-size:clamp(14px,1.2vw,16px);line-height:1.6;color:#9CA3AF;max-width:58ch;}
+.hero-k-cta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:20px;}
+.hero-k-b1{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#0b0f15;border:1px solid var(--accent2);border-radius:8px;padding:11px 20px;font-size:14px;font-weight:600;transition:background .18s,transform .18s;}
+.hero-k-b1:hover{background:var(--cream);transform:translateY(-1px);}
+.hero-k-b2{display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,0.04);border:1px solid var(--border-s);border-radius:8px;padding:11px 18px;font-size:14px;font-weight:600;color:var(--text2);transition:background .18s,border-color .18s,color .18s;}
+.hero-k-b2:hover{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.18);color:var(--text);}
+.hero-k-kbd{font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;color:var(--muted);background:rgba(255,255,255,0.05);border:1px solid var(--border-s);border-radius:5px;padding:2px 6px;}
+.hero-k-rozet{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);}
+.hk-r{display:inline-flex;align-items:center;gap:7px;}
+.hk-dot{width:6px;height:6px;border-radius:50%;background:var(--success);font-style:normal;animation:blink 1.8s ease infinite;}
+.hk-s{color:var(--muted2);}
+
+/* ══ CANLI KARAR MASASI ══
+   Veri tablosu düzeni: ticker, görüş, başlık, referans → güncel fiyat,
+   getiri, aksiyon. Rakamlar tabular-nums ile kaymıyor. */
+.sec-karar{padding:22px 0 0;}
+.km-bas{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:11px;border-bottom:2px solid var(--accent);}
+.km-kick{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--accent);}
+.km-not{font-size:12px;color:var(--muted);}
+.km-tablo{border:1px solid rgba(255,255,255,0.07);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;}
+.km-satir{display:grid;grid-template-columns:84px 74px minmax(0,1fr) 124px 84px 104px;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.055);border-left:2px solid transparent;transition:background .15s,border-left-color .15s;}
+.km-satir:last-child{border-bottom:none;}
+.km-satir:hover{background:rgba(255,255,255,0.03);border-left-color:var(--accent);}
+.km-tk{font-family:var(--font-mono);font-size:13px;font-weight:600;letter-spacing:.8px;color:var(--text);}
+.km-sig{font-family:var(--font-mono);font-size:8.5px;font-weight:600;letter-spacing:1.1px;padding:3px 9px;border-radius:20px;border:1px solid transparent;text-align:center;}
+.km-sig.al{background:rgba(16,185,129,.12);color:#34D399;border-color:rgba(16,185,129,.30);}
+.km-sig.izle{background:var(--accent-dim);color:var(--accent);border-color:rgba(194,173,132,.30);}
+.km-sig.notr{background:rgba(96,165,250,.12);color:#60a5fa;border-color:rgba(96,165,250,.30);}
+.km-sig.uzak{background:rgba(239,68,68,.12);color:#F87171;border-color:rgba(239,68,68,.30);}
+.km-tt{font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.km-satir:hover .km-tt{color:var(--accent);}
+.km-px{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;}
+.km-ok{color:rgba(255,255,255,.35);margin:0 5px;}
+.km-ret{font-family:var(--font-mono);font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;}
+.km-ret.pos{color:#10B981;}
+.km-ret.neg{color:#EF4444;}
+.km-ret.neu{color:var(--muted);}
+.km-git{font-size:11.5px;font-weight:600;color:var(--accent);text-align:right;white-space:nowrap;opacity:0;transition:opacity .15s;}
+.km-satir:hover .km-git{opacity:1;}
+.km-bos{padding:22px 16px;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;color:var(--muted2);}
+/* Dar ekranda iki satıra kırılıyor; başlık ve fiyat akışı alta geçiyor */
+@media(max-width:900px){
+  .km-satir{grid-template-columns:auto auto minmax(0,1fr);grid-template-areas:"tk sig ret" "tt tt tt" "px px px";gap:7px 10px;}
+  .km-tk{grid-area:tk;} .km-sig{grid-area:sig;}
+  .km-ret{grid-area:ret;}
+  .km-tt{grid-area:tt;white-space:normal;}
+  .km-px{grid-area:px;text-align:left;}
+  .km-git{display:none;}
+}
+@media(max-width:767px){
+  .hero-k{padding:20px 0 16px;}
+  .hero-k-h{max-width:none;font-size:30px;}
+  .hero-k-b1,.hero-k-b2{flex:1;justify-content:center;}
+  .sec-karar{padding:16px 0 0;}
 }
 </style>
 </head>
@@ -862,6 +905,44 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
 
 <main>
 
+<!-- ═══════ HERO — kompakt değer teklifi ═══════
+     Eski tam ekran hero kaldırılmıştı: manşeti ekranın altına itiyor,
+     kaydırmayan ziyaretçi tek bir içerik görmeden çıkıyordu. Bu sürüm
+     kasten alçak — dikey boşluklar ekran yüksekliğine bağlı (clamp),
+     altındaki karar masası ilk ekranda kalmaya devam ediyor. -->
+<section class="sec hero-k" id="hero">
+  <div class="container">
+    <h1 class="hero-k-h">Gürültüyü değil, <em>bilançoyu</em> fiyatlayanlar için.</h1>
+    <p class="hero-k-p">Derinlemesine hisse araştırma tezleri ve gerçek zamanlı interaktif piyasa terminali.</p>
+    <div class="hero-k-cta">
+      <a class="hero-k-b1" id="heroSonTez" href="/tezler">Son Tezi Oku <span class="arrow-ic"></span></a>
+      <a class="hero-k-b2" href="/terminal">Terminali Aç <kbd class="hero-k-kbd">⌘K</kbd></a>
+    </div>
+    <div class="hero-k-rozet">
+      <span class="hk-r"><i class="hk-dot"></i>Şeffaf Sicil</span>
+      <span class="hk-s">·</span>
+      <span class="hk-r" id="hkTakip">Aktif Takip Listesi</span>
+      <span class="hk-s">·</span>
+      <span class="hk-r">Canlı Piyasa Verisi</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ CANLI KARAR MASASI ═══════
+     Tez sicili yalnızca /tezler sayfasındaydı; güven sinyali olduğu için
+     ana sayfaya, hero'nun hemen altına alındı. Eski "Açık Tezler" şeridinin
+     yerini aldı — ikisi aynı veriyi gösteriyordu, biri fiyatsızdı.
+     Fiyatlar ilk boyamadan SONRA dolduruluyor (kararFiyatlari). -->
+<section class="sec sec-karar" id="takip">
+  <div class="container">
+    <div class="km-bas">
+      <span class="km-kick">◈ Canlı Karar Masası</span>
+      <span class="km-not">açık tezler · referans fiyat → güncel fiyat · getiri</span>
+    </div>
+    <div class="km-tablo" id="kmTablo"><div class="km-bos">YÜKLENİYOR…</div></div>
+  </div>
+</section>
+
 <!-- ═══════ HAFTANIN SEÇİMİ + YATIRIM TEZLERİ (API) ═══════ -->
 <!-- ═══════ İÇERİK MERKEZİ — tez + araştırma + haber TEK EKRANDA ═══════ -->
 <!-- ═══════ MANŞET — haber sitesi düzeni ═══════
@@ -914,20 +995,6 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
           <span class="rp-cta">Hisseni analiz et →</span>
         </a>
     </aside>
-  </div>
-</section>
-
-<!-- ═══════ TEZ TAKİBİ — "şu an neyi düşünüyorum" ═══════
-     Ziyaretçi 20 dakikalık araştırmayı okumadan da açık tezleri ve
-     görüşü görebilsin. Tamamen mevcut veriden türüyor (ticker, sinyal,
-     son hareket) — doldurulacak yeni bir alan yok. -->
-<section class="sec sec-takip" id="takip">
-  <div class="container">
-    <div class="tk-bas">
-      <span class="tk-kick">◈ Açık Tezler</span>
-      <span class="tk-not">şu an takip ettiğim şirketler ve görüşüm</span>
-    </div>
-    <div class="tk-serit" id="tkSerit"></div>
   </div>
 </section>
 
@@ -1022,8 +1089,8 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
 
       <!-- Sağ: Bülten aboneliği -->
       <div class="price-card rv">
-        <h3>Bültene Abone Ol</h3>
-        <p class="desc">Yeni tezler, haftalık seçimler ve piyasa notları doğrudan e-postana gelsin. Tamamen ücretsiz.</p>
+        <h3 class="news-h">Yeni bir yatırım tezi veya bilanço analizi yayınlandığında anında haberdar olun.</h3>
+        <p class="desc">Haftalık seçimler ve piyasa notları da aynı listeden gidiyor. Tamamen ücretsiz, istediğin an çıkarsın.</p>
         <div class="divider"></div>
         <div id="newsForm">
           <div class="news-row">
@@ -1542,25 +1609,78 @@ function guncellemeBariniGoster(list) {
 /* Açık tezler şeridi: yalnızca 'tez' kategorisi, en son hareket edenden
    başlayarak. Sinyali olmayan tez de görünsün — görüş yerine tarih. */
 const GORUS_AD = { AL:['al','AL'], IZLE:['izle','İZLE'], NOTR:['notr','TUT'], KACIN:['uzak','KAÇIN'] };
+/* CANLI KARAR MASASI — açık tezler, referans ve güncel fiyatla.
+   Fiyatlar burada ÇEKİLMİYOR: satırlar önce yazılıyor, fiyat ve getiri
+   alanları sonra dolduruluyor (kararFiyatlari). Ana sayfa açılışı altı
+   ayrı fiyat isteğini beklemesin — hız çalışmasını bozmamak için. */
 function takipCiz(list) {
-  const el = document.getElementById('tkSerit');
+  const el = document.getElementById('kmTablo');
   if (!el) return;
-  const tezler = list.filter(t => (t.kategori || 'tez') === 'tez' && t.durum !== 'kapandi').slice(0, 8);
-  if (!tezler.length) { el.innerHTML = '<div class="skel" style="text-align:left">AÇIK TEZ YOK.</div>'; return; }
+  const tezler = list.filter(t => (t.kategori || 'tez') === 'tez' && t.durum !== 'kapandi').slice(0, 6);
+  if (!tezler.length) { el.innerHTML = '<div class="km-bos">AÇIK TEZ YOK.</div>'; return; }
   el.innerHTML = tezler.map(t => {
     const g = GORUS_AD[t.sinyal] || null;
-    const hareket = sonHareket(t);
-    const gun = hareket ? Math.round((Date.now() - new Date(hareket).getTime()) / 86400000) : null;
-    const ne = gun == null ? '' : gun <= 1 ? 'bugün' : gun < 30 ? gun + ' gün önce' : Math.round(gun / 30) + ' ay önce';
-    return `<a class="tk-kart" href="/tez/${t.id}">
-      <div class="tk-ust">
-        <span class="tk-tk">${esc(t.ticker || '◈')}</span>
-        ${g ? `<span class="tk-rozet ${g[0]}">${g[1]}</span>` : ''}
-      </div>
-      <div class="tk-satir">${esc(t.ozet_fark || t.ozet || t.baslik || '')}</div>
-      <div class="tk-alt"><span>${ne}</span>${guncelMi(t) ? '<span class="tk-guncel">güncellendi</span>' : ''}</div>
+    const ex = t.exchange || 'BIST';
+    const ref = t.maliyet_fiyat ? fmtFiyat(t.maliyet_fiyat, ex) : '—';
+    return `<a class="km-satir" href="/tez/${t.id}">
+      <span class="km-tk">${esc(t.ticker || '◈')}</span>
+      ${g ? `<span class="km-sig ${g[0]}">${g[1]}</span>` : '<span></span>'}
+      <span class="km-tt">${esc(t.baslik || '')}</span>
+      <span class="km-px" id="kmpx-${t.id}">${ref}</span>
+      <span class="km-ret neu" id="kmret-${t.id}">${t.maliyet_fiyat ? '·' : '—'}</span>
+      <span class="km-git">Tezi İncele →</span>
     </a>`;
   }).join('');
+  kararFiyatlari(tezler);
+}
+
+/* Fiyat biçimi: BIST ₺, ABD $ */
+function fmtFiyat(v, ex) {
+  const n = parseFloat(v);
+  if (!isFinite(n)) return '—';
+  const cur = (ex === 'NYSE' || ex === 'NASDAQ') ? '$' : '₺';
+  return cur + (n >= 1000 ? n.toLocaleString('en-US', { maximumFractionDigits: 0 }) : n.toFixed(2));
+}
+
+/* Karar masasının fiyat ve getiri alanlarını doldurur. Satırlar zaten
+   ekranda; yalnızca iki alan güncelleniyor, düzen oynamıyor. */
+const _kmPx = {};
+async function kararFiyatlari(tezler) {
+  await Promise.all(tezler.map(async t => {
+    const pxEl = document.getElementById('kmpx-' + t.id);
+    const rEl  = document.getElementById('kmret-' + t.id);
+    const cost = parseFloat(t.maliyet_fiyat);
+    if (!t.ticker || !isFinite(cost)) { if (rEl) rEl.textContent = '—'; return; }
+    const ex = t.exchange || 'BIST';
+    const k = t.ticker + '|' + ex;
+    try {
+      if (!(k in _kmPx)) {
+        const r = await fetch('/api/tez-admin?price=1&ticker=' + encodeURIComponent(t.ticker) + '&exchange=' + ex);
+        const d = await r.json();
+        _kmPx[k] = (d && isFinite(d.price)) ? d.price : null;
+      }
+      const px = _kmPx[k];
+      if (!px) { if (rEl) rEl.textContent = '—'; return; }
+      if (pxEl) pxEl.innerHTML = `${fmtFiyat(cost, ex)}<span class="km-ok">→</span>${fmtFiyat(px, ex)}`;
+      if (rEl) {
+        const ret = (px - cost) / cost * 100;
+        rEl.textContent = (ret > 0 ? '+' : '') + ret.toFixed(1) + '%';
+        rEl.className = 'km-ret ' + (ret > 0.5 ? 'pos' : ret < -0.5 ? 'neg' : 'neu');
+      }
+    } catch (_) { if (rEl) rEl.textContent = '—'; }
+  }));
+}
+
+/* Hero'nun değişken parçaları: "Son Tezi Oku" en taze içeriğe gitsin,
+   rozette açık tez sayısı görünsün. */
+function heroCiz(list) {
+  const link = document.getElementById('heroSonTez');
+  if (link && list.length) link.href = '/tez/' + list[0].id;
+  const el = document.getElementById('hkTakip');
+  if (el) {
+    const n = list.filter(t => (t.kategori || 'tez') === 'tez' && t.durum !== 'kapandi').length;
+    el.textContent = n ? n + ' aktif tez' : 'Aktif Takip Listesi';
+  }
 }
 
 /* Listeyi ekrana bas — hem yerel kopya hem taze veri aynı yoldan geçer */
@@ -1599,6 +1719,7 @@ function icerigiCiz(list, tazeMi) {
   ortaCiz(list);
   ucuncuCiz(list);
   takipCiz(list);
+  heroCiz(list);
   armFly();
   if (tazeMi) guncellemeBariniGoster(list);
 }
