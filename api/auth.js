@@ -280,6 +280,84 @@ export default async function handler(req, res) {
     }
   }
 
+  /* ── ABONELİK (yazı sonu kutusu) ──────────────────────────────────
+     Kapı kaldırıldıktan sonra mail tek bir yerden isteniyor: yazının
+     SONUNDAKİ kutu. Kayıt abonelikler tablosuna gidiyor (hangi yazı,
+     hangi kampanya), users tablosu olduğu gibi kalıyor — abone olana
+     terminal kredisi verilmeye devam ediyor.
+
+     Okura ek adım çıkmıyor: tek istek, tek alan. Şifre ya da doğrulama
+     yok, çünkü bu uygulamada kimlik zaten e-posta. */
+  if (action === 'abone_ol' && req.method === 'POST') {
+    const { email, tez_id, kaynak_sayfa, utm_source, utm_medium, utm_campaign } = req.body || {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!email || !emailRegex.test(email) || email.length > 254) {
+      return res.status(400).json({ error: 'Geçerli bir e-posta girin.' });
+    }
+
+    const em = norm(email);
+    const tezId = (tez_id != null && isFinite(+tez_id) && +tez_id > 0) ? Math.trunc(+tez_id) : null;
+    const kis = (v, n) => { const s = String(v == null ? '' : v).trim(); return s ? s.slice(0, n) : null; };
+
+    if (!SB_URL || !SB_KEY) return res.status(200).json({ ok: true, warning: 'Supabase kurulmamış.' });
+
+    // 1) Abonelik kaydı
+    let kayit = false, tekrar = false;
+    try {
+      await sbEkle('abonelikler', {
+        email: em,
+        tez_id: tezId,
+        kaynak_sayfa: kis(kaynak_sayfa, 200),
+        utm_source: kis(utm_source, 120),
+        utm_medium: kis(utm_medium, 120),
+        utm_campaign: kis(utm_campaign, 120),
+      });
+      kayit = true;
+    } catch (e) {
+      /* 23505 = tekil indeks ihlali: aynı kişi aynı yazıya ikinci kez
+         abone olmuş. Okur için bu bir hata değil, "zaten kayıtlısın". */
+      if (/23505|duplicate key/i.test(e.message)) { tekrar = true; }
+      else { console.error('abone_ol abonelikler:', e.message); }
+    }
+
+    // 2) Kredi bağı — users yerinde kalıyor, abone krediyi almaya devam ediyor
+    let user = null, yeni = false;
+    try {
+      user = await getUser(em);
+      yeni = !user;
+      const now = new Date().toISOString();
+      if (!user) {
+        const rows = await sb('POST', 'users', { 'on_conflict': 'email' }, {
+          email: em,
+          credits: FREE_CREDITS,
+          total_used: 0,
+          is_admin: ADMIN_EMAIL ? em === ADMIN_EMAIL : false,
+          marketing_consent: true,
+          joined_at: now,
+          last_seen: now,
+          last_bonus_at: now,
+          ref_code: makeRefCode(),
+          referred_by: null,
+          ref_count: 0,
+        });
+        user = rows?.[0] || null;
+      } else {
+        await sb('PATCH', 'users', { 'email': `eq.${em}` }, { marketing_consent: true, last_seen: now });
+      }
+    } catch (e) {
+      console.error('abone_ol users:', e.message);
+    }
+
+    // await şart: res dönünce Vercel fonksiyonu donduruyor, mail yolda kalır
+    if (yeni) { await sendWelcomeEmail(em); }
+
+    return res.status(200).json({
+      ok: true, kayit, tekrar, yeni,
+      krediler: user ? (user.credits || 0) : null,
+      email: em,
+    });
+  }
+
   // ── KULLANICI BİLGİSİ ──
   if (action === 'me' && req.method === 'POST') {
     const { email } = req.body || {};

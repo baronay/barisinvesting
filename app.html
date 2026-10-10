@@ -2518,32 +2518,28 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 /* ── Yazı sonu abonelik kutusu ──
    Kapı kaldırıldı: metni söndüren body.tzo-kilitli kuralları kalktı.
    Alttaki kart stilleri yazı sonundaki abonelik kutusunda kullanılıyor. */
-.tzo-duvar{margin-top:-26px;position:relative;z-index:1;}
-.tzo-duvar-kart{border:1px solid rgba(194,173,132,.3);border-top:2px solid var(--accent);border-radius:14px;background:linear-gradient(165deg,rgba(194,173,132,.07) 0%,rgba(16,21,30,.96) 55%);padding:26px 26px 22px;box-shadow:0 18px 40px rgba(0,0,0,.35);}
-.tzo-duvar-kick{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
-.tzo-duvar-h{font-family:var(--font-head,'Playfair Display',serif);font-size:23px;font-weight:700;line-height:1.3;color:var(--cream);margin-bottom:9px;letter-spacing:-.01em;}
-.tzo-duvar-p{font-size:13.5px;line-height:1.75;color:var(--cream2);opacity:.85;margin-bottom:16px;max-width:62ch;}
-.tzo-duvar-form{display:flex;gap:9px;flex-wrap:wrap;}
-.tzo-duvar-in{flex:1 1 240px;min-width:0;background:rgba(0,0,0,.35);border:1px solid var(--portal-border-s);border-radius:9px;padding:13px 15px;color:var(--cream);font-size:14px;font-family:inherit;outline:none;transition:border-color .18s;}
-.tzo-duvar-in:focus{border-color:var(--accent);}
-.tzo-duvar-in::placeholder{color:var(--cream2);opacity:.4;}
-.tzo-duvar-btn{flex:0 0 auto;background:var(--accent);color:#0b0f15;border:none;border-radius:9px;padding:13px 22px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .18s,opacity .18s;}
-.tzo-duvar-btn:hover{transform:translateY(-1px);}
-.tzo-duvar-btn:disabled{opacity:.55;cursor:default;transform:none;}
-.tzo-duvar-msg{min-height:16px;margin-top:9px;font-size:12px;line-height:1.5;}
-.tzo-duvar-msg.err{color:var(--danger);}
-.tzo-duvar-msg.ok{color:var(--success);}
-.tzo-duvar-not{margin-top:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.6px;color:var(--cream2);opacity:.55;}
-.tzt-kilitli{color:var(--accent);opacity:.9;}
-.tzt-kilitli a{color:inherit;text-decoration:underline;text-underline-offset:3px;}
-/* Kilitli okura en yeni güncellemenin girişi: alt kenarı sönerek biter,
-   hemen altında devam çağrısı duruyor. */
-.tzt-onizleme{-webkit-mask-image:linear-gradient(to bottom,#000 70%,transparent);mask-image:linear-gradient(to bottom,#000 70%,transparent);}
+.tzo-abone{margin-top:34px;padding-top:26px;border-top:1px solid var(--portal-border-s);}
+.tzo-abone-kart{border:1px solid rgba(194,173,132,.3);border-top:2px solid var(--accent);border-radius:14px;background:linear-gradient(165deg,rgba(194,173,132,.07) 0%,rgba(16,21,30,.96) 55%);padding:26px 26px 22px;box-shadow:0 18px 40px rgba(0,0,0,.35);}
+.tzo-abone-kick{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+.tzo-abone-h{font-family:var(--font-head,'Playfair Display',serif);font-size:23px;font-weight:700;line-height:1.3;color:var(--cream);margin-bottom:9px;letter-spacing:-.01em;}
+.tzo-abone-p{font-size:13.5px;line-height:1.75;color:var(--cream2);opacity:.85;margin-bottom:16px;max-width:62ch;}
+.tzo-abone-form{display:flex;gap:9px;flex-wrap:wrap;}
+.tzo-abone-in{flex:1 1 240px;min-width:0;background:rgba(0,0,0,.35);border:1px solid var(--portal-border-s);border-radius:9px;padding:13px 15px;color:var(--cream);font-size:14px;font-family:inherit;outline:none;transition:border-color .18s;}
+.tzo-abone-in:focus{border-color:var(--accent);}
+.tzo-abone-in::placeholder{color:var(--cream2);opacity:.4;}
+.tzo-abone-btn{flex:0 0 auto;background:var(--accent);color:#0b0f15;border:none;border-radius:9px;padding:13px 22px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .18s,opacity .18s;}
+.tzo-abone-btn:hover{transform:translateY(-1px);}
+.tzo-abone-btn:disabled{opacity:.55;cursor:default;transform:none;}
+.tzo-abone-msg{min-height:16px;margin-top:9px;font-size:12px;line-height:1.5;}
+.tzo-abone-msg.err{color:var(--danger);}
+.tzo-abone-msg.ok{color:var(--success);}
+.tzo-abone-not{margin-top:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.6px;color:var(--cream2);opacity:.55;}
+
 @media(max-width:640px){
-  .tzo-duvar-kart{padding:20px 18px 18px;border-radius:12px;}
-  .tzo-duvar-h{font-size:19px;}
-  .tzo-duvar-p{font-size:13px;}
-  .tzo-duvar-btn{width:100%;}
+  .tzo-abone-kart{padding:20px 18px 18px;border-radius:12px;}
+  .tzo-abone-h{font-size:19px;}
+  .tzo-abone-p{font-size:13px;}
+  .tzo-abone-btn{width:100%;}
 }
 .tzo-note{margin-top:34px;padding:12px 16px;border:1px solid var(--portal-border);border-left:3px solid var(--warn);background:rgba(0,0,0,0.2);border-radius:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.3px;line-height:1.7;color:var(--cream2);opacity:.8;}
 .tzo-ctas{margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
@@ -7473,6 +7469,151 @@ function garpAnalizAc(ticker) {
 
 
   /* Sekmeli yapı: [Güncellemeler] [İlk Tez] — okur kaydırmakla uğraşmasın */
+  /* UTM'i ilk girişte sakla: okur etiketli bir linkten girip SPA içinde
+     gezindikten sonra abone oluyor, o anda adres çubuğunda UTM kalmıyor.
+     sessionStorage: sekme kapanınca unutuluyor, kalıcı iz bırakmıyor. */
+  function utmAl() {
+    const bos = { utm_source: null, utm_medium: null, utm_campaign: null };
+    try {
+      const p = new URLSearchParams(location.search);
+      const canli = {
+        utm_source: p.get('utm_source'),
+        utm_medium: p.get('utm_medium'),
+        utm_campaign: p.get('utm_campaign'),
+      };
+      if (canli.utm_source || canli.utm_medium || canli.utm_campaign) {
+        sessionStorage.setItem('bi_utm', JSON.stringify(canli));
+        return canli;
+      }
+      const kayit = sessionStorage.getItem('bi_utm');
+      return kayit ? Object.assign({}, bos, JSON.parse(kayit)) : bos;
+    } catch (_) { return bos; }
+  }
+  window.__biUtm = utmAl;
+
+  /* ── Yazı sonu abonelik kutusu ─────────────────────────────────────
+     Mail artık okumanın ÖNÜNDE değil, sonunda isteniyor. Pop-up, tam ekran
+     katman ya da metnin ortasına giren kutu YOK: kutu akışın en sonunda,
+     yazı bittikten sonra duruyor; okumayı hiçbir noktada kesmiyor.
+
+     Tez kutusu o teze bağlanıyor (tez_id) — verilen söz "bu tez
+     güncellenince haber ver". Araştırma ve haberde böyle bir söz
+     verilemiyor (tek seferlik içerik), o yüzden genel bültene yazılıyor
+     (tez_id null). */
+  function aboneKutusuHTML(tez, kat) {
+    const tezce = kat === 'tez';
+    const baslik = tezce
+      ? 'Bu tez güncellendiğinde ilk sen öğren'
+      : kat === 'arastirma'
+        ? 'Yeni araştırmalardan haberdar ol'
+        : 'Yeni analizlerden haberdar ol';
+
+    /* kontrol_noktasi: "tezde neyi izliyorum" cümlesi. Tezin kendi alanı
+       boşsa belirsiz bir vaat uydurulmuyor, sözün sade hali kalıyor. */
+    const kn = tezce ? String(tez.kontrol_noktasi || '').trim() : '';
+    const soz = tezce
+      ? (kn ? 'Takip ettiğim kontrol noktası: ' + esc(kn) : 'Tez güncellendiğinde sana mail atayım.')
+      : kat === 'arastirma'
+        ? 'Yeni şirket araştırmaları yayınlandığında mailine düşer.'
+        : 'Yeni analiz ve piyasa notları yayınlandığında mailine düşer.';
+
+    let kayitli = '';
+    try { kayitli = localStorage.getItem('bi_email') || ''; } catch (_) {}
+
+    return `<div class="tzo-abone" id="aboneKutu">
+        <div class="tzo-abone-kart">
+          <div class="tzo-abone-kick">${tezce ? 'Tez takibi' : 'Bülten'}</div>
+          <h3 class="tzo-abone-h">${baslik}</h3>
+          <p class="tzo-abone-p">${soz} Ayrıca Terminal'de ücretsiz analiz kredisi kazanırsın.</p>
+          <form class="tzo-abone-form" id="aboneForm">
+            <input class="tzo-abone-in" id="aboneMail" type="email" inputmode="email"
+                   autocomplete="email" placeholder="ornek@mail.com" value="${esc(kayitli)}" required>
+            <button class="tzo-abone-btn" id="aboneBtn" type="submit">${tezce ? 'Beni haberdar et' : 'Abone ol'}</button>
+          </form>
+          <div class="tzo-abone-msg" id="aboneMsg" role="status" aria-live="polite"></div>
+          <div class="tzo-abone-not">Sadece e-posta · şifre ya da doğrulama adımı yok</div>
+        </div>
+      </div>`;
+  }
+
+  function aboneKutusuBagla(tez, kat) {
+    const form = document.getElementById('aboneForm');
+    if (!form) return;
+    const inp = document.getElementById('aboneMail');
+    const btn = document.getElementById('aboneBtn');
+    const msg = document.getElementById('aboneMsg');
+    const tezce = kat === 'tez';
+
+    /* Regex yerine elle kontrol: alan zaten type=email, bu yalnızca
+       boş/bozuk girdide sunucuya gitmeden uyarmak için. Asıl doğrulama
+       sunucuda. */
+    const gecerliMi = (s) => {
+      const at = s.indexOf('@');
+      const nokta = s.lastIndexOf('.');
+      return at > 0 && nokta > at + 1 && nokta < s.length - 2 && s.indexOf(' ') < 0;
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const em = (inp.value || '').trim().toLowerCase();
+      if (!gecerliMi(em)) {
+        msg.className = 'tzo-abone-msg err';
+        msg.textContent = 'Geçerli bir e-posta gir.';
+        inp.focus();
+        return;
+      }
+      const eskiMetin = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Kaydediliyor…';
+      msg.className = 'tzo-abone-msg';
+      msg.textContent = '';
+
+      const u = utmAl();
+      try {
+        const r = await fetch('/api/auth?action=abone_ol', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: em,
+            tez_id: tezce ? (tez.id || null) : null,
+            kaynak_sayfa: location.pathname,
+            utm_source: u.utm_source,
+            utm_medium: u.utm_medium,
+            utm_campaign: u.utm_campaign,
+          }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || 'Kayıt başarısız.');
+
+        /* Mail kaydedildi: terminal krediyi bu anahtardan okuyor, böylece
+           abone olan okura ikinci bir giriş adımı çıkmıyor. */
+        try { localStorage.setItem('bi_email', em); } catch (_) {}
+
+        let metin = d.tekrar
+          ? 'Zaten listedeydin, bir şey değişmedi.'
+          : (tezce ? 'Tamam. Bu tez güncellenince ilk sen duyacaksın.'
+                   : 'Tamam. Yeni içerikler mailine düşecek.');
+        if (d.krediler != null) metin += ' Terminal kredin: ' + d.krediler + '.';
+        msg.className = 'tzo-abone-msg ok';
+        msg.textContent = metin;
+        btn.textContent = 'Kaydedildi ✓';
+        inp.disabled = true;
+
+        if (window.trackEvent) {
+          window.trackEvent('abone_oldu', {
+            tez_id: tez.id || null, kategori: kat, tekrar: !!d.tekrar,
+            utm_source: u.utm_source || null, utm_campaign: u.utm_campaign || null,
+          });
+        }
+      } catch (err) {
+        msg.className = 'tzo-abone-msg err';
+        msg.textContent = err.message || 'Bir şeyler ters gitti, tekrar dene.';
+        btn.disabled = false;
+        btn.textContent = eskiMetin;
+      }
+    });
+  }
+
   function tezPanelleriHTML(list, ilkTarih, icerik, govdeAd){
     if (!Array.isArray(list) || !list.length){
       return `<div class="tzo-content">${icerik}</div>`;
@@ -7598,6 +7739,7 @@ function garpAnalizAc(ticker) {
         ${tez.ticker ? terminalWidgetHTML(tez) : ''}
         ${ucDakikaHTML(tez)}
         ${tezPanelleriHTML(guncellemeler, tarih, icerik, govdeAd)}
+        ${aboneKutusuHTML(tez, kat)}
 
         <div class="tzo-note">Bu içerik araştırma ve bilgi amaçlıdır; yatırım tavsiyesi değildir. Tüm projeksiyonlar tahmin içermektedir.</div>
         <div class="tzo-ctas">
@@ -7607,6 +7749,7 @@ function garpAnalizAc(ticker) {
       tzoTopHesapla();   // sticky sekme şeridinin üst boşluğu
       tablolariHazirla(art);
       kunyeGetiri(tez);
+      aboneKutusuBagla(tez, kat);
 
     }catch(e){
       if (_tzoLast === id) art.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">İçerik yüklenemedi.</div>';
