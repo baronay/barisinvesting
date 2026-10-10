@@ -28,11 +28,13 @@
     { "source": "/terminal/(.*)", "destination": "/app.html" },
     { "source": "/tezler", "destination": "/app.html" },
     { "source": "/tezler/(.*)", "destination": "/app.html" },
+    { "source": "/tez/:id", "destination": "/api/tez-admin?html=1&id=:id" },
     { "source": "/tez/(.*)", "destination": "/app.html" },
     { "source": "/arastirmalar", "destination": "/app.html" },
     { "source": "/arastirmalar/(.*)", "destination": "/app.html" },
     { "source": "/haberler", "destination": "/app.html" },
     { "source": "/haberler/(.*)", "destination": "/app.html" },
+    { "source": "/haber/:id", "destination": "/api/tez-admin?html=1&id=:id" },
     { "source": "/haber/(.*)", "destination": "/app.html" }
   ]
 }
