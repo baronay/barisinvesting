@@ -2515,11 +2515,9 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
   .uc-dk-v{font-size:13.5px;}
 }
 
-/* ── E-posta duvarı ──
-   Kesim noktası sert bir kenarla bitmesin: son paragraf söner, hemen
-   altında form gelir. Sönme yalnızca kilitliyken uygulanıyor. */
-body.tzo-kilitli .tzo-content{position:relative;}
-body.tzo-kilitli .tzo-content::after{content:'';position:absolute;left:0;right:0;bottom:0;height:150px;background:linear-gradient(to bottom,rgba(11,15,21,0) 0%,var(--anthracite) 92%);pointer-events:none;}
+/* ── Yazı sonu abonelik kutusu ──
+   Kapı kaldırıldı: metni söndüren body.tzo-kilitli kuralları kalktı.
+   Alttaki kart stilleri yazı sonundaki abonelik kutusunda kullanılıyor. */
 .tzo-duvar{margin-top:-26px;position:relative;z-index:1;}
 .tzo-duvar-kart{border:1px solid rgba(194,173,132,.3);border-top:2px solid var(--accent);border-radius:14px;background:linear-gradient(165deg,rgba(194,173,132,.07) 0%,rgba(16,21,30,.96) 55%);padding:26px 26px 22px;box-shadow:0 18px 40px rgba(0,0,0,.35);}
 .tzo-duvar-kick{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
@@ -7475,20 +7473,17 @@ function garpAnalizAc(ticker) {
 
 
   /* Sekmeli yapı: [Güncellemeler] [İlk Tez] — okur kaydırmakla uğraşmasın */
-  function tezPanelleriHTML(list, ilkTarih, icerik, govdeAd, kilit){
+  function tezPanelleriHTML(list, ilkTarih, icerik, govdeAd){
     if (!Array.isArray(list) || !list.length){
       return `<div class="tzo-content">${icerik}</div>`;
     }
     const yeniden = list.slice().reverse();   // en yeni en üstte
     const n = list.length;
     /* Açık sekme GÜNCELLEMELER: okur bu sayfaya çoğu zaman güncellemeyi
-       okumak için geliyor. Kilitliyken de en yeni güncellemenin girişi
-       geliyor (API önizlemesi). Yalnızca o da okunamıyorsa ilk teze düş —
-       okur tek satır metin görmeden doğrudan duvara çarpmasın. */
-    const sonOkunur = !!(yeniden[0] && yeniden[0].icerik);
-    const guncelOnde = !kilit || sonOkunur;
-    const g = guncelOnde ? ' active' : '';
-    const i = guncelOnde ? '' : ' active';
+       okumak için geliyor. Kapı kalktıktan sonra her güncelleme tam
+       okunabildiği için bu sekme koşulsuz açık geliyor. */
+    const g = ' active';
+    const i = '';
     return `<div class="tzo-tabs" id="tezSeyri">
         <button type="button" class="tzo-tab${g}" onclick="window.__tezTab('guncel')" id="tezTabGuncel">
           Güncellemeler <span class="tzo-tab-n">${n}</span>
@@ -7602,7 +7597,7 @@ function garpAnalizAc(ticker) {
         ${kat==='tez' ? kunyeHTML(tez, guncellemeler) : ''}
         ${tez.ticker ? terminalWidgetHTML(tez) : ''}
         ${ucDakikaHTML(tez)}
-        ${tezPanelleriHTML(guncellemeler, tarih, icerik, govdeAd, !!tez.kilit)}
+        ${tezPanelleriHTML(guncellemeler, tarih, icerik, govdeAd)}
 
         <div class="tzo-note">Bu içerik araştırma ve bilgi amaçlıdır; yatırım tavsiyesi değildir. Tüm projeksiyonlar tahmin içermektedir.</div>
         <div class="tzo-ctas">

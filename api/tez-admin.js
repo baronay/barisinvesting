@@ -489,12 +489,6 @@ export default async function handler(req, res) {
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
-// ── E-posta duvarı yardımcıları ─────────────────────────────────
-
-
-/* HTML'i etiket bütünlüğünü bozmadan kes.
-
-
 // ── Güncelleme yardımcıları ─────────────────────────────────────
 
 const GUNC_TURLER = ['bilanco', 'haber', 'revizyon', 'fiyat', 'kapanis', 'not'];
