@@ -65,21 +65,68 @@ export default async function handler(req, res) {
       // Pozisyon geçmişi — yayındaki güncellemeler, eskiden yeniye
       tez.guncellemeler = await fetchGuncellemeler(headers, idNum, true);
 
-      /* ── KAPI KALDIRILDI ─────────────────────────────────────────────
-         Tez, araştırma ve haber metinleri artık giriş ya da mail istemeden
-         tam okunuyor. Mail yazının SONUNDAKİ abonelik kutusundan isteniyor:
-         okumanın önünde değil, okur değeri gördükten sonra.
-
-         Kilit alanları açıkça kapatılıyor — istemci hâlâ bu alanlara bakıyor,
-         false görünce duvarı hiç çizmiyor. Böylece eski istemci önbelleğe
-         alınmış sayfalarda da duvar açılmıyor.
-
-         Yanıt artık herkes için aynı olduğu için private/no-store kalktı,
-         normal kenar önbelleğine döndü (kapıdayken kilitli/açık sürüm
-         karışmasın diye kapatılmıştı). */
-      tez.kilit = false;
-      tez.kilitli_guncelleme = 0;
-      res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=86400');
+      /* ── E-POSTA DUVARI ──────────────────────────────────────────
+         İçeriğin girişi herkese açık, gerisi kayıtlı okura. Kesme
+         sunucuda yapılıyor: istemci tarafında gizlemek, metni yine de
+         ağdan indirip DOM'a koymak demekti — hem duvar delik olurdu
+         hem 30-40 KB gövde boşuna inerdi. Kimlik bu uygulamada zaten
+         e-posta: users tablosunda kaydı varsa tam metin gider. */
+      const okur = await kayitliOkur(headers, req.query.email);
+      res.setHeader('Cache-Control', 'private, no-store');   // kilitli/açık sürüm CDN'de karışmasın
+      if (!okur) {
+        const tam = String(tez.icerik || '');
+        // Haber kısa yazılıyor: tez bütçesiyle kesilse çoğu haber hiç
+        // kilitlenmez, duvar sadece uzun tezlerde çalışırdı.
+        const butce = tez.kategori === 'haber' ? 420 : 950;
+        const onizleme = htmlOnizleme(tam, butce);
+        tez.kilit = onizleme.kesildi;
+        if (onizleme.kesildi) {
+          tez.icerik = onizleme.html;
+          // Güncellemelerin başlığı/tarihi kalsın (neyin beklediği görünsün).
+          // EN YENİ güncellemenin girişi açık: okur bu linke çoğu zaman
+          // güncellemeyi okumak için geliyor (manşet /tez/:id#tezSeyri'ye
+          // gidiyor). Eskiden bütün güncellemeler kilitliydi, açık sekme ilk
+          // tez oluyordu ve okur güncellenmemiş eski metni görüyordu.
+          // Eski güncellemeler yine yalnızca başlık; ilk tezin girişi de açık.
+          const sonIdx = tez.guncellemeler.length - 1;
+          tez.guncellemeler = tez.guncellemeler.map((g, idx) => {
+            const ortak = {
+              id: g.id, tez_id: g.tez_id, baslik: g.baslik, tarih: g.tarih,
+              tur: g.tur, sinyal: g.sinyal, fiyat: g.fiyat,
+              // Görsel kalsın: ana sayfa listesinde zaten herkese açık
+              // (son_guncelleme_bilgi.gorsel); okuma sayfasının kapağı buradan geliyor.
+              gorsel: g.gorsel || null,
+            };
+            if (idx !== sonIdx) return { ...ortak, kilit: true, icerik: null };
+            // htmlOnizleme kesme noktasını yalnızca bir KABIN içindeyken
+            // bulabiliyor (yigin.length kontrolü). Güncelleme gövdeleri
+            // sarmalayıcısız geldiği için hiç kesilmiyor, tamamı dönüyordu
+            // (ölçüldü: 21.945 karakter görünen metin, bütçe 950 — duvar
+            // deliniyordu). Sarmalayıcıyı burada ekliyoruz; yine de sonucu
+            // ölçüp, kesilmemişse ham metin olarak kesiyoruz.
+            // Okunan metin: <style>/<script> GÖVDESİ de atılmalı. Yalnızca
+            // etiketleri silmek yetmiyordu — CSS kaynağı metin sayılıp hem
+            // ölçümü şişiriyor hem de önizlemenin sonunda okura CSS olarak
+            // görünüyordu (ölçüldü: "font-family:var(--sans) !important…").
+            const duzAl = (h) => String(h || '')
+              .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+              .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+              .replace(/<[^>]+>/g, ' ')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+            const o = htmlOnizleme(`<div>${String(g.icerik || '')}</div>`, butce);
+            const gorunen = duzAl(o.html);
+            if (gorunen.length > butce * 2) {
+              const duz = duzAl(g.icerik);
+              const p = duz.lastIndexOf(' ', butce);
+              return { ...ortak, kilit: duz.length > butce, icerik: `<p>${duz.slice(0, p > 0 ? p : butce)}…</p>` };
+            }
+            return { ...ortak, kilit: o.kesildi, icerik: o.html || null };
+          });
+          tez.kilitli_guncelleme = tez.guncellemeler.filter(g => g.kilit).length;
+        }
+      }
       return res.status(200).json(tez);
     }
 
@@ -491,9 +538,81 @@ export default async function handler(req, res) {
 
 // ── E-posta duvarı yardımcıları ─────────────────────────────────
 
+/* Okur kayıtlı mı? users tablosunda e-posta varsa evet.
+   Şifre/oturum yok — bu uygulamada kimlik zaten e-posta. */
+async function kayitliOkur(headers, email) {
+  const em = String(email || '').toLowerCase().trim();
+  if (!em || !em.includes('@') || em.length > 200) return false;
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(em)}&select=email&limit=1`,
+      { headers }
+    );
+    if (!r.ok) return false;
+    const d = await r.json();
+    return Array.isArray(d) && d.length > 0;
+  } catch (_) {
+    return false;   // doğrulayamıyorsak duvar kapalı kalsın
+  }
+}
 
 /* HTML'i etiket bütünlüğünü bozmadan kes.
 
+   Tezler tam bir HTML belgesi olarak yapıştırılıyor: <head> içinde ~7 KB
+   <style>, ardından <article> içinde onlarca <section>. Bu yüzden kesim
+   iki şeye dikkat ediyor:
+   1) Bütçe yalnızca OKUNAN metni sayıyor — <style>/<script> içeriği
+      sayılsaydı önizleme daha ilk paragrafa gelmeden dolardı.
+   2) Kesim noktasında açık kalan tüm ataların kapanış etiketleri
+      ekleniyor; yoksa <article>/<section> yarım kalır, sayfanın kalan
+      düzeni bozulurdu.
+   Kesim her zaman bir blok öğesinin (p, section, table…) bitiminde. */
+function htmlOnizleme(html, butce) {
+  if (!html) return { html: '', kesildi: false };
+  const BOS  = new Set(['br','hr','img','input','meta','link','source','col','area','base','embed','track','wbr']);
+  const ATLA = new Set(['style','script','head','title']);       // metni okunmuyor
+  const AKIS = new Set(['p','section','article','h1','h2','h3','h4','ul','ol','table','blockquote','figure','div','pre']);
+  // Yorum blokları da eşleşsin: eşleşmezlerse metin sayılıp bütçeyi
+  // yiyorlardı (ölçüldü: bir tezde 390 karakterlik ayraç yorumları
+  // önizlemeyi 563 karaktere düşürmüştü).
+  const etiket = /<!--[\s\S]*?-->|<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*?(\/?)>/g;
+
+  const yigin = [];
+  let metin = 0, i = 0, atla = 0, kes = -1, m;
+  while ((m = etiket.exec(html)) !== null) {
+    // Bütçe okunan metne göre: kaynaktaki girinti/satır sonları ham
+    // uzunluğa dahil olunca güzel biçimlendirilmiş tezlerde önizleme
+    // yarı yarıya kısalıyordu (ölçüldü: 495 karakterde kesilen tez).
+    if (!atla) metin += html.slice(i, m.index).replace(/\s+/g, ' ').length;
+    i = etiket.lastIndex;
+    if (!m[1]) continue;                       // yorum bloğu: atlandı, sayılmadı
+    const ad = m[1].toLowerCase();
+    const kapanis = m[0][1] === '/';
+    if (m[2] === '/' || BOS.has(ad)) continue;
+    if (kapanis) {
+      if (ATLA.has(ad) && atla) atla--;
+      for (let k = yigin.length - 1; k >= 0; k--) {
+        if (yigin[k] === ad) { yigin.length = k; break; }
+      }
+      // Bütçe dolduysa ve hâlâ bir kabın (article/body) içindeysek burada kes
+      if (metin >= butce && AKIS.has(ad) && yigin.length) { kes = etiket.lastIndex; break; }
+    } else {
+      if (ATLA.has(ad)) atla++;
+      yigin.push(ad);
+    }
+  }
+
+  if (kes < 0) {
+    // Etiketsiz düz metin: kelime sınırında kes
+    if (!/<[a-zA-Z]/.test(html) && html.length > butce * 1.5) {
+      const p = html.lastIndexOf(' ', butce);
+      return { html: html.slice(0, p > 0 ? p : butce), kesildi: true };
+    }
+    return { html, kesildi: false };
+  }
+  const kapat = yigin.slice().reverse().map(t => `</${t}>`).join('');
+  return { html: html.slice(0, kes) + kapat, kesildi: true };
+}
 
 // ── Güncelleme yardımcıları ─────────────────────────────────────
 
