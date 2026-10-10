@@ -234,6 +234,11 @@ async function deleteUser(targetEmail, secret) {
 // ── TEZ EDİTÖRÜ ──────────────────────────────────────────────────
 
 let _tezKapakUrl = null; // upload sonrası URL burada tutulur
+/* Düzenlenen tezde kontrol noktası dolu muydu? Alan yalnızca kullanıldığında
+   gönderiliyor: sütun henüz eklenmemişken (sql/tez-kontrol-noktasi.sql
+   çalıştırılmadan) her kaydetme isteği PostgREST hatası dönerdi. Dolu bir
+   değer boşaltıldığında null gitsin diye bu bayrak gerekiyor. */
+let _tezKontrolVardi = false;
 
 async function openTezEditor() {
   _tezSecret = prompt('Tez editörü şifresi:');
@@ -364,6 +369,13 @@ async function openTezEditor() {
         <div style="margin-bottom:12px;">
           <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">ÖZET</label>
           <textarea id="tezOzet" rows="2" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;resize:vertical;" placeholder="Kısa özet..."></textarea>
+        </div>
+
+        <!-- Kontrol noktası: tezin sonundaki abonelik kutusunda gösterilir -->
+        <div style="margin-bottom:12px;">
+          <label style="font-size:10px;color:#5d6675;display:block;margin-bottom:4px;letter-spacing:1px;">KONTROL NOKTASI (abonelik kutusunda görünür)</label>
+          <input type="text" id="tezKontrol" maxlength="160" style="width:100%;background:#13182a;border:1px solid rgba(255,255,255,0.1);color:#ffffff;padding:8px 10px;border-radius:6px;font-size:13px;box-sizing:border-box;" placeholder="Örn: 3. çeyrek net faiz marjı ve TL kredi büyümesi"/>
+          <div style="font-size:9px;color:#3a4150;margin-top:5px;">Tezde neyi izlediğini tek cümleyle yaz. Yazının sonundaki kutuda &quot;Takip ettiğim kontrol noktası: …&quot; olarak çıkar. Boş bırakılırsa sade metin kullanılır.</div>
         </div>
 
         <!-- İçerik -->
@@ -638,6 +650,9 @@ function tezFormAc(tez) {
     document.getElementById('tezTicker').value    = tez.ticker || '';
     document.getElementById('tezSinyal').value    = tez.sinyal || '';
     document.getElementById('tezOzet').value      = tez.ozet || '';
+    const _knEl = document.getElementById('tezKontrol');
+    if (_knEl) _knEl.value = tez.kontrol_noktasi || '';
+    _tezKontrolVardi = !!(tez.kontrol_noktasi && String(tez.kontrol_noktasi).trim());
     document.getElementById('tezIcerik').value    = tez.icerik || '';
     document.getElementById('tezYayinda').checked = tez.yayinda || false;
     const _katE = tez.kategori || 'tez';
@@ -675,6 +690,9 @@ function tezFormAc(tez) {
     document.getElementById('tezTicker').value    = '';
     document.getElementById('tezSinyal').value    = '';
     document.getElementById('tezOzet').value      = '';
+    const _knElN = document.getElementById('tezKontrol');
+    if (_knElN) _knElN.value = '';
+    _tezKontrolVardi = false;
     document.getElementById('tezIcerik').value    = '';
     document.getElementById('tezYayinda').checked = false;
     const _kElN = document.querySelector('input[name="tezKategori"][value="tez"]');
@@ -767,6 +785,9 @@ async function tezKaydet() {
     exchange:      _exchangeVal,
     kategori:      document.querySelector('input[name="tezKategori"]:checked')?.value || 'tez',
   };
+
+  const _knVal = (document.getElementById('tezKontrol')?.value || '').trim();
+  if (_knVal || _tezKontrolVardi) body.kontrol_noktasi = _knVal || null;
 
   if (!body.baslik) { showToast('Başlık zorunlu'); return; }
 
