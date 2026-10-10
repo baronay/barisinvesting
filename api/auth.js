@@ -358,6 +358,145 @@ export default async function handler(req, res) {
     });
   }
 
+  /* ── OLAY KAYDI ───────────────────────────────────────────────────
+     Kapıyı kaldırmanın işe yarayıp yaramadığını ölçen dört olay:
+     goruntuleme → kaydirma75 → kutu_gorundu → abone_oldu. Bu sıra bir
+     huni: hangi adımda kaybettiğimiz tek bakışta görünüyor.
+
+     Umami zaten çalışıyor ama verisi admin panelinden sorgulanamıyor;
+     bu tablo "yazı bazında dört sayı" görünümünü besliyor.
+
+     Kimlik tutulmuyor: ne e-posta ne IP. Yalnızca olay türü, yazı ve
+     kampanya. Sayım için bu yeterli. */
+  if (action === 'olay' && req.method === 'POST') {
+    const TURLER = new Set(['goruntuleme', 'kaydirma75', 'kutu_gorundu', 'abone_oldu']);
+    const { tur, tez_id, utm_source, utm_medium, utm_campaign } = req.body || {};
+    if (!TURLER.has(String(tur))) return res.status(400).json({ error: 'Bilinmeyen olay' });
+    if (!SB_URL || !SB_KEY) return res.status(200).json({ ok: true });
+
+    const tezId = (tez_id != null && isFinite(+tez_id) && +tez_id > 0) ? Math.trunc(+tez_id) : null;
+    const kis = (v, n) => { const s = String(v == null ? '' : v).trim(); return s ? s.slice(0, n) : null; };
+    try {
+      await sbEkle('olaylar', {
+        tur: String(tur),
+        tez_id: tezId,
+        utm_source: kis(utm_source, 120),
+        utm_medium: kis(utm_medium, 120),
+        utm_campaign: kis(utm_campaign, 120),
+      });
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      /* Ölçüm hiçbir zaman okuma deneyimini bozmasın: tablo yoksa ya da
+         yazma düşerse sessizce 200 dönüyoruz, istemci de beklemiyor. */
+      console.error('olay:', e.message);
+      return res.status(200).json({ ok: false });
+    }
+  }
+
+  /* ── ADMIN: İÇERİK HUNİSİ ──────────────────────────────────────────
+     Yazı bazında dört sayı + abone listesi. PostgREST'te GROUP BY yok,
+     bu yüzden satırlar çekilip burada toplanıyor; hacim bu ölçekte
+     (binler) tek istekte rahat dönüyor. Sınıra dayanırsak Supabase'de
+     bir view açmak gerekir, yanıtta uyarı olarak belirtiliyor. */
+  if (action === 'admin_icerik' && req.method === 'POST') {
+    const { email, secret, gun } = req.body || {};
+    if (!isAdminRequest(email, secret)) return res.status(403).json({ error: 'Yetkisiz erişim' });
+    const pencere = Math.min(365, Math.max(1, parseInt(gun, 10) || 30));
+    const baslangic = new Date(Date.now() - pencere * 86400000).toISOString();
+    const LIMIT = 10000;
+
+    try {
+      const [olaylar, abonelikler, tezler] = await Promise.all([
+        sb('GET', 'olaylar', {
+          'select': 'tur,tez_id,utm_source,utm_campaign,olusturma',
+          'olusturma': `gte.${baslangic}`,
+          'order': 'olusturma.desc',
+          'limit': String(LIMIT),
+        }).catch(() => []),
+        sb('GET', 'abonelikler', {
+          'select': 'email,tez_id,kaynak_sayfa,utm_source,utm_medium,utm_campaign,olusturma',
+          'order': 'olusturma.desc',
+          'limit': String(LIMIT),
+        }).catch(() => []),
+        sb('GET', 'tezler', {
+          'select': 'id,baslik,ticker,kategori,kontrol_noktasi',
+          'order': 'olusturma.desc',
+          'limit': '500',
+        }).catch(() => []),
+      ]);
+
+      const oListe = Array.isArray(olaylar) ? olaylar : [];
+      const aListe = Array.isArray(abonelikler) ? abonelikler : [];
+      const tListe = Array.isArray(tezler) ? tezler : [];
+
+      const bos = () => ({ goruntuleme: 0, kaydirma75: 0, kutu_gorundu: 0, abone_oldu: 0 });
+      const yazilar = {};
+      const al = (id) => {
+        const k = id == null ? 'genel' : String(id);
+        return yazilar[k] || (yazilar[k] = { tez_id: id == null ? null : +id, sayac: bos(), abone: 0 });
+      };
+      for (const o of oListe) {
+        const y = al(o.tez_id);
+        if (y.sayac[o.tur] != null) y.sayac[o.tur]++;
+      }
+      for (const a of aListe) al(a.tez_id).abone++;
+
+      const adlar = {};
+      for (const t of tListe) adlar[String(t.id)] = t;
+
+      const satirlar = Object.values(yazilar).map(y => {
+        const t = y.tez_id == null ? null : adlar[String(y.tez_id)];
+        const g = y.sayac.goruntuleme;
+        const yuzde = (n) => (g > 0 ? Math.round((n / g) * 1000) / 10 : null);
+        return {
+          tez_id: y.tez_id,
+          baslik: t ? t.baslik : (y.tez_id == null ? 'Genel bülten (yazıya bağlı değil)' : 'Silinmiş yazı #' + y.tez_id),
+          ticker: t ? t.ticker : null,
+          kategori: t ? t.kategori : null,
+          kontrol_noktasi: t ? (t.kontrol_noktasi || null) : null,
+          goruntuleme: g,
+          kaydirma75: y.sayac.kaydirma75,
+          kutu_gorundu: y.sayac.kutu_gorundu,
+          abone: y.abone,
+          // huni oranları: görüntülemeye bölünmüş yüzdeler
+          okuma_orani: yuzde(y.sayac.kaydirma75),
+          kutu_orani: yuzde(y.sayac.kutu_gorundu),
+          donusum: yuzde(y.abone),
+        };
+      }).sort((a, b) => (b.goruntuleme - a.goruntuleme) || (b.abone - a.abone));
+
+      const kampanyalar = {};
+      for (const a of aListe) {
+        const k = a.utm_campaign || a.utm_source || '(etiketsiz)';
+        kampanyalar[k] = (kampanyalar[k] || 0) + 1;
+      }
+
+      return res.status(200).json({
+        pencereGun: pencere,
+        toplam: {
+          goruntuleme: oListe.filter(o => o.tur === 'goruntuleme').length,
+          kaydirma75: oListe.filter(o => o.tur === 'kaydirma75').length,
+          kutu_gorundu: oListe.filter(o => o.tur === 'kutu_gorundu').length,
+          abone: aListe.length,
+          tekilAbone: new Set(aListe.map(a => a.email)).size,
+        },
+        satirlar,
+        kampanyalar: Object.entries(kampanyalar).map(([ad, adet]) => ({ ad, adet })).sort((a, b) => b.adet - a.adet),
+        aboneler: aListe.map(a => ({
+          email: a.email, tez_id: a.tez_id, kaynak_sayfa: a.kaynak_sayfa,
+          utm_source: a.utm_source, utm_medium: a.utm_medium, utm_campaign: a.utm_campaign,
+          olusturma: a.olusturma,
+        })),
+        uyari: (oListe.length >= LIMIT || aListe.length >= LIMIT)
+          ? 'Satır sınırına dayandı: sayılar eksik olabilir, Supabase tarafında özet view açmak gerekiyor.'
+          : null,
+      });
+    } catch (e) {
+      console.error('admin_icerik:', e.message);
+      return res.status(200).json({ error: 'İçerik ölçümü yüklenemedi: ' + e.message });
+    }
+  }
+
   // ── KULLANICI BİLGİSİ ──
   if (action === 'me' && req.method === 'POST') {
     const { email } = req.body || {};

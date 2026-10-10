@@ -84,6 +84,92 @@ function adminAnalizCSV() {
   URL.revokeObjectURL(a.href);
 }
 
+/* ── İÇERİK HUNİSİ ──────────────────────────────────────────────────
+   Mail kapısını kaldırmanın işe yarayıp yaramadığını gösteren tek ekran:
+   her yazı için görüntülenme → %75 okuma → kutuyu gördü → abone.
+
+   Dönüşüm sütunu abone/görüntülenme. Kutuyu görmeyen biri abone olamaz,
+   bu yüzden "kutuyu gördü" düşükse sorun metnin uzunluğunda; abone
+   düşükse sorun kutunun kendisinde. İki ayrı karar, iki ayrı sayı. */
+let _adminIcerik = null;
+
+async function loadAdminIcerik() {
+  const email  = getEmail();
+  const secret = _adminSecret;
+  if (!secret) return;
+  const gun  = document.getElementById('adminIcerikGun')?.value || '30';
+  const body = document.getElementById('adminIcerikBody');
+  const ozet = document.getElementById('adminIcerikOzet');
+  const kamp = document.getElementById('adminKampanya');
+  if (body) body.innerHTML = '<tr><td colspan="7" style="padding:14px;color:#5d6675">Yükleniyor…</td></tr>';
+  try {
+    const r = await fetch('/api/auth?action=admin_icerik', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, secret, gun })
+    });
+    const d = await r.json();
+    _adminIcerik = d;
+
+    if (d.error) {
+      if (ozet) ozet.textContent = '⚠ ' + d.error;
+      if (body) body.innerHTML = '<tr><td colspan="7" style="padding:14px;color:#8a93a3">Kayıt yok.</td></tr>';
+      return;
+    }
+
+    const t = d.toplam || {};
+    if (ozet) {
+      ozet.textContent = `${d.pencereGun} günde ${t.goruntuleme || 0} görüntülenme · `
+        + `${t.kaydirma75 || 0} yazıyı %75 okudu · ${t.kutu_gorundu || 0} kutuyu gördü · `
+        + `${t.abone || 0} abonelik (${t.tekilAbone || 0} tekil kişi)`
+        + (d.uyari ? ' · ⚠ ' + d.uyari : '');
+    }
+    if (kamp) {
+      const k = (d.kampanyalar || []).slice(0, 8);
+      kamp.innerHTML = k.length
+        ? 'Abonelik kaynakları: ' + k.map(x => `${_gEsc(x.ad)} <b style="color:#c2ad84">${x.adet}</b>`).join(' · ')
+        : '';
+    }
+    if (!d.satirlar || !d.satirlar.length) {
+      if (body) body.innerHTML = '<tr><td colspan="7" style="padding:14px;color:#8a93a3">Bu aralıkta ölçüm yok. Tablolar kuruldu mu? (sql/olaylar.sql, sql/abonelikler.sql)</td></tr>';
+      return;
+    }
+    const yuz = (v) => (v == null ? '—' : v + '%');
+    const katAd = { tez: 'Tez', arastirma: 'Araştırma', haber: 'Haber' };
+    if (body) body.innerHTML = d.satirlar.map(s => `<tr>
+      <td style="max-width:260px">
+        ${s.ticker ? `<span style="font-family:'JetBrains Mono',monospace;color:#c2ad84;font-weight:600">${_gEsc(s.ticker)}</span> ` : ''}
+        <span style="color:#dfe4ec">${_gEsc(String(s.baslik).slice(0, 70))}</span>
+      </td>
+      <td style="color:#8a93a3">${katAd[s.kategori] || '—'}</td>
+      <td style="font-weight:600">${s.goruntuleme}</td>
+      <td style="color:#8a93a3">${s.kaydirma75} <span style="font-size:10px;opacity:.7">${yuz(s.okuma_orani)}</span></td>
+      <td style="color:#8a93a3">${s.kutu_gorundu} <span style="font-size:10px;opacity:.7">${yuz(s.kutu_orani)}</span></td>
+      <td style="font-weight:600;color:#c2ad84">${s.abone}</td>
+      <td style="color:${(s.donusum || 0) >= 2 ? '#4ade80' : '#8a93a3'}">${yuz(s.donusum)}</td>
+    </tr>`).join('');
+  } catch (e) {
+    if (ozet) ozet.textContent = '⚠ İçerik hunisi yüklenemedi: ' + e.message;
+  }
+}
+
+/* Abone listesini CSV indir — mail göndermeyi dışarıda yapmak için yeterli */
+function adminAboneCSV() {
+  const d = _adminIcerik;
+  if (!d || !d.aboneler || !d.aboneler.length) { showToast('Önce ↻ ile yükle'); return; }
+  const bas = ['email', 'tez_id', 'kaynak_sayfa', 'utm_source', 'utm_medium', 'utm_campaign', 'tarih'];
+  const satir = d.aboneler.map(a => [
+    a.email, a.tez_id ?? '', a.kaynak_sayfa || '',
+    a.utm_source || '', a.utm_medium || '', a.utm_campaign || '', a.olusturma || ''
+  ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+  const bom = String.fromCharCode(0xFEFF);   // Excel Türkçe karakterleri doğru okusun
+  const blob = new Blob([bom + [bas.join(','), ...satir].join(String.fromCharCode(10))], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `aboneler-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 // ── Kullanıcı listesini yükle ──
 async function loadAdminUsers() {
   const email  = getEmail();
@@ -122,6 +208,7 @@ async function loadAdminUsers() {
 
     if (note) note.textContent = `Toplam ${s.total} kullanıcı · ${s.marketingConsent} mail izni`;
     loadAdminAnaliz();
+    loadAdminIcerik();
 
     const exportBtn = document.getElementById('adminExportEmailsBtn');
     if (exportBtn) {
