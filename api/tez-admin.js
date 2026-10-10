@@ -51,6 +51,54 @@ export default async function handler(req, res) {
     }
   }
 
+  /* ── SUNUCU TARAFI META (X / WhatsApp / Telegram kartları) ────────
+     /tez/:id isteği vercel.json üzerinden buraya yönleniyor. app.html
+     olduğu gibi dönüyor; yalnızca <head> içindeki başlık, açıklama ve
+     paylaşım etiketleri o yazının bilgileriyle değiştiriliyor.
+
+     Neden sunucuda: paylaşım botları JavaScript çalıştırmıyor. SPA
+     başlığı istemcide yazdığı için her tez linki aynı genel kartı
+     gösteriyordu.
+
+     Neden ayrı bir fonksiyon dosyası değil: Hobby planında 12 fonksiyon
+     sınırı dolu (api/ altında tam 12 dosya var), 13.'sü dağıtımı kırar.
+
+     Etiketler <head>'in EN BAŞINA giriyor: app.html'in head'i ~40 KB
+     CSS taşıyor, botların çoğu belgenin ilk parçasını okuyup kesiyor. */
+  if (req.method === 'GET' && req.query.html) {
+    const kabuk = await appKabugu();
+    const idNum = String(req.query.id || '').replace(/[^0-9]/g, '');
+
+    if (!kabuk) {
+      /* Kabuk hiçbir yoldan okunamadı: sayfa yine açılsın diye statik
+         dosyaya yönlendiriyoruz. Kart genel kalır ama site çalışır. */
+      res.setHeader('Cache-Control', 'public, s-maxage=30');
+      res.setHeader('Location', '/app.html');
+      return res.status(302).end();
+    }
+
+    let tez = null;
+    if (idNum) {
+      try {
+        const r = await fetch(
+          `${SUPABASE_URL}/rest/v1/tezler?id=eq.${idNum}&yayinda=eq.true`
+          + `&select=id,baslik,ozet,kapak_gorseli,kategori,ticker,olusturma,tez_guncellemeler(gorsel,tarih)`,
+          { headers }
+        );
+        if (r.ok) { const d = await r.json(); tez = d?.[0] || null; }
+      } catch (_) { /* meta zenginleştirme kritik değil, kabuk yine dönüyor */ }
+    }
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    /* Kenar önbelleği: aynı tez linki her tıklamada fonksiyonu
+       çalıştırmasın. Güncelleme yayınlandığında kart 5 dakika içinde
+       tazeleniyor, SWR sayesinde okur beklemiyor. */
+    res.setHeader('Cache-Control', tez
+      ? 'public, s-maxage=300, stale-while-revalidate=86400'
+      : 'public, s-maxage=60');
+    return res.status(200).send(tez ? metaYerlestir(kabuk, tez) : kabuk);
+  }
+
   // ── PUBLIC OKUMA (auth gerekmez) ──────────────────────────────
   if (req.method === 'GET' && req.query.pub) {
     const { id, ticker } = req.query;
@@ -487,6 +535,102 @@ export default async function handler(req, res) {
   }
 
   return res.status(405).json({ error: 'Method not allowed' });
+}
+
+// ── Sunucu tarafı meta yardımcıları ─────────────────────────────
+
+const SITE = 'https://www.barisinvesting.com';
+
+/* app.html'i bir kez oku, sıcak lambda'da tekrar kullan.
+
+   Üç yol sırayla deneniyor: diskten (vercel.json içindeki includeFiles
+   sayesinde paketin içinde), sonra dağıtımın kendi adresinden, sonra
+   canlı alan adından. Birincisi hızlı ama paketleyicinin dosyayı
+   almasına bağlı; diğerleri ağ üzerinden ama her koşulda çalışıyor. */
+let _kabuk = null;
+async function appKabugu() {
+  if (_kabuk) return _kabuk;
+  try {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+    const p = path.join(process.cwd(), 'app.html');
+    const d = await fs.readFile(p, 'utf8');
+    if (d && d.length > 1000) { _kabuk = d; return _kabuk; }
+  } catch (_) {}
+  for (const kok of [process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null, SITE]) {
+    if (!kok) continue;
+    try {
+      const r = await fetch(`${kok}/app.html`);
+      if (r.ok) { const d = await r.text(); if (d && d.length > 1000) { _kabuk = d; return _kabuk; } }
+    } catch (_) {}
+  }
+  return null;
+}
+
+function attrEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/* Düz metne indir ve kısalt: ozet alanı HTML içerebiliyor, paylaşım
+   açıklamasında etiket görünmesin. Kesim kelime sınırında. */
+function metinKis(s, n) {
+  const duz = String(s == null ? '' : s)
+    .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+  if (duz.length <= n) return duz;
+  const p = duz.lastIndexOf(' ', n);
+  return duz.slice(0, p > 40 ? p : n).trim() + '…';
+}
+
+function metaYerlestir(kabuk, tez) {
+  const katAd = tez.kategori === 'arastirma' ? 'Şirket Araştırması'
+    : tez.kategori === 'haber' ? 'Haber' : 'Yatırım Tezi';
+  const baslik = `${tez.baslik} — Barış Investing`;
+  const aciklama = metinKis(tez.ozet, 200)
+    || `${tez.ticker ? tez.ticker + ' · ' : ''}${katAd} — Barış Investing`;
+
+  /* Kapak: son güncellemenin görseli varsa o. Ana sayfadaki manşet de
+     onu gösteriyor; kart ile sitenin aynı görseli göstermesi gerekiyor. */
+  const guncler = Array.isArray(tez.tez_guncellemeler) ? tez.tez_guncellemeler.slice() : [];
+  guncler.sort((a, b) => String(b.tarih || '').localeCompare(String(a.tarih || '')));
+  const gorsel = (guncler.find(g => g && g.gorsel) || {}).gorsel || tez.kapak_gorseli || `${SITE}/og.jpg`;
+  const url = `${SITE}/tez/${tez.id}`;
+
+  const etiketler = [
+    `<title>${attrEsc(baslik)}</title>`,
+    `<meta name="description" content="${attrEsc(aciklama)}">`,
+    `<link rel="canonical" href="${attrEsc(url)}">`,
+    `<meta property="og:type" content="article">`,
+    `<meta property="og:site_name" content="Barış Investing">`,
+    `<meta property="og:locale" content="tr_TR">`,
+    `<meta property="og:title" content="${attrEsc(baslik)}">`,
+    `<meta property="og:description" content="${attrEsc(aciklama)}">`,
+    `<meta property="og:url" content="${attrEsc(url)}">`,
+    `<meta property="og:image" content="${attrEsc(gorsel)}">`,
+    `<meta property="og:image:alt" content="${attrEsc(tez.baslik)}">`,
+    `<meta name="twitter:card" content="summary_large_image">`,
+    `<meta name="twitter:title" content="${attrEsc(baslik)}">`,
+    `<meta name="twitter:description" content="${attrEsc(aciklama)}">`,
+    `<meta name="twitter:image" content="${attrEsc(gorsel)}">`,
+    `<meta name="twitter:image:alt" content="${attrEsc(tez.baslik)}">`,
+    tez.olusturma ? `<meta property="article:published_time" content="${attrEsc(tez.olusturma)}">` : '',
+    `<meta property="article:section" content="${attrEsc(katAd)}">`,
+  ].filter(Boolean).join('\n');
+
+  /* Önce kabuktaki genel başlık ve açıklama çıkarılıyor; ikisi birden
+     kalsa botlar hangisini alacağına kendi karar verirdi. */
+  let out = kabuk
+    .replace(/<title>[\s\S]*?<\/title>\s*/i, '')
+    .replace(/<meta\s+name=["']description["'][^>]*>\s*/i, '');
+
+  const yer = out.search(/<meta\s+charset=[^>]*>/i);
+  if (yer >= 0) {
+    const son = out.indexOf('>', yer) + 1;
+    return out.slice(0, son) + '\n' + etiketler + out.slice(son);
+  }
+  return out.replace(/<head[^>]*>/i, (m) => m + '\n' + etiketler);
 }
 
 // ── Güncelleme yardımcıları ─────────────────────────────────────
