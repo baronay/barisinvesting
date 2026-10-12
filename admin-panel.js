@@ -135,7 +135,13 @@ async function loadAdminIcerik() {
     }
     const yuz = (v) => (v == null ? '—' : v + '%');
     const katAd = { tez: 'Tez', arastirma: 'Araştırma', haber: 'Haber' };
-    if (body) body.innerHTML = d.satirlar.map(s => `<tr>
+    /* Yerleşim kırılımı: satıra tıklayınca açılıyor. Hangi temas noktası
+       işe yarıyor — yazı içi mi, sondaki mi, alt bar mı. */
+    const kir = (k) => {
+      const o = k || {};
+      return `<span style="font-size:10px;opacity:.75">yazı içi ${o.inline || 0} · son ${o.end || 0} · bar ${o.slidein || 0}</span>`;
+    };
+    if (body) body.innerHTML = d.satirlar.map((s, i) => `<tr onclick="adminIcerikAc(${i})" style="cursor:pointer" title="Yerleşim kırılımı için tıkla">
       <td style="max-width:260px">
         ${s.ticker ? `<span style="font-family:'JetBrains Mono',monospace;color:#c2ad84;font-weight:600">${_gEsc(s.ticker)}</span> ` : ''}
         <span style="color:#dfe4ec">${_gEsc(String(s.baslik).slice(0, 70))}</span>
@@ -146,19 +152,31 @@ async function loadAdminIcerik() {
       <td style="color:#8a93a3">${s.kutu_gorundu} <span style="font-size:10px;opacity:.7">${yuz(s.kutu_orani)}</span></td>
       <td style="font-weight:600;color:#c2ad84">${s.abone}</td>
       <td style="color:${(s.donusum || 0) >= 2 ? '#4ade80' : '#8a93a3'}">${yuz(s.donusum)}</td>
+    </tr>
+    <tr id="icerikKir${i}" style="display:none;background:rgba(0,0,0,.25)">
+      <td colspan="2" style="color:#5d6675;font-size:10px;letter-spacing:1px">YERLEŞİM KIRILIMI</td>
+      <td colspan="2"></td>
+      <td>${kir(s.kutu_kirilim)}</td>
+      <td colspan="2">${kir(s.abone_kirilim)}</td>
     </tr>`).join('');
   } catch (e) {
     if (ozet) ozet.textContent = '⚠ İçerik hunisi yüklenemedi: ' + e.message;
   }
 }
 
+/* Satıra tıklayınca yerleşim kırılımı açılır/kapanır */
+function adminIcerikAc(i) {
+  const el = document.getElementById('icerikKir' + i);
+  if (el) el.style.display = (el.style.display === 'none' || !el.style.display) ? 'table-row' : 'none';
+}
+
 /* Abone listesini CSV indir — mail göndermeyi dışarıda yapmak için yeterli */
 function adminAboneCSV() {
   const d = _adminIcerik;
   if (!d || !d.aboneler || !d.aboneler.length) { showToast('Önce ↻ ile yükle'); return; }
-  const bas = ['email', 'tez_id', 'kaynak_sayfa', 'utm_source', 'utm_medium', 'utm_campaign', 'tarih'];
+  const bas = ['email', 'tez_id', 'ticker', 'yerlesim', 'kaynak_sayfa', 'utm_source', 'utm_medium', 'utm_campaign', 'tarih'];
   const satir = d.aboneler.map(a => [
-    a.email, a.tez_id ?? '', a.kaynak_sayfa || '',
+    a.email, a.tez_id ?? '', a.ticker || '', a.yerlesim || 'end', a.kaynak_sayfa || '',
     a.utm_source || '', a.utm_medium || '', a.utm_campaign || '', a.olusturma || ''
   ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
   const bom = String.fromCharCode(0xFEFF);   // Excel Türkçe karakterleri doğru okusun

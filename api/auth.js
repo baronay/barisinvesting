@@ -134,6 +134,22 @@ async function sbEkle(tablo, govde) {
   return true;
 }
 
+/* Admin e-postaları — olay sayaçlarını kirletmesinler diye. Sıcak lambda'da
+   10 dakika önbellekte: her olayda bir users okuması yapılmıyor. */
+let _adminMailler = null, _adminMailZaman = 0;
+async function adminMailleri() {
+  if (_adminMailler && (Date.now() - _adminMailZaman) < 600000) return _adminMailler;
+  const kume = new Set();
+  if (ADMIN_EMAIL) kume.add(ADMIN_EMAIL);
+  try {
+    const rows = await sb('GET', 'users', { 'is_admin': 'eq.true', 'select': 'email' });
+    (rows || []).forEach(r => { if (r && r.email) kume.add(norm(r.email)); });
+  } catch (_) { /* okunamazsa en azından ADMIN_EMAIL elde */ }
+  _adminMailler = kume;
+  _adminMailZaman = Date.now();
+  return kume;
+}
+
 async function getUser(email) {
   const rows = await sb('GET', 'users', { 'email': `eq.${email}`, 'select': '*' });
   return rows?.[0] || null;
@@ -289,7 +305,7 @@ export default async function handler(req, res) {
      Okura ek adım çıkmıyor: tek istek, tek alan. Şifre ya da doğrulama
      yok, çünkü bu uygulamada kimlik zaten e-posta. */
   if (action === 'abone_ol' && req.method === 'POST') {
-    const { email, tez_id, kaynak_sayfa, utm_source, utm_medium, utm_campaign } = req.body || {};
+    const { email, tez_id, ticker, yerlesim, kaynak_sayfa, utm_source, utm_medium, utm_campaign } = req.body || {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!email || !emailRegex.test(email) || email.length > 254) {
       return res.status(400).json({ error: 'Geçerli bir e-posta girin.' });
@@ -307,6 +323,10 @@ export default async function handler(req, res) {
       await sbEkle('abonelikler', {
         email: em,
         tez_id: tezId,
+        /* ticker ayrı sütun: "şu hisseye abone olanlara toplu mail at"
+           sorgusu tez_id üzerinden dolaşmak zorunda kalmasın. */
+        ticker: ticker ? String(ticker).toUpperCase().replace(/[^A-Z0-9. ]/g, '').slice(0, 24) : null,
+        yerlesim: ['inline', 'end', 'slidein'].indexOf(String(yerlesim)) >= 0 ? String(yerlesim) : null,
         kaynak_sayfa: kis(kaynak_sayfa, 200),
         utm_source: kis(utm_source, 120),
         utm_medium: kis(utm_medium, 120),
@@ -370,9 +390,18 @@ export default async function handler(req, res) {
      kampanya. Sayım için bu yeterli. */
   if (action === 'olay' && req.method === 'POST') {
     const TURLER = new Set(['goruntuleme', 'kaydirma75', 'kutu_gorundu', 'abone_oldu']);
-    const { tur, tez_id, utm_source, utm_medium, utm_campaign } = req.body || {};
+    const { tur, tez_id, yerlesim, okur, utm_source, utm_medium, utm_campaign } = req.body || {};
     if (!TURLER.has(String(tur))) return res.status(400).json({ error: 'Bilinmeyen olay' });
     if (!SB_URL || !SB_KEY) return res.status(200).json({ ok: true });
+
+    /* Admin kendi sayaçlarını kirletmesin. İstemcide de bir filtre var ama
+       localStorage damgası silinince o filtre düşüyor; burası son söz.
+       'okur' YALNIZCA bu karşılaştırma için geliyor, hiçbir yere yazılmıyor. */
+    const okurEm = norm(okur || '');
+    if (okurEm) {
+      const yoneticiler = await adminMailleri();
+      if (yoneticiler.has(okurEm)) return res.status(200).json({ ok: true, atlandi: 'yonetici' });
+    }
 
     const tezId = (tez_id != null && isFinite(+tez_id) && +tez_id > 0) ? Math.trunc(+tez_id) : null;
     const kis = (v, n) => { const s = String(v == null ? '' : v).trim(); return s ? s.slice(0, n) : null; };
@@ -380,6 +409,7 @@ export default async function handler(req, res) {
       await sbEkle('olaylar', {
         tur: String(tur),
         tez_id: tezId,
+        yerlesim: ['inline', 'end', 'slidein'].indexOf(String(yerlesim)) >= 0 ? String(yerlesim) : null,
         utm_source: kis(utm_source, 120),
         utm_medium: kis(utm_medium, 120),
         utm_campaign: kis(utm_campaign, 120),
@@ -408,13 +438,13 @@ export default async function handler(req, res) {
     try {
       const [olaylar, abonelikler, tezler] = await Promise.all([
         sb('GET', 'olaylar', {
-          'select': 'tur,tez_id,utm_source,utm_campaign,olusturma',
+          'select': 'tur,tez_id,yerlesim,utm_source,utm_campaign,olusturma',
           'olusturma': `gte.${baslangic}`,
           'order': 'olusturma.desc',
           'limit': String(LIMIT),
         }).catch(() => []),
         sb('GET', 'abonelikler', {
-          'select': 'email,tez_id,kaynak_sayfa,utm_source,utm_medium,utm_campaign,olusturma',
+          'select': 'email,tez_id,ticker,yerlesim,kaynak_sayfa,utm_source,utm_medium,utm_campaign,olusturma',
           'order': 'olusturma.desc',
           'limit': String(LIMIT),
         }).catch(() => []),
@@ -430,16 +460,24 @@ export default async function handler(req, res) {
       const tListe = Array.isArray(tezler) ? tezler : [];
 
       const bos = () => ({ goruntuleme: 0, kaydirma75: 0, kutu_gorundu: 0, abone_oldu: 0 });
+      const bosKirilim = () => ({ inline: 0, end: 0, slidein: 0 });
+      /* 2026-10-12'den ÖNCEKİ kayıtlarda yerlesim alanı yok: o tarihe kadar
+         tek yerleşim sondaki kutuydu, bu yüzden boş değerler 'end' sayılıyor. */
+      const yer = (v) => (['inline', 'end', 'slidein'].indexOf(String(v)) >= 0 ? String(v) : 'end');
       const yazilar = {};
       const al = (id) => {
         const k = id == null ? 'genel' : String(id);
-        return yazilar[k] || (yazilar[k] = { tez_id: id == null ? null : +id, sayac: bos(), abone: 0 });
+        return yazilar[k] || (yazilar[k] = {
+          tez_id: id == null ? null : +id, sayac: bos(), abone: 0,
+          kutuKirilim: bosKirilim(), aboneKirilim: bosKirilim(),
+        });
       };
       for (const o of oListe) {
         const y = al(o.tez_id);
         if (y.sayac[o.tur] != null) y.sayac[o.tur]++;
+        if (o.tur === 'kutu_gorundu') y.kutuKirilim[yer(o.yerlesim)]++;
       }
-      for (const a of aListe) al(a.tez_id).abone++;
+      for (const a of aListe) { const y = al(a.tez_id); y.abone++; y.aboneKirilim[yer(a.yerlesim)]++; }
 
       const adlar = {};
       for (const t of tListe) adlar[String(t.id)] = t;
@@ -458,6 +496,8 @@ export default async function handler(req, res) {
           kaydirma75: y.sayac.kaydirma75,
           kutu_gorundu: y.sayac.kutu_gorundu,
           abone: y.abone,
+          kutu_kirilim: y.kutuKirilim,
+          abone_kirilim: y.aboneKirilim,
           // huni oranları: görüntülemeye bölünmüş yüzdeler
           okuma_orani: yuzde(y.sayac.kaydirma75),
           kutu_orani: yuzde(y.sayac.kutu_gorundu),
@@ -483,7 +523,8 @@ export default async function handler(req, res) {
         satirlar,
         kampanyalar: Object.entries(kampanyalar).map(([ad, adet]) => ({ ad, adet })).sort((a, b) => b.adet - a.adet),
         aboneler: aListe.map(a => ({
-          email: a.email, tez_id: a.tez_id, kaynak_sayfa: a.kaynak_sayfa,
+          email: a.email, tez_id: a.tez_id, ticker: a.ticker || null, yerlesim: a.yerlesim || null,
+          kaynak_sayfa: a.kaynak_sayfa,
           utm_source: a.utm_source, utm_medium: a.utm_medium, utm_campaign: a.utm_campaign,
           olusturma: a.olusturma,
         })),

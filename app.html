@@ -2534,14 +2534,47 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 .tzo-abone-msg.err{color:var(--danger);}
 .tzo-abone-msg.ok{color:var(--success);}
 .tzo-abone-not{margin-top:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.6px;color:var(--cream2);opacity:.55;}
+.tzo-abone-kn{margin:-8px 0 14px;font-size:12.5px;line-height:1.6;color:var(--accent);opacity:.9;}
+
+/* Yazı İÇİ kutu: reklam gibi değil, içeriğin parçası gibi dursun.
+   Kart çerçevesi yerine ince amber sol kenarlık + hafif koyu zemin,
+   yazı genişliğinde, blok elemanlar arasında. */
+.tzo-abone.ic{margin:30px 0;padding:0;border-top:none;}
+.tzo-abone.ic .tzo-abone-kart{border:none;border-left:2px solid var(--accent);border-radius:0 10px 10px 0;background:rgba(194,173,132,.05);padding:18px 20px 16px;}
+.tzo-abone.ic .tzo-abone-h{font-size:19px;margin-bottom:7px;}
+.tzo-abone.ic .tzo-abone-p{font-size:13px;margin-bottom:13px;}
+
+/* Alt bar: %75'te alttan kayarak açılır, içeriğin üstünü örtmesin diye
+   gövdeye alt boşluk ekleniyor. */
+.tzo-bar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(11,15,21,.97);border-top:1px solid rgba(194,173,132,.35);box-shadow:0 -8px 26px rgba(0,0,0,.45);transform:translateY(115%);transition:transform .3s ease;}
+.tzo-bar.acik{transform:none;}
+.tzo-bar-ic{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 14px;flex-wrap:wrap;}
+.tzo-bar-t{flex:1 1 220px;min-width:0;font-size:13px;line-height:1.4;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tzo-bar-form{flex:0 1 auto;display:flex;gap:7px;}
+.tzo-bar .tzo-abone-in{flex:0 1 210px;padding:9px 12px;font-size:13px;}
+.tzo-bar .tzo-abone-btn{padding:9px 16px;font-size:13px;}
+.tzo-bar-x{flex:0 0 auto;background:none;border:none;color:var(--cream2);opacity:.6;cursor:pointer;font-size:14px;line-height:1;padding:8px;}
+.tzo-bar-x:hover{opacity:1;}
+.tzo-bar .tzo-abone-msg{flex:1 1 100%;min-height:0;margin-top:0;}
+.tzo-bar .tzo-abone-msg:empty{display:none;}
+body.tzo-bar-acik #tezOkuRoot{padding-bottom:96px;}
 
 @media(max-width:640px){
   .tzo-abone-kart{padding:20px 18px 18px;border-radius:12px;}
   .tzo-abone-h{font-size:19px;}
   .tzo-abone-p{font-size:13px;}
   .tzo-abone-btn{width:100%;}
+  .tzo-abone.ic .tzo-abone-kart{padding:16px 16px 14px;}
+  .tzo-abone.ic .tzo-abone-h{font-size:17px;}
+  /* Bar mobilde ince kalsın: metin bir satır, alan ve buton altında */
+  .tzo-bar-ic{padding:8px 12px 10px;gap:7px;}
+  .tzo-bar-t{flex:1 1 100%;font-size:12px;order:1;}
+  .tzo-bar-x{order:2;position:absolute;top:4px;right:6px;padding:6px;}
+  .tzo-bar-form{flex:1 1 100%;order:3;}
+  .tzo-bar .tzo-abone-in{flex:1 1 auto;min-width:0;}
+  .tzo-bar .tzo-abone-btn{width:auto;flex:0 0 auto;}
+  body.tzo-bar-acik #tezOkuRoot{padding-bottom:118px;}
 }
-.tzo-note{margin-top:34px;padding:12px 16px;border:1px solid var(--portal-border);border-left:3px solid var(--warn);background:rgba(0,0,0,0.2);border-radius:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.3px;line-height:1.7;color:var(--cream2);opacity:.8;}
 .tzo-ctas{margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
 
 /* ── Tezin seyri: güncelleme zaman çizelgesi ── */
@@ -3566,6 +3599,12 @@ body{overflow-x:hidden;max-width:100vw;}
         </table>
       </div>
       <div id="adminKampanya" style="font-size:11px;color:#8a93a3;margin-top:8px;"></div>
+      <div style="font-size:10px;color:#5d6675;margin-top:6px;line-height:1.5;">
+        Not: 12 Ekim 2026'da kutu görünürlük eşiği %40'tan %50'ye çıkarıldı ve teklif üç yerleşime
+        (yazı içi / son / alt bar) dağıtıldı. Bu tarihten önceki &quot;kutuyu gördü&quot; sayıları
+        daha gevşek bir eşikle toplandı, sonrakilerle birebir kıyaslanamaz. Yerleşimi boş olan eski
+        kayıtlar &quot;son&quot; sayılıyor. Admin görüntülemeleri sayaca yazılmıyor.
+      </div>
       <div class="admin-sec-title" style="margin-top:18px">Kullanıcılar</div>
       <button class="admin-refresh" onclick="loadAdminUsers()">↻ Yenile</button>
        <button class="admin-refresh" onclick="openTezEditor()" style="margin-left:8px;background:rgba(194,173,132,0.1);border-color:rgba(194,173,132,0.3);color:#c2ad84;">✍ Tez Editörü</button>
@@ -7508,137 +7547,239 @@ function garpAnalizAc(ticker) {
   }
   window.__biUtm = utmAl;
 
-  /* ── Yazı sonu abonelik kutusu ─────────────────────────────────────
-     Mail artık okumanın ÖNÜNDE değil, sonunda isteniyor. Pop-up, tam ekran
-     katman ya da metnin ortasına giren kutu YOK: kutu akışın en sonunda,
-     yazı bittikten sonra duruyor; okumayı hiçbir noktada kesmiyor.
+  /* ── ABONELİK: ÜÇ TEMAS NOKTASI ────────────────────────────────────
+     Ölçüm şunu gösterdi: yazının %75'ine gelen okurun yaklaşık yarısı
+     sondaki kutuyu hiç görmüyor — değerlemeyi ve çıkarımı okuyup sayfayı
+     kapatıyor. Bu yüzden teklif üç yere dağıtıldı:
 
-     Tez kutusu o teze bağlanıyor (tez_id) — verilen söz "bu tez
-     güncellenince haber ver". Araştırma ve haberde böyle bir söz
-     verilemiyor (tek seferlik içerik), o yüzden genel bültene yazılıyor
-     (tez_id null). */
-  /* ── ÖLÇÜM ────────────────────────────────────────────────────────
-     Dört olay bir huni kuruyor: yazı açıldı → %75'i kaydırıldı → kutu
-     göründü → abone olundu. Hangi adımda kaybettiğimiz böyle görünüyor.
+       inline   yazının içinde, değerleme bölümünün hemen sonrasında
+       end      kapanış paragrafının altında, kaynakçanın ÜSTÜNDE
+       slidein  %75'te alttan açılan ince bar (yalnızca inline kaçtıysa)
 
-     sendBeacon: okur sayfadan ayrılırken de kayıt gidiyor; normal fetch
-     gezinme sırasında iptal ediliyordu. Yanıt beklenmiyor, ölçüm hiçbir
-     koşulda sayfayı yavaşlatmıyor.
+     Hiçbiri içeriği kilitlemiyor, üstünü örtmüyor ya da okumayı kesmiyor;
+     üçü de akışın içinde duran blok elemanlar. */
 
-     Her olay yazı başına bir kez: aynı kişinin kaydırıp geri gelmesi
-     sayıyı şişirmesin. Anahtar sessionStorage'da, sekme kapanınca
-     unutuluyor. */
-  function olayGonder(tur, tezId) {
-    try {
-      const anahtar = 'bi_olay_' + tur + '_' + (tezId == null ? 'genel' : tezId);
-      if (sessionStorage.getItem(anahtar)) return;
-      sessionStorage.setItem(anahtar, '1');
-    } catch (_) { /* sessionStorage kapalıysa ölçüm yine gitsin */ }
+  const ABONE_KISA_ESIK = 600;   // kelime — altındaki gövdeye yazı içi kutu konmuyor
+  const BAR_SESSIZ_GUN  = 7;
 
-    const u = (window.__biUtm ? window.__biUtm() : {}) || {};
-    const govde = JSON.stringify({
-      tur: tur,
-      tez_id: tezId == null ? null : tezId,
-      utm_source: u.utm_source || null,
-      utm_medium: u.utm_medium || null,
-      utm_campaign: u.utm_campaign || null,
-    });
-    const url = '/api/auth?action=olay';
-    try {
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(url, new Blob([govde], { type: 'application/json' }));
-        return;
-      }
-    } catch (_) {}
-    try {
-      fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: govde, keepalive: true });
-    } catch (_) {}
+  /* Gözlemci eşiği 2026-10-12'de %40'tan %50'ye çıkarıldı. Bu tarihten
+     ÖNCEKİ "kutu_gorundu" sayıları daha gevşek bir eşikle toplandığı için
+     sonrakilerle birebir kıyaslanamaz. Aynı not admin panelinde de duruyor. */
+  const KUTU_ESIK = 0.5;
+
+  /* ── Okur durumu — hepsi istemcide ────────────────────────────────
+     Sunucuya "bu mail şu ticker'a abone mi" diye sormuyoruz: o uç
+     herkesin başkasının mailini sorgulamasına açık olurdu. Abone olan
+     kişi kendi tarayıcısında işaretleniyor, karar oradan veriliyor. */
+  function lsOku(anahtar, varsayilan) {
+    try { const d = localStorage.getItem(anahtar); return d == null ? varsayilan : d; }
+    catch (_) { return varsayilan; }
   }
-  window.__biOlay = olayGonder;
-
-  /* Yazı açıldığında ölçümü kur. Kaydırma dinleyicisi tetiklenince
-     kendini kaldırıyor, kutu gözlemcisi de bir kez görünce kapanıyor —
-     sayfada boşa çalışan dinleyici kalmıyor. */
-  function olcumuBagla(tez) {
-    const tezId = tez && tez.id ? tez.id : null;
-    olayGonder('goruntuleme', tezId);
-
-    const art = document.getElementById('tzoArticle') || document.querySelector('.tzo-article') || document.body;
-
-    let kaydirmaBitti = false;
-    const kaydirmaKontrol = () => {
-      if (kaydirmaBitti) return;
-      const b = art.getBoundingClientRect();
-      const yukseklik = b.height || 1;
-      // yazının kaç puanı okundu: üstü ne kadar geçti + ekranda görünen kısım
-      const okunan = Math.min(yukseklik, Math.max(0, window.innerHeight - b.top));
-      if (okunan / yukseklik >= 0.75) {
-        kaydirmaBitti = true;
-        window.removeEventListener('scroll', kaydirmaKontrol);
-        olayGonder('kaydirma75', tezId);
-      }
-    };
-    window.addEventListener('scroll', kaydirmaKontrol, { passive: true });
-    kaydirmaKontrol();   // kısa yazılar tek ekrana sığıyor, kaydırma hiç olmuyor
-
-    const kutu = document.getElementById('aboneKutu');
-    if (kutu && typeof IntersectionObserver === 'function') {
-      const goz = new IntersectionObserver((girdiler) => {
-        for (const g of girdiler) {
-          if (g.isIntersecting) { olayGonder('kutu_gorundu', tezId); goz.disconnect(); return; }
-        }
-      }, { threshold: 0.4 });
-      goz.observe(kutu);
+  function lsYaz(anahtar, deger) {
+    try { localStorage.setItem(anahtar, deger); } catch (_) {}
+  }
+  function aboneTickerlar() {
+    const ham = lsOku('bi_abone_tickers', '');
+    return ham ? ham.split(',').filter(Boolean) : [];
+  }
+  function tickerAboneMi(ticker) {
+    if (!ticker) return false;
+    return aboneTickerlar().indexOf(String(ticker).toUpperCase()) >= 0;
+  }
+  function genelAboneMi() { return lsOku('bi_abone_genel', '') === '1'; }
+  function aboneIsaretle(ticker) {
+    if (ticker) {
+      const t = String(ticker).toUpperCase();
+      const liste = aboneTickerlar();
+      if (liste.indexOf(t) < 0) { liste.push(t); lsYaz('bi_abone_tickers', liste.join(',')); }
+    } else {
+      lsYaz('bi_abone_genel', '1');
     }
   }
+  function barSusturulduMu() {
+    const t = parseInt(lsOku('bi_bar_kapali', '0'), 10) || 0;
+    return t > 0 && (Date.now() - t) < BAR_SESSIZ_GUN * 86400000;
+  }
 
-  function aboneKutusuHTML(tez, kat) {
-    const tezce = kat === 'tez';
-    const baslik = tezce
-      ? 'Bu tez güncellendiğinde ilk sen öğren'
-      : kat === 'arastirma'
-        ? 'Yeni araştırmalardan haberdar ol'
-        : 'Yeni analizlerden haberdar ol';
+  /* Admin kendi sayaçlarını kirletmesin. curUser sunucudan geç gelebiliyor,
+     o yüzden bir kez görülen admin bayrağı localStorage'a damgalanıyor;
+     ilk görüntülenme olayı yarışı kaybetmiyor. Sunucuda da ayrı bir
+     filtre var — damga silinse bile sayaç temiz kalıyor. */
+  function yoneticiMi() {
+    try {
+      if (typeof curUser !== 'undefined' && curUser && curUser.is_admin) {
+        lsYaz('bi_admin', '1');
+        return true;
+      }
+    } catch (_) {}
+    return lsOku('bi_admin', '') === '1';
+  }
 
-    /* kontrol_noktasi: "tezde neyi izliyorum" cümlesi. Tezin kendi alanı
-       boşsa belirsiz bir vaat uydurulmuyor, sözün sade hali kalıyor. */
-    const kn = tezce ? String(tez.kontrol_noktasi || '').trim() : '';
-    const soz = tezce
-      ? (kn ? 'Takip ettiğim kontrol noktası: ' + esc(kn) : 'Tez güncellendiğinde sana mail atayım.')
-      : kat === 'arastirma'
-        ? 'Yeni şirket araştırmaları yayınlandığında mailine düşer.'
-        : 'Yeni analiz ve piyasa notları yayınlandığında mailine düşer.';
+  /* ── YERLEŞTİRME MOTORU ───────────────────────────────────────────
+     Yazı gövdeleri elle yapıştırılmış tam HTML belgeleri: her birinin
+     kendi <style>'ı ve kendi sarmalayıcı sınıfı var (ta-wrap, tp-wrap,
+     wrap, bazen sınıfsız). Sabit bir seçici işe yaramıyor, akış kabı
+     çalışma anında bulunuyor: en çok blok çocuğu taşıyan eleman. */
+  const BLOK = ['P','H1','H2','H3','H4','UL','OL','TABLE','BLOCKQUOTE','FIGURE','PRE','SECTION','DIV','HR','FOOTER'];
 
-    let kayitli = '';
-    try { kayitli = localStorage.getItem('bi_email') || ''; } catch (_) {}
+  function blokCocuklar(el) {
+    const c = [];
+    for (let i = 0; i < el.children.length; i++) {
+      if (BLOK.indexOf(el.children[i].tagName) >= 0) c.push(el.children[i]);
+    }
+    return c;
+  }
 
-    return `<div class="tzo-abone" id="aboneKutu">
+  function akisKabi(kok) {
+    let enIyi = kok, enCok = blokCocuklar(kok).length;
+    const hepsi = kok.querySelectorAll('*');
+    for (let i = 0; i < hepsi.length; i++) {
+      const n = blokCocuklar(hepsi[i]).length;
+      if (n > enCok) { enCok = n; enIyi = hepsi[i]; }
+    }
+    return enCok >= 4 ? enIyi : null;
+  }
+
+  function kelimeSay(el) {
+    const m = (el.textContent || '').trim();
+    return m ? m.split(/\s+/).length : 0;
+  }
+
+  /* Kaynakça / yasal not bloğu. .closing BİLEREK dışarıda: o bir kapanış
+     paragrafı, kaynakça değil — kutu onun ALTINA gelmeli. */
+  function kaynakcaBlogu(kok) {
+    return kok.querySelector('footer, .ta-foot, .tp-foot');
+  }
+
+  /* Yazı içi kutunun gireceği nokta: akış kabının KAÇINCI çocuğundan
+     önce. Blok elemanlar arasına giriyor, dolayısıyla bir paragrafın,
+     tablonun, listenin ya da gömülü grafiğin ortasına düşmesi mümkün değil.
+
+     Kural: değerleme/senaryo bölümünün sonu. Ama bu bölüm bazı tezlerde
+     çok erken bitiyor (GARAN'da %33) — orada okur henüz giriş fiyatını ve
+     riskleri okumamış oluyor. Bu yüzden %50 alt sınırı var: bölüm sonu
+     metnin yarısından önceyse %62 kuralına düşülüyor. */
+  function yerlestirmeNoktasi(cocuklar) {
+    const n = cocuklar.length;
+    if (n < 6) return -1;
+
+    const uzunluk = cocuklar.map(c => (c.textContent || '').trim().length);
+    const toplam = uzunluk.reduce((a, b) => a + b, 0);
+    if (!toplam) return -1;
+
+    const birikimli = (idx) => {
+      let s = 0;
+      for (let i = 0; i < idx && i < n; i++) s += uzunluk[i];
+      return s;
+    };
+
+    // 1) değerleme / senaryo bölümünün sonu
+    let basIdx = -1, basSeviye = 0;
+    for (let i = 0; i < n; i++) {
+      const t = cocuklar[i].tagName;
+      if (/^H[2-4]$/.test(t) && /senaryo|değerleme|degerleme/i.test(cocuklar[i].textContent || '')) {
+        basIdx = i; basSeviye = parseInt(t.slice(1), 10); break;
+      }
+    }
+    if (basIdx >= 0) {
+      let son = n;
+      for (let j = basIdx + 1; j < n; j++) {
+        const t = cocuklar[j].tagName;
+        if (/^H[1-4]$/.test(t) && parseInt(t.slice(1), 10) <= basSeviye) { son = j; break; }
+      }
+      if (son < n && birikimli(son) / toplam >= 0.5) return son;
+    }
+
+    // 2) metnin %62'si — en yakın blok sınırı
+    const hedef = toplam * 0.62;
+    let birikim = 0;
+    for (let i = 0; i < n; i++) {
+      const onceki = birikim;
+      birikim += uzunluk[i];
+      if (birikim >= hedef) {
+        /* Tek bir büyük blok hedefin üstünden atlayabiliyor (GARAN'da
+           "Makro gelişmeler" bloğu %62'yi %74'e taşıyordu). Hedefe daha
+           yakın olan sınırı seç: bloğun öncesi mi, sonrası mı. */
+        if (i > 0 && (hedef - onceki) < (birikim - hedef)) return i;
+        return (i + 1 < n) ? i + 1 : -1;
+      }
+    }
+    return -1;
+  }
+
+  /* ── KUTU ─────────────────────────────────────────────────────────── */
+
+  function aboneMetni(tez, kat, yerlesim) {
+    const tezce = kat === 'tez' && !!tez.ticker;
+    const tkr = tezce ? String(tez.ticker).toUpperCase() : '';
+    if (tezce) {
+      return {
+        kick: tkr + ' TAKİBİ',
+        baslik: tkr + ' pozisyonumda bir şey değiştiğinde haber vereyim',
+        alt: 'Ekleme yaptığımda, sattığımda ya da tez bozulduğunda tek bir mail atarım. Başka bir şey göndermem.',
+        buton: 'Haber ver',
+        barMetin: tkr + ' pozisyonumda bir şey değiştiğinde haber vereyim',
+      };
+    }
+    return {
+      kick: 'BÜLTEN',
+      baslik: 'Yeni tez ve analizler yayımlandığında haber vereyim',
+      alt: 'Yeni bir tez ya da analiz yayımladığımda tek bir mail atarım. Başka bir şey göndermem.',
+      buton: 'Abone ol',
+      barMetin: 'Yeni tez ve analizler yayımlandığında haber vereyim',
+    };
+  }
+
+  function aboneKutusuHTML(tez, kat, yerlesim) {
+    const m = aboneMetni(tez, kat, yerlesim);
+    const kayitli = lsOku('bi_email', '');
+    /* kontrol_noktasi doluysa sözü somutlaştıran tek satır olarak ekleniyor;
+       boşsa hiç çizilmiyor, belirsiz bir vaat uydurulmuyor. */
+    const kn = (kat === 'tez') ? String(tez.kontrol_noktasi || '').trim() : '';
+
+    return `<div class="tzo-abone ${yerlesim === 'inline' ? 'ic' : 'son'}" data-yerlesim="${yerlesim}">
         <div class="tzo-abone-kart">
-          <div class="tzo-abone-kick">${tezce ? 'Tez takibi' : 'Bülten'}</div>
-          <h3 class="tzo-abone-h">${baslik}</h3>
-          <p class="tzo-abone-p">${soz} Ayrıca Terminal'de ücretsiz analiz kredisi kazanırsın.</p>
-          <form class="tzo-abone-form" id="aboneForm">
-            <input class="tzo-abone-in" id="aboneMail" type="email" inputmode="email"
-                   autocomplete="email" placeholder="ornek@mail.com" value="${esc(kayitli)}" required>
-            <button class="tzo-abone-btn" id="aboneBtn" type="submit">${tezce ? 'Beni haberdar et' : 'Abone ol'}</button>
+          <div class="tzo-abone-kick">${esc(m.kick)}</div>
+          <h3 class="tzo-abone-h">${esc(m.baslik)}</h3>
+          <p class="tzo-abone-p">${esc(m.alt)}</p>
+          ${kn ? `<p class="tzo-abone-kn">İzlediğim kontrol noktası: ${esc(kn)}</p>` : ''}
+          <form class="tzo-abone-form">
+            <input class="tzo-abone-in" type="email" inputmode="email" autocomplete="email"
+                   placeholder="ornek@mail.com" value="${esc(kayitli)}" required>
+            <button class="tzo-abone-btn" type="submit">${esc(m.buton)}</button>
           </form>
-          <div class="tzo-abone-msg" id="aboneMsg" role="status" aria-live="polite"></div>
-          <div class="tzo-abone-not">Sadece e-posta · şifre ya da doğrulama adımı yok</div>
+          <div class="tzo-abone-msg" role="status" aria-live="polite"></div>
+          <div class="tzo-abone-not">Sadece e-posta · Terminal'de ücretsiz analiz kredisi kazanırsın</div>
         </div>
       </div>`;
   }
 
-  function aboneKutusuBagla(tez, kat) {
-    const form = document.getElementById('aboneForm');
-    if (!form) return;
-    const inp = document.getElementById('aboneMail');
-    const btn = document.getElementById('aboneBtn');
-    const msg = document.getElementById('aboneMsg');
-    const tezce = kat === 'tez';
+  function barHTML(tez, kat) {
+    const m = aboneMetni(tez, kat, 'slidein');
+    const kayitli = lsOku('bi_email', '');
+    return `<div class="tzo-bar-ic">
+        <span class="tzo-bar-t">${esc(m.barMetin)}</span>
+        <form class="tzo-abone-form tzo-bar-form">
+          <input class="tzo-abone-in" type="email" inputmode="email" autocomplete="email"
+                 placeholder="ornek@mail.com" value="${esc(kayitli)}" required>
+          <button class="tzo-abone-btn" type="submit">${esc(m.buton)}</button>
+        </form>
+        <button type="button" class="tzo-bar-x" aria-label="Kapat">✕</button>
+        <div class="tzo-abone-msg" role="status" aria-live="polite"></div>
+      </div>`;
+  }
 
-    /* Regex yerine elle kontrol: alan zaten type=email, bu yalnızca
-       boş/bozuk girdide sunucuya gitmeden uyarmak için. Asıl doğrulama
-       sunucuda. */
+  /* Tek bağlayıcı: kutu da bar da aynı sınıfları taşıyor, böylece gönderim
+     akışı tek yerde duruyor. */
+  function aboneKutusuBagla(kok, tez, kat, yerlesim) {
+    const form = kok.querySelector('form');
+    if (!form) return;
+    const inp = kok.querySelector('.tzo-abone-in');
+    const btn = kok.querySelector('.tzo-abone-btn');
+    const msg = kok.querySelector('.tzo-abone-msg');
+    const tezce = kat === 'tez' && !!tez.ticker;
+    const tkr = tezce ? String(tez.ticker).toUpperCase() : null;
+
     const gecerliMi = (s) => {
       const at = s.indexOf('@');
       const nokta = s.lastIndexOf('.');
@@ -7656,7 +7797,7 @@ function garpAnalizAc(ticker) {
       }
       const eskiMetin = btn.textContent;
       btn.disabled = true;
-      btn.textContent = 'Kaydediliyor…';
+      btn.textContent = '…';
       msg.className = 'tzo-abone-msg';
       msg.textContent = '';
 
@@ -7668,6 +7809,8 @@ function garpAnalizAc(ticker) {
           body: JSON.stringify({
             email: em,
             tez_id: tezce ? (tez.id || null) : null,
+            ticker: tkr,
+            yerlesim: yerlesim,
             kaynak_sayfa: location.pathname,
             utm_source: u.utm_source,
             utm_medium: u.utm_medium,
@@ -7677,29 +7820,34 @@ function garpAnalizAc(ticker) {
         const d = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(d.error || 'Kayıt başarısız.');
 
-        /* Mail kaydedildi: terminal krediyi bu anahtardan okuyor, böylece
-           abone olan okura ikinci bir giriş adımı çıkmıyor. */
-        try { localStorage.setItem('bi_email', em); } catch (_) {}
+        /* Terminal krediyi bu anahtardan okuyor: abone olan okura ikinci
+           bir giriş adımı çıkmıyor. */
+        lsYaz('bi_email', em);
+        aboneIsaretle(tkr);
 
         let metin = d.tekrar
           ? 'Zaten listedeydin, bir şey değişmedi.'
-          : (tezce ? 'Tamam. Bu tez güncellenince ilk sen duyacaksın.'
-                   : 'Tamam. Yeni içerikler mailine düşecek.');
+          : (tezce ? 'Tamam. ' + tkr + ' pozisyonumda bir şey değişince haber veririm.'
+                   : 'Tamam. Yeni tez ve analizler mailine düşecek.');
         if (d.krediler != null) metin += ' Terminal kredin: ' + d.krediler + '.';
         msg.className = 'tzo-abone-msg ok';
         msg.textContent = metin;
-        btn.textContent = 'Kaydedildi ✓';
+        btn.textContent = '✓';
         inp.disabled = true;
 
-        /* Tekrar abonelikte huniyi şişirmemek için olay yalnızca yeni
-           kayıtta yazılıyor; Umami tarafına ikisi de gidiyor. */
-        if (!d.tekrar) olayGonder('abone_oldu', tezce ? (tez.id || null) : null);
+        if (!d.tekrar) olayGonder('abone_oldu', tez.id || null, yerlesim);
         if (window.trackEvent) {
           window.trackEvent('abone_oldu', {
-            tez_id: tez.id || null, kategori: kat, tekrar: !!d.tekrar,
+            tez_id: tez.id || null, kategori: kat, yerlesim: yerlesim, tekrar: !!d.tekrar,
             utm_source: u.utm_source || null, utm_campaign: u.utm_campaign || null,
           });
         }
+        // Aynı sayfadaki diğer teklifler artık gereksiz
+        setTimeout(() => {
+          document.querySelectorAll('.tzo-abone').forEach(k => { if (k !== kok) k.remove(); });
+          const bar = document.getElementById('tzoBar');
+          if (bar && !kok.closest('#tzoBar')) barKapat(false);
+        }, 2600);
       } catch (err) {
         msg.className = 'tzo-abone-msg err';
         msg.textContent = err.message || 'Bir şeyler ters gitti, tekrar dene.';
@@ -7707,6 +7855,193 @@ function garpAnalizAc(ticker) {
         btn.textContent = eskiMetin;
       }
     });
+  }
+
+  function barKapat(damgala) {
+    const bar = document.getElementById('tzoBar');
+    if (bar) bar.classList.remove('acik');
+    document.body.classList.remove('tzo-bar-acik');
+    if (damgala) lsYaz('bi_bar_kapali', String(Date.now()));
+  }
+
+  /* ── ÖLÇÜM ────────────────────────────────────────────────────────
+     Huni: görüntülenme → %75 okundu → kutu göründü → abone olundu.
+
+     sendBeacon: okur sayfadan ayrılırken de kayıt gidiyor, normal fetch
+     gezinme sırasında iptal ediliyordu.
+
+     Anahtar sessionStorage'da. "kutu_gorundu" yerleşim başına bir kez
+     sayılıyor (inline ve end ayrı satır), diğerleri yazı başına bir kez. */
+  function olayGonder(tur, tezId, yerlesim) {
+    if (yoneticiMi()) return;
+    try {
+      const anahtar = 'bi_olay_' + tur + (yerlesim ? '_' + yerlesim : '') + '_' + (tezId == null ? 'genel' : tezId);
+      if (sessionStorage.getItem(anahtar)) return;
+      sessionStorage.setItem(anahtar, '1');
+    } catch (_) { /* sessionStorage kapalıysa ölçüm yine gitsin */ }
+
+    const u = (window.__biUtm ? window.__biUtm() : {}) || {};
+    const govde = JSON.stringify({
+      tur: tur,
+      tez_id: tezId == null ? null : tezId,
+      yerlesim: yerlesim || null,
+      okur: lsOku('bi_email', '') || null,   // sunucu admin filtresi için; KAYDEDİLMİYOR
+      utm_source: u.utm_source || null,
+      utm_medium: u.utm_medium || null,
+      utm_campaign: u.utm_campaign || null,
+    });
+    const url = '/api/auth?action=olay';
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(url, new Blob([govde], { type: 'application/json' }));
+        return;
+      }
+    } catch (_) {}
+    try {
+      fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: govde, keepalive: true });
+    } catch (_) {}
+  }
+  window.__biOlay = olayGonder;
+
+  /* Kutuyu izle: viewport'a %50 girince bir kez say. */
+  function kutuyuIzle(kutu, tezId, yerlesim, gorulduCb) {
+    if (!kutu || typeof IntersectionObserver !== 'function') return;
+    const goz = new IntersectionObserver((girdiler) => {
+      for (const g of girdiler) {
+        if (g.isIntersecting) {
+          olayGonder('kutu_gorundu', tezId, yerlesim);
+          if (gorulduCb) gorulduCb();
+          goz.disconnect();
+          return;
+        }
+      }
+    }, { threshold: KUTU_ESIK });
+    goz.observe(kutu);
+  }
+
+  /* ── ORKESTRASYON ─────────────────────────────────────────────────
+     Sekmeli tezlerde iki gövde var: açık sekmedeki en yeni güncelleme ve
+     kapalı sekmedeki ilk tez. Yazı içi kutu İKİSİNE DE konuyor — aynı anda
+     yalnız biri görünür olduğu için çakışmıyor.
+
+     600 kelime kuralı her gövdeye AYRI uygulanıyor: kısa bir güncelleme
+     yazı içi kutu almıyor, teklifi kendi sonunda "end" olarak görüyor. */
+  function govdeleriBul() {
+    const liste = [];
+    const guncel = document.querySelector('#tezPanelGuncel .tzt-acc.son .tzt-body');
+    if (guncel) liste.push({ el: guncel, panel: document.getElementById('tezPanelGuncel') });
+    const ilk = document.querySelector('.tzo-content');
+    if (ilk) liste.push({ el: ilk, panel: document.getElementById('tezPanelIlk') || ilk });
+    return liste;
+  }
+
+  function abonelikKur(tez, kat) {
+    const tezce = kat === 'tez' && !!tez.ticker;
+    // Zaten abone olduğu teklifi tekrar görmesin. Genel bülten abonesi bir
+    // tez yazısında o ticker'ın takip kutusunu görmeye devam ediyor.
+    const zatenAbone = tezce ? tickerAboneMi(tez.ticker) : genelAboneMi();
+
+    const tezId = tez && tez.id ? tez.id : null;
+    olayGonder('goruntuleme', tezId, null);
+
+    let inlineKutu = null;
+    if (!zatenAbone) {
+      govdeleriBul().forEach((g) => {
+        const kelime = kelimeSay(g.el);
+        const kap = akisKabi(g.el);
+        const cocuklar = kap ? blokCocuklar(kap) : [];
+        let kondu = false;
+
+        if (kelime >= ABONE_KISA_ESIK && kap && cocuklar.length) {
+          const idx = yerlestirmeNoktasi(cocuklar);
+          if (idx > 0 && idx < cocuklar.length) {
+            const d = document.createElement('div');
+            d.innerHTML = aboneKutusuHTML(tez, kat, 'inline');
+            const kutu = d.firstElementChild;
+            kap.insertBefore(kutu, cocuklar[idx]);
+            aboneKutusuBagla(kutu, tez, kat, 'inline');
+            if (!inlineKutu) inlineKutu = kutu;
+            kutuyuIzle(kutu, tezId, 'inline', () => { _inlineGoruldu = true; });
+            kondu = true;
+          }
+        }
+
+        // Kapanış paragrafının altı, kaynakçanın üstü
+        const d2 = document.createElement('div');
+        d2.innerHTML = aboneKutusuHTML(tez, kat, 'end');
+        const sonKutu = d2.firstElementChild;
+        const kaynakca = kaynakcaBlogu(g.el);
+        if (kaynakca && kaynakca.parentElement) kaynakca.parentElement.insertBefore(sonKutu, kaynakca);
+        else (kap || g.el).appendChild(sonKutu);
+        aboneKutusuBagla(sonKutu, tez, kat, 'end');
+        kutuyuIzle(sonKutu, tezId, 'end', null);
+        void kondu;
+      });
+    }
+
+    olcumuBagla(tez, kat, zatenAbone);
+  }
+
+  let _inlineGoruldu = false;
+
+  /* %75 ölçümü GÖRÜNÜR gövdeye göre çalışıyor. Okur sekme değiştirirse
+     hedef yeni görünen gövdeye geçiyor; olay yine yazı başına bir kez
+     yazılıyor (sessionStorage anahtarı aynı). */
+  function olcumuBagla(tez, kat, zatenAbone) {
+    const tezId = tez && tez.id ? tez.id : null;
+    let yuzde75 = false;
+
+    const hedefGovde = () => {
+      const pg = document.getElementById('tezPanelGuncel');
+      const pi = document.getElementById('tezPanelIlk');
+      if (pg && pg.classList.contains('active')) return pg;
+      if (pi && pi.classList.contains('active')) return pi;
+      return document.querySelector('.tzo-content')
+        || document.getElementById('tzoArticle')
+        || document.body;
+    };
+
+    const kontrol = () => {
+      if (yuzde75) return;
+      const el = hedefGovde();
+      if (!el) return;
+      const b = el.getBoundingClientRect();
+      const yukseklik = b.height || 1;
+      const okunan = Math.min(yukseklik, Math.max(0, window.innerHeight - b.top));
+      if (okunan / yukseklik >= 0.75) {
+        yuzde75 = true;
+        window.removeEventListener('scroll', kontrol);
+        olayGonder('kaydirma75', tezId, null);
+        barAc(tez, kat, zatenAbone);
+      }
+    };
+
+    window.addEventListener('scroll', kontrol, { passive: true });
+    kontrol();   // kısa gövdeler tek ekrana sığıyor, kaydırma hiç olmuyor
+    // Sekme değişince yeni gövdeye göre yeniden ölç
+    window.__olcumGovdeDegisti = kontrol;
+  }
+
+  /* Alt bar yalnızca inline kutu KAÇTIYSA açılıyor: okur teklifi zaten
+     yazının içinde gördüyse ikinci kez rahatsız edilmiyor. */
+  function barAc(tez, kat, zatenAbone) {
+    if (zatenAbone || _inlineGoruldu || barSusturulduMu() || yoneticiMi()) return;
+    if (document.getElementById('tzoBar')) return;
+
+    const bar = document.createElement('div');
+    bar.className = 'tzo-bar';
+    bar.id = 'tzoBar';
+    bar.innerHTML = barHTML(tez, kat);
+    document.body.appendChild(bar);
+    aboneKutusuBagla(bar, tez, kat, 'slidein');
+    const x = bar.querySelector('.tzo-bar-x');
+    if (x) x.addEventListener('click', () => barKapat(true));
+
+    requestAnimationFrame(() => {
+      bar.classList.add('acik');
+      document.body.classList.add('tzo-bar-acik');
+    });
+    olayGonder('kutu_gorundu', tez && tez.id ? tez.id : null, 'slidein');
   }
 
   function tezPanelleriHTML(list, ilkTarih, icerik, govdeAd){
@@ -7764,6 +8099,9 @@ function garpAnalizAc(ticker) {
     pi.classList.toggle('active', !g);
     if (tg) tg.classList.toggle('active', g);
     if (ti) ti.classList.toggle('active', !g);
+    /* Ölçüm GÖRÜNÜR gövdeye göre çalışıyor: sekme değişince %75 kontrolü
+       yeni gövdeye göre yeniden bakıyor. Olay yine yazı başına bir kez. */
+    if (window.__olcumGovdeDegisti) window.__olcumGovdeDegisti();
     // Sekme değişince sekme şeridi görünür kalsın
     const tabs = document.getElementById('tezSeyri');
     if (tabs){
@@ -7834,7 +8172,7 @@ function garpAnalizAc(ticker) {
         ${tez.ticker ? terminalWidgetHTML(tez) : ''}
         ${ucDakikaHTML(tez)}
         ${tezPanelleriHTML(guncellemeler, tarih, icerik, govdeAd)}
-        ${aboneKutusuHTML(tez, kat)}
+
 
         <div class="tzo-note">Bu içerik araştırma ve bilgi amaçlıdır; yatırım tavsiyesi değildir. Tüm projeksiyonlar tahmin içermektedir.</div>
         <div class="tzo-ctas">
@@ -7844,8 +8182,7 @@ function garpAnalizAc(ticker) {
       tzoTopHesapla();   // sticky sekme şeridinin üst boşluğu
       tablolariHazirla(art);
       kunyeGetiri(tez);
-      aboneKutusuBagla(tez, kat);
-      olcumuBagla(tez);
+      abonelikKur(tez, kat);
 
     }catch(e){
       if (_tzoLast === id) art.innerHTML = '<div class="pt-tez-skel" style="color:var(--danger)">İçerik yüklenemedi.</div>';
