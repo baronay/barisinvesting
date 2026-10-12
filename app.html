@@ -2577,6 +2577,73 @@ body.tzo-bar-acik #tezOkuRoot{padding-bottom:96px;}
   .tzo-bar .tzo-abone-btn{width:auto;flex:0 0 auto;}
   body.tzo-bar-acik #tezOkuRoot{padding-bottom:118px;}
 }
+
+/* ── KUTU ZIRHI ────────────────────────────────────────────────────
+   Yazı gövdeleri elle yapıştırılmış tam HTML belgeleri ve her biri kendi
+   <style>'ını taşıyor. Yazı içi kutu artık o belgenin İÇİNE giriyor, yani
+   o belgenin kuralları kutuya da uyguluyor: RGYAS tezinde kart kenarlığı
+   1,6 px'e, metin rengi lacivere (#1e2d4f) dönüyordu ve başlık okunmaz
+   hale geliyordu.
+
+   Bu yüzden görünümü belirleyen her özellik burada !important ile
+   sabitleniyor. Yeni renk ya da font tanımlanmıyor; hepsi mevcut tasarım
+   değişkenleri. */
+.tzo-abone, .tzo-abone *{box-sizing:border-box!important;}
+.tzo-abone{background:none!important;box-shadow:none!important;}
+.tzo-abone .tzo-abone-kart{
+  background:linear-gradient(165deg,rgba(194,173,132,.07) 0%,rgba(16,21,30,.96) 55%)!important;
+  box-shadow:none!important;text-align:left!important;}
+.tzo-abone.son .tzo-abone-kart{
+  border:1px solid rgba(194,173,132,.3)!important;border-top:2px solid var(--accent)!important;
+  border-radius:14px!important;padding:24px!important;}
+.tzo-abone.ic .tzo-abone-kart{
+  border:none!important;border-left:2px solid var(--accent)!important;
+  border-radius:0 10px 10px 0!important;padding:18px 20px 16px!important;
+  background:rgba(194,173,132,.06)!important;}
+.tzo-abone .tzo-abone-kick{
+  font-family:var(--font-mono)!important;font-size:9px!important;font-weight:600!important;
+  letter-spacing:2px!important;text-transform:uppercase!important;color:var(--accent)!important;
+  background:none!important;margin:0 0 9px!important;}
+.tzo-abone .tzo-abone-h{
+  font-family:var(--font-head,'Playfair Display',serif)!important;font-weight:700!important;
+  line-height:1.3!important;color:var(--cream)!important;background:none!important;
+  margin:0 0 9px!important;letter-spacing:-.01em!important;border:none!important;}
+.tzo-abone.son .tzo-abone-h{font-size:23px!important;}
+.tzo-abone.ic .tzo-abone-h{font-size:19px!important;}
+.tzo-abone .tzo-abone-p{
+  font-family:var(--font-body,inherit)!important;font-size:13.5px!important;line-height:1.75!important;
+  color:var(--cream2)!important;opacity:.85!important;background:none!important;
+  margin:0 0 16px!important;max-width:62ch!important;border:none!important;}
+.tzo-abone .tzo-abone-kn{
+  font-size:12.5px!important;line-height:1.6!important;color:var(--accent)!important;
+  opacity:.9!important;background:none!important;margin:-8px 0 14px!important;border:none!important;}
+.tzo-abone .tzo-abone-form{
+  display:flex!important;gap:9px!important;flex-wrap:wrap!important;background:none!important;margin:0!important;}
+.tzo-abone .tzo-abone-in{
+  flex:1 1 240px!important;min-width:0!important;background:rgba(0,0,0,.35)!important;
+  border:1px solid var(--portal-border-s)!important;border-radius:9px!important;
+  padding:13px 15px!important;color:var(--cream)!important;font-size:13.5px!important;
+  font-family:inherit!important;width:auto!important;}
+.tzo-abone .tzo-abone-btn{
+  flex:0 0 auto!important;background:var(--accent)!important;color:#0b0f15!important;
+  border:none!important;border-radius:9px!important;padding:13px 22px!important;
+  font-size:13.5px!important;font-weight:700!important;font-family:inherit!important;
+  cursor:pointer!important;width:auto!important;}
+.tzo-abone .tzo-abone-msg{
+  min-height:16px!important;margin-top:9px!important;font-size:12px!important;
+  line-height:1.5!important;background:none!important;}
+.tzo-abone .tzo-abone-msg.err{color:var(--danger)!important;}
+.tzo-abone .tzo-abone-msg.ok{color:var(--success)!important;}
+.tzo-abone .tzo-abone-not{
+  font-family:var(--font-mono)!important;font-size:9.5px!important;letter-spacing:.6px!important;
+  color:var(--cream2)!important;opacity:.55!important;background:none!important;
+  margin:6px 0 0!important;text-transform:none!important;}
+@media(max-width:640px){
+  .tzo-abone.ic .tzo-abone-kart{padding:16px 16px 14px!important;}
+  .tzo-abone.ic .tzo-abone-h{font-size:17px!important;}
+  .tzo-abone .tzo-abone-btn{width:100%!important;}
+}
+.tzo-note{margin-top:34px;padding:12px 16px;border:1px solid var(--portal-border);border-left:3px solid var(--warn);background:rgba(0,0,0,0.2);border-radius:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.3px;line-height:1.7;color:var(--cream2);opacity:.8;}
 .tzo-ctas{margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
 
 /* ── Tezin seyri: güncelleme zaman çizelgesi ── */
