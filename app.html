@@ -2638,6 +2638,21 @@ body.tzo-bar-acik #tezOkuRoot{padding-bottom:96px;}
   font-family:var(--font-mono)!important;font-size:9.5px!important;letter-spacing:.6px!important;
   color:var(--cream2)!important;opacity:.55!important;background:none!important;
   margin:6px 0 0!important;text-transform:none!important;}
+/* AÇIK temalı yazıların içine düşen kutu: metin rengini yazının kendi
+   mürekkebinden alıyor (inherit), zemin amber tonunu koruyor. Yeni renk
+   yok — amber vurgu ve buton iki temada da aynı. */
+.tzo-abone.ac .tzo-abone-kart{background:rgba(194,173,132,.16)!important;}
+.tzo-abone.son.ac .tzo-abone-kart{border:1px solid rgba(194,173,132,.55)!important;border-top:2px solid var(--accent)!important;}
+.tzo-abone.ac .tzo-abone-h,
+.tzo-abone.ac .tzo-abone-p,
+.tzo-abone.ac .tzo-abone-kn{color:inherit!important;}
+.tzo-abone.ac .tzo-abone-p{opacity:.8!important;}
+.tzo-abone.ac .tzo-abone-kn{opacity:.95!important;font-weight:600!important;}
+.tzo-abone.ac .tzo-abone-kick{color:inherit!important;opacity:.55!important;}
+.tzo-abone.ac .tzo-abone-not{color:inherit!important;opacity:.45!important;}
+.tzo-abone.ac .tzo-abone-in{background:rgba(255,255,255,.7)!important;border:1px solid rgba(0,0,0,.18)!important;color:inherit!important;}
+.tzo-abone.ac .tzo-abone-in::placeholder{color:inherit!important;opacity:.45!important;}
+
 @media(max-width:640px){
   .tzo-abone.ic .tzo-abone-kart{padding:16px 16px 14px!important;}
   .tzo-abone.ic .tzo-abone-h{font-size:17px!important;}
@@ -7776,6 +7791,30 @@ function garpAnalizAc(ticker) {
     return -1;
   }
 
+  /* Yazıların bir kısmı AÇIK temalı belgeler: RGYAS tezinde
+     article.tez-rgyas zemini krem (#faf6eb), metni lacivert. Koyu site
+     içine açık bir "kâğıt" olarak yerleşiyorlar. Kutu o belgenin içine
+     girdiği için zemini kendi bulduğu yere göre seçiyor — yoksa açık
+     yazıda koyu kutu yabancı cisim gibi duruyor.
+
+     Yeni renk tanımlanmıyor: açık varyant metin rengini yazının kendi
+     mürekkebinden (inherit) alıyor, amber vurgu ikisinde de aynı. */
+  function temaSinifiVer(kutu) {
+    let el = kutu.parentElement, bg = null;
+    while (el && el !== document.documentElement) {
+      const c = getComputedStyle(el).backgroundColor;
+      const m = /rgba?\(([^)]+)\)/.exec(c || '');
+      if (m) {
+        const p = m[1].split(',').map(s => parseFloat(s));
+        if (p.length < 4 || p[3] > 0.5) { bg = p; break; }
+      }
+      el = el.parentElement;
+    }
+    if (!bg) return;
+    const parlaklik = 0.299 * bg[0] + 0.587 * bg[1] + 0.114 * bg[2];
+    if (parlaklik > 140) kutu.classList.add('ac');
+  }
+
   /* ── KUTU ─────────────────────────────────────────────────────────── */
 
   function aboneMetni(tez, kat, yerlesim) {
@@ -8028,6 +8067,7 @@ function garpAnalizAc(ticker) {
             d.innerHTML = aboneKutusuHTML(tez, kat, 'inline');
             const kutu = d.firstElementChild;
             kap.insertBefore(kutu, cocuklar[idx]);
+            temaSinifiVer(kutu);
             aboneKutusuBagla(kutu, tez, kat, 'inline');
             if (!inlineKutu) inlineKutu = kutu;
             kutuyuIzle(kutu, tezId, 'inline', () => { _inlineGoruldu = true; });
@@ -8042,6 +8082,7 @@ function garpAnalizAc(ticker) {
         const kaynakca = kaynakcaBlogu(g.el);
         if (kaynakca && kaynakca.parentElement) kaynakca.parentElement.insertBefore(sonKutu, kaynakca);
         else (kap || g.el).appendChild(sonKutu);
+        temaSinifiVer(sonKutu);
         aboneKutusuBagla(sonKutu, tez, kat, 'end');
         kutuyuIzle(sonKutu, tezId, 'end', null);
         void kondu;
