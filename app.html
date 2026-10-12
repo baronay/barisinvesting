@@ -2548,11 +2548,13 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
    gövdeye alt boşluk ekleniyor. */
 .tzo-bar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(11,15,21,.97);border-top:1px solid rgba(194,173,132,.35);box-shadow:0 -8px 26px rgba(0,0,0,.45);transform:translateY(115%);transition:transform .3s ease;}
 .tzo-bar.acik{transform:none;}
-.tzo-bar-ic{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 14px;flex-wrap:wrap;}
-.tzo-bar-t{flex:1 1 220px;min-width:0;font-size:13px;line-height:1.4;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.tzo-bar-form{flex:0 1 auto;display:flex;gap:7px;}
-.tzo-bar .tzo-abone-in{flex:0 1 210px;padding:9px 12px;font-size:13px;}
-.tzo-bar .tzo-abone-btn{padding:9px 16px;font-size:13px;}
+.tzo-bar-ic{position:relative;max-width:860px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 14px;flex-wrap:wrap;}
+.tzo-bar-t{flex:1 1 200px;min-width:0;font-size:13px;line-height:1.4;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Bar formu SARMASIN: sarınca alan ve buton alt alta düşüyor, bar iki
+   katına çıkıyordu. Alan esniyor, buton kendi genişliğinde kalıyor. */
+.tzo-bar-form{flex:0 1 380px;display:flex;gap:7px;flex-wrap:nowrap;}
+.tzo-bar .tzo-abone-in{flex:1 1 150px;min-width:0;padding:9px 12px;font-size:13px;}
+.tzo-bar .tzo-abone-btn{flex:0 0 auto;padding:9px 16px;font-size:13px;white-space:nowrap;}
 .tzo-bar-x{flex:0 0 auto;background:none;border:none;color:var(--cream2);opacity:.6;cursor:pointer;font-size:14px;line-height:1;padding:8px;}
 .tzo-bar-x:hover{opacity:1;}
 .tzo-bar .tzo-abone-msg{flex:1 1 100%;min-height:0;margin-top:0;}
