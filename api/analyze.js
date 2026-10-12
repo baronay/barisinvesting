@@ -1,4 +1,5 @@
 // /api/analyze.js — Barış Investing
+import crypto from 'node:crypto';
 // Veri Motoru: Yahoo Finance (v7 quote + v10 quoteSummary + balanceSheetHistory)
 // BIST Fallback: Ham bilanço verisiyle PD/DD ve ROE formül hesabı
 // Son Çare: BIST site scraping (İş Yatırım / BigPara)
@@ -965,6 +966,11 @@ export default async function handler(req, res) {
   if (!ticker) return res.status(400).json({ error: 'Ticker gerekli' });
   const cleanTicker = String(ticker).toUpperCase().replace(/[^A-Z0-9.]/g, '').slice(0, 12);
   if (!cleanTicker) return res.status(400).json({ error: 'Geçersiz ticker' });
+  /* Harfsiz ticker kabul edilmiyor. 12 Ekim 2026'da uca ticker=1,2,3…14
+     diye sırayla istek atıldı; rakamlar bu filtreden geçtiği için hepsi
+     geçerli sayıldı, AI'a gitti ve para harcattı. BIST, NYSE ve NASDAQ
+     sembollerinin hepsinde en az bir harf var. */
+  if (!/[A-Z]/.test(cleanTicker)) return res.status(400).json({ error: 'Geçersiz ticker' });
 
   // Tek çerçeve var: Barış Investing. Eski bağlantılar (fw=buffett gibi)
   // hâlâ geliyor olabilir, hepsi buraya düşüyor.
@@ -1022,6 +1028,13 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
      örnek donduruluyor; beklenmeyen fetch bazen Supabase'e hiç
      ulaşmıyordu (kayıtların bir kısmı düşüyor, bir kısmı düşmüyordu).
      ~100 ms'lik gecikme, eksik veriye tercih edilir. */
+  /* IP'nin kendisi saklanmıyor; misafir sayacının sayabilmesi için tuzlu
+     özeti yetiyor. Tuz olarak servis anahtarı kullanılıyor — zaten gizli,
+     yeni bir ortam değişkeni eklemeye gerek kalmıyor. */
+  const ipIzi = (SB_KEY && ip && ip !== 'unknown')
+    ? crypto.createHash('sha256').update(SB_KEY + '|' + ip).digest('hex').slice(0, 32)
+    : null;
+
   const kayitYaz = async (alanlar) => {
     if (!SB_URL || !SB_KEY) return;
     const govde = {
@@ -1029,20 +1042,31 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
       exchange: exLabel,
       email: email ? String(email).toLowerCase().trim().slice(0, 200) : null,
       oturum: oturum ? String(oturum).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40) : null,
+      ip_iz: ipIzi,
       sure_ms: Date.now() - istekBasi,
       ...alanlar,
     };
+    const yaz = (g) => fetch(`${SB_URL}/rest/v1/analiz_kayitlari`, {
+      method: 'POST',
+      headers: {
+        apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json', Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(g),
+      signal: AbortSignal.timeout(3000),
+    });
     try {
-      const r = await fetch(`${SB_URL}/rest/v1/analiz_kayitlari`, {
-        method: 'POST',
-        headers: {
-          apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`,
-          'Content-Type': 'application/json', Prefer: 'return=minimal',
-        },
-        body: JSON.stringify(govde),
-        signal: AbortSignal.timeout(3000),
-      });
-      if (!r.ok) dlog('[kayit] reddedildi:', r.status, (await r.text()).slice(0, 200));
+      let r = await yaz(govde);
+      if (!r.ok) {
+        const metin = await r.text();
+        /* ip_iz sütunu henüz eklenmediyse (göç çalıştırılmadıysa) kayıt
+           tamamen kaybolmasın: o alan olmadan bir kez daha dene. */
+        if (metin.includes("'ip_iz'")) {
+          const { ip_iz, ...sade } = govde;
+          r = await yaz(sade);
+        }
+        if (!r.ok) dlog('[kayit] reddedildi:', r.status, metin.slice(0, 200));
+      }
     } catch (e) {
       dlog('[kayit] yazilamadi:', e.message);   // kayıt hatası analizi asla bozmaz
     }
@@ -1068,12 +1092,53 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
     } catch(e) { dlog('[Kredi kontrol] hata:', e.message); }
   }
 
+  /* ── MİSAFİR GÜNLÜK SINIRI ────────────────────────────────────────
+     Yukarıdaki kredi kontrolü "kullanıcıyı mail tanır" varsayımıyla
+     yazılmıştı: mail yoksa bakılacak satır da yok, blok tamamen
+     atlanıyordu. Misafir sınırı yalnızca tarayıcıdaki guest_credits'te
+     duruyordu — site verisini temizlemek ya da doğrudan uca istek atmak
+     onu baypas ediyor.
+
+     Handler başındaki checkRateLimit bir patlama freni (10/dk) ve
+     BELLEKTE tutuluyor: soğuk başlangıçta sıfırlanıyor, paralel çalışan
+     her örneğin kendi sayacı oluyor. 12 Ekim 2026'da 17 analiz 14 dakikaya
+     yayılınca o frenden rahatça geçti ve ~$0,25 harcattı.
+
+     Bu sayaç kalıcı: analiz_kayitlari'nda son 24 saatteki BAŞARILI
+     analizlere bakıyor. Sütun henüz eklenmemişse sorgu dizi döndürmüyor
+     ve sınır uygulanmıyor — analiz hiçbir koşulda bu yüzden kırılmıyor. */
+  const MISAFIR_GUNLUK = 3;   // istemcideki guest_credits ile aynı
+  if (SB_URL && SB_KEY && !em && ipIzi) {
+    try {
+      const gecmis24 = new Date(Date.now() - 86400000).toISOString();
+      const r = await fetch(
+        `${SB_URL}/rest/v1/analiz_kayitlari?ip_iz=eq.${ipIzi}&durum=eq.ok`
+        + `&olusturma=gte.${gecmis24}&select=id&limit=${MISAFIR_GUNLUK}`,
+        {
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+          signal: AbortSignal.timeout(4000),
+        }
+      );
+      if (r.ok) {
+        const satirlar = await r.json();
+        if (Array.isArray(satirlar) && satirlar.length >= MISAFIR_GUNLUK) {
+          await kayitYaz({ durum: 'hata', hata: 'misafir_kota' });
+          return res.status(403).json({
+            error: 'Günlük ücretsiz analiz hakkın doldu. E-postanı bırakırsan hakkın hemen yenilenir.',
+            kota: 'misafir',
+          });
+        }
+      }
+    } catch (e) { dlog('[misafir kota] hata:', e.message); }
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'API key eksik' });
 
   const isBIST = exchange === 'BIST';
   const yahooTicker = isBIST ? `${cleanTicker}.IS` : cleanTicker;
   let financialData = null;
+  let veriHatasi = null;
   try {
     // Veri çekmeye kesin üst süre. Bütçe: veri 8sn + AI 30sn + haiku yedeği
     // 15sn = ~53sn < maxDuration 60sn. BIST: TV (5sn) + Yahoo takviye (2.5sn).
@@ -1084,7 +1149,18 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
       dataFetch,
       new Promise((_, rej) => setTimeout(() => rej(new Error('veri-suresi-doldu')), 8000)),
     ]);
-  } catch(e) { dlog('Fetch failed/timeout:', e.message); }
+  } catch(e) { veriHatasi = e.message; dlog('Fetch failed/timeout:', e.message); }
+
+  /* Hiç veri gelmediyse sembol muhtemelen yok: AI'a gitmeden dönüyoruz,
+     var olmayan bir sembol için para harcanmasın.
+
+     Zaman aşımı AYRI tutuluyor: gerçek bir hissenin verisi yavaş geldiği
+     için analiz reddedilmesin, orada eski davranış (eksik veriyle analiz)
+     korunuyor. */
+  if (!financialData && veriHatasi !== 'veri-suresi-doldu') {
+    await kayitYaz({ durum: 'hata', hata: 'veri-yok' });
+    return res.status(422).json({ error: 'Bu sembol için veri bulunamadı. Ticker’ı kontrol et.' });
+  }
 
   const fd     = financialData;
 
