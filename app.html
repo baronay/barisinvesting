@@ -8037,10 +8037,13 @@ function garpAnalizAc(ticker) {
     const x = bar.querySelector('.tzo-bar-x');
     if (x) x.addEventListener('click', () => barKapat(true));
 
-    requestAnimationFrame(() => {
+    /* rAF yerine zamanlayıcı: arka plandaki sekmede rAF duraklıyor, bar
+       açılmadan asılı kalabiliyordu. 30 ms başlangıç durumunun boyanması
+       için yeterli, geçiş yine kayarak çalışıyor. */
+    setTimeout(() => {
       bar.classList.add('acik');
       document.body.classList.add('tzo-bar-acik');
-    });
+    }, 30);
     olayGonder('kutu_gorundu', tez && tez.id ? tez.id : null, 'slidein');
   }
 
