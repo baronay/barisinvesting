@@ -1076,6 +1076,194 @@ function bistKurallari() {
   });
 }
 
+/* ── MANUEL TEZ VERİSİ ─────────────────────────────────────────────
+   TradingView bir GYO'nun EPRA net aktif değerini, kira endeksini,
+   değerleme raporunu ya da tezin senaryolarını bilmiyor. Bunlar elle
+   derleniyor ve tez_veri tablosunda duruyor.
+
+   Her zaman o ticker'ın EN GÜNCEL satırı okunuyor; eski satırlar
+   silinmiyor, "tez o gün neye dayanıyordu" geriye dönük cevaplanabilsin. */
+async function tezVerisiGetir(ticker) {
+  const SB_URL = process.env.SUPABASE_URL, SB_KEY = process.env.SUPABASE_SERVICE_KEY;
+  if (!SB_URL || !SB_KEY) return null;
+  try {
+    const r = await fetch(
+      `${SB_URL}/rest/v1/tez_veri?ticker=eq.${encodeURIComponent(ticker)}`
+      + `&order=guncelleme_tarihi.desc&limit=1&select=*`,
+      { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }, signal: AbortSignal.timeout(3000) }
+    );
+    if (!r.ok) return null;
+    const d = await r.json();
+    return (Array.isArray(d) && d[0]) ? d[0] : null;
+  } catch (e) { dlog('[tez_veri] cekilemedi:', e.message); return null; }
+}
+
+/* EUR/TRY — NAD'ı TL'ye çevirmek için. BIST taraması turkey/scan'de ama
+   kur orada yok, forex/scan'de. Sabit kur kullanmıyoruz: tez 610 TL
+   derken kur 55,3'tü, kur değişince iskonto da değişiyor. */
+async function eurTryGetir() {
+  try {
+    const r = await fetch('https://scanner.tradingview.com/forex/scan', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json', 'Accept': 'application/json',
+        'Origin': 'https://www.tradingview.com', 'User-Agent': UA,
+      },
+      body: JSON.stringify({ symbols: { tickers: ['FX_IDC:EURTRY'], query: { types: [] } }, columns: ['close'] }),
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const v = j?.data?.[0]?.d?.[0];
+    return (v != null && isFinite(v)) ? Number(v) : null;
+  } catch (e) { dlog('[EURTRY] cekilemedi:', e.message); return null; }
+}
+
+/* Manuel veriyi prompt bloğuna çevir.
+
+   Üç şeye dikkat ediyor:
+   1) ÖNCELİK — aynı kalemde manuel ile TradingView çakışırsa manuel
+      kazanıyor ve kaynağı yazılıyor. Çakışmayan kalemlerde TV sürüyor.
+   2) BAYATLIK — kontrol noktasının tarihi geçmiş ama veri o tarihten
+      sonra güncellenmemişse model bunu söylüyor.
+   3) CANLI KONTROL — doluluk, kiracı cirosu gibi eşikler canlı veriyle
+      doğrulanamıyor; "son manuel veri itibarıyla" diye işaretleniyor ki
+      güncel durum gibi sunulmasın. */
+function manuelBlok(m, fd, eurTry) {
+  if (!m) return '';
+  const say = (v, d = 1) => (v != null && isFinite(v)) ? Number(v).toFixed(d) : null;
+  const gun = (t) => { const d = new Date(t); return isNaN(d) ? null : d; };
+  const bugun = new Date();
+  const guncTarih = gun(m.guncelleme_tarihi);
+  const kaynakEtiket = `${m.kaynak || 'Barış Investing tezi'}, ${m.guncelleme_tarihi}`;
+
+  // ── NAD iskontosu: canlı kurla, sabit rakam yok ──
+  const fiyat = fd?.currentPrice ?? null;
+  const nadEurHisse = (m.epra_nad_eur && m.hisse_sayisi) ? (m.epra_nad_eur / m.hisse_sayisi) : null;
+  const nadTry = (nadEurHisse != null && eurTry) ? nadEurHisse * eurTry : null;
+  const iskonto = (nadTry && fiyat) ? (1 - fiyat / nadTry) * 100 : null;
+  const kapanis = (nadTry && m.tez_kapanis_nad_orani) ? nadTry * Number(m.tez_kapanis_nad_orani) : null;
+
+  let nadMetin;
+  if (nadTry == null) {
+    nadMetin = eurTry
+      ? 'NAD hesaplanamadı (EPRA NAD ya da hisse sayısı eksik) — iskonto rakamı ÜRETME.'
+      : 'EUR/TRY kuru alınamadı — NAD iskontosunu hesaplama, "kur verisi elimde yok" de.';
+  } else {
+    nadMetin = `  EPRA NAD: ${(m.epra_nad_eur / 1e6).toFixed(0)} mn € · hisse sayısı ${(m.hisse_sayisi / 1e6).toFixed(0)} mn → ${say(nadEurHisse, 3)} €/hisse
+  EUR/TRY (TradingView, canlı): ${say(eurTry, 4)}  →  NAD = ${say(nadTry, 2)} TL/hisse
+  Güncel fiyat ${say(fiyat, 2)} TL  →  NAD İSKONTOSU: %${say(iskonto, 1)}
+  Tez kapanış eşiği (NAD × ${say(m.tez_kapanis_nad_orani, 2)}): ${say(kapanis, 0)} TL
+  BU HESABI YANITTA GÖSTER: kullanılan kur, kurun kaynağı ve tarih (${bugun.toISOString().slice(0, 10)}).`;
+  }
+
+  // ── Giriş bandı konumu ──
+  let bant = '';
+  if (fiyat != null && m.giris_bandi_al_ust != null) {
+    const al = Number(m.giris_bandi_al_ust), ol = Number(m.giris_bandi_olculu_ust ?? al);
+    bant = fiyat < al ? `Güncel fiyat ${say(fiyat, 2)} TL → AL bandında (${al} TL altı).`
+         : fiyat <= ol ? `Güncel fiyat ${say(fiyat, 2)} TL → ölçülü alım bandında (${al}–${ol} TL).`
+         : `Güncel fiyat ${say(fiyat, 2)} TL → giriş bandının ÜSTÜNDE (${ol} TL üstü = TUT). Bunu açıkça not et.`;
+  }
+
+  // ── Bayatlık: tarihi geçmiş ama veri o tarihten sonra güncellenmemiş ──
+  const kn = Array.isArray(m.kontrol_noktalari) ? m.kontrol_noktalari : [];
+  const bayat = kn.filter(k => { const t = gun(k.tarih); return t && t < bugun && guncTarih && t > guncTarih; });
+  const bayatMetin = bayat.length
+    ? `\nBAYATLIK UYARISI: şu kontrol noktalarının tarihi geçti ama manuel veri (${m.guncelleme_tarihi}) o tarihten sonra güncellenmedi — ${bayat.map(k => `${k.tarih} ${k.olay}`).join('; ')}. İlgili verinin GÜNCELLENMEYİ BEKLEDİĞİNİ söyle, eski rakamı güncelmiş gibi sunma.`
+    : '';
+
+  // ── Kırılma eşikleri: canlı kontrol edilebilenler ayrı ──
+  const esikler = Array.isArray(m.kirilma_esikleri) ? m.kirilma_esikleri : [];
+  const netBorc = (fd?.totalDebt != null && fd?.totalCash != null) ? fd.totalDebt - fd.totalCash : null;
+  const canliNetBorcFavok = (netBorc != null && fd?.ebitda) ? netBorc / fd.ebitda : null;
+  const gavTry = (m.gav_eur && eurTry) ? m.gav_eur * eurTry : null;
+  const canliLtv = (netBorc != null && gavTry) ? (netBorc / gavTry) * 100 : null;
+
+  const esikSatir = esikler.map(e => {
+    const temel = `  - ${e.ad}: eşik ${e.yon === 'ust' ? '>' : '<'} ${e.esik} ${e.birim}`;
+    if (e.canli_kontrol && e.metrik === 'net_borc_favok' && canliNetBorcFavok != null) {
+      return `${temel} | manuel ${m.net_borc_favok}x (${m.guncelleme_tarihi}) | TradingView'den türetilen güncel ≈ ${say(canliNetBorcFavok, 1)}x (net borç/FAVÖK TTM — tanım farkı olabilir)`;
+    }
+    if (e.canli_kontrol && e.metrik === 'ltv_yuzde' && canliLtv != null) {
+      return `${temel} | manuel %${m.ltv_yuzde} (${m.guncelleme_tarihi}) | TradingView net borcu ile rapor GAV'ı üzerinden ≈ %${say(canliLtv, 1)}`;
+    }
+    return `${temel} | SON MANUEL VERİ İTİBARIYLA (${m.guncelleme_tarihi}) — canlı veriyle doğrulanamıyor, güncel durum gibi sunma`;
+  }).join('\n');
+
+  const t = m.tez || {};
+  const kira = m.kira_yapisi || {};
+  const dg = m.degerleme || {};
+  const hy = m.hissedar_yapisi || {};
+  const sen = Array.isArray(t.senaryolar) ? t.senaryolar : [];
+
+  return `
+═══ MANUEL TEZ VERİSİ — ${m.ticker} ═══
+KAYNAK: ${kaynakEtiket}${m.rapor_tarihi ? ` · değerleme raporu ${m.rapor_tarihi}` : ''}
+
+ÖNCELİK KURALI: Aşağıdaki veriler TradingView ile AYNI kalemde çakışırsa
+(net aktif değer, borç yapısı, doluluk vb.) BUNLARI kullan ve kaynağı
+"${kaynakEtiket}" olarak belirt. Çakışmayan kalemlerde TradingView verisini
+kullanmaya devam et. İki kaynağın da olmadığı yerde rakam ÜRETME.
+
+NAD İSKONTOSU (sabit rakam kullanma, aşağıdaki canlı hesabı kullan):
+${nadMetin}
+
+TEZ: sinyal ${t.sinyal || '—'} · tip ${t.tip || '—'} · tarih ${t.tarih || m.guncelleme_tarihi} · tez fiyatı ${m.tez_fiyati} TL
+Giriş bandı: ${m.giris_bandi_al_ust} TL altı AL · ${m.giris_bandi_al_ust}–${m.giris_bandi_olculu_ust} TL ölçülü · ${m.giris_bandi_olculu_ust} TL üstü TUT
+${bant}
+Senaryolar (12 ay, varsayım: ${t.varsayimlar_12ay || '—'}):
+${sen.map(s => `  - ${s.ad} (%${Math.round((s.olasilik || 0) * 100)}): NAD € ${s.nad_degisim > 0 ? '+' : ''}${Math.round((s.nad_degisim || 0) * 100)}%, iskonto %${Math.round((s.iskonto || 0) * 100)} → ${s.fiyat} TL (${s.getiri > 0 ? '+' : ''}${Math.round((s.getiri || 0) * 100)}%)`).join('\n')}
+Beklenen değer: ${m.beklenen_deger} TL${t.beklenen_deger_nominal_yuzde ? ` (nominal +%${t.beklenen_deger_nominal_yuzde}, reel +%${t.beklenen_deger_reel_yuzde})` : ''}
+${t.not ? `Not: ${t.not}` : ''}
+
+KİRA YAPISI: ${kira.para_birimi || '—'} · endeks: ${kira.endeks || '—'}
+  Kiracı ciro artışı (6A26) %${kira.kiraci_ciro_artisi_6a26} vs TÜFE %${kira.ortalama_tufe} · hazır giyim %${kira.hazir_giyim_ciro_artisi} vs TÜFE %${kira.hazir_giyim_tufe}
+  Doluluk %${m.doluluk_yuzde} · OCR %${m.ocr_yuzde} (2024: %8,6, küresel emsal %9-10)
+  NOI 6A25 ${(kira.noi_6a25_eur / 1e6).toFixed(1)} mn € → 6A26 ${(kira.noi_6a26_eur / 1e6).toFixed(1)} mn € (+%${kira.noi_buyume_yuzde})
+    satın alma katkısı +${(kira.noi_satin_alma_katkisi_eur / 1e6).toFixed(1)} mn € · ORGANİK +${(kira.noi_organik_katki_eur / 1e6).toFixed(1)} mn € (organik € büyüme +%${kira.noi_organik_buyume_yuzde})
+  FCF 6A26 ${(kira.fcf_6a26_eur / 1e6).toFixed(0)} mn € (yıllıklandırılmış ~%${kira.fcf_getirisi_yillik_yuzde} FCF getirisi)
+  Borç: ${(kira.borc_eur / 1e6).toFixed(0)} mn € + ${(kira.borc_usd / 1e6).toFixed(1)} mn $ · faiz ${kira.faiz_bandi} · Fitch ${kira.fitch}
+  Net döviz yükümlülüğü ${(m.net_doviz_yukumluluk_eur / 1e6).toFixed(0)} mn € · net borç/FAVÖK ${m.net_borc_favok}x · LTV %${m.ltv_yuzde}
+  Temettü 2026: brüt ${kira.temettu_brut_tl} TL/hisse, %${kira.stopaj_yuzde} stopaj
+  GYO STATÜSÜ: ${m.gyo_statusu ? 'EVET' : 'HAYIR'}${m.gyo_statusu ? '' : " — kurumlar vergisi muafiyeti YOK, bilançoda ertelenmiş vergi yükümlülüğü var, DEFTER DEĞERİ NET AKTİF DEĞERİ OLDUĞUNDAN DÜŞÜK GÖSTERİR. Defter değerini NAD vekili olarak kullanma, yukarıdaki EPRA NAD'ı kullan."}
+  Ana risk: ${kira.ana_risk || '—'}
+
+DEĞERLEME RAPORU (${m.rapor_tarihi}, ${dg.sirket || '—'}, rapor kuru ${m.rapor_kuru_eur_try} TL/€):
+  GAV ${(m.gav_eur / 1e6).toFixed(0)} mn € · ${dg.portfoy || '—'}
+  İlk yıl net gelir/değer %${dg.ilk_yil_getiri_yuzde} · çıkış kapitalizasyon %${dg.cikis_kap_orani_yuzde}
+  Rapor varsayımı: ${dg.varsayim || '—'}
+  ${dg.optimum_istanbul || ''}
+  PİYASANIN İMA ETTİĞİ: firma değeri ~${(dg.piyasa_ima_firma_degeri_eur / 1e9).toFixed(1)} mlr € · ~${dg.piyasa_ima_m2_eur} €/m² (rapor ~${dg.rapor_m2_eur} €/m²) · ima edilen NOI getirisi ~%${dg.piyasa_ima_noi_getirisi_yuzde} (€)
+
+KIRILMA EŞİKLERİ — her birinin ŞU ANKİ durumunu kontrol et:
+${esikSatir}
+
+KONTROL NOKTALARI:
+${kn.map(k => `  - ${k.tarih} · ${k.olay} · izlenecek: ${k.izlenecek}`).join('\n')}${bayatMetin}
+
+HİSSEDAR YAPISI: ${hy.ana_ortak || '—'} %${hy.ana_ortak_pay} (${hy.ana_ortak_not || ''})
+  ${hy.gic || ''}
+  Yabancı payı (${hy.yabanci_payi?.kaynak || '—'}): yıl başı %${hy.yabanci_payi?.yil_basi} → %${hy.yabanci_payi?.['2026-10-06']}
+
+BÖLÜMLERE DAĞITIM — bu veriyi şu kriterlerde kullan:
+  ANLATI  : piyasanın ima ettiği ~${dg.piyasa_ima_m2_eur} €/m² ile rapor ~${dg.rapor_m2_eur} €/m² farkı ve NAD iskontosu
+  MOTOR   : kiracı ciro artışı vs TÜFE, hazır giyim cirosu, € bazında ORGANİK NOI büyümesi (satın alma katkısını ayırarak)
+  KALITE  : doluluk, OCR, € bazında FCF
+  BILANCO : net borç/FAVÖK, LTV, döviz borç yapısı, net döviz yükümlülüğü ve devalüasyon riski
+  FIYAT   : tezin giriş bandı ve senaryoları; güncel fiyatın banda göre konumu
+  KATALIZOR: kontrol noktaları
+  BOZULMA : kırılma eşikleri ve her birinin şu anki durumu
+
+TEZLE İLİŞKİ: Tezi KOPYALAMA, kendi değerlendirmeni yap. Yanıtın başında
+tezin sinyalini (${t.sinyal || '—'}), tarihini (${t.tarih || m.guncelleme_tarihi}) ve tez fiyatını (${m.tez_fiyati} TL) belirt.
+Kendi sonucun tezden FARKLIYSA farkın sebebini açıkça yaz.
+Yanıtın sonunda tez sayfasına link ver: ${m.tez_id ? `https://www.barisinvesting.com/tez/${m.tez_id}` : 'https://www.barisinvesting.com/tezler'}
+═══ MANUEL VERİ SONU ═══
+
+`;
+}
+
 // ── ANA HANDLER ──────────────────────────────────────────────────
 // ── IP bazlı rate limit (in-memory, Vercel serverless için yeterli) ──
 const _ipHits = new Map();
@@ -1299,6 +1487,11 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
 
   const isBIST = exchange === 'BIST';
   const yahooTicker = isBIST ? `${cleanTicker}.IS` : cleanTicker;
+  /* Manuel tez verisi ve EUR/TRY kuru — TradingView çağrısıyla PARALEL
+     başlıyor. Kritik yol onlar değil; gelmezlerse analiz onlarsız sürüyor. */
+  const manuelSoz = isBIST ? tezVerisiGetir(cleanTicker) : Promise.resolve(null);
+  const kurSoz    = isBIST ? eurTryGetir() : Promise.resolve(null);
+
   let financialData = null;
   let veriHatasi = null;
   try {
@@ -1325,6 +1518,12 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
   }
 
   const fd     = financialData;
+
+  /* Paralel başlayan iki çağrıyı topla. 2,5 sn'den uzun sürerlerse
+     onlarsız devam: manuel veri analizi bloke etmemeli. */
+  const bekle = (soz) => Promise.race([soz, new Promise(r => setTimeout(() => r(null), 2500))]);
+  const manuelVeri = await bekle(manuelSoz).catch(() => null);
+  const eurTryKuru = await bekle(kurSoz).catch(() => null);
 
   /* ═══ BARIŞ INVESTING ANALİST PROMPTU ═══════════════════════════
      Yöntem sitedeki tezlerden çıkarıldı (ServiceNow, UnitedHealth,
@@ -1458,6 +1657,10 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
 ---
 `;
   }
+
+  /* Manuel blok veri bloğunun HEMEN ARDINDAN, soru metninden ÖNCE:
+     öncelik kuralı TradingView rakamlarını gördükten sonra okunmalı. */
+  if (manuelVeri) enrichedPrompt += manuelBlok(manuelVeri, fd, eurTryKuru);
 
   enrichedPrompt += prompt;
   enrichedPrompt += '\n\nKRİTİK KURAL: Yukarıdaki gerçek rakamları kullan, uydurma. Her PASS/FAIL/NEUTRAL satırı pipe (|) ile açıklama içermeli, CRITERIA_START/CRITERIA_END eksiksiz olmalı. 7 kriterin TAMAMINI yaz, hiçbirini atlama. ADIL_GIRIS, IZLENECEK, PORTFOY ve METRIKLER bölümlerini de doldur — tezin değeri orada. Olgun ve akıcı yaz, küçümseyici/argo kelime kullanma.\n\nDÜŞÜNME TALİMATI: Bu bir veri özeti değil, bir tez. Ekrandaki rakamları tekrar etmek analiz değildir — kullanıcı onları zaten görüyor. Senden beklenen: rakamların birbiriyle çeliştiği yeri bulmak (marj düşerken ciro büyüyorsa neden), piyasanın atladığı detayı görmek, ve "bu fiyat neyi varsayıyor, o varsayım tutar mı" sorusunu cevaplamak. Cevabı yazmadan önce hangi iki-üç kriterin bu hissede belirleyici olduğunu kendine sor, derinliği oraya harca.';
