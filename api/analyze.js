@@ -2020,11 +2020,7 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
           body: JSON.stringify({
             model,
             max_tokens: maxTokens,
-            /* Karar tutarlılığı: aynı veriyle üç ardışık koşuda verdict
-               AL → BEKLE → AL oldu. Düşük sıcaklık bu salınımı daraltıyor;
-               analiz bir yaratıcılık işi değil, aynı rakamlar aynı sonuca
-               çıkmalı. */
-            temperature: 0.2,
+
             /* Sistem promptu sabit (tarih/ticker içermiyor) → önbelleğe
                alınabilir. Şirkete özel veri kullanıcı mesajında, yani
                önbellek önekini bozmuyor. */
