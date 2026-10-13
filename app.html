@@ -596,6 +596,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .ai-metrik-s .ai-metrik-d.uzun+.ai-metrik-y{margin-top:4px;}
 /* Model/token ölçümü — yalnızca admin görür */
 .ai-olcum{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.5px;color:var(--muted2);}
+.ai-tutarsiz{margin:10px 0 2px;padding:7px 11px;font-size:11.5px;line-height:1.5;color:var(--warn);background:rgba(234,179,8,.08);border-left:2px solid var(--warn);border-radius:0 6px 6px 0;}
 
 /* Tez künyesi — analizin başında, tezin görüşü. Modele gitmiyor,
    veritabanından gelip burada deterministik basılıyor. */
@@ -5218,7 +5219,19 @@ function renderRealData(fd){
   document.getElementById('rdROE').textContent=fd.roe!=null?pct(fd.roe):'N/A';
   document.getElementById('rdDE').textContent=fd.debtToEquity!=null?num(fd.debtToEquity):'N/A';
   document.getElementById('rdDES').textContent=fd.debtToEquity!=null?(fd.debtToEquity<50?'Düşük ✓':fd.debtToEquity<100?'Orta':'Yüksek ✗'):'—';
-  document.getElementById('rdRevG').textContent=fd.revenueGrowth!=null?pct(fd.revenueGrowth):'N/A';
+  /* BIST'te gelir büyümesi kartı son YILLIK rapor değişimini gösteriyor:
+     TTM rakamı enflasyon muhasebesi ve çeyrek kaymaları yüzünden yıllık
+     raporla ayrışıyordu. Etiket de dönem tipini yazıyor. */
+  const _bist=curEX==='BIST';
+  const _revG=(_bist&&fd.yillik&&fd.yillik.hasilatBuyume!=null)?fd.yillik.hasilatBuyume:fd.revenueGrowth;
+  const _revL=(_bist&&fd.yillik&&fd.yillik.hasilatBuyume!=null)?'Yıllık (YoY)':'TTM (YoY)';
+  document.getElementById('rdRevG').textContent=_revG!=null?pct(_revG):'N/A';
+  const _revSub=document.querySelector('#rdRevG')?.parentElement?.querySelector('.rd-sub');
+  if(_revSub) _revSub.textContent=_revL;
+  /* Kurumsal sahiplik BIST'te beslenmiyor (Yahoo oranı takas verisiyle
+     tutmuyor) — kartı tamamen gizliyoruz, "N/A" bile göstermiyoruz. */
+  const _instKart=document.getElementById('rdInst')?.closest('.rd-card');
+  if(_instKart) _instKart.style.display=_bist?'none':'';
   document.getElementById('rdInst').textContent=fd.institutionOwnership!=null?pct(fd.institutionOwnership):'N/A';
   document.getElementById('rdInstS').textContent=fd.institutionOwnership!=null?(fd.institutionOwnership<0.3?'Düşük — Fırsat ✓':'Yüksek'):'—';
 
@@ -5590,6 +5603,26 @@ function parseAndRender(ticker,company,text,fd,fwKey){
       return {v:(p[0]||'').trim(), n:(p.slice(1).join('|')||'').trim()};
     };
     const giris=ikili('ADIL_GIRIS'), izle=ikili('IZLENECEK'), portfoy=ikili('PORTFOY'), hedef=ikili('HEDEF');
+    let adilDeger=ikili('ADIL_DEGER');
+    if(adilDeger && /^[—\-–\s]*$/.test(adilDeger.v)) adilDeger=null;   // varlık bazlı değilse "—" geliyor
+
+    /* TUTARLILIK: giriş bölgesi, adil değerin ya da 12 aylık hedefin
+       üstünde olamaz — güvenlik payı bırakmak bu alanın tanımı. Model
+       bir kez adil değerin üstünde giriş bandı yazdı; sayıları burada
+       karşılaştırıp okura işaretliyoruz, modele güvenmiyoruz. */
+    const bandUst=(s)=>{
+      if(!s) return null;
+      const n=String(s).replace(/\./g,'').replace(/,/g,'.').match(/\d+(?:\.\d+)?/g);
+      return n&&n.length?Math.max(...n.map(Number)):null;
+    };
+    const tutarsizlik=(()=>{
+      const gU=bandUst(giris&&giris.v);
+      if(gU==null) return null;
+      const aU=bandUst(adilDeger&&adilDeger.v), hU=bandUst(hedef&&hedef.v);
+      if(aU!=null&&gU>aU) return 'Giriş bölgesi adil değer bandının üstünde görünüyor — güvenlik payı yok.';
+      if(hU!=null&&gU>hU) return 'Giriş bölgesi 12 aylık hedefin üstünde görünüyor.';
+      return null;
+    })();
     // Şirkete özel operasyonel metrikler: "ad | değer | yorum" satırları
     const mBlok=text.match(/METRIKLER_START([\s\S]*?)METRIKLER_END/i);
     const metrikler=mBlok?mBlok[1].split('\n').map(s=>s.trim()).filter(s=>s&&s.includes('|')).map(s=>{
@@ -5610,7 +5643,8 @@ function parseAndRender(ticker,company,text,fd,fwKey){
       (smX?`<div class="ai-summary-text">${esc(smX[1].trim())}</div>`:'')+
       (rkX?`<div class="ai-summary-risk">⚠ ${esc(rkX[1].trim())}</div>`:'')+
       (metrikler.length?`<div class="ai-metrik"><div class="ai-metrik-b">Şirkete Özel Metrikler</div>${metrikler.map(m=>`<div class="ai-metrik-s"><div class="ai-metrik-ust"><span class="ai-metrik-ad">${esc(m.ad)}</span>${m.deger?`<span class="ai-metrik-d${dSinif(m.deger)}">${esc(m.deger)}</span>`:''}</div>${m.yorum?`<div class="ai-metrik-y">${esc(m.yorum)}</div>`:''}</div>`).join('')}</div>`:'')+
-      ((giris||izle||portfoy||hedef)?`<div class="ai-tez-grid">${kutu('Adil Giriş Bölgesi',giris)}${kutu('12 Aylık Hedef',hedef)}${kutu('İzlenecek Eşik',izle)}${kutu('Portföydeki Rol',portfoy)}</div>`:'')+
+      (tutarsizlik?`<div class="ai-tutarsiz">⚠ ${esc(tutarsizlik)}</div>`:'')+
+      ((adilDeger||giris||izle||portfoy||hedef)?`<div class="ai-tez-grid">${kutu('Adil Değer Bandı',adilDeger)}${kutu('Giriş Bölgesi',giris)}${kutu('12 Aylık Hedef',hedef)}${kutu('İzlenecek Eşik',izle)}${kutu('Portföydeki Rol',portfoy)}</div>`:'')+
       `<div class="ai-summary-verdict" style="color:${vColor}">Nihai Görüş: ${verdictAd(verdict)}${garpM?` <span class="ai-garp">GARP ${garpM[1]}/100</span>`:''}</div>`+
       tezAltiHTML()+
       olcumSatiri();

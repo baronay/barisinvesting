@@ -934,7 +934,9 @@ async function fetchBISTFast(ticker) {
     new Promise(resolve => setTimeout(() => resolve(null), 2500)),
   ]);
   if (extras) {
-    result.institutionOwnership    = extras.institutionOwnership;
+    /* BIST'te Yahoo'nun kurumsal sahiplik oranı takas verisiyle tutmuyor;
+       beslenmiyor ki ne kartta ne de yorumda yanlış rakam görünsün. */
+    result.institutionOwnership    = null;
     result.recommendationKey       = extras.recommendationKey;
     result.numberOfAnalystOpinions = extras.numberOfAnalystOpinions;
     result.website                 = extras.website ?? result.website;
@@ -945,6 +947,15 @@ async function fetchBISTFast(ticker) {
       else dlog(`[BIST Extras] targetMeanPrice=${extras.targetMeanPrice} fiyata (${fiyat}) göre anormal → atlandı`);
     }
     dlog(`[BIST Extras] inst=${extras.institutionOwnership} hedef=${result.targetMeanPrice} tavsiye=${extras.recommendationKey}`);
+  }
+
+  /* PD/DD son çeyrek özkaynağıyla: TradingView'in hazır price_book_ratio
+     değeri farklı bir döneme dayanabiliyor, elimizde total_equity_fq
+     varken tahmin etmeye gerek yok. */
+  const ozkaynakFQ = g('total_equity_fq');
+  if (mc && ozkaynakFQ && ozkaynakFQ > 0) {
+    result.pbRatio  = mc / ozkaynakFQ;
+    result.pbSource = 'MC/Özkaynak (son çeyrek)';
   }
 
   const { data: clean, warnings } = sanitizeFinancialData(result);
@@ -1359,9 +1370,10 @@ METRIKLER_START
 [metrik adı] | [değer] | [tek cümle yorum]
 METRIKLER_END
 
-ADIL_GIRIS: [fiyat aralığı] | [tek cümle gerekçe]
+ADIL_DEGER: [adil değer bandı] | [nasıl hesaplandı]
+ADIL_GIRIS: [giriş bölgesi] | [tek cümle gerekçe]
 IZLENECEK: [metrik ve eşik] | [ne zaman test edilecek]
-PORTFOY: [portföydeki rol] | [makul ağırlık tavanı]
+PORTFOY: [portföydeki rol, NİTEL] | [bu rolü ne sınırlar]
 HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
 
 
@@ -1536,7 +1548,7 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
      piyasanın anlatısı ile bilançonun çatışması var, fiyat disiplini
      ayrı bir karar, tez somut bir eşikle çürütülebiliyor.
      GARP bantları günlük taramayla (pipeline/global_pipeline.py) aynı. */
-  const systemPrompt = `Sen "Barış Investing"in baş analistisin. Bir efsaneyi (Buffett, Lynch…) taklit etmiyorsun; evin kendi yöntemiyle, birinci tekil şahısla, tecrübeli bir yatırımcının sohbet üslubuyla yazıyorsun.
+  const systemPrompt = `Sen "Barış Investing"in baş analistisin. Bir efsaneyi (Buffett, Lynch…) taklit etmiyorsun; evin kendi yöntemiyle yazıyorsun. DİL: tarafsız üçüncü şahıs. Olgun, akıcı, net. Pozisyon sahibi gibi konuşma — "benim tarafımda", "lehime", "pozisyonumu büyütürüm" gibi ifadeler kullanma; değerlendirme şirket hakkındadır.
 
 YÖNTEM — TEZ KURMA:
 1) ÇATIŞMAYI BUL. Her tezin merkezinde tek bir soru var: piyasanın bu şirkete dair fiyatladığı anlatı ile rakamların söylediği şey ayrışıyor mu? "Piyasa X'i fiyatlıyor; oysa bilanço Y diyor" cümlesini kurabiliyor musun? Ayrışma yoksa bunu da açıkça söyle — her hissede fırsat yoktur.
@@ -1622,7 +1634,10 @@ ${isBIST ? bistKurallari() : ""}`;
     let warnings = '';
     if (isBIST && fd.peRatio==null)  warnings += 'F/K verisi YOK — "bu veri elimde yok" de. Sektör ortalamasıyla DOLDURMA.\n';
     if (isBIST && fd.pbRatio==null)  warnings += 'F/DD verisi YOK — "bu veri elimde yok" de, tahmin etme.\n';
-    if (isBIST && fd.institutionOwnership==null) warnings += 'Kurumsal sahiplik verisi YOK — "bu veri elimde yok" de, oran tahmin etme.\n';
+    /* BIST'te Yahoo'nun kurumsal sahiplik oranı güvenilmez (takas verisiyle
+       tutmuyor). Hiç beslemiyoruz; model de bu konuda yorum yapmıyor.
+       Manuel veride hissedar yapısı varsa onu kullanıyor. */
+    if (isBIST) warnings += 'Kurumsal sahiplik verisi beslenmiyor — bu konuda oran yazma ve yorum yapma; manuel veride hissedar yapısı varsa yalnızca onu kullan.\n';
     if (isBIST) warnings += 'Insider alım/geri alım verisi beslenmiyor — bu kriterde NEUTRAL ver ve "veri yok" yaz.\n';
     if (isBIST) {
       const eksik = bistMakroEksikler();
@@ -1643,7 +1658,7 @@ FCF: ${big(fd.freeCashflow)} | Op.CF: ${big(fd.operatingCashflow)}
 Nakit: ${big(fd.totalCash)} | Borç: ${big(fd.totalDebt)} | Net Nakit: ${big(nc)}
 Borç/Özsermaye: ${n(fd.debtToEquity)}% (YÜZDE — 20,6 demek 0,21 kat demektir, 20,6 kat DEĞİL) | Cari Oran: ${n(fd.currentRatio)} (kat)
 Gelir Büyümesi (TTM, YoY): ${p(fd.revenueGrowth)} | Kazanç Büyümesi (TTM, YoY): ${p(fd.earningsGrowth)}
-Kurumsal Sahiplik: ${p(fd.institutionOwnership)}
+${fd.institutionOwnership != null ? `Kurumsal Sahiplik: ${p(fd.institutionOwnership)}` : ''}
 ${fd.rsi != null ? `RSI(14): ${Number(fd.rsi).toFixed(0)} — MULTIPLES bölümündeki RSI satırında BU değeri kullan\n` : ''}Analist: ${fd.recommendationKey||'N/A'} | Hedef: ${n(fd.targetMeanPrice,2)} | Potansiyel: ${upside ? `%${upside}` : 'N/A'}
 ${fd.sector ? `Sektör: ${fd.sector}${fd.industry ? ' / '+fd.industry : ''}` : ''}
 ${fd.totalAssets ? `
@@ -1668,6 +1683,45 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
   if (manuelVeri) enrichedPrompt += manuelBlok(manuelVeri, fd, eurTryKuru);
 
   enrichedPrompt += prompt;
+
+  /* ── ÇIKTI DİSİPLİNİ ───────────────────────────────────────────────
+     Hepsi canlı RGYAS çıktısında görülen somut hatalardan çıktı:
+     giriş bölgesi adil değerin üstünde kaldı, net döviz borcu olan bir
+     şirket "TL değer kaybına karşı koruma" diye tanımlandı, portföy
+     rolüne uydurma bir yüzde ağırlık yazıldı, GYO olmayan şirkete GYO
+     dendi ve veride olmayan emsal iskonto oranları üretildi. */
+  enrichedPrompt += `
+
+ÇIKTI DİSİPLİNİ — HEPSİ ZORUNLU:
+
+1) ADIL_DEGER ve ADIL_GIRIS. Varlık bazlı şirketlerde (gayrimenkul,
+   holding, yatırım şirketi) ikisi AYRI şeydir:
+   - ADIL_DEGER = net aktif değer üzerinden hesaplanan değer aralığı.
+   - ADIL_GIRIS = adil değerin ALTINDA, güvenlik payı bırakan alım aralığı.
+   GİRİŞ BÖLGESİ HİÇBİR ZAMAN adil değer bandının ya da 12 aylık hedefin
+   ÜSTÜNDE olamaz. Varlık bazlı değilse ADIL_DEGER satırına "—" yaz.
+
+2) DÖVİZ POZİSYONU. Şirketin kur hareketinden nasıl etkilendiği NET DÖVİZ
+   POZİSYONUNA ve gelirin para birimine göre belirlenir. Net döviz
+   YÜKÜMLÜLÜĞÜ olan ve geliri TL olan bir şirket, TL değer kaybına karşı
+   koruma DEĞİLDİR — tam tersine kur riski taşır. Risk bölümünde kur
+   riski yazıp portföy rolünde "kur koruması" demek çelişkidir, yapma.
+
+3) PORTFÖY ROLÜ NİTELDİR. "%6-8 ağırlık" gibi yüzde öneri YAZMA; rolün ne
+   olduğunu ve neyin sınırladığını anlat.
+
+4) ŞİRKET TÜRÜ. Bir şirkete yalnızca GYO statüsündeyse "GYO" de. Değilse
+   "gayrimenkul şirketi" yaz. Veride olmayan emsal çarpan ya da iskonto
+   aralığı ("benzer şirketlerde %30-40 iskonto olur" gibi) ÜRETME —
+   elinde emsal verisi yoksa karşılaştırma yapmadığını söyle.
+
+5) DİL. Tarafsız üçüncü şahısla yaz. "Rakamlar benim tarafımda", "lehime",
+   "pozisyonumu büyütürüm" gibi pozisyon sahibi bir anlatım KULLANMA.
+   Değerlendirme şirket hakkındadır, yazarın portföyü hakkında değil.
+
+6) DURUM ETİKETİ. Bir kriterin değerlendirmesi için gereken verinin bir
+   kısmı eksikse ve kalan veri net bir sonuç vermiyorsa PASS verme,
+   NEUTRAL ver ve hangi verinin eksik olduğunu yaz.`;
   enrichedPrompt += '\n\nKRİTİK KURAL: Yukarıdaki gerçek rakamları kullan, uydurma. Her PASS/FAIL/NEUTRAL satırı pipe (|) ile açıklama içermeli, CRITERIA_START/CRITERIA_END eksiksiz olmalı. 7 kriterin TAMAMINI yaz, hiçbirini atlama. ADIL_GIRIS, IZLENECEK, PORTFOY ve METRIKLER bölümlerini de doldur — tezin değeri orada. Olgun ve akıcı yaz, küçümseyici/argo kelime kullanma.\n\nDÜŞÜNME TALİMATI: Bu bir veri özeti değil, bir tez. Ekrandaki rakamları tekrar etmek analiz değildir — kullanıcı onları zaten görüyor. Senden beklenen: rakamların birbiriyle çeliştiği yeri bulmak (marj düşerken ciro büyüyorsa neden), piyasanın atladığı detayı görmek, ve "bu fiyat neyi varsayıyor, o varsayım tutar mı" sorusunu cevaplamak. Cevabı yazmadan önce hangi iki-üç kriterin bu hissede belirleyici olduğunu kendine sor, derinliği oraya harca.';
   /* Uydurmayı kapatan kural. Eskiden burada "sektör bilgine göre tahmin
      yürüt" yazıyordu; modelin olmayan rakamı üretmesinin kaynağı buydu. */
@@ -1798,7 +1852,17 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
     };
 
     try {
-      ({ resp: response, d: data } = await callModel(primaryModel, 40000, 3000, dusunmeAcik));
+      /* Manuel verisi olan ticker'larda çıktı token tavanına çarpıyordu
+         (RGYAS: 2825/3000, "TOKEN TAVANI — KISMİ"). Tavan ve süre birlikte
+         yükseliyor; yalnız tavanı artırmak süre aşımına çevirirdi.
+         Bütçe: veri ≤8sn + 46sn = 54sn < maxDuration 60sn. Süre dolarsa
+         akış kısmi metni döndürüyor, hata fırlatmıyor. */
+      ({ resp: response, d: data } = await callModel(
+        primaryModel,
+        manuelVeri ? 46000 : 40000,
+        manuelVeri ? 3800 : 3000,
+        dusunmeAcik
+      ));
       denemeNotu(primaryModel);
     } catch (e) {
       // Birincil model ZAMAN AŞIMINA uğradıysa 504 dönme — hızlı haiku'yla kurtar.
