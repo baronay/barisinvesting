@@ -1757,7 +1757,13 @@ MULTIPLES_END`;
       financialData: fd,
       peers: fd?.peers || [],
       dataWarnings: fd?._dataWarnings || [],
-      olcum,
+      /* Ölçüm YALNIZCA admin'e. Arayüzde zaten admin kontrolü vardı ama
+         nesne yanıtta herkese gidiyordu: kullanıcı DevTools'tan analiz
+         başına maliyeti, hangi modeli kullandığımızı ve yedek modele ne
+         sıklıkta düştüğümüzü okuyabiliyordu. Gizleme kozmetik kalmasın.
+         undefined alanı JSON.stringify atıyor, istemci de null görüp
+         şeridi hiç çizmiyor. */
+      olcum: isAdmin ? olcum : undefined,
     });
 
   } catch(err) {
