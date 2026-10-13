@@ -1875,25 +1875,6 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
     } catch (e) { dlog('[misafir kota] hata:', e.message); }
   }
 
-  /* Günlük önbellek: veri çekildikten SONRA bakılıyor çünkü geçersizlik
-     imzası mali tablo dönemine bağlı. Veri çekme maliyeti (~5 sn) kalıyor,
-     asıl pahalı olan model çağrısı (~40 sn, ~6 cent) atlanıyor. */
-  if (SB_URL && SB_KEY) {
-    const imza = await onbellekImza(fd, manuelVeri);
-    const kayitli = await onbellekOku(cleanTicker, exLabel, imza);
-    if (kayitli && kayitli.result) {
-      await kayitYaz({ durum: 'ok', kaynak: 'onbellek', verdict: kararHesapla(kayitli.result).karar });
-      return res.status(200).json({
-        result: kayitli.result,
-        financialData: fd,          // fiyat ve çarpanlar CANLI
-        peers: fd?.peers || [],
-        dataWarnings: fd?._dataWarnings || [],
-        tezNotu: kayitli.tezNotu ?? null,
-        onbellek: true,             // istemci hak düşürmesin
-      });
-    }
-  }
-
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'API key eksik' });
 
@@ -1936,6 +1917,25 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
   const bekle = (soz) => Promise.race([soz, new Promise(r => setTimeout(() => r(null), 2500))]);
   const manuelVeri = await bekle(manuelSoz).catch(() => null);
   const eurTryKuru = await bekle(kurSoz).catch(() => null);
+
+  /* Günlük önbellek: veri çekildikten SONRA bakılıyor çünkü geçersizlik
+     imzası mali tablo dönemine bağlı. Veri çekme maliyeti (~5 sn) kalıyor,
+     asıl pahalı olan model çağrısı (~40 sn, ~6 cent) atlanıyor. */
+  if (SB_URL && SB_KEY) {
+    const imza = await onbellekImza(fd, manuelVeri);
+    const kayitli = await onbellekOku(cleanTicker, exLabel, imza);
+    if (kayitli && kayitli.result) {
+      await kayitYaz({ durum: 'ok', kaynak: 'onbellek', verdict: kararHesapla(kayitli.result).karar });
+      return res.status(200).json({
+        result: kayitli.result,
+        financialData: fd,          // fiyat ve çarpanlar CANLI
+        peers: fd?.peers || [],
+        dataWarnings: fd?._dataWarnings || [],
+        tezNotu: kayitli.tezNotu ?? null,
+        onbellek: true,             // istemci hak düşürmesin
+      });
+    }
+  }
 
   /* ═══ BARIŞ INVESTING ANALİST PROMPTU ═══════════════════════════
      Yöntem sitedeki tezlerden çıkarıldı (ServiceNow, UnitedHealth,
