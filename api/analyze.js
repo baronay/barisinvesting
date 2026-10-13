@@ -1325,7 +1325,7 @@ Brüt Marj: ${p(fd.grossMargin)} | Faaliyet Marjı: ${p(fd.operatingMargin)} | N
 FAVÖK: ${big(fd.ebitda)} | Hasılat: ${big(fd.totalRevenue)} | FAVÖK Marjı: ${(fd.ebitda != null && fd.totalRevenue) ? `%${(fd.ebitda / fd.totalRevenue * 100).toFixed(1)}` : 'N/A'}
 FCF: ${big(fd.freeCashflow)} | Op.CF: ${big(fd.operatingCashflow)}
 Nakit: ${big(fd.totalCash)} | Borç: ${big(fd.totalDebt)} | Net Nakit: ${big(nc)}
-Borç/Özsermaye: ${n(fd.debtToEquity)} | Cari Oran: ${n(fd.currentRatio)}
+Borç/Özsermaye: ${n(fd.debtToEquity)}% (YÜZDE — 20,6 demek 0,21 kat demektir, 20,6 kat DEĞİL) | Cari Oran: ${n(fd.currentRatio)} (kat)
 Gelir Büyümesi (TTM, YoY): ${p(fd.revenueGrowth)} | Kazanç Büyümesi (TTM, YoY): ${p(fd.earningsGrowth)}
 Kurumsal Sahiplik: ${p(fd.institutionOwnership)}
 ${fd.rsi != null ? `RSI(14): ${Number(fd.rsi).toFixed(0)} — MULTIPLES bölümündeki RSI satırında BU değeri kullan\n` : ''}Analist: ${fd.recommendationKey||'N/A'} | Hedef: ${n(fd.targetMeanPrice,2)} | Potansiyel: ${upside ? `%${upside}` : 'N/A'}
