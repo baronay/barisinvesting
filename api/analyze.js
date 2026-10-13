@@ -970,13 +970,17 @@ function sigEV(v)  { if(v==null)return'N/A'; if(v<8)return'ucuz'; if(v<15)return
    söylüyor — rakam uydurulmuyor.
 
    Ortam değişkenleri (Vercel → Environment Variables):
-     BIST_TUFE  BIST_POLITIKA_FAIZI  BIST_TL_10Y  BIST_CDS  BIST_US_10Y */
+     TUFE_YILLIK  POLITIKA_FAIZI  TL_10Y  CDS_5Y  US_10Y  MAKRO_GUNCELLEME_TARIHI */
 const BIST_MAKRO_ALANLAR = {
-  TUFE_YILLIK:    { env: 'BIST_TUFE',           bicim: v => `%${v}` },
-  POLITIKA_FAIZI: { env: 'BIST_POLITIKA_FAIZI', bicim: v => `%${v}` },
-  TL_10Y:         { env: 'BIST_TL_10Y',         bicim: v => `%${v}` },
-  CDS_5Y:         { env: 'BIST_CDS',            bicim: v => `${v} baz puan` },
-  US_10Y:         { env: 'BIST_US_10Y',         bicim: v => `%${v}` },
+  TUFE_YILLIK:    { env: 'TUFE_YILLIK',    bicim: v => `%${v}` },
+  POLITIKA_FAIZI: { env: 'POLITIKA_FAIZI', bicim: v => `%${v}` },
+  TL_10Y:         { env: 'TL_10Y',         bicim: v => `%${v}` },
+  CDS_5Y:         { env: 'CDS_5Y',         bicim: v => `${v} baz puan` },
+  US_10Y:         { env: 'US_10Y',         bicim: v => `%${v}` },
+  /* Makro verinin tarihi. Bayat bir TÜFE ile reel büyüme hesaplamak
+     uydurmanın başka bir hâli; tarih prompt'a giriyor ki model eskiliği
+     görebilsin. */
+  MAKRO_TARIHI:   { env: 'MAKRO_GUNCELLEME_TARIHI', bicim: v => v },
 };
 
 function bistMakroEksikler() {
@@ -1020,6 +1024,8 @@ vb.) doğrudan BIST'e taşıma.
 - Güncel değerler: politika faizi {{POLITIKA_FAIZI}}, TL 10 yıllık tahvil
   faizi {{TL_10Y}}, Türkiye 5 yıllık CDS {{CDS_5Y}}, ABD 10 yıllık tahvil
   faizi {{US_10Y}}
+- Bu makro değerlerin tarihi: {{MAKRO_TARIHI}}. Analiz tarihine göre
+  bayatsa (birkaç aydan eskiyse) bunu belirt ve hesabı temkinli kur.
 
 4) ÇARPANLARI DOĞRU BAĞLAMDA YORUMLA
 - BIST çarpanları yapısal olarak ABD'nin altındadır. Düşük F/K veya PD/DD
