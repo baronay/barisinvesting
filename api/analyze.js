@@ -1674,6 +1674,14 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
   enrichedPrompt += '\n\nVERİ DÜRÜSTLÜĞÜ — İHLAL EDİLEMEZ: Yalnızca yukarıdaki blokta sana VERİLEN rakamları kullan. Bir alan N/A ise ya da hiç yoksa, o rakamı tahmin etme, hatırladığın/bildiğin bir değerle doldurma, sektör ortalamasıyla ikame etme. Açıkça "bu veri elimde yok" yaz ve o kriteri NEUTRAL bırak. Sana verilmeyen bir dönemin rakamını da üretme. Her rakamı yazarken dönemini belirt (çeyrek / yıllık / TTM); blokta hangi dönem yazıyorsa onu kullan, dönemleri birbirine karıştırma.';
   if (!fd) enrichedPrompt += '\n\nVERİ NOTU: Finansal veri hiç alınamadı. Rakam üretme; hangi verinin eksik olduğunu söyle ve yalnızca niteliksel, rakamsız bir çerçeve sun.';
 
+  /* ÇIKTI BİÇİMİ ÇAPASI — en sonda, çünkü son okunan talimat en ağır basıyor.
+     Manuel veri bloğundaki "kendi bağımsız değerlendirmeni yap" talimatı
+     modeli anlatıya itti: bir kez şemaya hiç başlamadan düz metin yazdı ve
+     süre dolunca VERDICT üretilmeden kesildi (ölçüm: sureDoldu=true,
+     kesildi=true). Şemanın dışındaki her satır istemcide ayrıştırılmıyor,
+     yani kullanıcıya hiç ulaşmadan süreyi ve token'ı yiyor. */
+  enrichedPrompt += '\n\nÇIKTI BİÇİMİ — İSTİSNASIZ: Yanıta DOĞRUDAN "TICKER:" satırıyla başla. Açılış cümlesi, selamlama, düşünce dökümü ya da "analiz ediyorum", "önce şuna bakayım", "bölümlere geçiyorum" gibi ara metin YAZMA. Şemanın dışındaki hiçbir satır kullanıcıya ulaşmıyor; düşünceni şemanın İÇİNDEKİ açıklama alanlarına yaz.';
+
   try {
     // Süre bütçesi: vercel.json maxDuration=60sn (Hobby planı 60sn'e izin verir).
     // BÜTÇE DAĞILIMI (60 sn'lik fonksiyon penceresi):
