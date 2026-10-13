@@ -4602,9 +4602,13 @@ const HIST_KEY='bi_history';
 // v3: Barış Investing çerçevesine geçildi. Eski analizler Buffett/Lynch
 // anahtarlarıyla (ROE, MOAT, PEGCRIT...) kaydedildiği için yeni kriterlerle
 // eşleşmiyor ve ekranda yedi satır "—" olarak açılıyordu; anahtar değişti.
-const CACHE_KEY = 'bi_analysis_cache_v3';
+/* v4: tez künyesi (tezNotu) eklendi ve BIST prompt'u değişti. v3 kayıtları
+   künyeyi taşımıyor, bir kısmı da eski prompt'un çıktısı — biri şemaya hiç
+   başlamadan kesilmişti. Eski anahtarlar temizleniyor, okur yeni sürümü
+   görsün diye. */
+const CACHE_KEY = 'bi_analysis_cache_v4';
 const CACHE_TTL = 3 * 24 * 60 * 60 * 1000;
-try { localStorage.removeItem('bi_analysis_cache'); localStorage.removeItem('bi_analysis_cache_v2'); } catch(e) {}
+try { ['bi_analysis_cache','bi_analysis_cache_v2','bi_analysis_cache_v3'].forEach(k=>localStorage.removeItem(k)); } catch(e) {}
 
 function getCacheKey(ticker, exchange, fw) { return ticker+':'+exchange+':'+fw; }
 
@@ -4623,7 +4627,9 @@ function setAnalysisCache(ticker, exchange, fw, result, fd) {
     const store = JSON.parse(localStorage.getItem(CACHE_KEY)||'{}');
     const keys = Object.keys(store);
     if (keys.length >= 30) keys.sort((a,b)=>store[a].ts-store[b].ts).slice(0,5).forEach(k=>delete store[k]);
-    store[getCacheKey(ticker,exchange,fw)] = { result, financialData:fd, ts:Date.now() };
+    /* Tez künyesi de saklanıyor: önbellekten açılan analiz API'ye hiç
+       uğramıyor, künye orada yeniden üretilemezdi. */
+    store[getCacheKey(ticker,exchange,fw)] = { result, financialData:fd, tezNotu: window.__tezNotu || null, ts:Date.now() };
     localStorage.setItem(CACHE_KEY, JSON.stringify(store));
   } catch(e) { console.log('Cache err:', e.message); }
 }
@@ -5447,6 +5453,7 @@ async function doAnalyze(){
     // Cache hit: hak kullanmadan direkt sonucu göster
     const _ca = getAnalysisCache(ticker, curEX, curFW);
     if (_ca) {
+      window.__tezNotu = _ca.tezNotu || null;   // künye önbellekten de gelsin
       document.getElementById('ls4').classList.add('done');
       showToast('⚡ Önbellekten yüklendi (3 gün geçerli)');
       /* Önbellekten açılan analiz sunucuya hiç uğramıyor; "bugün kim
