@@ -827,7 +827,23 @@ async function fetchBISTFast(ticker) {
                    'gross_margin','operating_margin','after_tax_margin','return_on_assets',
                    'current_ratio','free_cash_flow','total_debt','cash_n_short_term_invest_fq',
                    'total_revenue_yoy_growth_ttm','net_income_yoy_growth_ttm','RSI',
-                   'sector','industry','description'];
+                   'sector','industry','description',
+                   /* MALİ TABLO KALEMLERİ — bunlar istenmediği için BIST'te
+                      totalAssets/netIncome/computedEquity hep null gidiyordu ve
+                      bot "eksik veri" diyordu. Veri kaynağı değişmedi, aynı uca
+                      doğru kolonlar soruluyor.
+
+                      DİKKAT: TradingView bilinmeyen bir kolona hata DÖNMÜYOR,
+                      sessizce null veriyor. Yani buradaki bir yazım hatası
+                      analizi kırmaz, veriyi sessizce eksiltir — kolon adı
+                      değiştirirken scanner'da tek tek doğrula. */
+                   'total_assets_fq','total_liabilities_fq','total_equity_fq',
+                   'net_income_fq','total_revenue_fq','cash_f_operating_activities_ttm',
+                   'total_revenue_ttm','net_income_ttm','ebitda_ttm',
+                   'total_assets_fy','total_liabilities_fy','total_equity_fy',
+                   'net_income_fy','total_revenue_fy',
+                   'total_revenue_yoy_growth_fy','net_income_yoy_growth_fy',
+                   'fiscal_period_end_fq','fiscal_period_end_fy','earnings_release_next_date'];
   const r = await fetch('https://scanner.tradingview.com/turkey/scan', {
     method: 'POST',
     headers: {
@@ -868,7 +884,7 @@ async function fetchBISTFast(ticker) {
     grossMargin: pct(g('gross_margin')),
     operatingMargin: pct(g('operating_margin')),
     profitMargin: pct(g('after_tax_margin')),
-    freeCashflow: g('free_cash_flow'), operatingCashflow: null,
+    freeCashflow: g('free_cash_flow'), operatingCashflow: g('cash_f_operating_activities_ttm'),
     totalCash: g('cash_n_short_term_invest_fq'), totalDebt: g('total_debt'),
     // TV debt_to_equity ORAN döner (0.84), Yahoo ise YÜZDE (84) — frontend ve
     // prompt Yahoo formatını beklediği için yüzdeye çeviriyoruz.
@@ -882,7 +898,33 @@ async function fetchBISTFast(ticker) {
     fiftyTwoWeekLow: g('price_52_week_low'), fiftyTwoWeekHigh: g('price_52_week_high'),
     shortName: str('description'), website: null,
     sector: str('sector'), industry: str('industry'),
-    totalAssets: null, totalLiabilities: null, netIncome: null, computedEquity: null,
+    /* Mali tablolar — hepsi TL ve tam birim (bin/milyon değil). Dönem
+       etiketleri ayrıca taşınıyor: prompt çeyreklik, yıllık ve TTM rakamını
+       aynı satırda karıştırmasın.
+
+       Bankalarda FAVÖK yok; TradingView zaten null döndürüyor, yani
+       XI_29 / UFRS ayrımını elle yapmaya gerek kalmıyor. */
+    totalAssets:      g('total_assets_fq'),
+    totalLiabilities: g('total_liabilities_fq'),
+    computedEquity:   g('total_equity_fq'),
+    netIncome:        g('net_income_fq'),      // ÇEYREK net kâr
+    ceyrekHasilat:    g('total_revenue_fq'),
+    totalRevenue:     g('total_revenue_ttm'),  // TTM hasılat
+    netIncomeTTM:     g('net_income_ttm'),
+    ebitda:           g('ebitda_ttm'),
+    yillik: {
+      aktif:         g('total_assets_fy'),
+      borc:          g('total_liabilities_fy'),
+      ozkaynak:      g('total_equity_fy'),
+      netKar:        g('net_income_fy'),
+      hasilat:       g('total_revenue_fy'),
+      hasilatBuyume: pct(g('total_revenue_yoy_growth_fy')),
+      karBuyume:     pct(g('net_income_yoy_growth_fy')),
+      donemSonu:     g('fiscal_period_end_fy'),
+    },
+    donemSonuFQ:    g('fiscal_period_end_fq'),
+    sonrakiBilanco: g('earnings_release_next_date'),
+    cekilme:        new Date().toISOString(),
     peers: [], dataSource: 'TradingView',
   };
 
@@ -1245,12 +1287,31 @@ TÜRK HİSSELERİ (BIST) — AYRI OKUNUR:
     const pbNote  = fd.pbSource  && fd.pbSource  !== 'Yahoo' ? ` [${fd.pbSource}: MC/Özsermaye formülü]` : '';
     const roeNote = fd.roeSource && fd.roeSource !== 'Yahoo' ? ` [${fd.roeSource}: NetKar/Özsermaye formülü]` : '';
 
+    /* Unix saniyeyi okunur döneme çevir. TradingView dönem sonlarını
+       epoch saniye veriyor; bot "hangi döneme bakıyorum" diyebilsin. */
+    const don = (v) => {
+      if (v == null) return null;
+      const d = new Date(Number(v) * 1000);
+      if (isNaN(d.getTime())) return null;
+      return d.toISOString().slice(0, 10);
+    };
+    const fqDon = don(fd.donemSonuFQ), fyDon = don(fd.yillik?.donemSonu);
+    const sonraki = don(fd.sonrakiBilanco);
+
+    /* Makro referanslar config'den geliyor. TANIMLI DEĞİLSE hiçbir rakam
+       uydurulmuyor: prompt'a "elimde yok" notu düşüyor. Eski davranış
+       modele "sektör ortalaması kullan" diyordu, uydurmanın kaynağı oydu. */
+    const makro = [];
+    if (process.env.BIST_TUFE)            makro.push(`TÜFE (yıllık): %${process.env.BIST_TUFE}`);
+    if (process.env.BIST_POLITIKA_FAIZI)  makro.push(`TCMB politika faizi: %${process.env.BIST_POLITIKA_FAIZI}`);
+    if (process.env.BIST_CDS)             makro.push(`Türkiye 5Y CDS: ${process.env.BIST_CDS} bp`);
+
     let warnings = '';
-    if (isBIST && fd.computedEquity!=null) warnings += `BİLGİ: Özsermaye hesaplandı = ${big(fd.computedEquity)} TRY (Varlıklar - Borçlar)\n`;
-    if (isBIST && fd.peRatio==null)  warnings += 'NOT: F/K güvenilmez — sektör ortalaması kullan.\n';
-    if (isBIST && fd.pbRatio==null)  warnings += 'NOT: F/DD hesaplanamadı — ROE ve piyasa değeri üzerinden değerlendir.\n';
-    if (isBIST && fd.institutionOwnership==null) warnings += 'NOT: Kurumsal sahiplik verisi beslenemedi — şirket hakkındaki bilginle (endeks fonları, yabancı takas oranı) değerlendir; hiçbir fikrin yoksa NEUTRAL ver ama gerekçesini MUTLAKA yaz.\n';
-    if (isBIST) warnings += 'NOT: Insider alım/geri alım verisi beslenmiyor — bildiğin somut geri alım programı veya KAP haberi varsa onu kullan, yoksa NEUTRAL ver ama gerekçesini MUTLAKA yaz. Hiçbir kriteri açıklamasız bırakma.\n';
+    if (isBIST && fd.peRatio==null)  warnings += 'F/K verisi YOK — "bu veri elimde yok" de. Sektör ortalamasıyla DOLDURMA.\n';
+    if (isBIST && fd.pbRatio==null)  warnings += 'F/DD verisi YOK — "bu veri elimde yok" de, tahmin etme.\n';
+    if (isBIST && fd.institutionOwnership==null) warnings += 'Kurumsal sahiplik verisi YOK — "bu veri elimde yok" de, oran tahmin etme.\n';
+    if (isBIST) warnings += 'Insider alım/geri alım verisi beslenmiyor — bu kriterde NEUTRAL ver ve "veri yok" yaz.\n';
+    if (isBIST && !makro.length) warnings += 'Makro referans (TÜFE/faiz/CDS) tanımlı değil — bu rakamları KULLANMA, reel büyüme yorumunu "TÜFE verisi elimde yok" diyerek geç.\n';
     if (fd.dataSource !== 'Yahoo')   warnings += `VERİ KAYNAĞI: ${fd.dataSource}\n`;
 
     enrichedPrompt = `GERÇEK FİNANSAL VERİLER [${fd.dataSource}] — BU RAKAMLARI KULLAN:
@@ -1265,11 +1326,21 @@ FAVÖK: ${big(fd.ebitda)} | Hasılat: ${big(fd.totalRevenue)} | FAVÖK Marjı: $
 FCF: ${big(fd.freeCashflow)} | Op.CF: ${big(fd.operatingCashflow)}
 Nakit: ${big(fd.totalCash)} | Borç: ${big(fd.totalDebt)} | Net Nakit: ${big(nc)}
 Borç/Özsermaye: ${n(fd.debtToEquity)} | Cari Oran: ${n(fd.currentRatio)}
-Gelir Büyümesi: ${p(fd.revenueGrowth)} | Kazanç Büyümesi: ${p(fd.earningsGrowth)}
+Gelir Büyümesi (TTM, YoY): ${p(fd.revenueGrowth)} | Kazanç Büyümesi (TTM, YoY): ${p(fd.earningsGrowth)}
 Kurumsal Sahiplik: ${p(fd.institutionOwnership)}
 ${fd.rsi != null ? `RSI(14): ${Number(fd.rsi).toFixed(0)} — MULTIPLES bölümündeki RSI satırında BU değeri kullan\n` : ''}Analist: ${fd.recommendationKey||'N/A'} | Hedef: ${n(fd.targetMeanPrice,2)} | Potansiyel: ${upside ? `%${upside}` : 'N/A'}
 ${fd.sector ? `Sektör: ${fd.sector}${fd.industry ? ' / '+fd.industry : ''}` : ''}
-${fd.totalAssets ? `Ham Bilanço: Varlıklar=${big(fd.totalAssets)} | Borçlar=${big(fd.totalLiabilities)} | NetKar=${big(fd.netIncome)}` : ''}
+${fd.totalAssets ? `
+MALİ TABLO — ÇEYREK${fqDon ? ` (dönem sonu ${fqDon})` : ''}:
+  Toplam Aktif: ${big(fd.totalAssets)} | Toplam Yükümlülük: ${big(fd.totalLiabilities)} | Özkaynak: ${big(fd.computedEquity)}
+  Net Kâr (çeyrek): ${big(fd.netIncome)} | Hasılat (çeyrek): ${big(fd.ceyrekHasilat)}` : ''}
+${fd.yillik && fd.yillik.aktif ? `MALİ TABLO — YILLIK${fyDon ? ` (mali yıl sonu ${fyDon})` : ''}:
+  Toplam Aktif: ${big(fd.yillik.aktif)} | Toplam Yükümlülük: ${big(fd.yillik.borc)} | Özkaynak: ${big(fd.yillik.ozkaynak)}
+  Net Kâr (yıllık): ${big(fd.yillik.netKar)} | Hasılat (yıllık): ${big(fd.yillik.hasilat)}
+  Hasılat Büyümesi (yıllık, YoY): ${p(fd.yillik.hasilatBuyume)} | Net Kâr Büyümesi (yıllık, YoY): ${p(fd.yillik.karBuyume)}` : ''}
+${fd.totalRevenue != null || fd.netIncomeTTM != null ? `SON 12 AY (TTM): Hasılat: ${big(fd.totalRevenue)} | Net Kâr: ${big(fd.netIncomeTTM)} | FAVÖK: ${big(fd.ebitda)}` : ''}
+${sonraki ? `Sonraki bilanço tarihi: ${sonraki}` : ''}
+${makro.length ? `MAKRO REFERANS (config): ${makro.join(' · ')}` : ''}
 ${warnings ? '\nUYARILAR:\n'+warnings : ''}
 MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBITDA=${n(fd.evEbitda)}
 ---
@@ -1278,7 +1349,10 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
 
   enrichedPrompt += prompt;
   enrichedPrompt += '\n\nKRİTİK KURAL: Yukarıdaki gerçek rakamları kullan, uydurma. Her PASS/FAIL/NEUTRAL satırı pipe (|) ile açıklama içermeli, CRITERIA_START/CRITERIA_END eksiksiz olmalı. 7 kriterin TAMAMINI yaz, hiçbirini atlama. ADIL_GIRIS, IZLENECEK, PORTFOY ve METRIKLER bölümlerini de doldur — tezin değeri orada. Olgun ve akıcı yaz, küçümseyici/argo kelime kullanma.\n\nDÜŞÜNME TALİMATI: Bu bir veri özeti değil, bir tez. Ekrandaki rakamları tekrar etmek analiz değildir — kullanıcı onları zaten görüyor. Senden beklenen: rakamların birbiriyle çeliştiği yeri bulmak (marj düşerken ciro büyüyorsa neden), piyasanın atladığı detayı görmek, ve "bu fiyat neyi varsayıyor, o varsayım tutar mı" sorusunu cevaplamak. Cevabı yazmadan önce hangi iki-üç kriterin bu hissede belirleyici olduğunu kendine sor, derinliği oraya harca.';
-  if (!fd) enrichedPrompt += '\n\nVERİ NOTU: Finansal veri alınamadı. Sektör bilgine göre dürüstçe tahmin yürüt, "veri sınırlı" olduğunu açıkça söyle ama yine de net bir görüş ver, analizi yarım bırakma.';
+  /* Uydurmayı kapatan kural. Eskiden burada "sektör bilgine göre tahmin
+     yürüt" yazıyordu; modelin olmayan rakamı üretmesinin kaynağı buydu. */
+  enrichedPrompt += '\n\nVERİ DÜRÜSTLÜĞÜ — İHLAL EDİLEMEZ: Yalnızca yukarıdaki blokta sana VERİLEN rakamları kullan. Bir alan N/A ise ya da hiç yoksa, o rakamı tahmin etme, hatırladığın/bildiğin bir değerle doldurma, sektör ortalamasıyla ikame etme. Açıkça "bu veri elimde yok" yaz ve o kriteri NEUTRAL bırak. Sana verilmeyen bir dönemin rakamını da üretme. Her rakamı yazarken dönemini belirt (çeyrek / yıllık / TTM); blokta hangi dönem yazıyorsa onu kullan, dönemleri birbirine karıştırma.';
+  if (!fd) enrichedPrompt += '\n\nVERİ NOTU: Finansal veri hiç alınamadı. Rakam üretme; hangi verinin eksik olduğunu söyle ve yalnızca niteliksel, rakamsız bir çerçeve sun.';
 
   try {
     // Süre bütçesi: vercel.json maxDuration=60sn (Hobby planı 60sn'e izin verir).

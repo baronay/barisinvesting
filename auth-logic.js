@@ -206,6 +206,24 @@ async function loadPortfolioFromCloud() {
   } catch {}
 }
 
+/* Hak VAR MI — düşürmeden bakar.
+   Eskiden analiz isteğinden önce doğrudan consumeCredit() çağrılıyordu:
+   geçersiz bir sembol ("ZZQQXW") ya da verisi olmayan bir hisse, sunucu
+   isteği reddetmeden önce kullanıcının hakkını yakıyordu. Artık önce
+   burası bakıyor, hak ancak analiz BAŞARIYLA dönünce düşüyor. */
+function hasCredit() {
+  const email = getEmail();
+  if (email && curUser) {
+    if (curUser.is_admin) return { ok: true };
+    return (curUser.credits || 0) > 0
+      ? { ok: true }
+      : { ok: false, error: 'Analiz hakkınız doldu.' };
+  }
+  return (typeof guestCredits !== 'undefined' && guestCredits > 0)
+    ? { ok: true }
+    : { ok: false, error: 'Analiz hakkınız doldu. E-posta ile kaydolarak daha fazla hak kazanın.' };
+}
+
 // ── Analiz hakkı kullan ──
 async function consumeCredit() {
   const email = getEmail();

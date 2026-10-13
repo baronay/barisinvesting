@@ -5391,17 +5391,15 @@ async function doAnalyze(){
       setTimeout(()=>{ov.classList.remove('visible');btn.disabled=false;hasAnalyzed=true;parseAndRender(ticker,company,_ca.result,_ca.financialData,curFW);},300);
       return;
     }
-    if (typeof consumeCredit === 'function') {
-      const creditResult = await consumeCredit();
-      if (!creditResult.ok) {
+    /* Hakka burada yalnızca BAKILIYOR, düşürülmüyor. Düşürme analiz
+       başarıyla döndükten sonra. Böylece geçersiz sembol ya da verisi
+       olmayan hisse kullanıcının hakkını yakmıyor. */
+    if (typeof hasCredit === 'function') {
+      const hakDurumu = hasCredit();
+      if (!hakDurumu.ok) {
         ov.classList.remove('visible');btn.disabled=false;
-        eb.textContent=creditResult.error;eb.classList.add('visible');
+        eb.textContent=hakDurumu.error;eb.classList.add('visible');
         return;
-      }
-    } else {
-      if (typeof guestCredits !== 'undefined' && guestCredits > 0) {
-        guestCredits--;
-        try { localStorage.setItem('guest_credits', guestCredits); } catch{}
       }
     }
     // Backend fonksiyonu en fazla 60sn calisiyor (vercel.json maxDuration) —
@@ -5415,6 +5413,13 @@ async function doAnalyze(){
     }finally{clearTimeout(_to);}
     const data=await r.json();
     if(data.error)throw new Error(data.error);
+    /* Analiz geldi — hak ancak şimdi düşüyor. Sunucu geçersiz sembolde
+       400/422 döndüğü için o yol buraya hiç ulaşmıyor. */
+    if (typeof consumeCredit === 'function') { try { await consumeCredit(); } catch(_){} }
+    else if (typeof guestCredits !== 'undefined' && guestCredits > 0) {
+      guestCredits--;
+      try { localStorage.setItem('guest_credits', guestCredits); } catch{}
+    }
     if(Array.isArray(data.dataWarnings)&&data.dataWarnings.length){
       showToast('⚠ Bazı finansal veriler doğrulanamadı, analiz sınırlı veriyle yapıldı.','warn');
     }
