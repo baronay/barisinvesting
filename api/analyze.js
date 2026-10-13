@@ -1270,7 +1270,11 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
     try {
       const gecmis24 = new Date(Date.now() - 86400000).toISOString();
       const r = await fetch(
-        `${SB_URL}/rest/v1/analiz_kayitlari?ip_iz=eq.${ipIzi}&durum=eq.ok`
+        /* email=is.null ŞART: sayaç yalnızca MİSAFİR analizlerini saymalı.
+           Aksi hâlde aynı IP'den giriş yapmış bir kullanıcının (ya da
+           admin'in) analizleri oradaki misafirlerin hakkını yiyor — ev,
+           ofis ya da NAT arkasındaki herkes tek kotayı paylaşırdı. */
+        `${SB_URL}/rest/v1/analiz_kayitlari?ip_iz=eq.${ipIzi}&durum=eq.ok&email=is.null`
         + `&olusturma=gte.${gecmis24}&select=id&limit=${MISAFIR_GUNLUK}`,
         {
           headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
