@@ -1119,7 +1119,34 @@ async function eurTryGetir() {
   } catch (e) { dlog('[EURTRY] cekilemedi:', e.message); return null; }
 }
 
+/* Tarihler Europe/Istanbul'a göre. Sunucu UTC çalışıyor; gece yarısı
+   civarında analiz "bir gün geride" tarih yazıyordu. sv-SE yerel biçimi
+   zaten YYYY-MM-DD veriyor. */
+function trTarih(d) {
+  try { return new Date(d).toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }); }
+  catch (_) { try { return new Date(d).toISOString().slice(0, 10); } catch (_e) { return null; } }
+}
+
+/* NAD hesabı tek yerde: hem prompt bloğu hem istemciye dönen tez notu
+   aynı rakamı kullansın, iki yerde ayrı hesaplanıp ayrışmasın. */
+function nadHesapla(m, fd, eurTry) {
+  const fiyat = fd?.currentPrice ?? null;
+  const nadEurHisse = (m?.epra_nad_eur && m?.hisse_sayisi) ? (m.epra_nad_eur / m.hisse_sayisi) : null;
+  const nadTry = (nadEurHisse != null && eurTry) ? nadEurHisse * eurTry : null;
+  const iskonto = (nadTry && fiyat) ? (1 - fiyat / nadTry) * 100 : null;
+  return { fiyat, nadEurHisse, nadTry, iskonto };
+}
+
 /* Manuel veriyi prompt bloğuna çevir.
+
+   OLGU / GÖRÜŞ AYRIMI: buraya yalnızca OLGULAR giriyor — kira yapısı,
+   değerleme raporu, hissedar yapısı, borç ve bilanço, kırılma eşikleri,
+   kontrol noktaları, EPRA NAD, hisse sayısı, GYO statüsü.
+
+   Tezin GÖRÜŞÜ (sinyal, senaryolar, giriş bandı, tez fiyatı, beklenen
+   değer, kapanış oranı) BİLEREK verilmiyor: model tezi tekrarlamasın,
+   aynı olgulardan kendi bağımsız sonucuna varsın. O alanlar yanıtta
+   ayrıca istemciye gidiyor ve orada gösteriliyor.
 
    Üç şeye dikkat ediyor:
    1) ÖNCELİK — aynı kalemde manuel ile TradingView çakışırsa manuel
@@ -1138,11 +1165,7 @@ function manuelBlok(m, fd, eurTry) {
   const kaynakEtiket = `${m.kaynak || 'Barış Investing tezi'}, ${m.guncelleme_tarihi}`;
 
   // ── NAD iskontosu: canlı kurla, sabit rakam yok ──
-  const fiyat = fd?.currentPrice ?? null;
-  const nadEurHisse = (m.epra_nad_eur && m.hisse_sayisi) ? (m.epra_nad_eur / m.hisse_sayisi) : null;
-  const nadTry = (nadEurHisse != null && eurTry) ? nadEurHisse * eurTry : null;
-  const iskonto = (nadTry && fiyat) ? (1 - fiyat / nadTry) * 100 : null;
-  const kapanis = (nadTry && m.tez_kapanis_nad_orani) ? nadTry * Number(m.tez_kapanis_nad_orani) : null;
+  const { fiyat, nadEurHisse, nadTry, iskonto } = nadHesapla(m, fd, eurTry);
 
   let nadMetin;
   if (nadTry == null) {
@@ -1153,17 +1176,7 @@ function manuelBlok(m, fd, eurTry) {
     nadMetin = `  EPRA NAD: ${(m.epra_nad_eur / 1e6).toFixed(0)} mn € · hisse sayısı ${(m.hisse_sayisi / 1e6).toFixed(0)} mn → ${say(nadEurHisse, 3)} €/hisse
   EUR/TRY (TradingView, canlı): ${say(eurTry, 4)}  →  NAD = ${say(nadTry, 2)} TL/hisse
   Güncel fiyat ${say(fiyat, 2)} TL  →  NAD İSKONTOSU: %${say(iskonto, 1)}
-  Tez kapanış eşiği (NAD × ${say(m.tez_kapanis_nad_orani, 2)}): ${say(kapanis, 0)} TL
-  BU HESABI YANITTA GÖSTER: kullanılan kur, kurun kaynağı ve tarih (${bugun.toISOString().slice(0, 10)}).`;
-  }
-
-  // ── Giriş bandı konumu ──
-  let bant = '';
-  if (fiyat != null && m.giris_bandi_al_ust != null) {
-    const al = Number(m.giris_bandi_al_ust), ol = Number(m.giris_bandi_olculu_ust ?? al);
-    bant = fiyat < al ? `Güncel fiyat ${say(fiyat, 2)} TL → AL bandında (${al} TL altı).`
-         : fiyat <= ol ? `Güncel fiyat ${say(fiyat, 2)} TL → ölçülü alım bandında (${al}–${ol} TL).`
-         : `Güncel fiyat ${say(fiyat, 2)} TL → giriş bandının ÜSTÜNDE (${ol} TL üstü = TUT). Bunu açıkça not et.`;
+  BU HESABI YANITTA GÖSTER: kullanılan kur, kurun kaynağı ve tarih (${trTarih(bugun)}).`;
   }
 
   // ── Bayatlık: tarihi geçmiş ama veri o tarihten sonra güncellenmemiş ──
@@ -1191,15 +1204,17 @@ function manuelBlok(m, fd, eurTry) {
     return `${temel} | SON MANUEL VERİ İTİBARIYLA (${m.guncelleme_tarihi}) — canlı veriyle doğrulanamıyor, güncel durum gibi sunma`;
   }).join('\n');
 
-  const t = m.tez || {};
   const kira = m.kira_yapisi || {};
   const dg = m.degerleme || {};
   const hy = m.hissedar_yapisi || {};
-  const sen = Array.isArray(t.senaryolar) ? t.senaryolar : [];
 
   return `
 ═══ MANUEL TEZ VERİSİ — ${m.ticker} ═══
 KAYNAK: ${kaynakEtiket}${m.rapor_tarihi ? ` · değerleme raporu ${m.rapor_tarihi}` : ''}
+
+BU BLOK OLGU VERİSİDİR. Bir yatırım görüşü değil. Tezin sinyali,
+senaryoları, giriş bandı ve hedef fiyatı sana BİLEREK verilmedi —
+aşağıdaki olgulardan KENDİ bağımsız değerlendirmeni yapacaksın.
 
 ÖNCELİK KURALI: Aşağıdaki veriler TradingView ile AYNI kalemde çakışırsa
 (net aktif değer, borç yapısı, doluluk vb.) BUNLARI kullan ve kaynağı
@@ -1208,14 +1223,6 @@ kullanmaya devam et. İki kaynağın da olmadığı yerde rakam ÜRETME.
 
 NAD İSKONTOSU (sabit rakam kullanma, aşağıdaki canlı hesabı kullan):
 ${nadMetin}
-
-TEZ: sinyal ${t.sinyal || '—'} · tip ${t.tip || '—'} · tarih ${t.tarih || m.guncelleme_tarihi} · tez fiyatı ${m.tez_fiyati} TL
-Giriş bandı: ${m.giris_bandi_al_ust} TL altı AL · ${m.giris_bandi_al_ust}–${m.giris_bandi_olculu_ust} TL ölçülü · ${m.giris_bandi_olculu_ust} TL üstü TUT
-${bant}
-Senaryolar (12 ay, varsayım: ${t.varsayimlar_12ay || '—'}):
-${sen.map(s => `  - ${s.ad} (%${Math.round((s.olasilik || 0) * 100)}): NAD € ${s.nad_degisim > 0 ? '+' : ''}${Math.round((s.nad_degisim || 0) * 100)}%, iskonto %${Math.round((s.iskonto || 0) * 100)} → ${s.fiyat} TL (${s.getiri > 0 ? '+' : ''}${Math.round((s.getiri || 0) * 100)}%)`).join('\n')}
-Beklenen değer: ${m.beklenen_deger} TL${t.beklenen_deger_nominal_yuzde ? ` (nominal +%${t.beklenen_deger_nominal_yuzde}, reel +%${t.beklenen_deger_reel_yuzde})` : ''}
-${t.not ? `Not: ${t.not}` : ''}
 
 KİRA YAPISI: ${kira.para_birimi || '—'} · endeks: ${kira.endeks || '—'}
   Kiracı ciro artışı (6A26) %${kira.kiraci_ciro_artisi_6a26} vs TÜFE %${kira.ortalama_tufe} · hazır giyim %${kira.hazir_giyim_ciro_artisi} vs TÜFE %${kira.hazir_giyim_tufe}
@@ -1251,14 +1258,12 @@ BÖLÜMLERE DAĞITIM — bu veriyi şu kriterlerde kullan:
   MOTOR   : kiracı ciro artışı vs TÜFE, hazır giyim cirosu, € bazında ORGANİK NOI büyümesi (satın alma katkısını ayırarak)
   KALITE  : doluluk, OCR, € bazında FCF
   BILANCO : net borç/FAVÖK, LTV, döviz borç yapısı, net döviz yükümlülüğü ve devalüasyon riski
-  FIYAT   : tezin giriş bandı ve senaryoları; güncel fiyatın banda göre konumu
+  FIYAT   : NAD iskontosu, piyasanın ima ettiği €/m² ile rapor değeri farkı,
+            ilk yıl net gelir/değer ve çıkış kapitalizasyon oranı üzerinden
+            KENDİ adil giriş bölgeni belirle. Hazır bir bant verilmedi.
   KATALIZOR: kontrol noktaları
   BOZULMA : kırılma eşikleri ve her birinin şu anki durumu
 
-TEZLE İLİŞKİ: Tezi KOPYALAMA, kendi değerlendirmeni yap. Yanıtın başında
-tezin sinyalini (${t.sinyal || '—'}), tarihini (${t.tarih || m.guncelleme_tarihi}) ve tez fiyatını (${m.tez_fiyati} TL) belirt.
-Kendi sonucun tezden FARKLIYSA farkın sebebini açıkça yaz.
-Yanıtın sonunda tez sayfasına link ver: ${m.tez_id ? `https://www.barisinvesting.com/tez/${m.tez_id}` : 'https://www.barisinvesting.com/tezler'}
 ═══ MANUEL VERİ SONU ═══
 
 `;
@@ -1605,7 +1610,7 @@ ${isBIST ? bistKurallari() : ""}`;
       if (v == null) return null;
       const d = new Date(Number(v) * 1000);
       if (isNaN(d.getTime())) return null;
-      return d.toISOString().slice(0, 10);
+      return trTarih(d);
     };
     const fqDon = don(fd.donemSonuFQ), fyDon = don(fd.yillik?.donemSonu);
     const sonraki = don(fd.sonrakiBilanco);
@@ -1964,6 +1969,28 @@ MULTIPLES_END`;
       financialData: fd,
       peers: fd?.peers || [],
       dataWarnings: fd?._dataWarnings || [],
+      /* Tezin GÖRÜŞÜ — modele gitmiyor, yalnızca istemcide gösteriliyor.
+         Böylece model kendi sonucuna bağımsız varıyor, okur ise tezin ne
+         dediğini yine görüyor. */
+      tezNotu: manuelVeri ? {
+        tez_id: manuelVeri.tez_id ?? null,
+        ticker: manuelVeri.ticker,
+        sinyal: manuelVeri.tez?.sinyal ?? null,
+        tip: manuelVeri.tez?.tip ?? null,
+        tarih: manuelVeri.tez?.tarih ?? manuelVeri.guncelleme_tarihi,
+        guncelleme_tarihi: manuelVeri.guncelleme_tarihi,
+        tez_fiyati: manuelVeri.tez_fiyati ?? null,
+        giris_bandi_al_ust: manuelVeri.giris_bandi_al_ust ?? null,
+        giris_bandi_olculu_ust: manuelVeri.giris_bandi_olculu_ust ?? null,
+        beklenen_deger: manuelVeri.beklenen_deger ?? null,
+        senaryolar: manuelVeri.tez?.senaryolar ?? [],
+        varsayimlar_12ay: manuelVeri.tez?.varsayimlar_12ay ?? null,
+        kapanis_fiyat: (() => {
+          const h = nadHesapla(manuelVeri, fd, eurTryKuru);
+          return (h.nadTry && manuelVeri.tez_kapanis_nad_orani)
+            ? Math.round(h.nadTry * Number(manuelVeri.tez_kapanis_nad_orani)) : null;
+        })(),
+      } : null,
       /* Ölçüm YALNIZCA admin'e. Arayüzde zaten admin kontrolü vardı ama
          nesne yanıtta herkese gidiyordu: kullanıcı DevTools'tan analiz
          başına maliyeti, hangi modeli kullandığımızı ve yedek modele ne

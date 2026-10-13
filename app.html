@@ -596,6 +596,26 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 .ai-metrik-s .ai-metrik-d.uzun+.ai-metrik-y{margin-top:4px;}
 /* Model/token ölçümü — yalnızca admin görür */
 .ai-olcum{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.5px;color:var(--muted2);}
+
+/* Tez künyesi — analizin başında, tezin görüşü. Modele gitmiyor,
+   veritabanından gelip burada deterministik basılıyor. */
+.ai-tezk{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 2px;padding:7px 10px;border-left:2px solid var(--accent);background:rgba(194,173,132,.06);border-radius:0 6px 6px 0;}
+.ai-tezk-e{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:1.4px;color:var(--accent);opacity:.85;}
+.ai-tezk-s{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.6px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.08);}
+.ai-tezk-s.AL{color:var(--success);} .ai-tezk-s.UZAK_DUR{color:var(--danger);} .ai-tezk-s.BEKLE,.ai-tezk-s.TUT{color:var(--warn);}
+.ai-tezk-d{font-size:11px;color:var(--muted2);}
+.ai-tezk-fark{margin:0 0 8px;padding:5px 10px;font-size:11.5px;line-height:1.5;color:var(--warn);background:rgba(234,179,8,.07);border-radius:0 6px 6px 0;border-left:2px solid var(--warn);}
+
+/* Tez görüşü — analizin sonunda. Giriş bandı, senaryolar ve link. */
+.ai-tezalt{margin-top:14px;padding:11px 13px;border:1px solid var(--portal-border-s);border-radius:9px;background:rgba(0,0,0,.18);}
+.ai-tezalt-b{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent);opacity:.8;margin-bottom:7px;}
+.ai-tezalt-r{display:flex;flex-direction:column;gap:4px;font-size:11.5px;line-height:1.55;color:var(--cream2);}
+.ai-tezalt-r b{color:var(--cream);font-weight:600;}
+.ai-tezalt-sen{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px;}
+.ai-tezalt-s{font-size:10.5px;color:var(--muted2);background:rgba(255,255,255,.05);padding:3px 7px;border-radius:4px;}
+.ai-tezalt-s b{color:var(--cream2);}
+.ai-tezalt-l{display:inline-block;margin-top:9px;font-size:11.5px;color:var(--accent);text-decoration:none;cursor:pointer;}
+.ai-tezalt-l:hover{text-decoration:underline;}
 /* Eşik şeridi — şirketin çerçeve bantlarındaki yeri */
 .esik-blok{margin-top:12px;border-top:1px solid var(--rule);padding-top:11px;}
 .esik-bas{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted-s);margin-bottom:9px;}
@@ -4794,6 +4814,55 @@ let analysisData=null,ptPie=null,ptScore=null;
 let curFW='baris',curEX='BIST',curTicker='',curCo='';
 /* Model/token ölçümü — sunucudan geliyor, yalnızca admin görüyor.
    "Hangi model, kaç token, ne tuttu" sorusu ekranda cevaplansın diye. */
+/* ── TEZ KÜNYESİ ───────────────────────────────────────────────────
+   Tezin GÖRÜŞÜ (sinyal, tarih, tez fiyatı, giriş bandı, senaryolar)
+   modele hiç gitmiyor — bot aynı olgulardan kendi sonucuna varıyor.
+   Okur ise tezin ne dediğini burada görüyor. Rakamlar veritabanından
+   geldiği için modele yazdırmaya gerek yok, bozulma riski de yok. */
+function trGun(s){
+  if(!s) return '';
+  const p=String(s).slice(0,10).split('-');
+  return p.length===3 ? `${p[2]}.${p[1]}.${p[0]}` : String(s);
+}
+function tezKunyesiHTML(verdict){
+  const t=window.__tezNotu;
+  if(!t||!t.sinyal) return '';
+  const ad={AL:'AL',BEKLE:'İZLE',UZAK_DUR:'UZAK DUR',TUT:'TUT'};
+  const sinyalAd=ad[t.sinyal]||t.sinyal;
+  /* Fark notu: botun kararı tezin sinyalinden ayrılıyorsa okur bunu
+     başta görsün. Karşılaştırma istemcide, modele sorulmuyor. */
+  const farkli=verdict && t.sinyal && verdict!==t.sinyal;
+  const fiyat=t.tez_fiyati!=null?`tez fiyatı ${Number(t.tez_fiyati).toFixed(2).replace('.',',')} TL`:'';
+  return `<div class="ai-tezk">
+      <span class="ai-tezk-e">BARIŞ INVESTING TEZİ</span>
+      <span class="ai-tezk-s ${esc(t.sinyal)}">${esc(sinyalAd)}</span>
+      <span class="ai-tezk-d">${esc(trGun(t.tarih))}${fiyat?' · '+esc(fiyat):''}</span>
+    </div>`
+    + (farkli?`<div class="ai-tezk-fark">Bu analiz tezden farklı bir sonuca varıyor.</div>`:'');
+}
+function tezAltiHTML(){
+  const t=window.__tezNotu;
+  if(!t||!t.sinyal) return '';
+  const n=(v,d=0)=>v!=null?Number(v).toFixed(d).replace('.',','):null;
+  const sat=[];
+  if(t.giris_bandi_al_ust!=null){
+    sat.push(`<span><b>Giriş bandı</b> ${n(t.giris_bandi_al_ust)} TL altı AL · ${n(t.giris_bandi_al_ust)}–${n(t.giris_bandi_olculu_ust)} ölçülü · ${n(t.giris_bandi_olculu_ust)} üstü TUT</span>`);
+  }
+  if(t.beklenen_deger!=null) sat.push(`<span><b>Beklenen değer</b> ${n(t.beklenen_deger)} TL</span>`);
+  if(t.kapanis_fiyat!=null)  sat.push(`<span><b>Kapanış eşiği</b> ${n(t.kapanis_fiyat)} TL</span>`);
+  const sen=Array.isArray(t.senaryolar)?t.senaryolar:[];
+  const senHTML=sen.length?`<div class="ai-tezalt-sen">${sen.map(s=>
+      `<span class="ai-tezalt-s"><b>${esc(s.ad)}</b> %${Math.round((s.olasilik||0)*100)} → ${n(s.fiyat)} TL</span>`
+    ).join('')}</div>`:'';
+  const yol=t.tez_id?`/tez/${t.tez_id}`:'/tezler';
+  return `<div class="ai-tezalt">
+      <div class="ai-tezalt-b">Tezin görüşü${t.guncelleme_tarihi?` · ${esc(trGun(t.guncelleme_tarihi))}`:''}</div>
+      <div class="ai-tezalt-r">${sat.join('')}</div>
+      ${senHTML}
+      <a class="ai-tezalt-l" data-route="${esc(yol)}" href="${esc(yol)}">Tezin tamamını oku →</a>
+    </div>`;
+}
+
 function olcumSatiri(){
   const o=window.__sonOlcum;
   if(!o) return '';
@@ -5425,6 +5494,7 @@ async function doAnalyze(){
     }
     document.getElementById('ls4').classList.add('done');
     window.__sonOlcum=data.olcum||null;
+    window.__tezNotu=data.tezNotu||null;
     setTimeout(()=>{ov.classList.remove('visible');btn.disabled=false;hasAnalyzed=true;parseAndRender(ticker,company,data.result,data.financialData,curFW);},400);
   }catch(err){ov.classList.remove('visible');btn.disabled=false;eb.textContent=friendlyError(err);eb.classList.add('visible');console.error('Analyze:',err);}
 }
@@ -5529,11 +5599,13 @@ function parseAndRender(ticker,company,text,fd,fwKey){
     const dSinif=(s)=>rakamMi(s)?'':' uzun';
     const kutu=(etiket,d)=>d&&d.v?`<div class="ai-tez-k"><div class="ai-tez-l">${etiket}</div><div class="ai-tez-v${dSinif(d.v)}">${esc(d.v)}</div>${d.n?`<div class="ai-tez-n">${esc(d.n)}</div>`:''}</div>`:'';
     aiCard.innerHTML=`<div class="ai-tag">${esc(fw.name)} · Tez</div>`+
+      tezKunyesiHTML(verdict)+
       (smX?`<div class="ai-summary-text">${esc(smX[1].trim())}</div>`:'')+
       (rkX?`<div class="ai-summary-risk">⚠ ${esc(rkX[1].trim())}</div>`:'')+
       (metrikler.length?`<div class="ai-metrik"><div class="ai-metrik-b">Şirkete Özel Metrikler</div>${metrikler.map(m=>`<div class="ai-metrik-s"><div class="ai-metrik-ust"><span class="ai-metrik-ad">${esc(m.ad)}</span>${m.deger?`<span class="ai-metrik-d${dSinif(m.deger)}">${esc(m.deger)}</span>`:''}</div>${m.yorum?`<div class="ai-metrik-y">${esc(m.yorum)}</div>`:''}</div>`).join('')}</div>`:'')+
       ((giris||izle||portfoy||hedef)?`<div class="ai-tez-grid">${kutu('Adil Giriş Bölgesi',giris)}${kutu('12 Aylık Hedef',hedef)}${kutu('İzlenecek Eşik',izle)}${kutu('Portföydeki Rol',portfoy)}</div>`:'')+
       `<div class="ai-summary-verdict" style="color:${vColor}">Nihai Görüş: ${verdictAd(verdict)}${garpM?` <span class="ai-garp">GARP ${garpM[1]}/100</span>`:''}</div>`+
+      tezAltiHTML()+
       olcumSatiri();
   }
 
