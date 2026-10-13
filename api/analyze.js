@@ -1341,7 +1341,16 @@ MODÜLÜNÜ uygula.`;
    göstermiyor. Ölçüldü: KCHOL "Oil Refining/Marketing", SAHOL "Regional
    Banks", DOHOL "Specialty Stores", AGHOL "Beverages: Non-Alcoholic",
    ALARK "Real Estate Development". */
-const HOLDING_ISTISNA = new Set(['KCHOL', 'SAHOL', 'DOHOL', 'AGHOL', 'ALARK']);
+const HOLDING_ISTISNA = new Set([
+  'KCHOL', 'SAHOL', 'DOHOL', 'AGHOL', 'ALARK',
+  /* Endüstri alanı holding olduklarını göstermiyor:
+     GLYHO "Investment Banks/Brokers" (liman, enerji, oyun işletmeleri),
+     NTHOL "Hotels/Resorts", ECILC "Pharmaceuticals: Major",
+     IEYHO "Containers/Packaging".
+     ENKAI, TKFEN ve AKFIS bilerek dışarıda — taahhüt ağırlıklı,
+     genel kurallara gidiyorlar. */
+  'GLYHO', 'NTHOL', 'ECILC', 'IEYHO',
+]);
 
 /* Tezin GÖRÜŞÜ — modele gitmiyor, yalnızca istemciye. Hem yanıtta hem
    önbellek kaydında aynı şeyi üretsin diye tek fonksiyon. */
@@ -1407,9 +1416,15 @@ async function onbellekImza(fd, manuel) {
   return [fd?.donemSonuFQ || '-', fd?.yillik?.donemSonu || '-', manuel?.guncelleme_tarihi || '-'].join('|');
 }
 
+/* Önbellek hataları SESSİZ GEÇMİYOR: tablo RLS açık ve politika yok,
+   yani yalnızca servis anahtarı erişebiliyor. Anahtar yanlışsa ya da
+   tablo yoksa önbellek çalışmaz ama analiz çalışmaya devam eder — bu
+   sessiz bir performans/para kaybı olurdu. Hata admin şeridine düşüyor.
+
+   Dönüş: { sonuc, hata } — hata varsa string, yoksa null. */
 async function onbellekOku(ticker, exchange, imza) {
   const SB_URL = process.env.SUPABASE_URL, SB_KEY = process.env.SUPABASE_SERVICE_KEY;
-  if (!SB_URL || !SB_KEY) return null;
+  if (!SB_URL || !SB_KEY) return { sonuc: null, hata: 'supabase anahtarı yok' };
   const gun = trTarih(new Date());
   try {
     const r = await fetch(
@@ -1417,20 +1432,26 @@ async function onbellekOku(ticker, exchange, imza) {
       + `&exchange=eq.${encodeURIComponent(exchange)}&gun=eq.${gun}&select=imza,sonuc&limit=1`,
       { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }, signal: AbortSignal.timeout(2500) }
     );
-    if (!r.ok) return null;
+    if (!r.ok) {
+      const g = (await r.text()).slice(0, 120);
+      return { sonuc: null, hata: `okuma HTTP ${r.status}${g ? ' ' + g : ''}` };
+    }
     const d = await r.json();
     const satir = Array.isArray(d) && d[0] ? d[0] : null;
-    if (!satir || satir.imza !== imza) return null;
-    return satir.sonuc || null;
-  } catch (e) { dlog('[onbellek] okunamadi:', e.message); return null; }
+    if (!satir) return { sonuc: null, hata: null };                 // bugün kayıt yok, normal
+    if (satir.imza !== imza) return { sonuc: null, hata: null };     // dönem değişmiş, normal
+    return { sonuc: satir.sonuc || null, hata: null };
+  } catch (e) {
+    return { sonuc: null, hata: `okuma: ${String(e.message).slice(0, 120)}` };
+  }
 }
 
 async function onbellekYaz(ticker, exchange, imza, sonuc) {
   const SB_URL = process.env.SUPABASE_URL, SB_KEY = process.env.SUPABASE_SERVICE_KEY;
-  if (!SB_URL || !SB_KEY) return;
+  if (!SB_URL || !SB_KEY) return 'supabase anahtarı yok';
   const gun = trTarih(new Date());
   try {
-    await fetch(`${SB_URL}/rest/v1/analiz_onbellek?on_conflict=ticker,exchange,gun`, {
+    const r = await fetch(`${SB_URL}/rest/v1/analiz_onbellek?on_conflict=ticker,exchange,gun`, {
       method: 'POST',
       headers: {
         apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`,
@@ -1440,7 +1461,14 @@ async function onbellekYaz(ticker, exchange, imza, sonuc) {
       body: JSON.stringify({ ticker, exchange, gun, imza, sonuc }),
       signal: AbortSignal.timeout(2500),
     });
-  } catch (e) { dlog('[onbellek] yazilamadi:', e.message); }
+    if (!r.ok) {
+      const g = (await r.text()).slice(0, 120);
+      return `yazma HTTP ${r.status}${g ? ' ' + g : ''}`;
+    }
+    return null;
+  } catch (e) {
+    return `yazma: ${String(e.message).slice(0, 120)}`;
+  }
 }
 
 function bistModulSec(endustri, ticker) {
@@ -1921,9 +1949,11 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
   /* Günlük önbellek: veri çekildikten SONRA bakılıyor çünkü geçersizlik
      imzası mali tablo dönemine bağlı. Veri çekme maliyeti (~5 sn) kalıyor,
      asıl pahalı olan model çağrısı (~40 sn, ~6 cent) atlanıyor. */
+  let onbellekUyari = null;
+  const onbellekImzasi = await onbellekImza(fd, manuelVeri);
   if (SB_URL && SB_KEY) {
-    const imza = await onbellekImza(fd, manuelVeri);
-    const kayitli = await onbellekOku(cleanTicker, exLabel, imza);
+    const { sonuc: kayitli, hata } = await onbellekOku(cleanTicker, exLabel, onbellekImzasi);
+    if (hata) onbellekUyari = hata;
     if (kayitli && kayitli.result) {
       await kayitYaz({ durum: 'ok', kaynak: 'onbellek', verdict: kararHesapla(kayitli.result).karar });
       return res.status(200).json({
@@ -1933,6 +1963,10 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
         dataWarnings: fd?._dataWarnings || [],
         tezNotu: kayitli.tezNotu ?? null,
         onbellek: true,             // istemci hak düşürmesin
+        /* Metnin yazıldığı an. Fiyat kartı canlı güncellenirken metindeki
+           fiyat ve iskonto bu saate ait — okur farkı görebilsin. */
+        uretim: kayitli.uretim || null,
+        olcum: isAdmin ? { onbellekUyari, onbellekten: true } : undefined,
       });
     }
   }
@@ -2437,10 +2471,14 @@ MULTIPLES_END`;
     /* Önbelleğe yalnızca TAM analiz yazılıyor: kesik bir metni gün boyu
        servis etmek, bir kerelik kesilmeyi kalıcı hataya çevirirdi. */
     if (SB_URL && SB_KEY && !kesildi && !sureDoldu) {
-      await onbellekYaz(cleanTicker, exLabel, await onbellekImza(fd, manuelVeri), {
+      const yazHata = await onbellekYaz(cleanTicker, exLabel, onbellekImzasi, {
         result: aiResult,
         tezNotu: manuelVeri ? tezNotuYap(manuelVeri, fd, eurTryKuru) : null,
+        uretim: new Date().toISOString(),
       });
+      if (yazHata) { olcum.onbellekUyari = yazHata; console.log('[onbellek]', yazHata); }
+    } else if (onbellekUyari) {
+      olcum.onbellekUyari = onbellekUyari;
     }
 
     return res.status(200).json({

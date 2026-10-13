@@ -597,6 +597,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
 /* Model/token ölçümü — yalnızca admin görür */
 .ai-olcum{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.5px;color:var(--muted2);}
 .ai-tutarsiz{margin:10px 0 2px;padding:7px 11px;font-size:11.5px;line-height:1.5;color:var(--warn);background:rgba(234,179,8,.08);border-left:2px solid var(--warn);border-radius:0 6px 6px 0;}
+.ai-uretim{margin:6px 0 2px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.4px;color:var(--muted2);opacity:.8;}
 
 /* Tez künyesi — analizin başında, tezin görüşü. Modele gitmiyor,
    veritabanından gelip burada deterministik basılıyor. */
@@ -4630,7 +4631,7 @@ function setAnalysisCache(ticker, exchange, fw, result, fd) {
     if (keys.length >= 30) keys.sort((a,b)=>store[a].ts-store[b].ts).slice(0,5).forEach(k=>delete store[k]);
     /* Tez künyesi de saklanıyor: önbellekten açılan analiz API'ye hiç
        uğramıyor, künye orada yeniden üretilemezdi. */
-    store[getCacheKey(ticker,exchange,fw)] = { result, financialData:fd, tezNotu: window.__tezNotu || null, ts:Date.now() };
+    store[getCacheKey(ticker,exchange,fw)] = { result, financialData:fd, tezNotu: window.__tezNotu || null, uretim: window.__uretim || new Date().toISOString(), ts:Date.now() };
     localStorage.setItem(CACHE_KEY, JSON.stringify(store));
   } catch(e) { console.log('Cache err:', e.message); }
 }
@@ -4851,6 +4852,18 @@ function tezKunyesiHTML(verdict){
     </div>`
     + (farkli?`<div class="ai-tezk-fark">Bu analiz tezden farklı bir sonuca varıyor.</div>`:'');
 }
+/* Analiz metninin yazıldığı an. Fiyat kartı canlı güncellenirken metin
+   içindeki fiyat, iskonto ve çarpanlar bu saate ait kalıyor — okur farkı
+   görebilsin diye açıkça yazılıyor. */
+function uretimSatiriHTML(){
+  const u=window.__uretim;
+  if(!u) return '';
+  const d=new Date(u);
+  if(isNaN(d.getTime())) return '';
+  const p=new Intl.DateTimeFormat('tr-TR',{timeZone:'Europe/Istanbul',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(d);
+  return `<div class="ai-uretim">Analiz: ${esc(p)} · metindeki fiyat ve oranlar bu ana ait, üstteki fiyat kartı canlı</div>`;
+}
+
 function tezAltiHTML(){
   const t=window.__tezNotu;
   if(!t||!t.sinyal) return '';
@@ -4880,10 +4893,19 @@ function olcumSatiri(){
   const yonetici=(typeof curUser!=='undefined')&&curUser&&curUser.is_admin;
   if(!yonetici) return '';
   const bin=v=>v==null?'—':(v>=1000?(v/1000).toFixed(1)+'k':String(v));
+  /* Sunucu önbelleğinden gelen yanıtta model/token yok — şerit onlarsız
+     çiziliyor, yoksa "undefined · giriş —" gibi bir şey görünürdü. */
+  if(o.onbellekten){
+    const p=['sunucu önbelleği'];
+    if(o.onbellekUyari) p.push('⚠ ÖNBELLEK: '+o.onbellekUyari);
+    return `<div class="ai-olcum">${esc(p.join(' · '))}</div>`;
+  }
   const parcalar=[o.model, `giriş ${bin(o.giris)}`, `çıkış ${bin(o.cikis)}${o.cikisTahmini?'~':''}`];
   if(o.cacheOku) parcalar.push(`önbellek ${bin(o.cacheOku)}`);
   if(o.maliyet!=null) parcalar.push(`~$${o.maliyet}`);
   if(o.sektorModulu) parcalar.push('modül: '+o.sektorModulu);
+  // Önbellek erişimi bozuksa analiz yine çalışır ama sessizce pahalılaşır
+  if(o.onbellekUyari) parcalar.push('⚠ ÖNBELLEK: '+o.onbellekUyari);
   if(o.yedek) parcalar.push('YEDEK MODEL');
   if(o.sureDoldu) parcalar.push('SÜRE DOLDU — KISMİ');
   else if(o.kesildi) parcalar.push('TOKEN TAVANI — KISMİ');
@@ -5472,6 +5494,7 @@ async function doAnalyze(){
     const _ca = getAnalysisCache(ticker, curEX, curFW);
     if (_ca) {
       window.__tezNotu = _ca.tezNotu || null;   // künye önbellekten de gelsin
+      window.__uretim = _ca.uretim || (_ca.ts ? new Date(_ca.ts).toISOString() : null);
       document.getElementById('ls4').classList.add('done');
       showToast('⚡ Önbellekten yüklendi (3 gün geçerli)');
       /* Önbellekten açılan analiz sunucuya hiç uğramıyor; "bugün kim
@@ -5523,6 +5546,7 @@ async function doAnalyze(){
     document.getElementById('ls4').classList.add('done');
     window.__sonOlcum=data.olcum||null;
     window.__tezNotu=data.tezNotu||null;
+    window.__uretim=data.uretim||null;   // önbellekten geldiyse metnin yazıldığı an
     setTimeout(()=>{ov.classList.remove('visible');btn.disabled=false;hasAnalyzed=true;parseAndRender(ticker,company,data.result,data.financialData,curFW);},400);
   }catch(err){ov.classList.remove('visible');btn.disabled=false;eb.textContent=friendlyError(err);eb.classList.add('visible');console.error('Analyze:',err);}
 }
@@ -5660,6 +5684,7 @@ function parseAndRender(ticker,company,text,fd,fwKey){
     const kutu=(etiket,d)=>d&&d.v?`<div class="ai-tez-k"><div class="ai-tez-l">${etiket}</div><div class="ai-tez-v${dSinif(d.v)}">${esc(d.v)}</div>${d.n?`<div class="ai-tez-n">${esc(d.n)}</div>`:''}</div>`:'';
     aiCard.innerHTML=`<div class="ai-tag">${esc(fw.name)} · Tez</div>`+
       tezKunyesiHTML(verdict)+
+      uretimSatiriHTML()+
       (smX?`<div class="ai-summary-text">${esc(smX[1].trim())}</div>`:'')+
       (rkX?`<div class="ai-summary-risk">⚠ ${esc(rkX[1].trim())}</div>`:'')+
       (metrikler.length?`<div class="ai-metrik"><div class="ai-metrik-b">Şirkete Özel Metrikler</div>${metrikler.map(m=>`<div class="ai-metrik-s"><div class="ai-metrik-ust"><span class="ai-metrik-ad">${esc(m.ad)}</span>${m.deger?`<span class="ai-metrik-d${dSinif(m.deger)}">${esc(m.deger)}</span>`:''}</div>${m.yorum?`<div class="ai-metrik-y">${esc(m.yorum)}</div>`:''}</div>`).join('')}</div>`:'')+
