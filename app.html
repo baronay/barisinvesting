@@ -4831,14 +4831,18 @@ function trGun(s){
   const p=String(s).slice(0,10).split('-');
   return p.length===3 ? `${p[2]}.${p[1]}.${p[0]}` : String(s);
 }
+/* Tez sinyali ↔ bot kararı eşlemesi. Tez dört sinyal kullanıyor
+   (AL / İZLE / TUT / SAT), bot üç karar veriyor (AL / BEKLE / UZAK_DUR).
+   Karşılaştırma doğrudan string eşitliğiyle yapılamaz: tez "İZLE" derken
+   bot "BEKLE" diyorsa bu bir fark değil, aynı duruş. */
+const TEZ_SINYAL_KARSILIK={AL:'AL', İZLE:'BEKLE', IZLE:'BEKLE', TUT:'BEKLE', SAT:'UZAK_DUR'};
 function tezKunyesiHTML(verdict){
   const t=window.__tezNotu;
   if(!t||!t.sinyal) return '';
-  const ad={AL:'AL',BEKLE:'İZLE',UZAK_DUR:'UZAK DUR',TUT:'TUT'};
+  const ad={AL:'AL',BEKLE:'İZLE',UZAK_DUR:'UZAK DUR',TUT:'TUT',İZLE:'İZLE',SAT:'SAT'};
   const sinyalAd=ad[t.sinyal]||t.sinyal;
-  /* Fark notu: botun kararı tezin sinyalinden ayrılıyorsa okur bunu
-     başta görsün. Karşılaştırma istemcide, modele sorulmuyor. */
-  const farkli=verdict && t.sinyal && verdict!==t.sinyal;
+  const karsilik=TEZ_SINYAL_KARSILIK[String(t.sinyal).toUpperCase()]||null;
+  const farkli=!!(verdict && karsilik && verdict!==karsilik);
   const fiyat=t.tez_fiyati!=null?`tez fiyatı ${Number(t.tez_fiyati).toFixed(2).replace('.',',')} TL`:'';
   return `<div class="ai-tezk">
       <span class="ai-tezk-e">BARIŞ INVESTING TEZİ</span>
@@ -5504,8 +5508,11 @@ async function doAnalyze(){
     const data=await r.json();
     if(data.error)throw new Error(data.error);
     /* Analiz geldi — hak ancak şimdi düşüyor. Sunucu geçersiz sembolde
-       400/422 döndüğü için o yol buraya hiç ulaşmıyor. */
-    if (typeof consumeCredit === 'function') { try { await consumeCredit(); } catch(_){} }
+       400/422 döndüğü için o yol buraya hiç ulaşmıyor.
+       Sunucu önbelleğinden gelen analiz de hak düşürmüyor: model hiç
+       çalışmadı, kullanıcıdan hak almak için bir sebep yok. */
+    if (data.onbellek) { showToast('⚡ Bugünün analizi (sunucu önbelleği)'); }
+    else if (typeof consumeCredit === 'function') { try { await consumeCredit(); } catch(_){} }
     else if (typeof guestCredits !== 'undefined' && guestCredits > 0) {
       guestCredits--;
       try { localStorage.setItem('guest_credits', guestCredits); } catch{}
@@ -5532,28 +5539,40 @@ function parseAndRender(ticker,company,text,fd,fwKey){
   const searchText=criteriaBlock?criteriaBlock[1]:text;
   fw.keys.forEach(key=>{const m=searchText.match(new RegExp('^'+key+':\\s*(PASS|FAIL|NEUTRAL)\\s*\\|\\s*([^\\n]+)','im'));statuses.push(m?pStat(m[1]):'neutral');details.push(m?m[2].trim():'—');});
   const sm=text.match(/TOTAL_SCORE:\s*(\d+)/);const rawScore=sm?parseInt(sm[1]):statuses.filter(s=>s==='pass').length;const score=Math.min(fw.criteria.length,Math.max(0,rawScore));
-  /* KARAR: analistin verdiği karara saygı duyulur. Eskiden "BEKLE"
-     otomatik AL'a çevriliyordu; bu çerçevede İZLE bir kararsızlık değil,
-     asıl disiplin — kaliteyi teslim edip fiyatın peşinden koşmamak.
-     Ev kuralı: fiyat kriteri kaldıysa karar AL olamaz. */
-  const vm=text.match(/VERDICT:\s*(AL|BEKLE|UZAK_DUR)/);
+  /* KARAR ARTIK DETERMİNİSTİK — modelin yazdığı VERDICT kullanılmıyor.
+     Aynı veriyle üç ardışık koşuda AL → BEKLE → AL çıkıyordu; sıcaklığı
+     düşürmek birincil modeli düşürdüğü için (ölçüldü) çözüm olmadı.
+     Model artık yalnızca yedi bölümün durumunu ve gerekçesini yazıyor,
+     kararı bu kural veriyor.
+
+     Sıra önemli, ilk eşleşen kazanıyor:
+       1) BELİRSİZ ≥ 4  → BEKLE (veri yetersiz)
+       2) KALDI   ≥ 3  → UZAK_DUR
+       3) AL için HEPSİ şart: Fiyat GEÇTİ, Bilanço ve Bozulma KALDI değil,
+          ve (GEÇTİ ≥ 5 ve KALDI ≤ 1) ya da (GEÇTİ ≥ 4 ve KALDI = 0)
+       4) diğer her durum → BEKLE
+
+     NOT: aynı kural api/analyze.js içinde de var (kayıt için). İkisi
+     birlikte değişmeli. */
+  const durum=(ad)=>{const i=fw.keys.indexOf(ad);return i>=0?statuses[i]:null;};
   const passCount=statuses.filter(s=>s==='pass').length;
   const failCount=statuses.filter(s=>s==='fail').length;
-  const fiyatIdx=fw.keys.indexOf('FIYAT');
-  const fiyatKaldi=fiyatIdx>=0&&statuses[fiyatIdx]==='fail';
+  const neutCount=statuses.filter(s=>s==='neutral').length;
   let verdict;
-  if(vm){
-    verdict=vm[1];
+  if(neutCount>=4){
+    verdict='BEKLE';
+  } else if(failCount>=3){
+    verdict='UZAK_DUR';
+  } else if(
+    durum('FIYAT')==='pass' &&
+    durum('BILANCO')!=='fail' &&
+    durum('BOZULMA')!=='fail' &&
+    ((passCount>=5&&failCount<=1)||(passCount>=4&&failCount===0))
+  ){
+    verdict='AL';
   } else {
-    // AI vermemişse sayısal karar
-    if(passCount>=5)verdict='AL';
-    else if(failCount>=5)verdict='UZAK_DUR';
-    else if(passCount>failCount)verdict='AL';
-    else if(failCount>passCount)verdict='UZAK_DUR';
-    else verdict='BEKLE';
+    verdict='BEKLE';
   }
-  // Fiyat gelmediyse "al" denmez — bu çerçevenin en sert kuralı
-  if(verdict==='AL'&&fiyatKaldi)verdict='BEKLE';
   analysisData={ticker,company,statuses,details,score,verdict,fw:fwKey||curFW};
   saveToHistory(ticker,company,curEX,fwKey||curFW,score,fw.criteria.length,verdict);
   checkMasterBadge(ticker,score,fw.criteria.length,fwKey||curFW);

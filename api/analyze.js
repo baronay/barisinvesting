@@ -992,6 +992,10 @@ const BIST_MAKRO_ALANLAR = {
      uydurmanın başka bir hâli; tarih prompt'a giriyor ki model eskiliği
      görebilsin. */
   MAKRO_TARIHI:   { env: 'MAKRO_GUNCELLEME_TARIHI', bicim: v => v },
+  /* Dönem bazlı TÜFE: 2025 yıllık ROE'yi güncel aylık enflasyonla
+     karşılaştırmak dönem kaymasıdır. Her yıl sonu için ayrı değer. */
+  TUFE_2025:      { env: 'TUFE_2025', bicim: v => `%${v}` },
+  TUFE_2026:      { env: 'TUFE_2026', bicim: v => `%${v}` },
 };
 
 function bistMakroEksikler() {
@@ -1021,7 +1025,10 @@ const ENDUSTRI_MODUL = {
   // Bankalar ve banka benzeri finansal kurumlar
   'Major Banks': 'BANKALAR',
   'Regional Banks': 'BANKALAR',
-  'Investment Banks/Brokers': 'BANKALAR',
+  /* Investment Banks/Brokers BİLEREK dışarıda: aracı kurumların bilanço
+     dinamiği mevduat bankasıyla aynı değil, banka modülü yanıltıyordu.
+     Finance/Rental/Leasing (leasing/faktoring) kalıyor — fonlama marjı ve
+     takipteki alacak mantığı banka modülüyle örtüşüyor. */
   'Finance/Rental/Leasing': 'BANKALAR',
 
   'Multi-Line Insurance': 'SIGORTA',
@@ -1037,18 +1044,21 @@ const ENDUSTRI_MODUL = {
   'Real Estate Development': 'GAYRIMENKUL',
   'Homebuilding': 'GAYRIMENKUL',
 
+  /* Yalnızca havayolu taşımacılığı: Other Transportation (havalimanı
+     işletmecisi TAVHL, yer hizmetleri CLEBI), Railroads ve Trucking
+     fonksiyonel para birimi ve birim maliyet mantığını paylaşmıyor,
+     genel kurallara gidiyorlar. */
   'Airlines': 'HAVAYOLU',
   'Air Freight/Couriers': 'HAVAYOLU',
-  'Other Transportation': 'HAVAYOLU',
-  'Railroads': 'HAVAYOLU',
-  'Trucking': 'HAVAYOLU',
 
   'Oil Refining/Marketing': 'RAFINERI',
   'Integrated Oil': 'RAFINERI',
-  'Gas Distributors': 'RAFINERI',
+
 
   'Electric Utilities': 'ELEKTRIK',
   'Alternative Power Generation': 'ELEKTRIK',
+  // Doğalgaz dağıtımı da regüle getiriye tabi — elektrik dağıtımıyla aynı mantık
+  'Gas Distributors': 'ELEKTRIK',
 
   'Steel': 'DEMIRCELIK',
   'Metal Fabrication': 'DEMIRCELIK',
@@ -1132,6 +1142,22 @@ taşıma.
    büyümedir; bunu tekrar enflasyonla karşılaştırma. Veri düzeltilmemişse
    aynı dönemin enflasyonuyla karşılaştır. Hangi durumda olduğu
    bilinmiyorsa reel büyüme yorumu YAPMA ve bunu belirt.
+
+   İSTİSNA — BDDK kapsamındaki kurumlar: bankalar, finansal kiralama
+   (leasing), faktoring, finansman ve varlık yönetim şirketleri BDDK
+   kararıyla enflasyon muhasebesi UYGULAMIYOR; finansalları NOMİNAL.
+   Bu şirketlerde büyümeyi ve ROE'yi aynı dönemin enflasyonuyla
+   KARŞILAŞTIR.
+
+   DÖNEM EŞLEŞMESİ — İSTİSNASIZ: karşılaştırmada dönem tutmalı. 2025
+   yıllık ROE, 2025 YIL SONU enflasyonuyla karşılaştırılır; güncel aylık
+   enflasyonla DEĞİL. Son çeyrek rakamı son çeyreğin yıllık enflasyonuyla
+   karşılaştırılır. Elindeki enflasyon değerleri:
+     - 2025 yıl sonu yıllık TÜFE: {{TUFE_2025}}
+     - 2026 yıl sonu yıllık TÜFE: {{TUFE_2026}}
+     - en güncel yıllık TÜFE ({{MAKRO_TARIHI}} itibarıyla): {{TUFE_YILLIK}}
+   Hangi döneme ait rakamla karşılaştırdığını YAZ. İlgili dönemin
+   enflasyonu "VERİ YOK" ise o karşılaştırmayı ATLA ve belirt.
 
 2) FONKSİYONEL PARA BİRİMİ. Fonksiyonel para birimi ABD doları veya avro
    olan şirketler (ör. havayolları) TMS 29 uygulamaz. Bu şirketlerde
@@ -1310,13 +1336,121 @@ MODÜLÜNÜ uygula.`;
 
 /* Endüstriye göre modül seç. Eşleşme yoksa modül GÖNDERİLMİYOR — yanlış
    modül göndermektense hiç göndermemek doğru (C kuralının gereği). */
-function bistModulSec(endustri) {
+/* Holding istisnaları: TradingView büyük holdingleri en büyük iştirakine
+   göre sınıflandırıyor, endüstri alanı bu beşinde holding olduklarını
+   göstermiyor. Ölçüldü: KCHOL "Oil Refining/Marketing", SAHOL "Regional
+   Banks", DOHOL "Specialty Stores", AGHOL "Beverages: Non-Alcoholic",
+   ALARK "Real Estate Development". */
+const HOLDING_ISTISNA = new Set(['KCHOL', 'SAHOL', 'DOHOL', 'AGHOL', 'ALARK']);
+
+/* Tezin GÖRÜŞÜ — modele gitmiyor, yalnızca istemciye. Hem yanıtta hem
+   önbellek kaydında aynı şeyi üretsin diye tek fonksiyon. */
+function tezNotuYap(m, fd, eurTry) {
+  if (!m) return null;
+  const h = nadHesapla(m, fd, eurTry);
+  return {
+    tez_id: m.tez_id ?? null,
+    ticker: m.ticker,
+    sinyal: m.tez?.sinyal ?? null,
+    tip: m.tez?.tip ?? null,
+    tarih: m.tez?.tarih ?? m.guncelleme_tarihi,
+    guncelleme_tarihi: m.guncelleme_tarihi,
+    tez_fiyati: m.tez_fiyati ?? null,
+    giris_bandi_al_ust: m.giris_bandi_al_ust ?? null,
+    giris_bandi_olculu_ust: m.giris_bandi_olculu_ust ?? null,
+    beklenen_deger: m.beklenen_deger ?? null,
+    senaryolar: m.tez?.senaryolar ?? [],
+    varsayimlar_12ay: m.tez?.varsayimlar_12ay ?? null,
+    kapanis_fiyat: (h.nadTry && m.tez_kapanis_nad_orani)
+      ? Math.round(h.nadTry * Number(m.tez_kapanis_nad_orani)) : null,
+  };
+}
+
+/* ── KARAR (DETERMİNİSTİK) ─────────────────────────────────────────
+   Modelin yazdığı VERDICT kullanılmıyor: aynı veriyle üç ardışık koşuda
+   AL → BEKLE → AL çıkıyordu. Model yedi bölümün durumunu yazıyor, kararı
+   bu kural veriyor.
+
+   AYNI KURAL app.html içinde de var (ekranda gösterilen karar). İkisi
+   birlikte değişmeli — ayrışırlarsa panelde ve ekranda farklı karar
+   görünür. */
+function kararHesapla(metin) {
+  const blok = String(metin || '').match(/CRITERIA_START([\s\S]*?)CRITERIA_END/i);
+  const kaynak = blok ? blok[1] : String(metin || '');
+  const ANAHTAR = ['ANLATI', 'MOTOR', 'KALITE', 'BILANCO', 'FIYAT', 'KATALIZOR', 'BOZULMA'];
+  const d = {};
+  for (const a of ANAHTAR) {
+    const m = kaynak.match(new RegExp('^' + a + ':\\s*(PASS|FAIL|NEUTRAL)', 'im'));
+    d[a] = m ? m[1].toUpperCase() : 'NEUTRAL';   // yazılmamışsa belirsiz say
+  }
+  const say = (t) => ANAHTAR.filter(a => d[a] === t).length;
+  const gecti = say('PASS'), kaldi = say('FAIL'), belirsiz = say('NEUTRAL');
+
+  if (belirsiz >= 4) return { karar: 'BEKLE', durumlar: d, gecti, kaldi, belirsiz };
+  if (kaldi >= 3)    return { karar: 'UZAK_DUR', durumlar: d, gecti, kaldi, belirsiz };
+  if (d.FIYAT === 'PASS' && d.BILANCO !== 'FAIL' && d.BOZULMA !== 'FAIL'
+      && ((gecti >= 5 && kaldi <= 1) || (gecti >= 4 && kaldi === 0))) {
+    return { karar: 'AL', durumlar: d, gecti, kaldi, belirsiz };
+  }
+  return { karar: 'BEKLE', durumlar: d, gecti, kaldi, belirsiz };
+}
+
+/* ── GÜNLÜK ANALİZ ÖNBELLEĞİ ───────────────────────────────────────
+   Aynı hisse aynı gün tekrar analiz edilince modeli yeniden çalıştırmak
+   hem para hem 40 saniye. Yalnızca ANALİZ METNİ saklanıyor; fiyat ve
+   çarpanlar her istekte canlı çekiliyor, yani önbellekten gelen analizde
+   de ekrandaki fiyat güncel.
+
+   Geçersizlik imzası: mali tablo dönemi (çeyrek sonu) ya da tez_veri
+   kaydının güncelleme tarihi değişirse imza değişir ve önbellek düşer. */
+async function onbellekImza(fd, manuel) {
+  return [fd?.donemSonuFQ || '-', fd?.yillik?.donemSonu || '-', manuel?.guncelleme_tarihi || '-'].join('|');
+}
+
+async function onbellekOku(ticker, exchange, imza) {
+  const SB_URL = process.env.SUPABASE_URL, SB_KEY = process.env.SUPABASE_SERVICE_KEY;
+  if (!SB_URL || !SB_KEY) return null;
+  const gun = trTarih(new Date());
+  try {
+    const r = await fetch(
+      `${SB_URL}/rest/v1/analiz_onbellek?ticker=eq.${encodeURIComponent(ticker)}`
+      + `&exchange=eq.${encodeURIComponent(exchange)}&gun=eq.${gun}&select=imza,sonuc&limit=1`,
+      { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }, signal: AbortSignal.timeout(2500) }
+    );
+    if (!r.ok) return null;
+    const d = await r.json();
+    const satir = Array.isArray(d) && d[0] ? d[0] : null;
+    if (!satir || satir.imza !== imza) return null;
+    return satir.sonuc || null;
+  } catch (e) { dlog('[onbellek] okunamadi:', e.message); return null; }
+}
+
+async function onbellekYaz(ticker, exchange, imza, sonuc) {
+  const SB_URL = process.env.SUPABASE_URL, SB_KEY = process.env.SUPABASE_SERVICE_KEY;
+  if (!SB_URL || !SB_KEY) return;
+  const gun = trTarih(new Date());
+  try {
+    await fetch(`${SB_URL}/rest/v1/analiz_onbellek?on_conflict=ticker,exchange,gun`, {
+      method: 'POST',
+      headers: {
+        apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal,resolution=merge-duplicates',
+      },
+      body: JSON.stringify({ ticker, exchange, gun, imza, sonuc }),
+      signal: AbortSignal.timeout(2500),
+    });
+  } catch (e) { dlog('[onbellek] yazilamadi:', e.message); }
+}
+
+function bistModulSec(endustri, ticker) {
+  if (ticker && HOLDING_ISTISNA.has(String(ticker).toUpperCase())) return 'HOLDING';
   const ad = ENDUSTRI_MODUL[String(endustri || '').trim()] || null;
   return (ad && BIST_MODULLER[ad]) ? ad : null;
 }
 
-function bistKurallari(endustri) {
-  const modulAd = bistModulSec(endustri);
+function bistKurallari(endustri, ticker) {
+  const modulAd = bistModulSec(endustri, ticker);
   const b = modulAd
     ? `\n── B. SEKTÖR MODÜLÜ: ${modulAd} ──\n${BIST_MODULLER[modulAd]}\n`
     : `\n── B. SEKTÖR MODÜLÜ ──\nBu hissenin endüstrisi (${endustri || 'bilinmiyor'}) için tanımlı bir sektör modülü YOK. Yalnızca genel kuralları uygula ve sektör modülü uygulanmadığını yanıtta belirt.\n`;
@@ -1741,6 +1875,25 @@ HEDEF: [12 aylık hedef fiyat bandı] | [yukarı potansiyel %]`;
     } catch (e) { dlog('[misafir kota] hata:', e.message); }
   }
 
+  /* Günlük önbellek: veri çekildikten SONRA bakılıyor çünkü geçersizlik
+     imzası mali tablo dönemine bağlı. Veri çekme maliyeti (~5 sn) kalıyor,
+     asıl pahalı olan model çağrısı (~40 sn, ~6 cent) atlanıyor. */
+  if (SB_URL && SB_KEY) {
+    const imza = await onbellekImza(fd, manuelVeri);
+    const kayitli = await onbellekOku(cleanTicker, exLabel, imza);
+    if (kayitli && kayitli.result) {
+      await kayitYaz({ durum: 'ok', kaynak: 'onbellek', verdict: kararHesapla(kayitli.result).karar });
+      return res.status(200).json({
+        result: kayitli.result,
+        financialData: fd,          // fiyat ve çarpanlar CANLI
+        peers: fd?.peers || [],
+        dataWarnings: fd?._dataWarnings || [],
+        tezNotu: kayitli.tezNotu ?? null,
+        onbellek: true,             // istemci hak düşürmesin
+      });
+    }
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'API key eksik' });
 
@@ -1837,7 +1990,7 @@ KRİTERLERİN ANLAMI:
 - KATALIZOR: Önümüzdeki 6-12 ayda tezi çalıştıracak tarihli olay + teknik teyit.
 - BOZULMA: Tezi çürütecek somut eşik tanımlanabiliyor ve risk-getiri asimetrisi lehine mi?
 
-${isBIST ? bistKurallari(fd?.industry) : ""}`;
+${isBIST ? bistKurallari(fd?.industry, cleanTicker) : ""}`;
 
   let enrichedPrompt = '';
   if (fd) {
@@ -2247,7 +2400,7 @@ MULTIPLES_END`;
       sureDoldu,
       yedek: usedFallback,
       // Hangi sektör modülü seçildi — yanlış eşleme admin şeridinden görülsün
-      sektorModulu: isBIST ? (bistModulSec(fd?.industry) || 'modül yok') : null,
+      sektorModulu: isBIST ? (bistModulSec(fd?.industry, cleanTicker) || 'modül yok') : null,
     };
     // Fiyat/1M token — model değişince buradan güncelle
     const FIYAT = {
@@ -2271,7 +2424,7 @@ MULTIPLES_END`;
     const sayi = (re) => { const m = aiResult.match(re); return m ? parseInt(m[1], 10) : null; };
     await kayitYaz({
       sirket: fd?.shortName || fd?.longName || null,
-      verdict: (aiResult.match(/^VERDICT:\s*([A-Z_]+)/m) || [])[1] || null,
+      verdict: kararHesapla(aiResult).karar,
       skor: sayi(/^TOTAL_SCORE:\s*(\d+)/m),
       garp: sayi(/^GARP_SKOR:\s*(\d{1,3})/m),
       model: olcum.model,
@@ -2281,6 +2434,15 @@ MULTIPLES_END`;
       durum: sureDoldu ? 'sure_doldu' : 'ok',
     });
 
+    /* Önbelleğe yalnızca TAM analiz yazılıyor: kesik bir metni gün boyu
+       servis etmek, bir kerelik kesilmeyi kalıcı hataya çevirirdi. */
+    if (SB_URL && SB_KEY && !kesildi && !sureDoldu) {
+      await onbellekYaz(cleanTicker, exLabel, await onbellekImza(fd, manuelVeri), {
+        result: aiResult,
+        tezNotu: manuelVeri ? tezNotuYap(manuelVeri, fd, eurTryKuru) : null,
+      });
+    }
+
     return res.status(200).json({
       result: aiResult,
       financialData: fd,
@@ -2289,25 +2451,7 @@ MULTIPLES_END`;
       /* Tezin GÖRÜŞÜ — modele gitmiyor, yalnızca istemcide gösteriliyor.
          Böylece model kendi sonucuna bağımsız varıyor, okur ise tezin ne
          dediğini yine görüyor. */
-      tezNotu: manuelVeri ? {
-        tez_id: manuelVeri.tez_id ?? null,
-        ticker: manuelVeri.ticker,
-        sinyal: manuelVeri.tez?.sinyal ?? null,
-        tip: manuelVeri.tez?.tip ?? null,
-        tarih: manuelVeri.tez?.tarih ?? manuelVeri.guncelleme_tarihi,
-        guncelleme_tarihi: manuelVeri.guncelleme_tarihi,
-        tez_fiyati: manuelVeri.tez_fiyati ?? null,
-        giris_bandi_al_ust: manuelVeri.giris_bandi_al_ust ?? null,
-        giris_bandi_olculu_ust: manuelVeri.giris_bandi_olculu_ust ?? null,
-        beklenen_deger: manuelVeri.beklenen_deger ?? null,
-        senaryolar: manuelVeri.tez?.senaryolar ?? [],
-        varsayimlar_12ay: manuelVeri.tez?.varsayimlar_12ay ?? null,
-        kapanis_fiyat: (() => {
-          const h = nadHesapla(manuelVeri, fd, eurTryKuru);
-          return (h.nadTry && manuelVeri.tez_kapanis_nad_orani)
-            ? Math.round(h.nadTry * Number(manuelVeri.tez_kapanis_nad_orani)) : null;
-        })(),
-      } : null,
+      tezNotu: manuelVeri ? tezNotuYap(manuelVeri, fd, eurTryKuru) : null,
       /* Ölçüm YALNIZCA admin'e. Arayüzde zaten admin kontrolü vardı ama
          nesne yanıtta herkese gidiyordu: kullanıcı DevTools'tan analiz
          başına maliyeti, hangi modeli kullandığımızı ve yedek modele ne
