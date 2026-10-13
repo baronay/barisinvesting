@@ -960,6 +960,116 @@ function sigPB(v)  { if(v==null)return'N/A'; if(v<1.5)return'ucuz'; if(v<3)retur
 function sigPEG(v) { if(v==null)return'N/A'; if(v<1)return'ucuz — büyüme fiyatlanmamış'; if(v<1.5)return'adil'; if(v<2)return'dikkatli ol'; return'pahalı'; }
 function sigEV(v)  { if(v==null)return'N/A'; if(v<8)return'ucuz'; if(v<15)return'adil'; return'pahalı'; }
 
+/* ── BIST'E ÖZGÜ DEĞERLENDİRME KURALLARI ───────────────────────────
+   ABD'ye göre kalibre edilmiş eşikler (F/K, PD/DD, büyüme) BIST'e
+   doğrudan taşınmasın diye ayrı blok. Yalnızca exchange BIST ise
+   prompt'a giriyor; ABD analizinde token yakmıyor.
+
+   Makro değerler CONFIG'DEN geliyor. Tanımsızsa yerine "VERİ YOK"
+   yazılıyor ve kural setinin son maddesi o değerlendirmeyi atlamayı
+   söylüyor — rakam uydurulmuyor.
+
+   Ortam değişkenleri (Vercel → Environment Variables):
+     BIST_TUFE  BIST_POLITIKA_FAIZI  BIST_TL_10Y  BIST_CDS  BIST_US_10Y */
+const BIST_MAKRO_ALANLAR = {
+  TUFE_YILLIK:    { env: 'BIST_TUFE',           bicim: v => `%${v}` },
+  POLITIKA_FAIZI: { env: 'BIST_POLITIKA_FAIZI', bicim: v => `%${v}` },
+  TL_10Y:         { env: 'BIST_TL_10Y',         bicim: v => `%${v}` },
+  CDS_5Y:         { env: 'BIST_CDS',            bicim: v => `${v} baz puan` },
+  US_10Y:         { env: 'BIST_US_10Y',         bicim: v => `%${v}` },
+};
+
+function bistMakroEksikler() {
+  return Object.entries(BIST_MAKRO_ALANLAR)
+    .filter(([, a]) => {
+      const v = process.env[a.env];
+      return v == null || String(v).trim() === '';
+    })
+    .map(([ad]) => ad);
+}
+
+const BIST_KURALLARI_SABLON = `
+BIST HİSSELERİ — EK DEĞERLENDİRME KURALLARI:
+Analiz edilen hisse Borsa İstanbul'da işlem görüyor. Standart rasyo
+değerlendirmesine ek olarak aşağıdaki Türkiye'ye özgü kuralları uygula.
+ABD piyasasına göre kalibre edilmiş eşikleri (F/K, PD/DD, büyüme oranı
+vb.) doğrudan BIST'e taşıma.
+
+1) NOMİNAL BÜYÜME, REEL BÜYÜME DEĞİLDİR
+- Gelir, kâr ve özkaynak büyümesini her zaman güncel yıllık enflasyonla
+  karşılaştır. Reel büyüme = (1 + nominal büyüme) / (1 + enflasyon) - 1
+- Nominal büyüme enflasyonun altındaysa şirket reel olarak küçülüyordur.
+  Bunu açıkça söyle.
+- Güncel enflasyon değeri: {{TUFE_YILLIK}}
+
+2) ENFLASYON MUHASEBESİ (TMS 29)
+- BIST şirketleri 2023 yıl sonu finansallarından itibaren enflasyon
+  muhasebesi uyguluyor. Geçmiş dönemlerle karşılaştırma yaparken verinin
+  enflasyona göre düzeltilmiş olup olmadığını kontrol et. Emin değilsen
+  karşılaştırmanın yanıltıcı olabileceğini belirt.
+- Net kârın içinde "net parasal pozisyon kazancı/kaybı" varsa bunu
+  faaliyet kârından ayrı değerlendir. Parasal kazançla şişen bir net kâr,
+  operasyonel güç göstergesi değildir.
+
+3) RİSK PRİMİ VE İSKONTO ORANI
+- Getiri beklentisini ABD hissesi gibi kurma. TL bazlı değerlendirmede
+  referans getiri TL faiz oranıdır. Hissenin kâr getirisi (1 / F/K) ve
+  temettü verimi bu oranla karşılaştırılmalıdır.
+- Dolar/avro bazlı değerlendirmede beklenen getiri: ABD 10 yıllık tahvil
+  faizi + Türkiye ülke risk primi + hisse senedi risk primi.
+- Güncel değerler: politika faizi {{POLITIKA_FAIZI}}, TL 10 yıllık tahvil
+  faizi {{TL_10Y}}, Türkiye 5 yıllık CDS {{CDS_5Y}}, ABD 10 yıllık tahvil
+  faizi {{US_10Y}}
+
+4) ÇARPANLARI DOĞRU BAĞLAMDA YORUMLA
+- BIST çarpanları yapısal olarak ABD'nin altındadır. Düşük F/K veya PD/DD
+  tek başına "ucuz" anlamına gelmez.
+- Çarpanları üç referansla karşılaştır: aynı sektördeki BIST şirketleri,
+  şirketin kendi geçmiş ortalaması ve TL faiz oranı.
+
+5) DÖVİZ YAPISI
+- Şirketin gelirleri, maliyetleri ve borcu hangi para biriminde, bunu
+  tespit et. Veride bilgi varsa net döviz pozisyonunu değerlendir.
+- Döviz geliri olan veya döviz cinsi varlık taşıyan şirketlerde
+  (ihracatçılar, döviz kiralı gayrimenkul şirketleri vb.) dolar/avro
+  bazlı değerlendirmeyi öne çıkar.
+- Döviz borcu yüksek ama geliri TL olan şirketlerde kur riskini açıkça
+  belirt.
+
+6) BANKALAR
+- Bankalarda özkaynak kârlılığını (ROE) enflasyon ve politika faiziyle
+  karşılaştır. Enflasyonun altındaki bir ROE, özkaynağın reel olarak
+  eridiği anlamına gelir.
+- PD/DD'yi ROE ile birlikte değerlendir. Yüksek ROE'li bir bankanın düşük
+  PD/DD'de işlem görmesi, yanlış fiyatlama ihtimaline işaret eder.
+- Net faiz marjının faiz indirim/artırım döngüsüne duyarlılığını ve
+  TÜFE'ye endeksli menkul kıymet gelirinin kâra katkısını not et.
+
+7) PİYASA YAPISI RİSKLERİ
+- Halka açıklık oranı ve işlem hacmi düşükse likidite riskini belirt.
+- Holding ve grup şirketlerinde holding iskontosunu ve grup içi ilişkileri
+  hesaba kat.
+
+8) SEKTÖR METRİKLERİ VE GÜVENİLMEZ ÇARPAN
+- Sigortada bileşik oran (%92 altı iyi, %96 üstü alarm) ve teknik kâr /
+  yatırım geliri ayrımı — kâr yatırım gelirine bağımlı hale geldiyse söyle.
+- F/K ve F/DD güvenilmezse tek başına PASS/FAIL verme; ROE, FAVÖK marjı,
+  nakit akışı ve operasyonel metrikler üzerinden karar ver.
+
+GENEL KURAL: Bu bağlamı gerektiren verilerden biri eksikse (enflasyon,
+faiz, döviz kırılımı vb. — yukarıda "VERİ YOK" yazan her yer) o
+değerlendirmeyi ATLA ve atladığını söyle. Rakam tahmin etme.`;
+
+function bistKurallari() {
+  return BIST_KURALLARI_SABLON.replace(/\{\{(\w+)\}\}/g, (tam, ad) => {
+    const alan = BIST_MAKRO_ALANLAR[ad];
+    if (!alan) return 'VERİ YOK';
+    const ham = process.env[alan.env];
+    if (ham == null || String(ham).trim() === '') return 'VERİ YOK';
+    return alan.bicim(String(ham).trim());
+  });
+}
+
 // ── ANA HANDLER ──────────────────────────────────────────────────
 // ── IP bazlı rate limit (in-memory, Vercel serverless için yeterli) ──
 const _ipHits = new Map();
@@ -1259,14 +1369,7 @@ KRİTERLERİN ANLAMI:
 - KATALIZOR: Önümüzdeki 6-12 ayda tezi çalıştıracak tarihli olay + teknik teyit.
 - BOZULMA: Tezi çürütecek somut eşik tanımlanabiliyor ve risk-getiri asimetrisi lehine mi?
 
-TÜRK HİSSELERİ (BIST) — AYRI OKUNUR:
-- UCUZLUK TEK BAŞINA TEZ DEĞİL. BIST'te makro belirsizlik yüzünden iskonto zaten otomatiktir; "F/K 4, çok ucuz" demek analiz değildir. Asıl soru: bu iskonto haklı mı, yoksa şirket kalitesi iskontoyu hak etmiyor mu? Cevabı marjda ve reel büyümede ara.
-- FAVÖK MARJI BURADA EN ÖNEMLİ GÖSTERGEDİR. Enflasyon muhasebesi net kârı ve F/K'yı bozar; FAVÖK marjı ve onun trendi (genişliyor mu, daralıyor mu) şirketin fiyatlama gücünü gösteren en temiz sinyaldir. Marj daralıyorsa nominal büyüme ne kadar yüksek olursa olsun tez zayıftır.
-- REEL BÜYÜME: nominal büyümeyi TÜFE ile karşılaştır. TÜFE altında kalıyorsa "REEL KÜÇÜLME" uyarısı ver ve büyüme sayma. TÜFE üstü büyüme gerçek başarıdır, bunu vurgula.
-- BORÇ VE FAİZ: yüksek faiz ortamında net borç/FAVÖK ve refinansman riski, ABD şirketlerine göre çok daha belirleyicidir. Döviz borcu varsa kur şokuna duyarlılığı yaz.
-- SEKTÖR METRİĞİ: sigortada bileşik oran (%92 altı iyi, %96 üstü alarm) ve teknik kâr / yatırım geliri ayrımı — kâr yatırım gelirine bağımlı hale geldiyse söyle; bankada net faiz marjı ve takipteki kredi oranı; havacılıkta doluluk ve birim gelir; perakendede aynı mağaza satışı ve stok devri; sanayide kapasite kullanımı ve ihracat payı.
-- F/K ve F/DD güvenilmezse tek başına PASS/FAIL verme; ROE, FAVÖK marjı, nakit akışı ve operasyonel metrikler üzerinden karar ver.
-- Global benzerleriyle çarpan kıyası yap: iskonto yüzdesini söyle ve iskontonun makul olup olmadığını tartış.`;
+${isBIST ? bistKurallari() : ""}`;
 
   let enrichedPrompt = '';
   if (fd) {
@@ -1301,17 +1404,16 @@ TÜRK HİSSELERİ (BIST) — AYRI OKUNUR:
     /* Makro referanslar config'den geliyor. TANIMLI DEĞİLSE hiçbir rakam
        uydurulmuyor: prompt'a "elimde yok" notu düşüyor. Eski davranış
        modele "sektör ortalaması kullan" diyordu, uydurmanın kaynağı oydu. */
-    const makro = [];
-    if (process.env.BIST_TUFE)            makro.push(`TÜFE (yıllık): %${process.env.BIST_TUFE}`);
-    if (process.env.BIST_POLITIKA_FAIZI)  makro.push(`TCMB politika faizi: %${process.env.BIST_POLITIKA_FAIZI}`);
-    if (process.env.BIST_CDS)             makro.push(`Türkiye 5Y CDS: ${process.env.BIST_CDS} bp`);
 
     let warnings = '';
     if (isBIST && fd.peRatio==null)  warnings += 'F/K verisi YOK — "bu veri elimde yok" de. Sektör ortalamasıyla DOLDURMA.\n';
     if (isBIST && fd.pbRatio==null)  warnings += 'F/DD verisi YOK — "bu veri elimde yok" de, tahmin etme.\n';
     if (isBIST && fd.institutionOwnership==null) warnings += 'Kurumsal sahiplik verisi YOK — "bu veri elimde yok" de, oran tahmin etme.\n';
     if (isBIST) warnings += 'Insider alım/geri alım verisi beslenmiyor — bu kriterde NEUTRAL ver ve "veri yok" yaz.\n';
-    if (isBIST && !makro.length) warnings += 'Makro referans (TÜFE/faiz/CDS) tanımlı değil — bu rakamları KULLANMA, reel büyüme yorumunu "TÜFE verisi elimde yok" diyerek geç.\n';
+    if (isBIST) {
+      const eksik = bistMakroEksikler();
+      if (eksik.length) warnings += `Makro referans eksik (${eksik.join(', ')}) — BIST kural setinde "VERİ YOK" yazan maddeleri ATLA, bu rakamları tahmin etme.\n`;
+    }
     if (fd.dataSource !== 'Yahoo')   warnings += `VERİ KAYNAĞI: ${fd.dataSource}\n`;
 
     enrichedPrompt = `GERÇEK FİNANSAL VERİLER [${fd.dataSource}] — BU RAKAMLARI KULLAN:
@@ -1340,7 +1442,7 @@ ${fd.yillik && fd.yillik.aktif ? `MALİ TABLO — YILLIK${fyDon ? ` (mali yıl s
   Hasılat Büyümesi (yıllık, YoY): ${p(fd.yillik.hasilatBuyume)} | Net Kâr Büyümesi (yıllık, YoY): ${p(fd.yillik.karBuyume)}` : ''}
 ${fd.totalRevenue != null || fd.netIncomeTTM != null ? `SON 12 AY (TTM): Hasılat: ${big(fd.totalRevenue)} | Net Kâr: ${big(fd.netIncomeTTM)} | FAVÖK: ${big(fd.ebitda)}` : ''}
 ${sonraki ? `Sonraki bilanço tarihi: ${sonraki}` : ''}
-${makro.length ? `MAKRO REFERANS (config): ${makro.join(' · ')}` : ''}
+
 ${warnings ? '\nUYARILAR:\n'+warnings : ''}
 MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBITDA=${n(fd.evEbitda)}
 ---
