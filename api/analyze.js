@@ -1004,78 +1004,189 @@ function bistMakroEksikler() {
 }
 
 const BIST_KURALLARI_SABLON = `
-BIST HİSSELERİ — EK DEĞERLENDİRME KURALLARI:
-Analiz edilen hisse Borsa İstanbul'da işlem görüyor. Standart rasyo
-değerlendirmesine ek olarak aşağıdaki Türkiye'ye özgü kuralları uygula.
-ABD piyasasına göre kalibre edilmiş eşikleri (F/K, PD/DD, büyüme oranı
-vb.) doğrudan BIST'e taşıma.
+BIST HİSSELERİ — DEĞERLENDİRME KURALLARI
+Analiz edilen hisse Borsa İstanbul'da işlem görüyor. Önce A bölümündeki
+genel kuralları, ardından veri bloğundaki Sektör/Endüstri bilgisine göre
+B bölümündeki İLGİLİ sektör modülünü uygula. Sektör belirlenemiyorsa
+yalnızca genel kuralları uygula ve bunu belirt. ABD piyasasına göre
+kalibre edilmiş eşikleri (F/K, PD/DD, büyüme oranı vb.) doğrudan BIST'e
+taşıma.
 
-1) NOMİNAL BÜYÜME, REEL BÜYÜME DEĞİLDİR
-- Gelir, kâr ve özkaynak büyümesini her zaman güncel yıllık enflasyonla
-  karşılaştır. Reel büyüme = (1 + nominal büyüme) / (1 + enflasyon) - 1
-- Nominal büyüme enflasyonun altındaysa şirket reel olarak küçülüyordur.
-  Bunu açıkça söyle.
-- Güncel enflasyon değeri: {{TUFE_YILLIK}}
+── A. GENEL KURALLAR ──
 
-2) ENFLASYON MUHASEBESİ (TMS 29)
-- BIST şirketleri 2023 yıl sonu finansallarından itibaren enflasyon
-  muhasebesi uyguluyor. Geçmiş dönemlerle karşılaştırma yaparken verinin
-  enflasyona göre düzeltilmiş olup olmadığını kontrol et. Emin değilsen
-  karşılaştırmanın yanıltıcı olabileceğini belirt.
-- Net kârın içinde "net parasal pozisyon kazancı/kaybı" varsa bunu
-  faaliyet kârından ayrı değerlendir. Parasal kazançla şişen bir net kâr,
-  operasyonel güç göstergesi değildir.
+1) ENFLASYON MUHASEBESİ (TMS 29). BIST şirketleri 2023 yıl sonundan
+   itibaren finansal tablolarını raporlama tarihinin satın alma gücüyle
+   sunuyor. Bu yüzden düzeltilmiş verideki yıllık büyüme ZATEN REEL
+   büyümedir; bunu tekrar enflasyonla karşılaştırma. Veri düzeltilmemişse
+   aynı dönemin enflasyonuyla karşılaştır. Hangi durumda olduğu
+   bilinmiyorsa reel büyüme yorumu YAPMA ve bunu belirt.
 
-3) RİSK PRİMİ VE İSKONTO ORANI
-- Getiri beklentisini ABD hissesi gibi kurma. TL bazlı değerlendirmede
-  referans getiri TL faiz oranıdır. Hissenin kâr getirisi (1 / F/K) ve
-  temettü verimi bu oranla karşılaştırılmalıdır.
-- Dolar/avro bazlı değerlendirmede beklenen getiri: ABD 10 yıllık tahvil
-  faizi + Türkiye ülke risk primi + hisse senedi risk primi.
-- Güncel değerler: politika faizi {{POLITIKA_FAIZI}}, TL 10 yıllık tahvil
-  faizi {{TL_10Y}}, Türkiye 5 yıllık CDS {{CDS_5Y}}, ABD 10 yıllık tahvil
-  faizi {{US_10Y}}
-- Bu makro değerlerin tarihi: {{MAKRO_TARIHI}}. Analiz tarihine göre
-  bayatsa (birkaç aydan eskiyse) bunu belirt ve hesabı temkinli kur.
+2) FONKSİYONEL PARA BİRİMİ. Fonksiyonel para birimi ABD doları veya avro
+   olan şirketler (ör. havayolları) TMS 29 uygulamaz. Bu şirketlerde
+   büyümeyi ve marjları fonksiyonel para biriminde değerlendir; TL
+   rakamlardaki büyüme büyük ölçüde kur etkisidir.
 
-4) ÇARPANLARI DOĞRU BAĞLAMDA YORUMLA
-- BIST çarpanları yapısal olarak ABD'nin altındadır. Düşük F/K veya PD/DD
-  tek başına "ucuz" anlamına gelmez.
-- Çarpanları üç referansla karşılaştır: aynı sektördeki BIST şirketleri,
-  şirketin kendi geçmiş ortalaması ve TL faiz oranı.
+3) TTM VERİSİ. TradingView'ın BIST için verdiği son 12 ay (TTM) rakamları
+   farklı satın alma gücündeki çeyreklerin toplamı olabilir. Büyüme ve
+   nakit akışı yorumlarında SON YILLIK RAPORU ve son çeyreğin yıllık
+   değişimini kullan. TTM kullanırsan yanıltıcı olabileceğini belirt.
 
-5) DÖVİZ YAPISI
-- Şirketin gelirleri, maliyetleri ve borcu hangi para biriminde, bunu
-  tespit et. Veride bilgi varsa net döviz pozisyonunu değerlendir.
-- Döviz geliri olan veya döviz cinsi varlık taşıyan şirketlerde
-  (ihracatçılar, döviz kiralı gayrimenkul şirketleri vb.) dolar/avro
-  bazlı değerlendirmeyi öne çıkar.
-- Döviz borcu yüksek ama geliri TL olan şirketlerde kur riskini açıkça
-  belirt.
+4) NET PARASAL POZİSYON KAZANCI/KAYBI. Net kârın içinde bu kalem varsa
+   faaliyet kârından ayrı değerlendir. Parasal kazançla şişen net kâr
+   operasyonel güç göstergesi değildir.
 
-6) BANKALAR
-- Bankalarda özkaynak kârlılığını (ROE) enflasyon ve politika faiziyle
-  karşılaştır. Enflasyonun altındaki bir ROE, özkaynağın reel olarak
-  eridiği anlamına gelir.
-- PD/DD'yi ROE ile birlikte değerlendir. Yüksek ROE'li bir bankanın düşük
-  PD/DD'de işlem görmesi, yanlış fiyatlama ihtimaline işaret eder.
-- Net faiz marjının faiz indirim/artırım döngüsüne duyarlılığını ve
-  TÜFE'ye endeksli menkul kıymet gelirinin kâra katkısını not et.
+5) GETİRİ KARŞILAŞTIRMASI. TL bazlı değerlendirmede referans getiri TL
+   faizidir; kâr getirisini (1/F/K) ve temettü verimini bununla
+   karşılaştır. Döviz bazlı değerlendirmede beklenen getiri ABD 10 yıllık
+   tahvil faizi + Türkiye ülke risk primi + hisse senedi risk primidir.
+   Güncel değerler: politika faizi {{POLITIKA_FAIZI}}, TL 10 yıllık
+   {{TL_10Y}}, CDS {{CDS_5Y}}, ABD 10 yıllık {{US_10Y}}, yıllık TÜFE
+   {{TUFE_YILLIK}} (makro verinin tarihi: {{MAKRO_TARIHI}} — analiz
+   tarihine göre bayatsa belirt).
 
-7) PİYASA YAPISI RİSKLERİ
-- Halka açıklık oranı ve işlem hacmi düşükse likidite riskini belirt.
-- Holding ve grup şirketlerinde holding iskontosunu ve grup içi ilişkileri
-  hesaba kat.
+6) ÇARPANLAR. BIST çarpanları yapısal olarak ABD'nin altındadır. Düşük
+   F/K veya PD/DD tek başına ucuzluk değildir. Çarpanları aynı sektördeki
+   BIST şirketleri, şirketin kendi geçmiş ortalaması ve TL faiziyle
+   karşılaştır.
 
-8) SEKTÖR METRİKLERİ VE GÜVENİLMEZ ÇARPAN
-- Sigortada bileşik oran (%92 altı iyi, %96 üstü alarm) ve teknik kâr /
-  yatırım geliri ayrımı — kâr yatırım gelirine bağımlı hale geldiyse söyle.
-- F/K ve F/DD güvenilmezse tek başına PASS/FAIL verme; ROE, FAVÖK marjı,
-  nakit akışı ve operasyonel metrikler üzerinden karar ver.
+7) DÖVİZ YAPISI. Gelir, maliyet ve borcun para birimini tespit et. Döviz
+   geliri olan şirketlerde döviz bazlı değerlendirmeyi öne çıkar. Geliri
+   TL, borcu döviz olan şirketlerde kur riskini açıkça belirt.
 
-GENEL KURAL: Bu bağlamı gerektiren verilerden biri eksikse (enflasyon,
-faiz, döviz kırılımı vb. — yukarıda "VERİ YOK" yazan her yer) o
-değerlendirmeyi ATLA ve atladığını söyle. Rakam tahmin etme.`;
+8) PİYASA YAPISI. Halka açıklık oranı ve işlem hacmi düşükse likidite
+   riskini belirt. Yabancı payı verisi varsa trendini not et.
+
+9) VERİ DİSİPLİNİ.
+   - Özkaynak bazlı oranları EN SON ÇEYREK özkaynağıyla hesapla.
+   - Her rakamın yanında dönem tipini (çeyrek / yıllık / TTM) ve dönemini
+     belirt.
+   - Veri yoksa "elimde yok" de. Vekil göstergelerle (52 haftalık bant
+     vb.) adil giriş bölgesi ÜRETME, veriye dayanmayan portföy ağırlığı
+     önerme.
+   - Bir bölümün temel verisi yoksa durum BELİRSİZ (NEUTRAL) olsun.
+     KALDI (FAIL) yalnızca veri OLUMSUZ bir sonuç gösterdiğinde verilsin.
+
+10) TEZ ENTEGRASYONU. Hissenin sitede tezi varsa tez tablosundaki veriyi
+    kullan; tezin sinyalini ve tarihini belirt, kendi görüşün farklıysa
+    sebebini açıkla ve tez sayfasına link ver.
+
+── B. SEKTÖR MODÜLLERİ (yalnızca ilgili olanı uygula) ──
+
+BANKALAR
+- Ana metrikler: ROE, PD/DD, net faiz marjı, takipteki kredi oranı, net
+  risk maliyeti, sermaye yeterlilik oranı, ücret ve komisyon gelirlerinin
+  giderleri karşılama oranı.
+- ROE'yi enflasyon ve politika faiziyle karşılaştır; enflasyonun altındaki
+  ROE özkaynağın reel olarak eridiği anlamına gelir. PD/DD'yi ROE ile
+  birlikte yorumla.
+- Faiz indirim döngüsünde mevduat ağırlıklı ve vadesiz mevduatı yüksek
+  bankaların marjı daha hızlı genişler. TÜFE'ye endeksli menkul kıymet
+  gelirinin kâra katkısını not et.
+- FAVÖK, cari oran, borç/özsermaye gibi SANAYİ metriklerini bankalara
+  UYGULAMA.
+
+SİGORTA VE EMEKLİLİK
+- Teknik kârı (sigortacılık faaliyeti) yatırım gelirinden ayır. Yüksek
+  faiz ortamında kârın büyük kısmı yatırım gelirinden gelir; faiz
+  indirimleri bu kısmı daraltır.
+- Birleşik rasyo verisi varsa %100'ün üstü teknik zarardır. Emeklilik
+  şirketlerinde fon büyüklüğü ve katılımcı sayısı büyüme motorudur.
+- ROE ve PD/DD birlikte değerlendirilir; sanayi metriklerini uygulama.
+
+HOLDİNGLER
+- Asıl metrik NAD'a göre iskontodur: halka açık iştiraklerin piyasa değeri
+  × holdingin payı + halka açık olmayan varlıklar − holding net borcu.
+- İştirak payları veride yoksa NAD HESAPLAMA; iskontonun holding
+  değerlemesinin temeli olduğunu ve verinin eksik olduğunu belirt.
+- Konsolide F/K ve FAVÖK holdingler için yanıltıcıdır; banka, enerji,
+  sanayi gibi farklı işleri karıştırır.
+
+GAYRİMENKUL (GYO VE GAYRİMENKUL ŞİRKETLERİ)
+- Asıl metrik NAD'a göre iskontodur. Gelir tablosunda yatırım amaçlı
+  gayrimenkul değerleme kazancı varsa şirket gerçeğe uygun değer modelini
+  kullanıyor demektir.
+- GYO statüsündeki (vergiden muaf) şirketlerde son çeyrek özkaynağı NAD'ın
+  vekili olarak kullanılabilir. GYO statüsünde OLMAYAN şirketlerde
+  ertelenmiş vergi nedeniyle özkaynak NAD'ı olduğundan DÜŞÜK gösterir;
+  bunu belirt ve o şirkete "GYO" deme, "gayrimenkul şirketi" de.
+- Değerleme kazançları nakit yaratmaz; tekrarlanabilir kira gelirini ve
+  operasyonel nakit akışını ayrı değerlendir. Konut geliştiricilerinde ön
+  satışlar ve teslim takvimi gelirin zamanlamasını belirler.
+
+HAVAYOLU VE ULAŞTIRMA
+- Fonksiyonel para birimi genelde ABD dolarıdır; değerlendirmeyi dolar
+  bazında yap.
+- Ana metrikler: yolcu ve kapasite büyümesi, doluluk, birim gelir ve birim
+  maliyet (yakıt hariç), yakıt maliyetinin payı, kiralama yükümlülükleri
+  dahil net borç.
+- Jeopolitik riskleri ve petrol fiyatı duyarlılığını not et.
+
+RAFİNERİ, PETROKİMYA VE ENERJİ TİCARETİ
+- Kârlılık rafineri marjlarına (crack spread) ve stok kazanç/kayıplarına
+  bağlıdır. Stok etkisini operasyonel kârdan ayır.
+- Döngüsel sektör: yüksek marj dönemindeki düşük F/K ucuzluk değil, döngü
+  zirvesi olabilir.
+
+ELEKTRİK ÜRETİM VE DAĞITIM
+- Dağıtım şirketleri regüle getiriye tabidir; düzenleyici varlık tabanı ve
+  izin verilen getiri oranı belirleyicidir.
+- Üretim şirketlerinde kaynak tipi (yenilenebilir/termik), YEKDEM ve dolar
+  bazlı alım garantileri, piyasa takas fiyatına duyarlılık ve döviz borcu
+  ana metriklerdir.
+
+DEMİR-ÇELİK VE METAL
+- Döngüsel sektör: emtia fiyatı ve ton başına marj belirleyicidir. Döngü
+  zirvesindeki düşük F/K'ya güvenme; normalize edilmiş marjı düşün.
+- İhracat payı, enerji maliyeti ve Çin kaynaklı fiyat baskısını not et.
+
+OTOMOTİV, BEYAZ EŞYA VE İHRACATÇI SANAYİ
+- İhracat payı ve ihracatın para birimi (çoğunlukla avro) kritik. Reel TL
+  değerlenmesi ihracatçı marjlarını baskılar; bunu kur ve maliyet
+  enflasyonu farkı olarak değerlendir.
+- Kapasite kullanımı, üretim adetleri ve iç pazar talebinin kredi
+  koşullarına duyarlılığını not et.
+
+SAVUNMA
+- Ana metrikler: sipariş bakiyesi (backlog) ve bunun yıllık gelire oranı,
+  kamu alacakları, işletme sermayesi ve kârın nakde dönüşümü.
+- Yüksek sipariş bakiyesine rağmen zayıf operasyonel nakit akışı, alacak
+  tahsilatı sorununa işaret edebilir.
+
+PERAKENDE VE GIDA PERAKENDESİ
+- Negatif işletme sermayesiyle çalışan perakendeciler yüksek enflasyonda
+  finansman avantajı elde eder. Bu kazancı faaliyet kârından ayır.
+- Ana metrikler: aynı mağaza satış büyümesi (reel), mağaza sayısı
+  büyümesi, brüt marj, metrekare verimliliği.
+
+TELEKOM
+- Abone başına gelir (ARPU) artışını enflasyonla karşılaştır. Yatırım
+  harcamalarının hasılata oranı ve döviz borcu ana risklerdir.
+- Fiber ve mobil abone büyümesini, regülasyon kaynaklı fiyat sınırlarını
+  not et.
+
+İNŞAAT MALZEMELERİ, ÇİMENTO VE CAM
+- Enerji maliyeti (doğal gaz, elektrik) marjı belirler. İhracat payı ve iç
+  pazarda inşaat faaliyetinin faiz oranlarına duyarlılığını not et.
+
+MADENCİLİK VE ALTIN
+- Emtia fiyatı, üretim hacmi, birim nakit maliyet ve rezerv ömrü ana
+  metriklerdir. Kâr emtia fiyatının bir fonksiyonu olduğu için F/K'yı
+  emtia fiyat varsayımıyla birlikte yorumla.
+
+TEKNOLOJİ VE YAZILIM
+- Tekrarlayan gelir payı, ihracat/yurt dışı gelir payı ve kârın nakde
+  dönüşümü ana metriklerdir. Aktifleştirilen geliştirme giderlerinin kârı
+  şişirip şişirmediğine dikkat et.
+
+DİĞER SANAYİ (KİMYA, TEKSTİL, KÂĞIT, GIDA ÜRETİMİ VB.)
+- Genel kuralları uygula. Ek olarak hammadde maliyetinin para birimi,
+  ihracat payı ve fiyatlama gücünü (maliyet artışını fiyata yansıtabilme)
+  değerlendir.
+
+── C. GENEL KURAL ──
+Sektör modülünde istenen bir metrik veride YOKSA o değerlendirmeyi ATLA ve
+eksikliği belirt. Sektör modülü ile genel kurallar çelişirse SEKTÖR
+MODÜLÜNÜ uygula.`;
 
 function bistKurallari() {
   return BIST_KURALLARI_SABLON.replace(/\{\{(\w+)\}\}/g, (tam, ad) => {
