@@ -4879,6 +4879,7 @@ function olcumSatiri(){
   const parcalar=[o.model, `giriş ${bin(o.giris)}`, `çıkış ${bin(o.cikis)}${o.cikisTahmini?'~':''}`];
   if(o.cacheOku) parcalar.push(`önbellek ${bin(o.cacheOku)}`);
   if(o.maliyet!=null) parcalar.push(`~$${o.maliyet}`);
+  if(o.sektorModulu) parcalar.push('modül: '+o.sektorModulu);
   if(o.yedek) parcalar.push('YEDEK MODEL');
   if(o.sureDoldu) parcalar.push('SÜRE DOLDU — KISMİ');
   else if(o.kesildi) parcalar.push('TOKEN TAVANI — KISMİ');

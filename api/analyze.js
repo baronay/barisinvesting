@@ -1003,7 +1003,119 @@ function bistMakroEksikler() {
     .map(([ad]) => ad);
 }
 
-const BIST_KURALLARI_SABLON = `
+/* ── ENDÜSTRİ → SEKTÖR MODÜLÜ EŞLEMESİ ────────────────────────────
+   TradingView'ın SEKTÖR alanı BIST'te işe yaramıyor: gayrimenkul
+   şirketleri de bankalar da "Finance" altında görünüyor. Eşleme
+   ENDÜSTRİ alanıyla yapılıyor.
+
+   Tablo 626 BIST hissesinin gerçek endüstri değerlerinden çıkarıldı
+   (80 farklı değer). Listede olmayan bir endüstri gelirse modül
+   seçilmiyor ve yalnızca genel kurallar gidiyor — yanlış modül
+   göndermektense hiç göndermemek doğru.
+
+   BİLİNEN SINIR: TradingView büyük holdingleri en büyük iştirakine göre
+   sınıflıyor (KCHOL "Oil Refining/Marketing", SAHOL "Regional Banks").
+   Bu ikisine holding modülü gitmiyor; eşleme tablosuna elle eklemek
+   gerekirse ticker bazlı bir istisna listesi açılabilir. */
+const ENDUSTRI_MODUL = {
+  // Bankalar ve banka benzeri finansal kurumlar
+  'Major Banks': 'BANKALAR',
+  'Regional Banks': 'BANKALAR',
+  'Investment Banks/Brokers': 'BANKALAR',
+  'Finance/Rental/Leasing': 'BANKALAR',
+
+  'Multi-Line Insurance': 'SIGORTA',
+  'Life/Health Insurance': 'SIGORTA',
+  'Property/Casualty Insurance': 'SIGORTA',
+
+  'Financial Conglomerates': 'HOLDING',
+  'Industrial Conglomerates': 'HOLDING',
+  'Investment Managers': 'HOLDING',
+  'Miscellaneous': 'HOLDING',
+
+  'Real Estate Investment Trusts': 'GAYRIMENKUL',
+  'Real Estate Development': 'GAYRIMENKUL',
+  'Homebuilding': 'GAYRIMENKUL',
+
+  'Airlines': 'HAVAYOLU',
+  'Air Freight/Couriers': 'HAVAYOLU',
+  'Other Transportation': 'HAVAYOLU',
+  'Railroads': 'HAVAYOLU',
+  'Trucking': 'HAVAYOLU',
+
+  'Oil Refining/Marketing': 'RAFINERI',
+  'Integrated Oil': 'RAFINERI',
+  'Gas Distributors': 'RAFINERI',
+
+  'Electric Utilities': 'ELEKTRIK',
+  'Alternative Power Generation': 'ELEKTRIK',
+
+  'Steel': 'DEMIRCELIK',
+  'Metal Fabrication': 'DEMIRCELIK',
+
+  'Precious Metals': 'MADENCILIK',
+  'Other Metals/Minerals': 'MADENCILIK',
+
+  'Motor Vehicles': 'OTOMOTIV',
+  'Auto Parts: OEM': 'OTOMOTIV',
+  'Automotive Aftermarket': 'OTOMOTIV',
+  'Electronics/Appliances': 'OTOMOTIV',
+  'Trucks/Construction/Farm Machinery': 'OTOMOTIV',
+  'Electrical Products': 'OTOMOTIV',
+
+  'Aerospace & Defense': 'SAVUNMA',
+
+  'Food Retail': 'PERAKENDE',
+  'Apparel/Footwear Retail': 'PERAKENDE',
+  'Specialty Stores': 'PERAKENDE',
+  'Restaurants': 'PERAKENDE',
+  'Electronics Distributors': 'PERAKENDE',
+  'Wholesale Distributors': 'PERAKENDE',
+
+  'Major Telecommunications': 'TELEKOM',
+  'Wireless Telecommunications': 'TELEKOM',
+
+  'Construction Materials': 'INSAAT_MALZEME',
+  'Building Products': 'INSAAT_MALZEME',
+  'Home Furnishings': 'INSAAT_MALZEME',
+
+  'Packaged Software': 'TEKNOLOJI',
+  'Information Technology Services': 'TEKNOLOJI',
+  'Semiconductors': 'TEKNOLOJI',
+  'Electronic Production Equipment': 'TEKNOLOJI',
+  'Electronic Equipment/Instruments': 'TEKNOLOJI',
+
+  // Üretim yapan geri kalan sanayi — genel sanayi modülü
+  'Textiles': 'DIGER_SANAYI',
+  'Apparel/Footwear': 'DIGER_SANAYI',
+  'Chemicals: Specialty': 'DIGER_SANAYI',
+  'Chemicals: Agricultural': 'DIGER_SANAYI',
+  'Chemicals: Major Diversified': 'DIGER_SANAYI',
+  'Containers/Packaging': 'DIGER_SANAYI',
+  'Industrial Specialties': 'DIGER_SANAYI',
+  'Industrial Machinery': 'DIGER_SANAYI',
+  'Miscellaneous Manufacturing': 'DIGER_SANAYI',
+  'Commercial Printing/Forms': 'DIGER_SANAYI',
+  'Agricultural Commodities/Milling': 'DIGER_SANAYI',
+  'Food: Specialty/Candy': 'DIGER_SANAYI',
+  'Food: Major Diversified': 'DIGER_SANAYI',
+  'Food: Meat/Fish/Dairy': 'DIGER_SANAYI',
+  'Beverages: Non-Alcoholic': 'DIGER_SANAYI',
+  'Beverages: Alcoholic': 'DIGER_SANAYI',
+  'Household/Personal Care': 'DIGER_SANAYI',
+  'Other Consumer Specialties': 'DIGER_SANAYI',
+  'Recreational Products': 'DIGER_SANAYI',
+};
+
+/* Eşleşmeyen endüstriler bilerek boş bırakıldı — bunlara yalnızca genel
+   kurallar gidiyor: Engineering & Construction (taahhüt; modülü yok,
+   backlog/alacak dinamiği savunmaya benziyor ama aynı değil),
+   Pharmaceuticals, Biotechnology, Hospital/Nursing Management,
+   Medical/Nursing Services, Medical Distributors, Movies/Entertainment,
+   Hotels/Resorts, Other Consumer Services, Miscellaneous Commercial
+   Services. */
+
+const BIST_A_SABLON = `
 BIST HİSSELERİ — DEĞERLENDİRME KURALLARI
 Analiz edilen hisse Borsa İstanbul'da işlem görüyor. Önce A bölümündeki
 genel kuralları, ardından veri bloğundaki Sektör/Endüstri bilgisine göre
@@ -1070,8 +1182,14 @@ taşıma.
     kullan; tezin sinyalini ve tarihini belirt, kendi görüşün farklıysa
     sebebini açıkla ve tez sayfasına link ver.
 
-── B. SEKTÖR MODÜLLERİ (yalnızca ilgili olanı uygula) ──
+`;
 
+/* Sektör modülleri — yalnızca eşleşen biri prompt'a giriyor.
+   Hepsini göndermek 16 modülün 15'ini boşa yakıyordu ve sistem
+   promptunu 8.533 token'a çıkarıp dağıtım sonrası ilk analizin
+   kesilmesine yol açıyordu (ölçüldü: cacheYaz 8533, sureDoldu). */
+const BIST_MODULLER = {
+  BANKALAR: `
 BANKALAR
 - Ana metrikler: ROE, PD/DD, net faiz marjı, takipteki kredi oranı, net
   risk maliyeti, sermaye yeterlilik oranı, ücret ve komisyon gelirlerinin
@@ -1083,24 +1201,24 @@ BANKALAR
   bankaların marjı daha hızlı genişler. TÜFE'ye endeksli menkul kıymet
   gelirinin kâra katkısını not et.
 - FAVÖK, cari oran, borç/özsermaye gibi SANAYİ metriklerini bankalara
-  UYGULAMA.
-
+  UYGULAMA.`,
+  SIGORTA: `
 SİGORTA VE EMEKLİLİK
 - Teknik kârı (sigortacılık faaliyeti) yatırım gelirinden ayır. Yüksek
   faiz ortamında kârın büyük kısmı yatırım gelirinden gelir; faiz
   indirimleri bu kısmı daraltır.
 - Birleşik rasyo verisi varsa %100'ün üstü teknik zarardır. Emeklilik
   şirketlerinde fon büyüklüğü ve katılımcı sayısı büyüme motorudur.
-- ROE ve PD/DD birlikte değerlendirilir; sanayi metriklerini uygulama.
-
+- ROE ve PD/DD birlikte değerlendirilir; sanayi metriklerini uygulama.`,
+  HOLDING: `
 HOLDİNGLER
 - Asıl metrik NAD'a göre iskontodur: halka açık iştiraklerin piyasa değeri
   × holdingin payı + halka açık olmayan varlıklar − holding net borcu.
 - İştirak payları veride yoksa NAD HESAPLAMA; iskontonun holding
   değerlemesinin temeli olduğunu ve verinin eksik olduğunu belirt.
 - Konsolide F/K ve FAVÖK holdingler için yanıltıcıdır; banka, enerji,
-  sanayi gibi farklı işleri karıştırır.
-
+  sanayi gibi farklı işleri karıştırır.`,
+  GAYRIMENKUL: `
 GAYRİMENKUL (GYO VE GAYRİMENKUL ŞİRKETLERİ)
 - Asıl metrik NAD'a göre iskontodur. Gelir tablosunda yatırım amaçlı
   gayrimenkul değerleme kazancı varsa şirket gerçeğe uygun değer modelini
@@ -1111,85 +1229,98 @@ GAYRİMENKUL (GYO VE GAYRİMENKUL ŞİRKETLERİ)
   bunu belirt ve o şirkete "GYO" deme, "gayrimenkul şirketi" de.
 - Değerleme kazançları nakit yaratmaz; tekrarlanabilir kira gelirini ve
   operasyonel nakit akışını ayrı değerlendir. Konut geliştiricilerinde ön
-  satışlar ve teslim takvimi gelirin zamanlamasını belirler.
-
+  satışlar ve teslim takvimi gelirin zamanlamasını belirler.`,
+  HAVAYOLU: `
 HAVAYOLU VE ULAŞTIRMA
 - Fonksiyonel para birimi genelde ABD dolarıdır; değerlendirmeyi dolar
   bazında yap.
 - Ana metrikler: yolcu ve kapasite büyümesi, doluluk, birim gelir ve birim
   maliyet (yakıt hariç), yakıt maliyetinin payı, kiralama yükümlülükleri
   dahil net borç.
-- Jeopolitik riskleri ve petrol fiyatı duyarlılığını not et.
-
+- Jeopolitik riskleri ve petrol fiyatı duyarlılığını not et.`,
+  RAFINERI: `
 RAFİNERİ, PETROKİMYA VE ENERJİ TİCARETİ
 - Kârlılık rafineri marjlarına (crack spread) ve stok kazanç/kayıplarına
   bağlıdır. Stok etkisini operasyonel kârdan ayır.
 - Döngüsel sektör: yüksek marj dönemindeki düşük F/K ucuzluk değil, döngü
-  zirvesi olabilir.
-
+  zirvesi olabilir.`,
+  ELEKTRIK: `
 ELEKTRİK ÜRETİM VE DAĞITIM
 - Dağıtım şirketleri regüle getiriye tabidir; düzenleyici varlık tabanı ve
   izin verilen getiri oranı belirleyicidir.
 - Üretim şirketlerinde kaynak tipi (yenilenebilir/termik), YEKDEM ve dolar
   bazlı alım garantileri, piyasa takas fiyatına duyarlılık ve döviz borcu
-  ana metriklerdir.
-
+  ana metriklerdir.`,
+  DEMIRCELIK: `
 DEMİR-ÇELİK VE METAL
 - Döngüsel sektör: emtia fiyatı ve ton başına marj belirleyicidir. Döngü
   zirvesindeki düşük F/K'ya güvenme; normalize edilmiş marjı düşün.
-- İhracat payı, enerji maliyeti ve Çin kaynaklı fiyat baskısını not et.
-
+- İhracat payı, enerji maliyeti ve Çin kaynaklı fiyat baskısını not et.`,
+  OTOMOTIV: `
 OTOMOTİV, BEYAZ EŞYA VE İHRACATÇI SANAYİ
 - İhracat payı ve ihracatın para birimi (çoğunlukla avro) kritik. Reel TL
   değerlenmesi ihracatçı marjlarını baskılar; bunu kur ve maliyet
   enflasyonu farkı olarak değerlendir.
 - Kapasite kullanımı, üretim adetleri ve iç pazar talebinin kredi
-  koşullarına duyarlılığını not et.
-
+  koşullarına duyarlılığını not et.`,
+  SAVUNMA: `
 SAVUNMA
 - Ana metrikler: sipariş bakiyesi (backlog) ve bunun yıllık gelire oranı,
   kamu alacakları, işletme sermayesi ve kârın nakde dönüşümü.
 - Yüksek sipariş bakiyesine rağmen zayıf operasyonel nakit akışı, alacak
-  tahsilatı sorununa işaret edebilir.
-
+  tahsilatı sorununa işaret edebilir.`,
+  PERAKENDE: `
 PERAKENDE VE GIDA PERAKENDESİ
 - Negatif işletme sermayesiyle çalışan perakendeciler yüksek enflasyonda
   finansman avantajı elde eder. Bu kazancı faaliyet kârından ayır.
 - Ana metrikler: aynı mağaza satış büyümesi (reel), mağaza sayısı
-  büyümesi, brüt marj, metrekare verimliliği.
-
+  büyümesi, brüt marj, metrekare verimliliği.`,
+  TELEKOM: `
 TELEKOM
 - Abone başına gelir (ARPU) artışını enflasyonla karşılaştır. Yatırım
   harcamalarının hasılata oranı ve döviz borcu ana risklerdir.
 - Fiber ve mobil abone büyümesini, regülasyon kaynaklı fiyat sınırlarını
-  not et.
-
+  not et.`,
+  INSAAT_MALZEME: `
 İNŞAAT MALZEMELERİ, ÇİMENTO VE CAM
 - Enerji maliyeti (doğal gaz, elektrik) marjı belirler. İhracat payı ve iç
-  pazarda inşaat faaliyetinin faiz oranlarına duyarlılığını not et.
-
+  pazarda inşaat faaliyetinin faiz oranlarına duyarlılığını not et.`,
+  MADENCILIK: `
 MADENCİLİK VE ALTIN
 - Emtia fiyatı, üretim hacmi, birim nakit maliyet ve rezerv ömrü ana
   metriklerdir. Kâr emtia fiyatının bir fonksiyonu olduğu için F/K'yı
-  emtia fiyat varsayımıyla birlikte yorumla.
-
+  emtia fiyat varsayımıyla birlikte yorumla.`,
+  TEKNOLOJI: `
 TEKNOLOJİ VE YAZILIM
 - Tekrarlayan gelir payı, ihracat/yurt dışı gelir payı ve kârın nakde
   dönüşümü ana metriklerdir. Aktifleştirilen geliştirme giderlerinin kârı
-  şişirip şişirmediğine dikkat et.
-
+  şişirip şişirmediğine dikkat et.`,
+  DIGER_SANAYI: `
 DİĞER SANAYİ (KİMYA, TEKSTİL, KÂĞIT, GIDA ÜRETİMİ VB.)
 - Genel kuralları uygula. Ek olarak hammadde maliyetinin para birimi,
   ihracat payı ve fiyatlama gücünü (maliyet artışını fiyata yansıtabilme)
-  değerlendir.
+  değerlendir.`,
+};
 
+const BIST_C_SABLON = `
 ── C. GENEL KURAL ──
 Sektör modülünde istenen bir metrik veride YOKSA o değerlendirmeyi ATLA ve
 eksikliği belirt. Sektör modülü ile genel kurallar çelişirse SEKTÖR
 MODÜLÜNÜ uygula.`;
 
-function bistKurallari() {
-  return BIST_KURALLARI_SABLON.replace(/\{\{(\w+)\}\}/g, (tam, ad) => {
+/* Endüstriye göre modül seç. Eşleşme yoksa modül GÖNDERİLMİYOR — yanlış
+   modül göndermektense hiç göndermemek doğru (C kuralının gereği). */
+function bistModulSec(endustri) {
+  const ad = ENDUSTRI_MODUL[String(endustri || '').trim()] || null;
+  return (ad && BIST_MODULLER[ad]) ? ad : null;
+}
+
+function bistKurallari(endustri) {
+  const modulAd = bistModulSec(endustri);
+  const b = modulAd
+    ? `\n── B. SEKTÖR MODÜLÜ: ${modulAd} ──\n${BIST_MODULLER[modulAd]}\n`
+    : `\n── B. SEKTÖR MODÜLÜ ──\nBu hissenin endüstrisi (${endustri || 'bilinmiyor'}) için tanımlı bir sektör modülü YOK. Yalnızca genel kuralları uygula ve sektör modülü uygulanmadığını yanıtta belirt.\n`;
+  return (BIST_A_SABLON + b + BIST_C_SABLON).replace(/\{\{(\w+)\}\}/g, (tam, ad) => {
     const alan = BIST_MAKRO_ALANLAR[ad];
     if (!alan) return 'VERİ YOK';
     const ham = process.env[alan.env];
@@ -1706,7 +1837,7 @@ KRİTERLERİN ANLAMI:
 - KATALIZOR: Önümüzdeki 6-12 ayda tezi çalıştıracak tarihli olay + teknik teyit.
 - BOZULMA: Tezi çürütecek somut eşik tanımlanabiliyor ve risk-getiri asimetrisi lehine mi?
 
-${isBIST ? bistKurallari() : ""}`;
+${isBIST ? bistKurallari(fd?.industry) : ""}`;
 
   let enrichedPrompt = '';
   if (fd) {
@@ -1889,6 +2020,11 @@ MULTIPLES: PE=${n(fd.peRatio)} PB=${n(fd.pbRatio)} PEG=${n(fd.pegRatio)} EV_EBIT
           body: JSON.stringify({
             model,
             max_tokens: maxTokens,
+            /* Karar tutarlılığı: aynı veriyle üç ardışık koşuda verdict
+               AL → BEKLE → AL oldu. Düşük sıcaklık bu salınımı daraltıyor;
+               analiz bir yaratıcılık işi değil, aynı rakamlar aynı sonuca
+               çıkmalı. */
+            temperature: 0.2,
             /* Sistem promptu sabit (tarih/ticker içermiyor) → önbelleğe
                alınabilir. Şirkete özel veri kullanıcı mesajında, yani
                önbellek önekini bozmuyor. */
@@ -2114,6 +2250,8 @@ MULTIPLES_END`;
       kesildi,
       sureDoldu,
       yedek: usedFallback,
+      // Hangi sektör modülü seçildi — yanlış eşleme admin şeridinden görülsün
+      sektorModulu: isBIST ? (bistModulSec(fd?.industry) || 'modül yok') : null,
     };
     // Fiyat/1M token — model değişince buradan güncelle
     const FIYAT = {
