@@ -8251,8 +8251,11 @@ function garpAnalizAc(ticker) {
         /* Yazı içi kutu yalnızca SÖYLEYECEK AYRI BİR ŞEYİ varsa çiziliyor:
            kontrol noktası dolu ya da tezin kendi takip teklifi var. Yoksa
            sondaki kutuyla birebir aynı metni taşıyacağı için atlanıyor. */
-        const icKutuGerekli = !!String(tez.kontrol_noktasi || '').trim()
-          || (kat === 'tez' && !!tez.ticker);
+        /* YALNIZCA kontrol noktası varsa. Ticker'lı bir tezde kontrol
+           noktası boşsa yazı içi kutu sondakiyle yine birebir aynı metni
+           taşıyacaktı — tekrarın asıl sebebi buydu. Kontrol noktası yoksa
+           okur yine iki temas noktası görüyor: yazı sonu kutusu ve alt bar. */
+        const icKutuGerekli = !!String(tez.kontrol_noktasi || '').trim();
         if (icKutuGerekli && kelime >= ABONE_KISA_ESIK && kap && cocuklar.length) {
           const idx = yerlestirmeNoktasi(cocuklar);
           if (idx > 0 && idx < cocuklar.length) {
