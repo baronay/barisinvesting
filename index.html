@@ -831,6 +831,7 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
 .km-ret.neu{color:var(--muted);}
 .km-git{font-size:11.5px;font-weight:600;color:var(--accent);text-align:right;white-space:nowrap;opacity:0;transition:opacity .15s;}
 .km-satir:hover .km-git{opacity:1;}
+.km-yukleniyor{padding:18px 16px;font-family:var(--font-mono);font-size:10px;letter-spacing:1.6px;color:var(--cream2);opacity:.5;}
 .km-bos{padding:22px 16px;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;color:var(--muted2);}
 /* Dar ekranda iki satıra kırılıyor; başlık ve fiyat akışı alta geçiyor */
 @media(max-width:900px){
@@ -930,9 +931,9 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
      bir boşluk kalıyordu. Tek ızgaraya alındılar — sol %45 metin, sağ %55
      veri. Yükseklik kasten düşük: altındaki manşet bandının üstü 1080p'de
      ilk ekranda görünüp aşağı kaydırmaya davet etsin.
-     Karar masası burada yalnızca en güncel 3 tezi gösteriyor; tamamı
-     /tezler sayfasındaki sicilde. Fiyatlar ilk boyamadan SONRA
-     dolduruluyor (kararFiyatlari). -->
+     Karar masası EN İYİ GETİRİLİ 3 tezi gösteriyor; tamamı /tezler
+     sayfasındaki sicilde. Sıralama için fiyatlar ilk boyamadan ÖNCE
+     çekiliyor, o yüzden bu bölüm ~1 sn sonra doluyor. -->
 <section class="sec split-hero" id="hero">
   <div class="container sh-grid">
 
@@ -1630,33 +1631,73 @@ function guncellemeBariniGoster(list) {
 /* Açık tezler şeridi: yalnızca 'tez' kategorisi, en son hareket edenden
    başlayarak. Sinyali olmayan tez de görünsün — görüş yerine tarih. */
 const GORUS_AD = { AL:['al','AL'], IZLE:['izle','İZLE'], NOTR:['notr','TUT'], KACIN:['uzak','KAÇIN'] };
-/* CANLI KARAR MASASI — açık tezler, referans ve güncel fiyatla.
-   Fiyatlar burada ÇEKİLMİYOR: satırlar önce yazılıyor, fiyat ve getiri
-   alanları sonra dolduruluyor (kararFiyatlari). Ana sayfa açılışı altı
-   ayrı fiyat isteğini beklemesin — hız çalışmasını bozmamak için. */
-function takipCiz(list) {
+/* CANLI KARAR MASASI — açık tezler, referans ve güncel fiyatla. */
+/* Masada EN İYİ GETİRİLİ üç tez duruyor; tamamı /tezler'deki sicilde.
+   Sıralama için fiyatların render'dan ÖNCE gelmesi gerekiyor, bu yüzden
+   akış tersine çevrildi: önce iskelet çizilir, açık tezlerin fiyatları
+   paralel çekilir, sonra sıralı üç satır basılır.
+
+   Ana sayfanın geri kalanı beklemiyor — bu yalnızca bu bölümü ~1 sn
+   sonra dolduruyor. Fiyatlar _kmPx'te önbellekleniyor, aynı hisse iki
+   kez istenmiyor. */
+async function takipCiz(list) {
   const el = document.getElementById('kmTablo');
   if (!el) return;
-  // Masada yalnızca en güncel üç tez; tamamı /tezler'deki sicilde.
   const acik = list.filter(t => (t.kategori || 'tez') === 'tez' && t.durum !== 'kapandi');
-  const tezler = acik.slice(0, 3);
   const tumLink = document.getElementById('kmTum');
   if (tumLink) tumLink.innerHTML = `Tüm Sicili İncele (${acik.length} Tez) <span class="arrow-ic"></span>`;
-  if (!tezler.length) { el.innerHTML = '<div class="km-bos">AÇIK TEZ YOK.</div>'; return; }
-  el.innerHTML = tezler.map(t => {
+  if (!acik.length) { el.innerHTML = '<div class="km-bos">AÇIK TEZ YOK.</div>'; return; }
+
+  el.innerHTML = '<div class="km-yukleniyor">GETİRİLER HESAPLANIYOR…</div>';
+
+  const olculen = await Promise.all(acik.map(async t => {
+    const cost = parseFloat(t.maliyet_fiyat);
+    if (!t.ticker || !isFinite(cost)) return { t, px: null, ret: null };
+    const px = await kmFiyat(t.ticker, t.exchange || 'BIST');
+    return { t, px, ret: (px && isFinite(px)) ? (px - cost) / cost * 100 : null };
+  }));
+
+  /* Getirisi ölçülebilenler büyükten küçüğe; ölçülemeyenler (fiyat ya da
+     maliyet yok) en sona, yayın sırasını koruyarak. Üç satır dolmazsa
+     liste onlarla tamamlanıyor, masa boş kalmıyor. */
+  const sirali = olculen
+    .filter(x => x.ret != null)
+    .sort((a, b) => b.ret - a.ret)
+    .concat(olculen.filter(x => x.ret == null))
+    .slice(0, 3);
+
+  el.innerHTML = sirali.map(({ t, px, ret }) => {
     const g = GORUS_AD[t.sinyal] || null;
     const ex = t.exchange || 'BIST';
-    const ref = t.maliyet_fiyat ? fmtFiyat(t.maliyet_fiyat, ex) : '—';
+    const cost = parseFloat(t.maliyet_fiyat);
+    const fiyatHtml = (px && isFinite(cost))
+      ? `${fmtFiyat(cost, ex)}<span class="km-ok">→</span>${fmtFiyat(px, ex)}`
+      : (isFinite(cost) ? fmtFiyat(cost, ex) : '—');
+    const retSinif = ret == null ? 'neu' : (ret > 0.5 ? 'pos' : ret < -0.5 ? 'neg' : 'neu');
+    const retMetin = ret == null ? '—' : (ret > 0 ? '+' : '') + ret.toFixed(1) + '%';
     return `<a class="km-satir" href="/tez/${t.id}">
       <span class="km-tk">${esc(t.ticker || '◈')}</span>
       ${g ? `<span class="km-sig ${g[0]}">${g[1]}</span>` : '<span></span>'}
       <span class="km-tt">${esc(t.baslik || '')}</span>
-      <span class="km-px" id="kmpx-${t.id}">${ref}</span>
-      <span class="km-ret neu" id="kmret-${t.id}">${t.maliyet_fiyat ? '·' : '—'}</span>
+      <span class="km-px">${fiyatHtml}</span>
+      <span class="km-ret ${retSinif}">${retMetin}</span>
       <span class="km-git">Tezi İncele →</span>
     </a>`;
   }).join('');
-  kararFiyatlari(tezler);
+}
+
+/* Tek hisse fiyatı, oturum içi önbellekli. Aynı ticker birden çok tezde
+   geçebilir; ikinci kez istenmiyor. */
+const _kmPx = {};
+async function kmFiyat(ticker, ex) {
+  const k = ticker + '|' + ex;
+  if (k in _kmPx) return _kmPx[k];
+  try {
+    const r = await fetch('/api/tez-admin?price=1&ticker=' + encodeURIComponent(ticker) + '&exchange=' + ex);
+    const d = await r.json();
+    _kmPx[k] = (d && isFinite(d.price)) ? d.price : null;
+  } catch (_) { _kmPx[k] = null; }
+  return _kmPx[k];
 }
 
 /* Fiyat biçimi: BIST ₺, ABD $ */
@@ -1667,34 +1708,6 @@ function fmtFiyat(v, ex) {
   return cur + (n >= 1000 ? n.toLocaleString('en-US', { maximumFractionDigits: 0 }) : n.toFixed(2));
 }
 
-/* Karar masasının fiyat ve getiri alanlarını doldurur. Satırlar zaten
-   ekranda; yalnızca iki alan güncelleniyor, düzen oynamıyor. */
-const _kmPx = {};
-async function kararFiyatlari(tezler) {
-  await Promise.all(tezler.map(async t => {
-    const pxEl = document.getElementById('kmpx-' + t.id);
-    const rEl  = document.getElementById('kmret-' + t.id);
-    const cost = parseFloat(t.maliyet_fiyat);
-    if (!t.ticker || !isFinite(cost)) { if (rEl) rEl.textContent = '—'; return; }
-    const ex = t.exchange || 'BIST';
-    const k = t.ticker + '|' + ex;
-    try {
-      if (!(k in _kmPx)) {
-        const r = await fetch('/api/tez-admin?price=1&ticker=' + encodeURIComponent(t.ticker) + '&exchange=' + ex);
-        const d = await r.json();
-        _kmPx[k] = (d && isFinite(d.price)) ? d.price : null;
-      }
-      const px = _kmPx[k];
-      if (!px) { if (rEl) rEl.textContent = '—'; return; }
-      if (pxEl) pxEl.innerHTML = `${fmtFiyat(cost, ex)}<span class="km-ok">→</span>${fmtFiyat(px, ex)}`;
-      if (rEl) {
-        const ret = (px - cost) / cost * 100;
-        rEl.textContent = (ret > 0 ? '+' : '') + ret.toFixed(1) + '%';
-        rEl.className = 'km-ret ' + (ret > 0.5 ? 'pos' : ret < -0.5 ? 'neg' : 'neu');
-      }
-    } catch (_) { if (rEl) rEl.textContent = '—'; }
-  }));
-}
 
 /* Hero'nun değişken parçaları: "Son Tezi Oku" en taze içeriğe gitsin,
    rozette açık tez sayısı görünsün. */
