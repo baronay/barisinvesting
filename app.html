@@ -7980,9 +7980,31 @@ function garpAnalizAc(ticker) {
 
   /* ── KUTU ─────────────────────────────────────────────────────────── */
 
+  /* İKİ KUTU AYNI ŞEYİ YAZMASIN. Yazı içi ve yazı sonu kutuları birebir
+     aynı metni taşıyınca okur bunu tekrar sanıyordu (#38'de ölçüldü:
+     %58 ve %96'da iki özdeş kutu).
+
+     Yazı içi kutu artık SIRADAKİ KONTROL NOKTASINI öne çıkarıyor — yani
+     yazının devamına dair somut bir söz. Yazı sonu kutusu genel teklif
+     olarak kalıyor. Kontrol noktası yoksa yazı içi kutu da genel metne
+     düşüyor ve ikisi yine aynı olacağı için YAZI İÇİ KUTU ÇİZİLMİYOR. */
   function aboneMetni(tez, kat, yerlesim) {
     const tezce = kat === 'tez' && !!tez.ticker;
     const tkr = tezce ? String(tez.ticker).toUpperCase() : '';
+    /* kontrol_noktasi artık KATEGORİDEN BAĞIMSIZ. Eskiden yalnızca
+       kategori "tez" ise okunuyordu; haber ve araştırmada alan dolu olsa
+       bile ekrana hiç çıkmıyordu — sessiz veri kaybıydı. */
+    const kn = String(tez.kontrol_noktasi || '').trim();
+
+    if (yerlesim === 'inline' && kn) {
+      return {
+        kick: 'SIRADAKİ KONTROL',
+        baslik: tezce ? (tkr + ' tezinde sırada ne var') : 'Bu konunun devamını yazacağım',
+        alt: 'İzlediğim kontrol noktası: ' + kn,
+        buton: 'Haber ver',
+        knSatiri: false,   // alt metinde zaten var, iki kez yazma
+      };
+    }
     if (tezce) {
       return {
         kick: tkr + ' TAKİBİ',
@@ -7990,6 +8012,7 @@ function garpAnalizAc(ticker) {
         alt: 'Ekleme yaptığımda, sattığımda ya da tez bozulduğunda tek bir mail atarım. Başka bir şey göndermem.',
         buton: 'Haber ver',
         barMetin: tkr + ' pozisyonumda bir şey değiştiğinde haber vereyim',
+        knSatiri: true,
       };
     }
     return {
@@ -7998,15 +8021,17 @@ function garpAnalizAc(ticker) {
       alt: 'Yeni bir tez ya da analiz yayımladığımda tek bir mail atarım. Başka bir şey göndermem.',
       buton: 'Abone ol',
       barMetin: 'Yeni tez ve analizler yayımlandığında haber vereyim',
+      knSatiri: true,
     };
   }
 
   function aboneKutusuHTML(tez, kat, yerlesim) {
     const m = aboneMetni(tez, kat, yerlesim);
     const kayitli = lsOku('bi_email', '');
-    /* kontrol_noktasi doluysa sözü somutlaştıran tek satır olarak ekleniyor;
-       boşsa hiç çizilmiyor, belirsiz bir vaat uydurulmuyor. */
-    const kn = (kat === 'tez') ? String(tez.kontrol_noktasi || '').trim() : '';
+    /* Kontrol noktası satırı: doluysa sözü somutlaştırıyor, boşsa hiç
+       çizilmiyor. Yazı içi kutu onu zaten alt metninde taşıyorsa burada
+       tekrar edilmiyor. */
+    const kn = m.knSatiri === false ? '' : String(tez.kontrol_noktasi || '').trim();
 
     return `<div class="tzo-abone ${yerlesim === 'inline' ? 'ic' : 'son'}" data-yerlesim="${yerlesim}">
         <div class="tzo-abone-kart">
@@ -8223,7 +8248,12 @@ function garpAnalizAc(ticker) {
         const cocuklar = kap ? blokCocuklar(kap) : [];
         let kondu = false;
 
-        if (kelime >= ABONE_KISA_ESIK && kap && cocuklar.length) {
+        /* Yazı içi kutu yalnızca SÖYLEYECEK AYRI BİR ŞEYİ varsa çiziliyor:
+           kontrol noktası dolu ya da tezin kendi takip teklifi var. Yoksa
+           sondaki kutuyla birebir aynı metni taşıyacağı için atlanıyor. */
+        const icKutuGerekli = !!String(tez.kontrol_noktasi || '').trim()
+          || (kat === 'tez' && !!tez.ticker);
+        if (icKutuGerekli && kelime >= ABONE_KISA_ESIK && kap && cocuklar.length) {
           const idx = yerlestirmeNoktasi(cocuklar);
           if (idx > 0 && idx < cocuklar.length) {
             const d = document.createElement('div');
