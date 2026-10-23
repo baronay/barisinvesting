@@ -8,7 +8,7 @@
     "api/profil.js":            { "maxDuration": 45 },
     "api/fair-value.js":        { "maxDuration": 20 },
     "api/garp-bildirim.js":     { "maxDuration": 10 },
-    "api/haftalik-secimler.js": { "maxDuration": 10 },
+
     "api/forum.js":             { "maxDuration": 10 },
     "api/logo.js":              { "maxDuration": 10 },
     "api/watchlist.js":         { "maxDuration": 10 }

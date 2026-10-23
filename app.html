@@ -911,7 +911,7 @@ input,button,select,textarea{font-family:var(--font-body);font-size:14px;color:v
   .mobile-toggle{display:none!important;}
   .sidebar{display:none!important;}
   .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--sidebar);backdrop-filter:blur(12px);border-top:1px solid var(--border-s);z-index:500;height:58px;}
-  #garpWidget{bottom:calc(58px + 20px + env(safe-area-inset-bottom,0px))!important;right:12px!important;}
+
   .bn-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);transition:color .2s;border:none;background:none;-webkit-tap-highlight-color:transparent;padding:6px 0;}
   .bn-tab.active{color:var(--accent);} #bn-tezler{color:var(--gold);opacity:.7;} #bn-tezler.active{color:var(--gold);opacity:1;}
   .bn-tab svg{width:18px;height:18px;}
@@ -3435,13 +3435,7 @@ body{overflow-x:hidden;max-width:100vw;}
 .db-tk-daha{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--muted-s);padding:8px 2px 0;}
 
 /* ══ HAFTANIN SEÇİMLERİ — sağ sütunun bloğu ══
-   Eskiden sağ alt köşede sabit (fixed) bir butondu ve ısı haritasının
-   üstüne biniyordu. Artık takip listesinin altında duran normal bir blok.
-   Satır içi stilleri ezmek için !important gerekiyor. */
-.app #garpWidget{width:100%;margin-top:14px;}
-.app #garpWidget > button{width:100%;justify-content:flex-start;background:var(--surface)!important;border:1px solid var(--border)!important;border-radius:8px!important;box-shadow:none!important;color:var(--text)!important;font-family:var(--font-body)!important;}
-.app #garpWidget > button:hover{background:var(--surface2)!important;border-color:rgba(194,173,132,0.35)!important;}
-.app #garpPanel{position:static!important;width:100%!important;max-width:none!important;margin-top:8px!important;background:var(--surface)!important;border:1px solid var(--border)!important;box-shadow:none!important;}
+
 
 .db-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start;}
 .db-sol{min-width:0;}
@@ -3700,7 +3694,7 @@ body{overflow-x:hidden;max-width:100vw;}
       <div id="adminIcerikOzet" style="font-size:11px;color:#8a93a3;margin-bottom:8px;">—</div>
       <div style="overflow-x:auto;max-height:340px;overflow-y:auto;">
         <table class="admin-user-table">
-          <thead><tr><th>Yazı</th><th>Tür</th><th>Görüntülenme</th><th>%75 okudu</th><th>Kutuyu gördü</th><th>Abone</th><th>Dönüşüm</th></tr></thead>
+          <thead><tr><th>Yazı</th><th>Tür</th><th>Görüntülenme</th><th>%75 okudu</th><th>Kutu gösterimi</th><th>Abone</th><th>Dönüşüm</th></tr></thead>
           <tbody id="adminIcerikBody"><tr><td colspan="7" style="padding:14px;color:#5d6675">↻ ile yükle</td></tr></tbody>
         </table>
       </div>
@@ -6745,145 +6739,10 @@ function fallbackCopy(text,msg){
   showToast(msg);
 }
 </script>
-   <!-- ── HAFTANIN SEÇİMLERİ WIDGET ── -->
-<div id="garpWidget" style="position:fixed;bottom:24px;right:24px;z-index:9999;font-family:'Inter',sans-serif;">
-  <!-- Kapalı buton -->
-  <button id="garpBtn" onclick="garpToggle()" style="
-    display:flex;align-items:center;gap:8px;
-    background:#0e1220;border:1px solid rgba(194,173,132,0.4);
-    color:#ffffff;padding:10px 16px;border-radius:8px;
-    cursor:pointer;font-size:13px;font-weight:500;
-    box-shadow:0 4px 24px rgba(0,0,0,0.4);
-    transition:all 0.2s;
-  ">
-    <span style="color:#c2ad84;font-size:16px;">◈</span>
-    Haftanın Seçimleri
-    <span id="garpBadge" style="background:#c2ad84;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;display:none;">3</span>
-  </button>
 
-  <!-- Açık panel -->
-  <div id="garpPanel" style="
-    display:none;
-    width:340px;
-    background:#0e1220;
-    border:1px solid rgba(194,173,132,0.25);
-    border-radius:12px;
-    box-shadow:0 8px 40px rgba(0,0,0,0.6);
-    overflow:hidden;
-    margin-bottom:8px;
-  ">
-    <!-- Header -->
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.07);">
-      <div>
-        <div style="font-size:13px;font-weight:600;color:#ffffff;letter-spacing:0.3px;">◈ Haftanın GARP Seçimleri</div>
-        <div id="garpHafta" style="font-size:11px;color:#5d6675;margin-top:2px;"></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <button id="garpTabBist" onclick="garpTabDegistir('bist')" style="background:rgba(194,173,132,0.2);border:1px solid rgba(194,173,132,0.4);color:#c2ad84;font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-weight:600;">BIST</button>
-        <button id="garpTabGlobal" onclick="garpTabDegistir('global')" style="background:none;border:1px solid rgba(255,255,255,0.1);color:#5d6675;font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;">Global</button>
-        <button onclick="garpToggle()" style="background:none;border:none;color:#5d6675;cursor:pointer;font-size:18px;line-height:1;margin-left:4px;">×</button>
-      </div>
-    </div>
-
-    <!-- İçerik -->
-    <div id="garpIcerik" style="padding:16px;max-height:420px;overflow-y:auto;">
-      <div style="text-align:center;padding:24px 0;color:#5d6675;font-size:13px;">
-        Yükleniyor...
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.07);font-size:11px;color:#3a4150;text-align:center;">
-      GARP + Teknik Teyit · Barış Investing AI
-    </div>
-  </div>
-</div>
 
 <script>
-var garpAcik = false;
-var garpYuklendi = false;
-var garpAktifTab = 'bist';
 
-function garpTabDegistir(tab) {
-  garpAktifTab = tab;
-  var b = document.getElementById('garpTabBist');
-  var g = document.getElementById('garpTabGlobal');
-  if (b && g) {
-    b.style.background = tab==='bist' ? 'rgba(194,173,132,0.2)' : 'none';
-    b.style.color = tab==='bist' ? '#c2ad84' : '#5d6675';
-    b.style.borderColor = tab==='bist' ? 'rgba(194,173,132,0.4)' : 'rgba(255,255,255,0.1)';
-    g.style.background = tab==='global' ? 'rgba(194,173,132,0.2)' : 'none';
-    g.style.color = tab==='global' ? '#c2ad84' : '#5d6675';
-    g.style.borderColor = tab==='global' ? 'rgba(194,173,132,0.4)' : 'rgba(255,255,255,0.1)';
-  }
-  garpYuklendi = false;
-  garpYukle();
-}
-function garpToggle() {
-  garpAcik = !garpAcik;
-  var panel = document.getElementById('garpPanel');
-  var btn   = document.getElementById('garpBtn');
-  panel.style.display = garpAcik ? 'block' : 'none';
-  if (garpAcik && !garpYuklendi) garpYukle();
-}
-
-function sinялRenk(s) {
-  if (s === 'AL')    return '#22c55e';
-  if (s === 'IZLE')  return '#b89b6a';
-  if (s === 'NOTR')  return '#9aa3b2';
-  return '#f05252';
-}
-
-function garpYukle() {
-  var icerik = document.getElementById('garpIcerik');
-  icerik.innerHTML = '<div style="text-align:center;padding:24px 0;color:#5d6675;font-size:13px;">Analiz yükleniyor<br><span style="font-size:11px;opacity:0.6;">İlk yüklemede 10-15 sn sürebilir</span></div>';
-
-  fetch(garpAktifTab === 'global' ? '/api/haftalik-secimler?market=global' : '/api/haftalik-secimler')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      garpYuklendi = true;
-      var secimler = data.secimler || [];
-
-      // Hafta badge
-      document.getElementById('garpHafta').textContent = data.hafta + (data.cache ? ' · önbellek' : ' · yeni analiz');
-      document.getElementById('garpBadge').textContent = secimler.length;
-      document.getElementById('garpBadge').style.display = 'inline';
-
-      if (!secimler.length) {
-        icerik.innerHTML = '<div style="text-align:center;padding:24px;color:#5d6675;font-size:13px;">Bu hafta için veri yok</div>';
-        return;
-      }
-
-      var html = '';
-      secimler.forEach(function(h, i) {
-        var renk = sinялRenk(h.sinyal);
-        html += '<div style="' + (i > 0 ? 'border-top:1px solid rgba(255,255,255,0.06);margin-top:12px;padding-top:12px;' : '') + '">';
-        // Ticker + sinyal
-        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
-        html += '<span style="font-size:15px;font-weight:600;color:#ffffff;font-family:\'JetBrains Mono\',monospace;">' + h.ticker + '</span>';
-        html += '<span style="font-size:11px;font-weight:600;color:' + renk + ';background:' + renk + '18;padding:2px 8px;border-radius:4px;border:1px solid ' + renk + '33;">' + h.sinyal + '</span>';
-        html += '</div>';
-        // Skorlar
-        html += '<div style="display:flex;gap:12px;margin-bottom:8px;">';
-        html += '<span style="font-size:11px;color:#5d6675;">Final <span style="color:#c2ad84;font-weight:600;">' + h.final_skoru + '</span></span>';
-        html += '<span style="font-size:11px;color:#5d6675;">GARP <span style="color:#9aa3b2;">' + h.garp_skoru + '</span></span>';
-        html += '<span style="font-size:11px;color:#5d6675;">Teknik <span style="color:#9aa3b2;">' + h.teknik_skoru + '</span></span>';
-        html += '</div>';
-        // Yorum
-        if (h.yorum) {
-          html += '<div style="font-size:12px;color:#7a8493;line-height:1.6;border-left:2px solid rgba(194,173,132,0.3);padding-left:10px;">' + h.yorum.replace(/\*\*/g,'').replace(/\n/g,'<br>') + '</div>';
-        }
-        // Analiz butonu
-        html += '<button onclick="garpAnalizAc(\'' + h.ticker + '\')" style="margin-top:8px;background:rgba(194,173,132,0.1);border:1px solid rgba(194,173,132,0.2);color:#c2ad84;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;width:100%;">Detaylı Analiz →</button>';
-        html += '</div>';
-      });
-
-      icerik.innerHTML = html;
-    })
-    .catch(function(e) {
-      icerik.innerHTML = '<div style="text-align:center;padding:24px;color:#f05252;font-size:13px;">Veri alınamadı</div>';
-    });
-}
 
 function garpAnalizAc(ticker) {
   // Mevcut analiz input'una ticker yaz ve analizi tetikle
@@ -6892,8 +6751,7 @@ function garpAnalizAc(ticker) {
     input.value = ticker;
     input.dispatchEvent(new Event('input'));
   }
-  // Paneli kapat
-  garpToggle();
+
   // Analiz butonunu bul ve tıkla
   setTimeout(function() {
     var btn = document.getElementById('anaBtn');
@@ -9283,23 +9141,7 @@ function garpAnalizAc(ticker) {
   }
 })();
 </script>
-<script>
-/* Haftanın Seçimleri widget'ı sağ sütuna taşınıyor. Markup'ı sayfanın
-   sonunda duruyor; 60 satırlık bloğu kesip yapıştırmak yerine DOM'da
-   yerine alınıyor. Sabit konumu da burada kaldırılıyor — eskiden
-   position:fixed ile ısı haritasının üstüne biniyordu. */
-document.addEventListener('DOMContentLoaded', function(){
-  var w = document.getElementById('garpWidget');
-  var sag = document.querySelector('.db-sag');
-  if (!w || !sag) return;
-  w.style.position = 'static';
-  w.style.right = 'auto';
-  w.style.bottom = 'auto';
-  w.style.zIndex = 'auto';
-  w.style.fontFamily = 'inherit';
-  sag.appendChild(w);
-});
-</script>
+
 <script>
 /* Tez sayfasındaki "Terminalde aç" bağlantısıyla gelindiğinde arama
    kutusunu doldurur. Analizi başlatmaz: analiz kredi harcıyor, kararı
