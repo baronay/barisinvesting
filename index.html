@@ -1611,17 +1611,32 @@ function icerigiCiz(list, tazeMi) {
   if (list.length) renderFeatured(list[0]);
   else if (feat) feat.innerHTML = '<div class="lead-kick"><span class="dot"></span>HENÜZ İÇERİK YOK</div><div class="lead-title">İlk içerik yakında yayınlanacak</div>';
 
+  /* ÜST BANT ÖNCE ÇİZİLİYOR. Sebep: bant beş kayıt birden tüketiyor
+     (manşet, orta tez, orta sütunun altındaki iki metin bağlantısı ve
+     üçüncü başlık) ve aşağıdaki sütunlar da aynı sıralamadan başladığı
+     için okur UnitedHealth'i, Netflix'i, Rönesans'ı sayfada iki kez
+     görüyordu. Sütun başına 4 öğe varken ilki tekrar olsa da altındaki
+     üç satır yeniydi; 2'ye inince tekrar sütunun yarısı oldu.
+     Eleme DOM'dan okunuyor, sayıyı iki yerde elle eşitlemek yerine:
+     bandın bileşimi ileride değişirse eleme kendiliğinden uyar. */
+  ortaCiz(list);
+  ucuncuCiz(list);
+  const ustte = new Set([...document.querySelectorAll('#icerik a[href^="/tez/"]')]
+    .map(a => +a.getAttribute('href').slice(5).split('#')[0])
+    .filter(n => Number.isFinite(n)));
+
   let i = 1;
   for (const tur of ['tez', 'arastirma', 'haber']) {
-    const grup = list.filter(t => (t.kategori || 'tez') === tur);
+    let grup = list.filter(t => (t.kategori || 'tez') === tur && !ustte.has(t.id));
+    // O türde bandın dışında hiç içerik kalmadıysa tekrara izin ver:
+    // boş sütun, tekrar eden sütundan kötü.
+    if (!grup.length) grup = list.filter(t => (t.kategori || 'tez') === tur);
     const kart = document.getElementById(kartlar[tur]);
     if (!kart) continue;
     kart.innerHTML = grup.length
       ? grup.slice(0, BOLUM_ADET).map(t => ikKartHTML(t, i++)).join('')
       : `<div class="skel">${BOLUM_BOS[tur]}</div>`;
   }
-  ortaCiz(list);
-  ucuncuCiz(list);
   takipCiz(list);
   heroCiz(list);
   armFly();
