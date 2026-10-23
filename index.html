@@ -128,22 +128,12 @@ nav.pill{display:flex;align-items:center;justify-content:center;gap:16px;max-wid
 .nav-links a.lnk:hover::after{width:100%;}
 .nav-cta{background:var(--accent);color:#0b0f15;border:1px solid var(--accent);border-radius:24px;padding:9px 18px;font-size:14px;font-weight:600;box-shadow:var(--shadow-btn);transition:transform .2s,background .2s;display:inline-block;}
 .nav-cta:hover{transform:scale(1.04);background:var(--cream);}
-.nav-burger{display:none;background:none;border:0;cursor:pointer;padding:8px;flex-direction:column;gap:5px;}
-.nav-burger span{display:block;width:20px;height:2px;background:var(--text);transition:transform .25s,opacity .25s;}
-@media(max-width:767px){
-  /* Başlık artık tam genişlik: açılır menü de sayfanın iki kenarına
-     yaslanıyor, yuvarlak hap kenarlığı kalktı. */
-  .nav-links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:0;background:rgba(8,11,16,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--rule);padding:10px 16px 14px;}
-  .nav-links.open{display:flex;}
-  .nav-links a.lnk{padding:12px 14px;border-radius:12px;}
-  .nav-links a.lnk:hover{background:var(--accent-dim);}
-  .nav-links a.lnk::after{display:none;}
-  .nav-cta{margin:8px 6px 4px;text-align:center;}
-  .nav-burger{display:flex;}
-  .nav-burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
-  .nav-burger.open span:nth-child(2){opacity:0;}
-  .nav-burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
-}
+/* ☰ düğmesi ve açılır menüsü kaldırıldı: nav.pill ≤767px'te zaten
+   display:none olduğu için menü mobilde hiç çizilemiyordu, düğme de
+   boşuna duruyordu. Bölüm şeridi (.mob-sek) aynı linkleri veriyor.
+   Künye CTA'sı masaüstünde "Terminal'e Giriş", telefonda tek kelime —
+   uzun etiket 146px kaplıyor ve ortadaki serif logoya giriyor. */
+.kc-kisa{display:none;}
 
 /* ═══════════════ HERO ═══════════════ */
 /* Hero tek başına ilk ekranı dolduruyordu: kaydırmayan ziyaretçi tek bir
@@ -296,16 +286,6 @@ nav.pill{display:flex;align-items:center;justify-content:center;gap:16px;max-wid
 .lead-sum b{color:var(--text2);font-weight:500;}
 
 .mn-rail{min-width:0;border-left:1px solid var(--rule);padding-left:26px;}
-.rail-head{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--text2);line-height:1;padding-bottom:11px;border-bottom:2px solid var(--accent);margin-bottom:2px;}
-.rail-row{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--rule);align-items:flex-start;}
-.rail-row:hover .rail-title{color:var(--accent);}
-.rail-time{flex:0 0 52px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.4px;color:var(--muted2);padding-top:2px;}
-.rail-title{font-size:13px;font-weight:600;line-height:1.45;color:var(--text2);transition:color .18s;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
-.rail-tur{display:inline-block;font-family:var(--font-mono);font-size:8px;letter-spacing:1.2px;padding:1px 6px;border-radius:4px;margin-right:6px;vertical-align:1px;}
-.rail-tur.tez{color:var(--accent);background:var(--accent-dim);}
-.rail-tur.arastirma{color:#9fb8c9;background:rgba(159,184,201,.1);}
-.rail-tur.haber{color:#7cb8e8;background:rgba(90,169,230,.1);}
-.rail-all{display:inline-flex;align-items:center;gap:7px;margin-top:14px;font-size:12px;font-weight:600;color:var(--accent);}
 .rail-yt{display:flex;align-items:center;gap:12px;margin-top:18px;padding:13px 14px;border:1px solid var(--border-s);border-left:2px solid #f0322c;border-radius:10px;background:var(--surface);transition:border-color .2s,transform .2s,background .2s;}
 .rail-yt:hover{border-color:rgba(240,50,44,.5);transform:translateY(-2px);background:var(--surface2);}
 .yt-play{flex:0 0 34px;width:34px;height:34px;border-radius:8px;background:rgba(240,50,44,.12);color:#f0554f;display:flex;align-items:center;justify-content:center;}
@@ -320,29 +300,15 @@ nav.pill{display:flex;align-items:center;justify-content:center;gap:16px;max-wid
 .rp-title{display:block;font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:6px;}
 .rp-sub{display:block;font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:11px;}
 .rp-cta{display:inline-block;font-size:12px;font-weight:600;color:var(--accent);}
-/* ── SON EKLENENLER: manşet bandının altında yatay şerit ──
-   Üst bant üç büyük habere dönünce sağ sütun buraya indi. İçerik aynı;
-   satırlar dört sütuna akıyor, altında "tüm haberler" bağlantısı ile
-   YouTube ve Terminal kartları duruyor. */
+/* ── YOUTUBE + TERMİNAL ŞERİDİ ──
+   İçeriden "Son Eklenenler" listesi çıkınca geriye iki kart kaldı:
+   masaüstünde yan yana ve eşit yükseklikte, telefonda alt alta. */
 .sec-son{padding:22px 0 0;}
-.sec-son .mn-rail{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:26px;align-items:start;border-left:none;padding-left:0;border-top:1px solid var(--rule);padding-top:16px;}
-/* Başlık ile "tüm haberler" aynı satırda — sayfadaki diğer bölüm
-   başlıklarıyla (ic-head + ic-all) aynı kalıp. */
-.sec-son .rail-head{grid-row:1;grid-column:1/-1;margin-bottom:6px;}
-.sec-son .rail-all{grid-row:1;grid-column:1/-1;justify-self:end;align-self:center;margin:0 0 6px;}
-.sec-son .rail-list{grid-row:2;grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:26px;}
-/* İki kart alt satırı ikiye bölüyor ve aynı yükseklikte duruyor; eskiden
-   ikisi sağa sıkışıp solda büyük bir boşluk bırakıyordu. span kullanıldı
-   ki dar ekranda iki sütuna düşünce alt alta geçsinler. */
-.sec-son .rail-yt,.sec-son .rail-promo{grid-column:span 2;align-self:stretch;margin-top:16px;}
-@media(max-width:991px){
-  .sec-son .mn-rail{grid-template-columns:repeat(2,minmax(0,1fr));}
-  .sec-son .rail-list{grid-template-columns:repeat(2,minmax(0,1fr));}
-}
+.sec-son .mn-rail{display:grid;grid-template-columns:1fr 1fr;column-gap:26px;align-items:stretch;border-left:none;padding-left:0;border-top:1px solid var(--rule);padding-top:16px;}
+.sec-son .rail-yt,.sec-son .rail-promo{margin-top:0;}
 @media(max-width:767px){
   .sec-son{padding:14px 0 0;}
-  .sec-son .mn-rail,.sec-son .rail-list{display:block;}
-  .sec-son .rail-all{display:inline-flex;margin:14px 0 0;}
+  .sec-son .mn-rail{display:block;}
   .sec-son .rail-yt{margin-top:16px;}
   .sec-son .rail-promo{margin-top:14px;}
 }
@@ -384,22 +350,10 @@ a.feat-strip:hover .fs-cover img{transform:scale(1.04);}
 .ic-head .kicker{display:block;margin-bottom:5px;}
 .ic-h{font-family:var(--font-head);font-size:20px;font-weight:600;letter-spacing:-.01em;line-height:1.2;color:var(--text);}
 .ic-all{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap;}
-.ic-list{display:flex;flex-direction:column;}
-.ic-row{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--rule);transition:opacity .18s;}
-.ic-row:last-child{border-bottom:none;}
-.ic-row:hover{opacity:.8;}
-.ic-row:hover .ic-title{color:var(--accent);}
-/* Künye kutusu kapağın kendi oranında (2.3:1). Kare 54x54 iken kapak
-   object-fit:contain ile 54x23'e düşüyor, kutunun yarısından fazlası boş
-   koyu zemin kalıyordu — görsel "karanlık bir kutuda yüzen şerit" gibi
-   duruyordu. Mobilde zaten 104x45 idi, masaüstü kare kalmıştı. */
-.ic-thumb{flex:0 0 96px;width:96px;height:auto;aspect-ratio:2.3/1;border-radius:6px;overflow:hidden;background:var(--surface3);display:flex;align-items:center;justify-content:center;}
-.ic-thumb img{width:100%;height:100%;object-fit:contain;background:var(--surface3);}
-.ic-thumb span{font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--accent);opacity:.55;letter-spacing:1px;}
-.ic-txt{min-width:0;flex:1;}
-.ic-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;}
-.ic-title{font-size:13.5px;font-weight:600;line-height:1.42;color:var(--text2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:color .18s;}
-.ic-list .skel{padding:18px 0 4px;text-align:left;}
+/* İnce künye satırı (.ic-row / .ic-thumb / .ic-title) kaldırıldı:
+   sütunda tek kart dili kaldı, hepsi .ik-card. */
+.ic-kartlar{display:flex;flex-direction:column;}
+.ic-kartlar .skel{padding:18px 0 4px;text-align:left;}
 
 /* ══ ANA SAYFA EDİTORYAL REVİZYON ═════════════════════════════════
    Hepsi mevcut değişkenlerle, ek kütüphane yok. */
@@ -426,12 +380,7 @@ a.feat-strip:hover .fs-cover img{transform:scale(1.04);}
 .rp-cta{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid rgba(194,173,132,.38);border-radius:6px;background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:600;transition:background .18s,color .18s,border-color .18s;}
 .rail-promo:hover .rp-cta{background:var(--accent);border-color:var(--accent);color:#0b0f15;}
 
-/* Liste küçük görselleri ve boş sütun bağlantısı */
-.ic-thumb{border:1px solid rgba(255,255,255,0.08);}
-.ic-bos{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--accent);}
-
-/* Sütun başındaki kapaklı kart — "temiz kart" görünümü burada duruyor */
-.ic-kart{margin-bottom:4px;}
+/* Bölüm kartı — sütundaki her öğe bu biçimde */
 .ik-card{display:block;padding-bottom:14px;border-bottom:1px solid var(--rule);}
 .ik-cover{aspect-ratio:2.3/1;border-radius:10px;overflow:hidden;background:var(--surface3);margin:14px 0 11px;}
 .ik-cover img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .6s cubic-bezier(.2,.8,.2,1);}
@@ -650,7 +599,7 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
 @media(min-width:1400px){
   .mkt-inner,.kunye-ic,nav.pill,
   /* #takip artık ızgaranın sağ sütununda, container çocuğu değil — o seçici düştü. */
-  #hero > .container,#icerik > .container,#bolumler > .container,#sonEklenenler > .container{max-width:1300px;}
+  #hero > .container,#icerik > .container,#bolumler > .container,#altSerit > .container{max-width:1300px;}
   .mn-grid{gap:38px;}
   .lead-title{font-size:34px;}
   .ort-baslik{font-size:29px;}
@@ -666,11 +615,12 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
   /* Künye: logo ortada, menü sağda — gazete künyesi gibi */
   .kunye-ic{padding:12px 16px 8px;min-height:auto;}
   .kunye-marka .wm{font-size:21px;}
-  .kunye-sag{display:none;}          /* mobilde tek giriş: sekme şeridindeki "Terminal" */
-  /* Dokunma hedefi 32x28'di — parmakla isabet ettirmesi zor. 44x44,
-     yaygın mobil kılavuzların alt sınırı. Çubuklar ortalanıyor. */
-  .nav-burger{position:absolute;right:8px;top:50%;transform:translateY(-50%);padding:0;width:44px;height:44px;align-items:center;justify-content:center;}
-  .nav-links{top:100%;position:absolute;}
+  /* Terminal hapı ☰'nin yerinde: sağa yaslı, dikey ortalı. Şeritten
+     çıkarıldı çünkü orada 5. sırada, ekranın 67px dışında kalıyordu. */
+  .kunye-sag{right:10px;}
+  .kunye-cta{display:inline-flex;align-items:center;height:34px;padding:0 14px;font-size:12.5px;border-radius:17px;}
+  .kc-uzun{display:none;}
+  .kc-kisa{display:inline;}
 
   /* Bölüm şeridi: yatay kaydırılır, kaydırma çubuğu gizli */
   .mob-sek{display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;
@@ -697,11 +647,6 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
   .mn-lead{padding-bottom:18px;border-bottom:1px solid var(--rule);}
   .mn-rail{border-top:none;padding-top:16px;}
 
-  /* ── Liste satırları: kutu yok, ince çizgi var ── */
-  .rail-head{font-size:9.5px;letter-spacing:2px;padding-bottom:9px;}
-  .rail-row{padding:14px 0;gap:10px;align-items:flex-start;}
-  .rail-time{flex-basis:46px;font-size:9px;padding-top:4px;}
-  .rail-title{font-family:var(--font-head);font-size:17px;font-weight:600;line-height:1.3;color:var(--text);-webkit-line-clamp:3;}
   .rail-promo{margin-top:16px;}
 
   /* ── Bölümler: sütun değil, akış ── */
@@ -709,71 +654,45 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
   .ic-grid{gap:30px;}
   .ic-head{padding-bottom:9px;margin-bottom:0;border-bottom:2px solid var(--accent);}
   .ic-h{font-size:19px;}
-  .ic-kart{margin-bottom:0;}
   .ik-card{padding:14px 0 15px;border-bottom:1px solid var(--rule);}
   .ik-cover{border-radius:6px;margin:11px 0 10px;}
   .ik-title{font-family:var(--font-head);font-size:20px;font-weight:600;line-height:1.25;letter-spacing:-.01em;}
   .ik-sum{font-size:13.5px;-webkit-line-clamp:3;}
-  .ic-row{padding:14px 0;gap:12px;}
-  .ic-thumb{flex:0 0 64px;width:64px;height:64px;border-radius:4px;order:2;}
-  .ic-txt{order:1;}
-  .ic-title{font-family:var(--font-head);font-size:16.5px;font-weight:600;line-height:1.3;color:var(--text);}
-  .ic-meta{margin-bottom:5px;}
 
 }
 
 
 
 /* ── MOBİL: GÖRSEL HİYERARŞİSİ ─────────────────────────────────
-   Sorun (canlıda 375px'te ölçüldü): alt alta beş kapak — manşet
-   375x163 tam genişlik, ardından 331x144'lük dört tane daha (öne
-   çıkan tez + üç bölüm kartı). Hepsi aynı genişlik, aynı oran,
-   aynı ağırlık olduğu için hiçbiri diğerinden önemli görünmüyor;
-   sayfa "önce şunu oku" sinyali veremiyor.
+   Eski kural: telefonda TEK büyük görsel vardı (manşet), diğer bütün
+   kapaklar satırın sağında 104px'lik künye görseline iniyordu. Bu kural
+   bölüm kartlarından KALDIRILDI: sütunda 4 öğe yerine 2 kaldığı ve
+   "Son Eklenenler" listesi tamamen çıktığı için yer açıldı, kapaklar
+   tam genişlikte durabiliyor. Sayfa bu değişiklikle uzamıyor —
+   ölçüm commit mesajında.
 
-   Kural: telefonda TEK büyük görsel var — manşet, tam genişlik.
-   Diğer bütün kapaklar satırın sağında 104px'lik künye görseline
-   iner. Küçük boy da kapağın kendi oranında (2.3:1) duruyor:
-   bunlar 1920x820 tasarım kartları, 64px'lik kare kutuda contain
-   ile üstte-altta boşluk bırakıp eziliyorlardı.
+   Kural artık sayfanın tamamında aynı: her kapak tam genişlikte ve
+   2.3:1 oranında. Kapaklar 1920x820 tasarım kartları; object-fit
+   contain kalıyor ki kenarları kırpılmasın.
    Masaüstü düzeni bu bloktan etkilenmiyor. */
 @media(max-width:767px){
-  /* Tek ölçü: sayfadaki her küçük görsel bu boyda ve bu oranda */
-  .ort-kapak,.ik-cover,.ic-thumb{
-    width:104px;flex:0 0 104px;height:auto;aspect-ratio:2.3/1;
-    border-radius:5px;margin:0;background:var(--surface3);
-  }
-  .ort-kapak img,.ik-cover img,.ic-thumb img{object-fit:contain;}
-  .ic-thumb span{font-size:13px;}
-
-  /* Öne çıkan tez: kapak başlığın sağına geçiyor. Kapak yoksa
-     (ya da onerror ile gizlenirse) ikinci sütun kendiliğinden
-     kapanıyor — auto genişlik. */
+  /* Öne çıkan tez ve üçüncü başlık: kapak başlığın üstünde, tam
+     genişlikte — bölüm kartlarıyla ve manşetle aynı dil. */
   .mn-orta{border-top:none;padding-top:16px;}
-  .mn-orta > a{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:14px;align-items:start;}
-  .ort-kapak{grid-area:1/2/3/3;}
-  .ort-kick{grid-area:1/1/2/2;margin-bottom:7px;}
-  .ort-baslik{grid-area:2/1/3/2;font-size:20px;line-height:1.26;margin-bottom:0;}
-  .ort-ozet{grid-column:1/-1;margin:9px 0 0;font-size:13.5px;-webkit-line-clamp:2;}
-  .mn-orta .meta-row{grid-column:1/-1;margin-top:10px;}
+  .ort-kapak{aspect-ratio:2.3/1;border-radius:6px;margin:0 0 11px;background:var(--surface3);}
+  .ort-kapak img{object-fit:contain;}
+  .ort-kick{margin-bottom:9px;}
+  .ort-baslik{font-size:20px;line-height:1.26;margin-bottom:0;}
+  .ort-ozet{margin:9px 0 0;font-size:13.5px;-webkit-line-clamp:2;}
+  .mn-orta .meta-row{margin-top:10px;}
   .ort-l{font-family:var(--font-head);font-size:16.5px;padding:12px 0;}
 
-  /* Bölüm başı kartları (Tezler/Araştırmalar/Haberler) aynı düzende */
-  .ik-card{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:14px;align-items:start;}
-  .ik-card .meta-row{grid-area:1/1/2/2;margin-bottom:6px;}
-  .ik-cover{grid-area:1/2/3/3;}
-  .ik-title{grid-area:2/1/3/2;font-size:17px;line-height:1.28;}
-  .ik-sum{grid-column:1/-1;margin-top:8px;-webkit-line-clamp:2;}
-
-  /* Liste satırları: künye görseli artık geniş, üstten hizalansın */
-  .ic-row{align-items:flex-start;}
-  .ic-thumb{margin-top:3px;}
-
-  /* Son Eklenenler: masaüstünde kenar sütunu, mobilde 8 satır x ~81px
-     = 980px'lik bir duvara dönüşüyor ve manşet ile bölümlerin arasını
-     kesiyordu. Beş başlık yeter; hemen altındaki "Tüm haberler" zaten
-     tam listeye götürüyor. */
-  .rail-row:nth-of-type(n+6){display:none;}
+  /* Bölüm kartları (Tezler/Araştırmalar/Haberler): manşetle aynı dil —
+     tam genişlik kapak, altında başlık ve özet. */
+  .ik-card{display:block;}
+  .ik-cover{width:auto;flex:none;aspect-ratio:2.3/1;border-radius:6px;margin:11px 0 10px;}
+  .ik-title{font-size:20px;line-height:1.25;}
+  .ik-sum{-webkit-line-clamp:2;}
 }
 
 /* ══ HERO — kompakt değer teklifi ══════════════════════════════════
@@ -894,12 +813,14 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
     <a class="kunye-marka" href="/" aria-label="Barış Investing — ana sayfa">
       <span class="wm">Barış<span class="wm-i">Investing</span></span>
     </a>
+    <!-- Mobilde burada ☰ düğmesi duruyordu ve ÖLÜYDÜ: açtığı #navLinks'in
+         ebeveyni nav.pill ≤767px'te display:none, menü hiç çizilmiyordu
+         (ölçüldü: tıklandığında yükseklik 0). Yerine sitenin tek CTA'sı
+         geldi — bölüm şeridinde 5 sekme 443px istiyor, ekran 375px, yani
+         "Terminal" 67px taşıp sağda kesik kalıyordu. Artık sabit. -->
     <div class="kunye-sag">
-      <a class="kunye-cta" href="/terminal">Terminal'e Giriş</a>
+      <a class="kunye-cta" href="/terminal"><span class="kc-uzun">Terminal'e Giriş</span><span class="kc-kisa">Terminal</span></a>
     </div>
-    <button class="nav-burger" id="navBurger" aria-label="Menü">
-      <span></span><span></span><span></span>
-    </button>
   </div>
 </header>
 
@@ -920,7 +841,6 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
     <a class="ms-l" href="/tezler">Tezler</a>
     <a class="ms-l" href="/arastirmalar">Araştırmalar</a>
     <a class="ms-l" href="/haberler">Haberler</a>
-    <a class="ms-l ms-cta" href="/terminal">Terminal</a>
   </nav>
 </div>
 
@@ -987,15 +907,14 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
   </div>
 </section>
 
-<!-- ═══════ SON EKLENENLER ═══════
-     Eskiden manşetin sağ sütunuydu; üst bant üç büyük habere dönünce
-     bandın altına indi. İçerik aynı, yalnızca yerleşim yatay. -->
-<section class="sec sec-son" id="sonEklenenler">
+<!-- ═══════ YOUTUBE + TERMİNAL ŞERİDİ ═══════
+     Burada "Son Eklenenler" diye 8 satırlık bir liste vardı. Kaldırıldı:
+     mobilde 832px yer kaplıyordu (tam bir ekrandan fazla) ve içindeki her
+     başlık hemen altındaki Tezler/Araştırmalar/Haberler sütunlarında
+     kapağıyla birlikte zaten tekrar ediyordu. İki kart kaldı. -->
+<section class="sec sec-son" id="altSerit">
   <div class="container">
     <aside class="mn-rail rv">
-        <div class="rail-head">Son Eklenenler</div>
-        <div class="rail-list" id="railList"><div class="skel">YÜKLENİYOR…</div></div>
-        <a class="rail-all" href="/haberler">Tüm haberler <span class="arrow-ic"></span></a>
         <!-- YouTube: sayfanın dibinde kalıyordu, ilk ekranda görünsün.
              Şeritte kompakt kart — içeriği aşağı itmiyor. -->
         <a class="rail-yt" href="https://youtube.com/@barisinvesting" target="_blank" rel="noopener">
@@ -1029,8 +948,7 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
           <div><span class="kicker">◈ Araştırma</span><h2 class="ic-h">Yatırım Tezleri</h2></div>
           <a class="ic-all" href="/tezler">Tümü <span class="arrow-ic"></span></a>
         </div>
-        <div class="ic-kart" id="tezKart"></div>
-        <div class="ic-list" id="tezGrid"><div class="skel">YÜKLENİYOR…</div></div>
+        <div class="ic-kartlar" id="tezKart"><div class="skel">YÜKLENİYOR…</div></div>
       </div>
 
       <div class="ic-col">
@@ -1038,8 +956,7 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
           <div><span class="kicker">◈ Derinlemesine</span><h2 class="ic-h">Şirket Araştırmaları</h2></div>
           <a class="ic-all" href="/arastirmalar">Tümü <span class="arrow-ic"></span></a>
         </div>
-        <div class="ic-kart" id="arastirmaKart"></div>
-        <div class="ic-list" id="arastirmaGrid"><div class="skel">YÜKLENİYOR…</div></div>
+        <div class="ic-kartlar" id="arastirmaKart"><div class="skel">YÜKLENİYOR…</div></div>
       </div>
 
       <div class="ic-col">
@@ -1047,8 +964,7 @@ footer{background:var(--bg2);color:var(--text);margin-top:96px;padding:88px 0 0;
           <div><span class="kicker">◈ Piyasa Notları</span><h2 class="ic-h">Haberler &amp; Yorum</h2></div>
           <a class="ic-all" href="/haberler">Tümü <span class="arrow-ic"></span></a>
         </div>
-        <div class="ic-kart" id="haberKart"></div>
-        <div class="ic-list" id="haberGrid"><div class="skel">YÜKLENİYOR…</div></div>
+        <div class="ic-kartlar" id="haberKart"><div class="skel">YÜKLENİYOR…</div></div>
       </div>
     </div>
   </div>
@@ -1260,18 +1176,6 @@ const io = new IntersectionObserver(es => {
 }, { threshold: .12, rootMargin: '0px 0px -40px 0px' });
 document.querySelectorAll('.rv').forEach(el => io.observe(el));
 
-/* ── Mobil menü ── */
-const burger = document.getElementById('navBurger');
-const links = document.getElementById('navLinks');
-burger.addEventListener('click', () => {
-  burger.classList.toggle('open');
-  links.classList.toggle('open');
-});
-links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
-  burger.classList.remove('open');
-  links.classList.remove('open');
-}));
-
 /* ── Nav gizle/göster ── */
 let lastY = 0;
 const pill = document.getElementById('pillNav');
@@ -1431,32 +1335,10 @@ function metaHTML(t) {
    yer kaplıyordu; üç tür tek ekrana ancak bu ölçüyle sığıyor. */
 const kisaTarih = s => s ? new Date(s).toLocaleDateString('tr-TR', { day:'numeric', month:'short' }) : '';
 
-function icRowHTML(t, opts = {}) {
-  const hasSig = t.sinyal && sigMap[t.sinyal];
-  const sig = sigMap[t.sinyal] || sigMap.NOTR;
-  const kod = esc((t.ticker || '◈').slice(0, 4));
-  return `<a class="ic-row" href="/tez/${t.id}">
-    <div class="ic-thumb">${guncelKapak(t)
-      ? `<img src="${esc(guncelKapak(t))}" alt="" loading="lazy" onerror="this.parentNode.innerHTML='<span>${kod}</span>'">`
-      : `<span>${kod}</span>`}</div>
-    <div class="ic-txt">
-      <div class="ic-meta">
-        ${t.ticker ? `<span class="chip-ticker">${esc(t.ticker)}</span>` : ''}
-        ${(!opts.haber && hasSig) ? `<span class="chip-sig ${sig[0]}">${sig[1]}</span>` : ''}
-        ${t.guncelleme_sayisi ? `<span class="chip-upd" title="Son güncelleme: ${esc(trDate(t.son_guncelleme))}"><i></i>${t.guncelleme_sayisi}</span>` : ''}
-        <span class="chip-date">${esc(kisaTarih(t.olusturma))}</span>
-      </div>
-      <div class="ic-title">${esc(t.baslik || '')}</div>
-    </div>
-  </a>`;
-}
-
-function listeCiz(el, list, opts, bos) {
-  if (!el) return;
-  el.innerHTML = list.length
-    ? list.slice(0, 3).map(t => icRowHTML(t, opts)).join('')
-    : `<div class="skel">${bos}</div>`;
-}
+/* icRowHTML/listeCiz kaldırıldı: bölüm sütunlarında 1 büyük kapaklı kart
+   + 3 ince künye satırı vardı, aynı sütunda iki ayrı kart dili olduğu
+   için liste "ikinci sınıf içerik" gibi duruyordu. Artık her öğe
+   ikKartHTML ile aynı büyük kartta. */
 
 /* Tezin son hareketi: güncelleme varsa onun tarihi, yoksa yayın tarihi.
    ISO tarih string'leri sözlük sırasında da doğru karşılaştırılır. */
@@ -1563,17 +1445,7 @@ function ucuncuCiz(list) {
     </a>`;
 }
 
-/* SON EKLENENLER ŞERİDİ: tüm türler karışık, en yeniden eskiye */
-const TUR_AD = { tez:'TEZ', arastirma:'ARAŞTIRMA', haber:'HABER' };
-function railHTML(t) {
-  const tur = (t.kategori || 'tez');
-  return `<a class="rail-row" href="/tez/${t.id}">
-    <span class="rail-time">${esc(kisaTarih(sonHareket(t)))}</span>
-    <span class="rail-title"><span class="rail-tur ${tur}">${TUR_AD[tur] || 'TEZ'}</span>${esc(t.baslik || '')}</span>
-  </a>`;
-}
-
-/* Sütun başındaki kapaklı kart */
+/* Bölüm kartı — sütundaki her öğe bununla çiziliyor */
 function ikKartHTML(t, i) {
   return `<a class="ik-card fly" style="${flyStyle(i)}" href="/tez/${t.id}">
     ${metaHTML(t)}
@@ -1722,37 +1594,31 @@ function heroCiz(list) {
 }
 
 /* Listeyi ekrana bas — hem yerel kopya hem taze veri aynı yoldan geçer */
+/* Sütun başına kaç kart. 4'tü (1 kapaklı + 3 satır); hepsi büyük karta
+   dönünce 2'ye indirildi — aksi halde sayfa uzayıp gidiyordu. Üstteki
+   "Tümü →" bağlantısı zaten tam arşive götürüyor. */
+const BOLUM_ADET = 2;
+const BOLUM_BOS = {
+  tez:       'HENÜZ TEZ YAYINLANMADI.',
+  arastirma: 'İLK ARAŞTIRMA YAKINDA.',
+  haber:     'İLK HABER YAKINDA.',
+};
+
 function icerigiCiz(list, tazeMi) {
   const feat = document.getElementById('featTez');
-  const rail = document.getElementById('railList');
   const kartlar = { tez:'tezKart', arastirma:'arastirmaKart', haber:'haberKart' };
-  const listeler = { tez:'tezGrid', arastirma:'arastirmaGrid', haber:'haberGrid' };
 
   if (list.length) renderFeatured(list[0]);
   else if (feat) feat.innerHTML = '<div class="lead-kick"><span class="dot"></span>HENÜZ İÇERİK YOK</div><div class="lead-title">İlk içerik yakında yayınlanacak</div>';
-
-  // Üstteki üç büyük haber şeritte tekrar etmesin
-  const buyukler = new Set(ustUcId(list));
-  const kalanlar = list.filter(t => !buyukler.has(t.id));
-  if (rail) rail.innerHTML = kalanlar.length
-    ? kalanlar.slice(0, 8).map(railHTML).join('')
-    : '<div class="skel">YAKINDA</div>';
 
   let i = 1;
   for (const tur of ['tez', 'arastirma', 'haber']) {
     const grup = list.filter(t => (t.kategori || 'tez') === tur);
     const kart = document.getElementById(kartlar[tur]);
-    const liste = document.getElementById(listeler[tur]);
-    if (grup.length) {
-      if (kart) kart.innerHTML = ikKartHTML(grup[0], i++);
-      listeCiz(liste, grup.slice(1), { haber: tur === 'haber', cat: tur === 'arastirma' },
-               tur === 'tez' ? '<a class="ic-bos" href="/tezler">Tez arşivi <span class="arrow-ic"></span></a>'
-             : tur === 'arastirma' ? '<a class="ic-bos" href="/arastirmalar">Araştırma arşivi <span class="arrow-ic"></span></a>'
-             : '<a class="ic-bos" href="/haberler">Haber arşivi <span class="arrow-ic"></span></a>');
-    } else {
-      if (kart) kart.innerHTML = '';
-      listeCiz(liste, [], {}, tur === 'tez' ? 'HENÜZ TEZ YAYINLANMADI.' : tur === 'arastirma' ? 'İLK ARAŞTIRMA YAKINDA.' : 'İLK HABER YAKINDA.');
-    }
+    if (!kart) continue;
+    kart.innerHTML = grup.length
+      ? grup.slice(0, BOLUM_ADET).map(t => ikKartHTML(t, i++)).join('')
+      : `<div class="skel">${BOLUM_BOS[tur]}</div>`;
   }
   ortaCiz(list);
   ucuncuCiz(list);
@@ -1764,8 +1630,7 @@ function icerigiCiz(list, tazeMi) {
 
 async function loadContent() {
   const feat = document.getElementById('featTez');
-  const rail = document.getElementById('railList');
-  const listeler = { tez:'tezGrid', arastirma:'arastirmaGrid', haber:'haberGrid' };
+  const kartlar = { tez:'tezKart', arastirma:'arastirmaKart', haber:'haberKart' };
 
   // 1) Yereldeki kopya varsa hemen çiz — "yükleniyor" hiç görünmesin
   const yerel = icerikYerelOku();
@@ -1781,8 +1646,7 @@ async function loadContent() {
     if (yerel) return;   // taze gelmediyse yerel kopya ekranda kalsın
     const hata = '<div class="skel" style="color:var(--danger)">YÜKLENEMEDİ.</div>';
     if (feat) feat.innerHTML = '<div class="lead-title">İçerik yüklenemedi</div><div class="lead-sum">Tezlere <a href="/tezler" style="color:var(--accent)">buradan</a> ulaşabilirsin.</div>';
-    if (rail) rail.innerHTML = hata;
-    Object.values(listeler).forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = hata; });
+    Object.values(kartlar).forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = hata; });
   }
 }
 
