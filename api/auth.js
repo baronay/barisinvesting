@@ -455,8 +455,13 @@ export default async function handler(req, res) {
         }).catch(() => []),
       ]);
 
+      /* Huniden de admin çıkarılıyor. olaylar tablosunda e-posta
+         tutulmuyor (bilerek), o yüzden yeni olaylar zaten yazılmadan
+         eleniyor; burada elenebilen abonelik kayıtları. */
+      const yoneticiler = await adminMailleri();
       const oListe = Array.isArray(olaylar) ? olaylar : [];
-      const aListe = Array.isArray(abonelikler) ? abonelikler : [];
+      const aListe = (Array.isArray(abonelikler) ? abonelikler : [])
+        .filter(a => !(a.email && yoneticiler.has(norm(a.email))));
       const tListe = Array.isArray(tezler) ? tezler : [];
 
       const bos = () => ({ goruntuleme: 0, kaydirma75: 0, kutu_gorundu: 0, abone_oldu: 0 });
@@ -769,7 +774,13 @@ export default async function handler(req, res) {
         'order': 'olusturma.desc',
         'limit': '2000',
       });
-      const liste = Array.isArray(kayitlar) ? kayitlar : [];
+      /* ADMIN KENDİ VERİSİNİ SAYMASIN. Kendi test analizlerin panelde
+         gerçek kullanıcı gibi görünüyordu (AVGO, MSFT, GARAN, RGYAS
+         satırları bizim test koşularımızdı). Kayıtlar SİLİNMİYOR — maliyet
+         takibi için duruyorlar — yalnızca bu özetten çıkarılıyorlar. */
+      const yoneticiler = await adminMailleri();
+      const liste = (Array.isArray(kayitlar) ? kayitlar : [])
+        .filter(k => !(k.email && yoneticiler.has(norm(k.email))));
 
       const hisseler = {};
       const gunler = {};
