@@ -119,7 +119,7 @@ async function loadAdminIcerik() {
     const t = d.toplam || {};
     if (ozet) {
       ozet.textContent = `${d.pencereGun} günde ${t.goruntuleme || 0} görüntülenme · `
-        + `${t.kaydirma75 || 0} yazıyı %75 okudu · ${t.kutu_gorundu || 0} kutuyu gördü · `
+        + `${t.kaydirma75 || 0} yazıyı %75 okudu · ${t.kutu_gorundu || 0} kutu gösterimi · `
         + `${t.abone || 0} abonelik (${t.tekilAbone || 0} tekil kişi)`
         + (d.uyari ? ' · ⚠ ' + d.uyari : '');
     }
@@ -149,7 +149,10 @@ async function loadAdminIcerik() {
       <td style="color:#8a93a3">${katAd[s.kategori] || '—'}</td>
       <td style="font-weight:600">${s.goruntuleme}</td>
       <td style="color:#8a93a3">${s.kaydirma75} <span style="font-size:10px;opacity:.7">${yuz(s.okuma_orani)}</span></td>
-      <td style="color:#8a93a3">${s.kutu_gorundu} <span style="font-size:10px;opacity:.7">${yuz(s.kutu_orani)}</span></td>
+      <!-- Yüzde YOK: bir sayfa görüntülemesi üç kutu gösterimi üretebiliyor
+           (yazı içi + yazı sonu + alt bar), o yüzden görüntülemeye bölünce
+           %300 gibi anlamsız oranlar çıkıyordu. Ham sayı doğru olan. -->
+      <td style="color:#8a93a3">${s.kutu_gorundu}</td>
       <td style="font-weight:600;color:#c2ad84">${s.abone}</td>
       <td style="color:${(s.donusum || 0) >= 2 ? '#4ade80' : '#8a93a3'}">${yuz(s.donusum)}</td>
     </tr>
