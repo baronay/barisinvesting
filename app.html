@@ -2560,11 +2560,24 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 
 /* Yazı İÇİ kutu: reklam gibi değil, içeriğin parçası gibi dursun.
    Kart çerçevesi yerine ince amber sol kenarlık + hafif koyu zemin,
-   yazı genişliğinde, blok elemanlar arasında. */
+   blok elemanlar arasında. Artık yazıdaki TEK kutu bu.
+
+   DAR DURUYOR (max-width) ve altında "Yazı devam ediyor" satırı var:
+   ikisi birlikte okura bunun bir KESİNTİ olduğunu, yazının bittiğini
+   değil, söylüyor. Eskiden kutu metin sütunuyla aynı genişlikteydi ve
+   okur onu kapanış sanıp sayfayı bırakabiliyordu. */
 .tzo-abone.ic{margin:30px 0;padding:0;border-top:none;}
-.tzo-abone.ic .tzo-abone-kart{border:none;border-left:2px solid var(--accent);border-radius:0 10px 10px 0;background:rgba(194,173,132,.05);padding:18px 20px 16px;}
-.tzo-abone.ic .tzo-abone-h{font-size:19px;margin-bottom:7px;}
-.tzo-abone.ic .tzo-abone-p{font-size:13px;margin-bottom:13px;}
+.tzo-abone.ic .tzo-abone-kart{border:none;border-left:2px solid var(--accent);border-radius:0 10px 10px 0;background:rgba(194,173,132,.05);padding:16px 20px 15px;max-width:38rem;}
+.tzo-abone.ic .tzo-abone-h{font-size:18px;margin-bottom:6px;}
+.tzo-abone.ic .tzo-abone-p{font-size:13px;margin-bottom:12px;}
+
+/* "Yazı devam ediyor": mono mikro etiket + sağa akan ince çizgi.
+   Çizgi gözü aşağı, metnin devamına taşıyor. */
+.tzo-abone-dev{display:flex;align-items:center;gap:10px;margin:9px 0 0 2px;
+  font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:1.9px;
+  text-transform:uppercase;color:var(--cream2);opacity:.45;}
+.tzo-abone-dev::after{content:"";flex:1;height:1px;background:currentColor;opacity:.4;}
+.tzo-abone.ac .tzo-abone-dev{color:inherit;opacity:.4;}
 
 /* Alt bar: %75'te alttan kayarak açılır, içeriğin üstünü örtmesin diye
    gövdeye alt boşluk ekleniyor. */
@@ -2584,12 +2597,11 @@ body:not(.route-terminal) #loadingOv{display:none !important;}
 body.tzo-bar-acik #tezOkuRoot{padding-bottom:96px;}
 
 @media(max-width:640px){
-  .tzo-abone-kart{padding:20px 18px 18px;border-radius:12px;}
-  .tzo-abone-h{font-size:19px;}
-  .tzo-abone-p{font-size:13px;}
-  .tzo-abone-btn{width:100%;}
-  .tzo-abone.ic .tzo-abone-kart{padding:16px 16px 14px;}
-  .tzo-abone.ic .tzo-abone-h{font-size:17px;}
+  /* MOBİL KUTU ÖLÇÜLERİ BURADA DEĞİL. Yazı gövdeleri kendi <style>'ıyla
+     geliyor ve kutunun içine sızıyor; o yüzden aşağıda !important'lı bir
+     zırh katmanı var ve buradaki kuralları eziyor. Mobil ölçüler tek
+     yerde: "MOBİLDE KÜÇÜK KUTU" bloğu. */
+  .tzo-abone-kart{padding:15px 14px 13px;border-radius:10px;}
   /* Bar mobilde ince kalsın: metin bir satır, alan ve buton altında */
   .tzo-bar-ic{padding:8px 12px 10px;gap:7px;}
   .tzo-bar-t{flex:1 1 100%;font-size:12px;order:1;}
@@ -2675,10 +2687,41 @@ body.tzo-bar-acik #tezOkuRoot{padding-bottom:96px;}
 .tzo-abone.ac .tzo-abone-in{background:rgba(255,255,255,.7)!important;border:1px solid rgba(0,0,0,.18)!important;color:inherit!important;}
 .tzo-abone.ac .tzo-abone-in::placeholder{color:inherit!important;opacity:.45!important;}
 
+/* "Yazı devam ediyor" etiketi de zırhlanıyor: yazının kendi <style>'ı
+   div'lere kenarlık/zemin verdiğinde bu satır kutu gibi görünüyordu. */
+.tzo-abone-dev{display:flex!important;align-items:center!important;gap:10px!important;
+  margin:9px 0 0 2px!important;font-family:var(--font-mono)!important;font-size:9px!important;
+  font-weight:600!important;letter-spacing:1.9px!important;text-transform:uppercase!important;
+  color:var(--cream2)!important;opacity:.45!important;background:none!important;border:none!important;
+  padding:0!important;}
+.tzo-abone.ac .tzo-abone-dev{color:inherit!important;opacity:.4!important;}
+
+/* ── MOBİLDE KÜÇÜK KUTU ──────────────────────────────────────────
+   Kutu telefonda ekranın %55'ini kaplıyordu; yazının ortasına giren bir
+   kesinti için fazlaydı. Ölçüm (375x812, GARAN): 445px → 300px, yani
+   ekranın %55'i → %37'si.
+   Blok !important taşıyor çünkü yukarıdaki zırh katmanını ancak böyle
+   aşabiliyor. MOBİL KUTU ÖLÇÜLERİ TEK YERDE, BURADA. */
 @media(max-width:640px){
-  .tzo-abone.ic .tzo-abone-kart{padding:16px 16px 14px!important;}
-  .tzo-abone.ic .tzo-abone-h{font-size:17px!important;}
-  .tzo-abone .tzo-abone-btn{width:100%!important;}
+  .tzo-abone.ic .tzo-abone-kart{padding:13px 14px 12px!important;max-width:none!important;}
+  .tzo-abone .tzo-abone-kick{font-size:8.5px!important;margin-bottom:7px!important;}
+  .tzo-abone.ic .tzo-abone-h{font-size:15.5px!important;line-height:1.28!important;margin:0 0 5px!important;}
+  .tzo-abone.son .tzo-abone-h{font-size:17px!important;line-height:1.28!important;margin:0 0 5px!important;}
+  .tzo-abone .tzo-abone-p{font-size:12.5px!important;line-height:1.5!important;margin:0 0 10px!important;
+    display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
+  .tzo-abone .tzo-abone-kn{font-size:11.5px!important;margin:-4px 0 10px!important;
+    display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
+  /* Alan ve buton YAN YANA. Buton width:100% iken kutu bir satır daha
+     uzuyordu; telefonda en pahalı satır oydu. */
+  .tzo-abone .tzo-abone-form{flex-wrap:nowrap!important;gap:7px!important;}
+  .tzo-abone .tzo-abone-in{flex:1 1 auto!important;padding:10px 12px!important;font-size:13.5px!important;}
+  .tzo-abone .tzo-abone-btn{flex:0 0 auto!important;width:auto!important;padding:10px 14px!important;
+    font-size:13px!important;white-space:nowrap!important;}
+  /* Boş durum mesajı yer kaplamasın: min-height sabit 16px tutuyordu. */
+  .tzo-abone .tzo-abone-msg{min-height:0!important;margin-top:7px!important;font-size:11.5px!important;}
+  .tzo-abone .tzo-abone-msg:empty{display:none!important;}
+  .tzo-abone .tzo-abone-not{font-size:8.5px!important;margin:6px 0 0!important;}
+  .tzo-abone-dev{font-size:8.5px!important;letter-spacing:1.6px!important;margin-top:7px!important;}
 }
 .tzo-note{margin-top:34px;padding:12px 16px;border:1px solid var(--portal-border);border-left:3px solid var(--warn);background:rgba(0,0,0,0.2);border-radius:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.3px;line-height:1.7;color:var(--cream2);opacity:.8;}
 .tzo-ctas{margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
@@ -7838,14 +7881,9 @@ function garpAnalizAc(ticker) {
 
   /* ── KUTU ─────────────────────────────────────────────────────────── */
 
-  /* İKİ KUTU AYNI ŞEYİ YAZMASIN. Yazı içi ve yazı sonu kutuları birebir
-     aynı metni taşıyınca okur bunu tekrar sanıyordu (#38'de ölçüldü:
-     %58 ve %96'da iki özdeş kutu).
-
-     Yazı içi kutu artık SIRADAKİ KONTROL NOKTASINI öne çıkarıyor — yani
-     yazının devamına dair somut bir söz. Yazı sonu kutusu genel teklif
-     olarak kalıyor. Kontrol noktası yoksa yazı içi kutu da genel metne
-     düşüyor ve ikisi yine aynı olacağı için YAZI İÇİ KUTU ÇİZİLMİYOR. */
+  /* Yazıda tek kutu var. Kontrol noktası doluysa kutu onu öne çıkarıyor
+     — yazının devamına dair somut bir söz, genel "abone ol"dan çok daha
+     güçlü. Boşsa tezin takip teklifine, o da yoksa bültene düşüyor. */
   function aboneMetni(tez, kat, yerlesim) {
     const tezce = kat === 'tez' && !!tez.ticker;
     const tkr = tezce ? String(tez.ticker).toUpperCase() : '';
@@ -7905,6 +7943,8 @@ function garpAnalizAc(ticker) {
           <div class="tzo-abone-msg" role="status" aria-live="polite"></div>
           <div class="tzo-abone-not">Sadece e-posta · Terminal'de ücretsiz analiz kredisi kazanırsın</div>
         </div>
+        ${yerlesim === 'inline'
+          ? '<div class="tzo-abone-dev">Yazı devam ediyor</div>' : ''}
       </div>`;
   }
 
@@ -8104,17 +8144,18 @@ function garpAnalizAc(ticker) {
         const kelime = kelimeSay(g.el);
         const kap = akisKabi(g.el);
         const cocuklar = kap ? blokCocuklar(kap) : [];
-        let kondu = false;
 
-        /* Yazı içi kutu yalnızca SÖYLEYECEK AYRI BİR ŞEYİ varsa çiziliyor:
-           kontrol noktası dolu ya da tezin kendi takip teklifi var. Yoksa
-           sondaki kutuyla birebir aynı metni taşıyacağı için atlanıyor. */
-        /* YALNIZCA kontrol noktası varsa. Ticker'lı bir tezde kontrol
-           noktası boşsa yazı içi kutu sondakiyle yine birebir aynı metni
-           taşıyacaktı — tekrarın asıl sebebi buydu. Kontrol noktası yoksa
-           okur yine iki temas noktası görüyor: yazı sonu kutusu ve alt bar. */
-        const icKutuGerekli = !!String(tez.kontrol_noktasi || '').trim();
-        if (icKutuGerekli && kelime >= ABONE_KISA_ESIK && kap && cocuklar.length) {
+        /* YAZI BAŞINA TEK KUTU, YAZININ İÇİNDE.
+           Yazı sonu kutusu kaldırıldı. 10-27 Ekim ölçümü:
+             GARAN — 13 açılış, kutuyu gören 1 kişi. Sayfa 12 ekran,
+                     tek kutu %91'de duruyordu, kimse oraya varmıyordu.
+             RGYAS — 27 açılış, kutuyu gören 25 kişi. Farkı yaratan şey
+                     yazı içi kutuydu; sitenin tek aboneliği de oradan
+                     geldi (22 Ekim, yerlesim='inline').
+           Kontrol noktası şartı da kalktı: ikinci bir kutu kalmadığı
+           için iki kutunun aynı metni taşıma riski ortadan kalktı. */
+        let kondu = false;
+        if (kelime >= ABONE_KISA_ESIK && kap && cocuklar.length) {
           const idx = yerlestirmeNoktasi(cocuklar);
           if (idx > 0 && idx < cocuklar.length) {
             const d = document.createElement('div');
@@ -8129,17 +8170,20 @@ function garpAnalizAc(ticker) {
           }
         }
 
-        // Kapanış paragrafının altı, kaynakçanın üstü
-        const d2 = document.createElement('div');
-        d2.innerHTML = aboneKutusuHTML(tez, kat, 'end');
-        const sonKutu = d2.firstElementChild;
-        const kaynakca = kaynakcaBlogu(g.el);
-        if (kaynakca && kaynakca.parentElement) kaynakca.parentElement.insertBefore(sonKutu, kaynakca);
-        else (kap || g.el).appendChild(sonKutu);
-        temaSinifiVer(sonKutu);
-        aboneKutusuBagla(sonKutu, tez, kat, 'end');
-        kutuyuIzle(sonKutu, tezId, 'end', null);
-        void kondu;
+        /* Yazı içine konamadıysa (kısa gövde ya da blok yapısı uygun
+           değil) kutu tamamen kaybolmasın: kaynakçanın üstüne düşsün.
+           Yedek yol — asıl yerleşim yukarısı. */
+        if (!kondu) {
+          const d2 = document.createElement('div');
+          d2.innerHTML = aboneKutusuHTML(tez, kat, 'end');
+          const sonKutu = d2.firstElementChild;
+          const kaynakca = kaynakcaBlogu(g.el);
+          if (kaynakca && kaynakca.parentElement) kaynakca.parentElement.insertBefore(sonKutu, kaynakca);
+          else (kap || g.el).appendChild(sonKutu);
+          temaSinifiVer(sonKutu);
+          aboneKutusuBagla(sonKutu, tez, kat, 'end');
+          kutuyuIzle(sonKutu, tezId, 'end', null);
+        }
       });
     }
 
