@@ -13,13 +13,39 @@
      ayrıştırmayla paralel akıyor. Hata yutuluyor — getTezler() gerekirse
      kendi isteğini atar, yani bu satır bozulsa da sayfa çalışır. -->
 <script>try{window.__icerikP=fetch('/api/tez-admin?pub=1').then(r=>r.ok?r.json():null).catch(()=>null);}catch(_){}</script>
-<!-- Chart.js yalnızca portföy grafiklerinde kullanılıyor (2 yer);
-     başlıkta render'ı bloklamasına gerek yok. -->
-<!-- Switzer: ana sayfanın gövde fontu. Terminal ve portal sayfaları Inter
-     kullanıyordu, yani site iki ayrı fontla çiziliyordu. -->
+<!-- KAPAK GÖRSELİ URL'İ — global, çünkü sayfadaki birden çok script
+     bloğu kapak çiziyor (tez ızgarası, okuma sayfası, portal listeleri).
+     Ölçüm (26 Kasım 2026): 19 kapak PNG olarak 9,7 MB, ortalama 508 KB.
+     Supabase'in dönüştürücüsünden 800px WebP geçince %78-99 küçülüyor —
+     787 KB'lık Burry kapağı 11 KB'a, 509 KB'lık UNH 14 KB'a indi.
+     /g/ öneki vercel.json'da render/image ucuna yönleniyor; doğrudan
+     Supabase URL'i kullanmıyoruz çünkü Supabase nesneleri
+     "Cache-Control: private, no-cache" ile geliyor, tarayıcı her
+     ziyarette on kapağı yeniden doğruluyordu. Uzun ömürlü başlığı
+     kendi öneğimiz üzerinden biz veriyoruz.
+     Supabase dışı URL'lere dokunulmuyor. -->
+<script>
+window.gorselUrl = function (u, genislik) {
+  if (!u || typeof u !== 'string') return u || '';
+  var onek = '/storage/v1/object/public/';
+  var i = u.indexOf(onek);
+  if (i < 0) return u;
+  var yol = u.slice(i + onek.length).split('?')[0];
+  return '/g/' + yol + '?width=' + (genislik || 800) + '&quality=75&format=webp';
+};
+</script>
+<!-- FONTLAR BURADA, <style> İÇİNDE @import İLE DEĞİL.
+     Google fontları aşağıdaki <style> bloğunun ilk satırında @import ile
+     çağrılıyordu. Tarayıcının ön-yükleme tarayıcısı @import'u göremez:
+     önce 239 KB'lık CSS ayrıştırılıyor, SONRA font isteği sıraya
+     giriyordu — seri bir zincir. Artık ikisi paralel akıyor.
+     Switzer gövde, Playfair başlık, JetBrains Mono künye/rakam.
+     Inter duruyor: .verdict-box onu doğrudan kullanıyor. -->
 <link rel="preconnect" href="https://api.fontshare.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script defer src="/_vercel/insights/script.js"></script>
 <!-- ══ UMAMI ANALYTICS — Cookieless, GDPR/KVKK uyumlu ══ -->
 <script
@@ -30,7 +56,6 @@
   data-do-not-track="true"
   data-cache="true"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
 :root{
   --font-head:'Playfair Display',Georgia,serif;
@@ -6304,7 +6329,7 @@ async function renderTezler() {
 
       return `
       <div class="tez-card" onclick="openTezSupabase(${tez.id})">
-        ${tezKapak ? `<img class="tez-cover" src="${tezKapak}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+        ${tezKapak ? `<img class="tez-cover" src="${gorselUrl(tezKapak, 700)}" alt="" width="700" height="304" loading="lazy" decoding="async" onerror="this.style.display='none'">` : ''}
         <div class="tez-card-header">
           <div class="tez-card-meta">
             ${tez.ticker ? `<span class="tez-ticker">${tez.ticker}</span>` : ''}
@@ -6589,7 +6614,13 @@ setTimeout(gecmisiGonder, 2500);   // açılışı yavaşlatmasın, bir kez çal
      __terminalJS'i çağırıyor. -->
 <script>
 (function(){
-  var D = ['/admin-panel.js','/analyze-features.js','/score-gauge.js','/arama.js',
+  /* Chart.js (200 KB) ARTIK BU LİSTEDE, <head>'de değil. Yalnızca portföy
+     grafiklerinde kullanılıyor (ptPie, ptScore — kodda tek yer), ama
+     başlıkta durduğu için tez okuyan herkes indiriyordu. Listenin
+     BAŞINDA duruyor: dosyalar sırayla yükleniyor, portföy kodu
+     çalışmadan önce window.Chart hazır olmalı. */
+  var D = ['https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js',
+           '/admin-panel.js','/analyze-features.js','/score-gauge.js','/arama.js',
            '/heatmap.js','/market-data.js','/profil.js','/dashboard.js'];
   var basladi = false;
   window.__terminalJS = function(){
@@ -8368,7 +8399,7 @@ function garpAnalizAc(ticker) {
       document.title = tez.baslik + ' — Barış Investing';
       art.innerHTML = `
         <span class="tzo-back" data-route="${backRoute}">← ${backLabel}</span>
-        ${tzoKapak ? `<div class="tzo-cover"><img src="${esc(tzoKapak)}" alt="" onerror="this.parentElement.style.display='none'"></div>` : ''}
+        ${tzoKapak ? `<div class="tzo-cover"><img src="${esc(gorselUrl(tzoKapak, 1200))}" alt="" width="1200" height="522" fetchpriority="high" decoding="async" onerror="this.parentElement.style.display='none'"></div>` : ''}
         <div class="tzo-meta">
           ${tez.ticker ? `<span class="ptz-ticker">${esc(tez.ticker)}</span>` : ''}
           ${kat==='arastirma' ? '<span class="ptz-cat">Araştırma</span>' : ''}
@@ -8489,6 +8520,7 @@ function garpAnalizAc(ticker) {
   }
   function guncelMi(t){ return !!(t.son_guncelleme && t.son_guncelleme > t.olusturma); }
   // Güncel kapak: son güncellemenin görseli varsa o, yoksa ilk kapak (ana sayfayla aynı kural)
+
   function guncelKapak(t){ const g = guncelMi(t) && t.son_guncelleme_bilgi; return (g && g.gorsel) || t.kapak_gorseli || ''; }
   function hareketSirala(list){
     return list.slice().sort((a,b)=> String(sonHareket(b)).localeCompare(String(sonHareket(a))));
@@ -8550,7 +8582,7 @@ function garpAnalizAc(ticker) {
   function tezCardHTML(t){
     const sig = sigMap[t.sinyal] || sigMap.NOTR;
     return `<div class="pt-tez-card" onclick="window.__openTez(${t.id})">
-      ${guncelKapak(t) ? `<div class="ptz-cover"><img src="${esc(guncelKapak(t))}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+      ${guncelKapak(t) ? `<div class="ptz-cover"><img src="${esc(gorselUrl(guncelKapak(t), 700))}" alt="" width="700" height="304" loading="lazy" decoding="async" onerror="this.parentNode.style.display='none'"></div>` : ''}
       <div class="ptz-body">
         <div class="ptz-meta">
           ${t.ticker ? `<span class="ptz-ticker">${esc(t.ticker)}</span>` : ''}
@@ -8571,7 +8603,7 @@ function garpAnalizAc(ticker) {
     const hasSig = t.sinyal && sigMap[t.sinyal];
     const sig = sigMap[t.sinyal] || sigMap.NOTR;
     return `<div class="pt-tez-card" onclick="window.__openTez(${t.id})">
-      ${guncelKapak(t) ? `<div class="ptz-cover"><img src="${esc(guncelKapak(t))}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+      ${guncelKapak(t) ? `<div class="ptz-cover"><img src="${esc(gorselUrl(guncelKapak(t), 700))}" alt="" width="700" height="304" loading="lazy" decoding="async" onerror="this.parentNode.style.display='none'"></div>` : ''}
       <div class="ptz-body">
         <div class="ptz-meta">
           ${t.ticker ? `<span class="ptz-ticker">${esc(t.ticker)}</span>` : ''}
@@ -8642,7 +8674,7 @@ function garpAnalizAc(ticker) {
      değil, bir not. */
   function haberCardHTML(t){
     return `<div class="pt-tez-card haber" onclick="window.__openTez(${t.id})">
-      ${guncelKapak(t) ? `<div class="ptz-cover"><img src="${esc(guncelKapak(t))}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+      ${guncelKapak(t) ? `<div class="ptz-cover"><img src="${esc(gorselUrl(guncelKapak(t), 700))}" alt="" width="700" height="304" loading="lazy" decoding="async" onerror="this.parentNode.style.display='none'"></div>` : ''}
       <div class="ptz-body">
         <div class="ptz-meta">
           ${t.ticker ? `<span class="ptz-ticker">${esc(t.ticker)}</span>` : ''}
@@ -8680,7 +8712,7 @@ function garpAnalizAc(ticker) {
     const baslik = (g && g.baslik) ? g.baslik : (t.baslik || '');
     host.classList.toggle('guncel', !!g);
     host.innerHTML =
-      (kapak ? `<div class="feat-cover"><img src="${esc(kapak)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : '') +
+      (kapak ? `<div class="feat-cover"><img src="${esc(gorselUrl(kapak, 900))}" alt="" width="900" height="391" loading="lazy" decoding="async" onerror="this.parentNode.style.display='none'"></div>` : '') +
       '<div class="feat-inner">' +
         '<div class="feat-kicker"><span class="dot"></span>' + (g ? 'GÜNCELLEME YAYINDA' : 'HAFTANIN SEÇİMİ') +
           (g ? `<span class="feat-updtag">${esc(trDate(t.son_guncelleme))}</span>` : '') +

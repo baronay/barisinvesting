@@ -468,6 +468,13 @@ export default async function handler(req, res) {
       const path = `${stamp}-${slug}.${ext}`;
 
       // Supabase Storage'a yükle
+      /* cache-control AÇIKÇA VERİLİYOR. Verilmediğinde Supabase nesneyi
+         "private, no-cache" ile servis ediyor ve tarayıcı kapağı her
+         ziyarette yeniden doğruluyor — ana sayfada on kapak, on fazladan
+         gidiş-geliş. Dosya adı zaman damgalı olduğu için bir yıl güvenli:
+         görsel değişirse yeni ad üretiliyor.
+         Okur tarafı zaten /g/ önekinden geçiyor (bkz. gorselUrl), bu satır
+         doğrudan Supabase URL'ine düşen yerler için ikinci savunma. */
       const upUrl = `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${path}`;
       const upRes = await fetch(upUrl, {
         method: 'POST',
@@ -475,6 +482,7 @@ export default async function handler(req, res) {
           apikey: SUPABASE_KEY,
           Authorization: `Bearer ${SUPABASE_KEY}`,
           'Content-Type': mime,
+          'cache-control': 'public, max-age=31536000, immutable',
           'x-upsert': 'true',
         },
         body: buf,

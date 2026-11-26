@@ -1350,6 +1350,28 @@ function guncelMi(t) { return !!(t.son_guncelleme && t.son_guncelleme > t.olustu
 /* Tezin güncel kapağı: son güncellemenin görseli varsa o, yoksa ilk kapak.
    Manşet ve orta sütun bunu zaten yapıyordu; bölüm kartları ve liste
    satırları ilk kapakta kalıyordu (NOW, 10 Eylül). */
+/* ── KAPAK GÖRSELLERİ ──────────────────────────────────────────────
+   Ölçüm (26 Kasım 2026): 19 kapak PNG olarak toplam 9,7 MB, ortalama
+   508 KB; ana sayfa bunlardan 10 tanesini çekiyordu. Aynı görseller
+   Supabase'in dönüştürücüsünden 800px WebP olarak geçince %78-99
+   küçülüyor — 787 KB'lık Burry kapağı 11 KB'a, 509 KB'lık UNH 14 KB'a.
+
+   Neden doğrudan Supabase URL'i değil de /g/ öneki: Supabase nesneleri
+   "Cache-Control: private, no-cache" ile servis ediyor, yani tarayıcı
+   her ziyarette on kapağı birden yeniden doğruluyordu. /g/ vercel.json
+   üzerinden render/image ucuna yönleniyor ve uzun ömürlü başlığı biz
+   veriyoruz.
+
+   Supabase dışından gelen URL'lere dokunulmuyor. */
+function gorselUrl(u, genislik) {
+  if (!u || typeof u !== 'string') return u || '';
+  const onek = '/storage/v1/object/public/';
+  const i = u.indexOf(onek);
+  if (i < 0) return u;
+  const yol = u.slice(i + onek.length).split('?')[0];
+  return '/g/' + yol + '?width=' + (genislik || 800) + '&quality=75&format=webp';
+}
+
 function guncelKapak(t) {
   const g = guncelMi(t) && t.son_guncelleme_bilgi;
   return (g && g.gorsel) || t.kapak_gorseli || '';
@@ -1378,7 +1400,7 @@ function renderFeatured(t) {
     : '';
 
   host.innerHTML = `<a class="lead-card fly" style="${flyStyle(0)}" href="${href}">
-    ${kapak ? `<div class="lead-cover"><img src="${esc(kapak)}" alt="" onerror="this.parentNode.style.display='none'"></div>` : ''}
+    ${kapak ? `<div class="lead-cover"><img src="${esc(gorselUrl(kapak, 1200))}" alt="" width="1200" height="522" fetchpriority="high" decoding="async" onerror="this.parentNode.style.display='none'"></div>` : ''}
     <div class="lead-kick"><span class="dot"></span>${kick}${t.ticker ? ' · ' + esc(t.ticker) : ''}</div>
     <div class="lead-title">${esc(baslik)}</div>
     ${ust ? `<div class="feat-parent">${ust}</div>` : ''}
@@ -1403,7 +1425,7 @@ function ortaCiz(list) {
   const g = guncelMi(bas) ? (bas.son_guncelleme_bilgi || {}) : null;
   const kapak = (g && g.gorsel) ? g.gorsel : bas.kapak_gorseli;
   el.innerHTML = `<a href="/tez/${bas.id}${g ? '#tezSeyri' : ''}">
-      ${kapak ? `<div class="ort-kapak"><img src="${esc(kapak)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+      ${kapak ? `<div class="ort-kapak"><img src="${esc(gorselUrl(kapak, 700))}" alt="" width="700" height="304" loading="lazy" decoding="async" onerror="this.parentNode.style.display='none'"></div>` : ''}
       <div class="ort-kick"><span class="dot"></span>${g ? 'GÜNCELLEME YAYINDA' : 'AÇIK TEZ'}${bas.ticker ? ' · ' + esc(bas.ticker) : ''}</div>
       <div class="ort-baslik">${esc((g && g.baslik) || bas.baslik || '')}</div>
       ${bas.ozet_fark || bas.ozet ? `<div class="ort-ozet">${esc(bas.ozet_fark || bas.ozet)}</div>` : ''}
@@ -1437,7 +1459,7 @@ function ucuncuCiz(list) {
              : tur === 'haber' ? 'SON HABER'
              : tur === 'arastirma' ? 'YENİ ARAŞTIRMA' : 'AÇIK TEZ';
   el.innerHTML = `<a href="/tez/${t.id}${g ? '#tezSeyri' : ''}">
-      ${kapak ? `<div class="ort-kapak"><img src="${esc(kapak)}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+      ${kapak ? `<div class="ort-kapak"><img src="${esc(gorselUrl(kapak, 700))}" alt="" width="700" height="304" loading="lazy" decoding="async" onerror="this.parentNode.style.display='none'"></div>` : ''}
       <div class="ort-kick"><span class="dot"></span>${kick}${t.ticker ? ' · ' + esc(t.ticker) : ''}</div>
       <div class="ort-baslik">${esc((g && g.baslik) || t.baslik || '')}</div>
       ${t.ozet_fark || t.ozet ? `<div class="ort-ozet">${esc(t.ozet_fark || t.ozet)}</div>` : ''}
@@ -1449,7 +1471,7 @@ function ucuncuCiz(list) {
 function ikKartHTML(t, i) {
   return `<a class="ik-card fly" style="${flyStyle(i)}" href="/tez/${t.id}">
     ${metaHTML(t)}
-    ${guncelKapak(t) ? `<div class="ik-cover"><img src="${esc(guncelKapak(t))}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>` : ''}
+    ${guncelKapak(t) ? `<div class="ik-cover"><img src="${esc(gorselUrl(guncelKapak(t), 700))}" alt="" width="700" height="304" loading="lazy" decoding="async" onerror="this.parentNode.style.display='none'"></div>` : ''}
     <div class="ik-title">${esc(t.baslik || '')}</div>
     ${t.ozet ? `<div class="ik-sum">${esc(t.ozet)}</div>` : ''}
   </a>`;
