@@ -7595,11 +7595,32 @@ function garpAnalizAc(ticker) {
   /* Akordeon satırı: kapalıyken tek satır başlık, açıkken tam içerik.
      Güncellemeler tez boyunda olabildiği için varsayılan olarak
      yalnızca en yenisi açık gelir. */
+  /* Yazı gövdesindeki görselleri de dönüştürücüden geçir.
+     Gömülü base64'ler Storage'a taşındı (api/tez-admin → gomuluGorselleriTasi)
+     ama geriye kalan ham Supabase URL'i hâlâ PNG ve "no-cache" ile geliyor.
+     Aynı /g/ yolundan geçirip WebP + uzun önbellek kazanıyoruz; üstüne
+     gövde görselleri ilk ekranda olmadığı için lazy işaretleniyor.
+     Supabase dışı URL'lere gorselUrl zaten dokunmuyor. */
+  function govdeGorselleri(html) {
+    if (!html || html.indexOf('<img') < 0) return html;
+    return html.replace(/<img\b[^>]*>/gi, function (etiket) {
+      const m = /\ssrc\s*=\s*["']([^"']+)["']/i.exec(etiket);
+      if (!m) return etiket;
+      const yeni = gorselUrl(m[1], 1200);
+      if (yeni === m[1]) return etiket;
+      let cikti = etiket.replace(m[0], ' src="' + yeni + '"');
+      if (!/\sloading\s*=/i.test(cikti)) {
+        cikti = cikti.replace(/<img\b/i, '<img loading="lazy" decoding="async"');
+      }
+      return cikti;
+    });
+  }
+
   function guncAccHTML(g, enYeni, i){
     const tur = turMap[g.tur] || turMap.not;
     const sg  = g.sinyal && sigMap[g.sinyal] ? sigMap[g.sinyal] : null;
     let body = g.icerik || '';
-    if (body.includes('<')) body = body.replace(/\n\n/g,'').replace(/\n/g,'');
+    if (body.includes('<')) body = govdeGorselleri(body.replace(/\n\n/g,'').replace(/\n/g,''));
     else body = esc(body).replace(/\n/g,'<br>');
     return `<div class="tzt-acc${enYeni?' son open':''}" id="tztAcc${i}">
       <div class="tzt-accwrap">
@@ -8382,7 +8403,7 @@ function garpAnalizAc(ticker) {
       if (_tzoLast !== id) return; // bu arada başka içeriğe geçildi
       if (!tez || !tez.baslik){ art.innerHTML = '<div class="pt-tez-skel">İçerik bulunamadı.</div>'; return; }
       let icerik = tez.icerik || '';
-      if (icerik.includes('<')) icerik = icerik.replace(/\n\n/g,'').replace(/\n/g,'');
+      if (icerik.includes('<')) icerik = govdeGorselleri(icerik.replace(/\n\n/g,'').replace(/\n/g,''));
       else icerik = esc(icerik).replace(/\n/g,'<br>');
       const katHam = tez.kategori||'tez';
       const kat = (katHam==='arastirma'||katHam==='haber') ? katHam : 'tez';

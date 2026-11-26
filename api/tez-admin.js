@@ -244,6 +244,75 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Yetkisiz' });
   }
 
+  /* ── GÖMÜLÜ GÖRSEL GÖÇÜ (admin, tek seferlik) ──────────────────
+     POST /api/tez-admin?action=gomulu_goc        → hepsini tara
+     POST /api/tez-admin?action=gomulu_goc&id=45  → tek tez
+     body: { kuru: true }  → hiçbir şey yazmaz, yalnızca raporlar
+
+     Kaydetme yolları artık gömülü görseli kendiliğinden taşıyor; bu uç
+     ESKİ kayıtlar için. Tekrar çalıştırmak güvenli: dosya adı içeriğin
+     SHA-256'sı, zaten taşınmış yazıda eşleşecek base64 kalmıyor.
+
+     Tek seferde en fazla 5 kayıt işleniyor — gövdeler 700 KB'a kadar
+     çıkıyor ve fonksiyonun 60 sn sınırı var. Kalan varsa yanıttaki
+     "kalan" alanı söylüyor, uç tekrar çağrılıyor. */
+  if (req.method === 'POST' && req.query.action === 'gomulu_goc') {
+    const kuru   = !!(req.body && req.body.kuru);
+    const tekId  = String(req.query.id || '').replace(/[^0-9]/g, '');
+    const suzgec = tekId ? `id=eq.${tekId}` : 'icerik=like.*;base64,*';
+
+    try {
+      const r = await fetch(
+        `${SUPABASE_URL}/rest/v1/tezler?${suzgec}&select=id,baslik,icerik&order=id.desc`,
+        { headers }
+      );
+      if (!r.ok) return res.status(502).json({ error: 'tezler okunamadi', detail: await r.text() });
+      const hepsi = await r.json();
+      const adaylar = (Array.isArray(hepsi) ? hepsi : [])
+        .filter(t => t && typeof t.icerik === 'string' && t.icerik.includes(';base64,'));
+
+      const PARTI = 5;
+      const parti = adaylar.slice(0, PARTI);
+      const rapor = [];
+      let toplamKazanc = 0;
+
+      for (const t of parti) {
+        const onceki = t.icerik.length;
+        const sonuc  = await gomuluGorselleriTasi(t.icerik);
+        toplamKazanc += sonuc.kazanilanBayt;
+
+        let yazildi = false;
+        if (!kuru && sonuc.tasinan > 0) {
+          const y = await fetch(`${SUPABASE_URL}/rest/v1/tezler?id=eq.${t.id}`, {
+            method: 'PATCH',
+            headers: { ...headers, Prefer: 'return=minimal' },
+            body: JSON.stringify({ icerik: sonuc.html }),
+          });
+          yazildi = y.ok;
+          if (!y.ok) rapor.push({ id: t.id, hata: await y.text() });
+        }
+        rapor.push({
+          id: t.id,
+          baslik: String(t.baslik || '').slice(0, 40),
+          tasinanGorsel: sonuc.tasinan,
+          oncekiKB: Math.round(onceki / 1024),
+          sonrakiKB: Math.round(sonuc.html.length / 1024),
+          yazildi,
+        });
+      }
+
+      return res.status(200).json({
+        kuru,
+        islenen: parti.length,
+        kalan: Math.max(0, adaylar.length - parti.length),
+        kazanilanKB: Math.round(toplamKazanc / 1024),
+        rapor,
+      });
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   // ── TEZ GÜNCELLEMELERİ (admin CRUD) ───────────────────────────
   // ?entity=guncelleme  →  GET (tez_id ile) / POST / PUT / DELETE
   if (req.query.entity === 'guncelleme') {
@@ -260,6 +329,7 @@ export default async function handler(req, res) {
       if (!body.tez_id)  return res.status(400).json({ error: 'tez_id zorunlu' });
       if (!body.baslik)  return res.status(400).json({ error: 'baslik zorunlu' });
       body.olusturma = new Date().toISOString();
+      if (body.icerik) body.icerik = (await gomuluGorselleriTasi(body.icerik)).html;
       let r = await fetch(GT, { method: 'POST', headers, body: JSON.stringify(body) });
       // gorsel sutunu henuz eklenmediyse kayit tamamen kirilmasin — o alan olmadan tekrar dene
       if (!r.ok && 'gorsel' in body) {
@@ -277,6 +347,7 @@ export default async function handler(req, res) {
       if (!gid) return res.status(400).json({ error: 'id gerekli' });
       const body = normalizeGuncelleme(req.body || {});
       delete body.id;
+      if (body.icerik) body.icerik = (await gomuluGorselleriTasi(body.icerik)).html;
       let r = await fetch(`${GT}?id=eq.${gid}`, { method: 'PATCH', headers, body: JSON.stringify(body) });
       if (!r.ok && 'gorsel' in body) {
         const { gorsel, ...gorselsiz } = body;
@@ -523,6 +594,8 @@ export default async function handler(req, res) {
     const KATEGORILER = ['tez', 'arastirma', 'haber'];
     if (!KATEGORILER.includes(body.kategori)) body.kategori = 'tez';
     if (!body.slug) body.slug = body.baslik.toLowerCase().replace(/[^a-z0-9ğüşıöç]+/gi, '-').replace(/(^-|-$)/g, '');
+    // Gömülü görseller Storage'a: yeni yazı baştan temiz kaydediliyor.
+    if (body.icerik) body.icerik = (await gomuluGorselleriTasi(body.icerik)).html;
     const r = await fetch(`${SUPABASE_URL}/rest/v1/tezler`, { method: 'POST', headers, body: JSON.stringify(body) });
     return res.status(200).json(await r.json());
   }
@@ -531,6 +604,7 @@ export default async function handler(req, res) {
   if (req.method === 'PUT') {
     const { id, ...body } = req.body;
     body.guncelleme = new Date().toISOString();
+    if (body.icerik) body.icerik = (await gomuluGorselleriTasi(body.icerik)).html;
     const r = await fetch(`${SUPABASE_URL}/rest/v1/tezler?id=eq.${id}`, { method: 'PATCH', headers, body: JSON.stringify(body) });
     return res.status(200).json(await r.json());
   }
@@ -573,6 +647,73 @@ async function appKabugu() {
     } catch (_) {}
   }
   return null;
+}
+
+/* ── GÖVDEYE GÖMÜLÜ GÖRSELLER ─────────────────────────────────────
+   Yazılar tam HTML belgesi olarak yapıştırılıyor ve görseller gövdenin
+   içine base64 olarak gömülü geliyor. Ölçüm (27 Kasım 2026): beş tezde
+   toplam 2,07 MB gömülü görsel — TÜM yazı içeriğinin %78'i. En kötüsü
+   Copart: 741 KB'lık API yanıtının 681 KB'ı yedi adet base64 görsel.
+
+   Üç ayrı maliyeti var: base64 ham dosyayı ~%33 şişiriyor; görsel ayrı
+   bir kaynak olmadığı için ne önbelleğe alınabiliyor ne lazy
+   yüklenebiliyor; üstelik yazı gövdesi API yanıtının içinde geldiği
+   için okur ilk harfi görmeden hepsini indiriyor.
+
+   Çözüm: gömülü görseli Storage'a taşıyıp yerine URL bırakmak.
+   Dosya adı görselin SHA-256'sı — aynı görsel iki yazıda da geçse tek
+   kopya duruyor ve göç ikinci kez çalıştırılsa yeniden yüklemiyor.
+   Yükleme başarısız olursa gömülü hali OLDUĞU GİBİ bırakılıyor: yazı
+   bozulmasın, en kötü ihtimalle eskisi kadar ağır kalsın. */
+const GOMULU_DESEN = /data:image\/(png|jpe?g|gif|webp|avif);base64,[A-Za-z0-9+/=\s]+/g;
+
+async function gomuluGorselleriTasi(html) {
+  if (!html || typeof html !== 'string' || html.indexOf(';base64,') < 0) {
+    return { html: html || '', tasinan: 0, kazanilanBayt: 0 };
+  }
+  const eslesmeler = html.match(GOMULU_DESEN);
+  if (!eslesmeler || !eslesmeler.length) return { html, tasinan: 0, kazanilanBayt: 0 };
+
+  const crypto = await import('node:crypto');
+  const benzersiz = [...new Set(eslesmeler)];   // aynı görsel iki kez geçebiliyor
+  let yeni = html, tasinan = 0, kazanilan = 0;
+
+  for (const uri of benzersiz) {
+    const tipEsle = /^data:image\/([a-z0-9+]+);base64,/i.exec(uri);
+    if (!tipEsle) continue;
+    const tip = tipEsle[1].toLowerCase();
+    const veri = uri.slice(tipEsle[0].length).replace(/\s+/g, '');
+
+    let buf;
+    try { buf = Buffer.from(veri, 'base64'); } catch (_) { continue; }
+    if (!buf || buf.length < 64) continue;      // bozuk ya da anlamsız küçük
+
+    const uzanti = tip === 'jpeg' ? 'jpg' : tip;
+    const ad  = crypto.createHash('sha256').update(buf).digest('hex').slice(0, 24);
+    const yol = `govde/${ad}.${uzanti}`;
+
+    try {
+      const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${yol}`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': `image/${tip}`,
+          'cache-control': 'public, max-age=31536000, immutable',
+          'x-upsert': 'true',
+        },
+        body: buf,
+      });
+      if (!up.ok) continue;
+    } catch (_) { continue; }
+
+    const genel = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${yol}`;
+    const oncekiUzunluk = yeni.length;
+    yeni = yeni.split(uri).join(genel);
+    kazanilan += oncekiUzunluk - yeni.length;
+    tasinan++;
+  }
+  return { html: yeni, tasinan, kazanilanBayt: kazanilan };
 }
 
 function attrEsc(s) {
@@ -667,6 +808,9 @@ function normalizeGuncelleme(b) {
   const out = {};
   if (b.tez_id != null) out.tez_id = parseInt(String(b.tez_id).replace(/[^0-9]/g, ''), 10) || null;
   if (b.baslik  != null) out.baslik  = String(b.baslik).slice(0, 300);
+  /* icerik burada ham kalıyor; gömülü görsel taşıma çağıranın işi
+     (async, normalizeGuncelleme senkron). Bkz. entity=guncelleme
+     POST/PUT dalları. */
   if (b.icerik  != null) out.icerik  = b.icerik ? String(b.icerik) : null;
   if (b.gorsel  !== undefined) out.gorsel = b.gorsel ? String(b.gorsel).slice(0, 500) : null;
   if (b.tur     != null) out.tur     = GUNC_TURLER.includes(b.tur) ? b.tur : 'not';
