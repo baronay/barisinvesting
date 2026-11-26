@@ -1369,7 +1369,11 @@ function gorselUrl(u, genislik) {
   const i = u.indexOf(onek);
   if (i < 0) return u;
   const yol = u.slice(i + onek.length).split('?')[0];
-  return '/g/' + yol + '?width=' + (genislik || 800) + '&quality=75&format=webp';
+  /* resize=contain ŞART. Supabase yalnızca width verilince yüksekliği
+     ORİJİNALDE BIRAKIP eni kırpıyor: 1840x800'lük kapak 700x800 oluyor
+     ve kart "Nvidia" yerine "vidia" gösteriyordu. contain oranı koruyor
+     (700x304). Zaten küçük görsellerde hiçbir şey değişmiyor. */
+  return '/g/' + yol + '?width=' + (genislik || 800) + '&quality=75&format=webp&resize=contain';
 }
 
 function guncelKapak(t) {
