@@ -1200,3 +1200,65 @@ async function tezGuncSil(id) {
     showToast('Hata: ' + e.message, 'error');
   }
 }
+
+/* ── GÖMÜLÜ GÖRSEL GÖÇÜ ────────────────────────────────────────────
+   Yazı gövdeleri tam HTML belgesi olarak yapıştırılıyor ve görseller
+   base64 olarak gövdenin içine gömülü geliyor. Ölçüm (27 Kasım 2026):
+   beş tezde 2,07 MB — yazı içeriğinin %78'i. Copart tek başına 741 KB,
+   681'i gömülü görsel.
+
+   Bu düğme api/tez-admin?action=gomulu_goc ucunu çağırıyor. Uç 5'erli
+   partiler hâlinde çalışıyor (gövdeler 700 KB'a kadar çıkıyor, fonksiyonun
+   60 sn sınırı var), o yüzden burada "kalan" sıfırlanana kadar döngüyle
+   tekrar çağrılıyor. Sonsuz döngüye karşı 20 tur sınırı var.
+
+   Kaydetme yolları artık gömülü görseli kendiliğinden taşıyor; bu düğme
+   ESKİ kayıtlar için. Tekrar çalıştırmak güvenli: dosya adı görselin
+   SHA-256'sı, taşınmış yazıda eşleşecek base64 kalmıyor. */
+async function gomuluGoc(kuru) {
+  const secret = _tezSecret || _adminSecret || prompt('Admin şifresi:');
+  if (!secret) return;
+  _tezSecret = secret;
+
+  const durum = document.getElementById('gomuluGocDurum');
+  const yaz = (s) => { if (durum) durum.textContent = s; };
+  yaz(kuru ? 'Taranıyor…' : 'Taşınıyor…');
+
+  let tur = 0, toplamTasinan = 0, toplamKazancKB = 0;
+  const satirlar = [];
+
+  try {
+    while (tur < 20) {
+      tur++;
+      const r = await fetch('/api/tez-admin?action=gomulu_goc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + secret },
+        body: JSON.stringify({ kuru: !!kuru })
+      });
+      const d = await r.json();
+      if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+
+      (d.rapor || []).forEach(x => {
+        if (x.hata) { satirlar.push('  ✗ id ' + x.id + ' — ' + String(x.hata).slice(0, 80)); return; }
+        toplamTasinan += x.tasinanGorsel || 0;
+        satirlar.push('  ' + (x.yazildi || kuru ? '✓' : '·') + ' ' + x.baslik
+          + ' — ' + x.tasinanGorsel + ' görsel, ' + x.oncekiKB + ' KB → ' + x.sonrakiKB + ' KB');
+      });
+      toplamKazancKB += d.kazanilanKB || 0;
+      yaz((kuru ? 'KURU ÇALIŞTIRMA\n' : 'TAŞIMA\n') + satirlar.join('\n')
+        + '\n\nkalan: ' + d.kalan);
+
+      // Kuru çalıştırmada hiçbir şey yazılmıyor, yani "kalan" hiç
+      // azalmıyor — ilk turdan sonra durmak gerekiyor, yoksa döngü
+      // aynı beş kaydı tekrar tekrar tarar.
+      if (kuru || !d.kalan) break;
+    }
+
+    yaz((kuru ? 'KURU ÇALIŞTIRMA (hiçbir şey değişmedi)\n' : 'TAŞIMA TAMAM\n')
+      + satirlar.join('\n')
+      + '\n\nToplam: ' + toplamTasinan + ' görsel, ' + toplamKazancKB + ' KB kazanç'
+      + (kuru ? '\n\n"Görselleri taşı" ile uygula.' : ''));
+  } catch (e) {
+    yaz('✗ Hata: ' + e.message);
+  }
+}
